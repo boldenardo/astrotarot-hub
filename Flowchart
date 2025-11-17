@@ -1,0 +1,109 @@
+```mermaid
+graph TD
+    Start([Usuário acessa Landing Page]) --> Choice{Já possui conta?}
+    
+    Choice -->|Não| Register[Registro de Conta]
+    Choice -->|Sim| Login[Login]
+    
+    Register --> ProfileData{Deseja adicionar<br/>dados astrais?}
+    ProfileData -->|Sim| AstroData[Preenche data/hora/local<br/>de nascimento]
+    ProfileData -->|Não| Dashboard
+    AstroData --> Dashboard
+    
+    Login --> Dashboard[Dashboard Principal]
+    
+    Dashboard --> SelectDeck[Escolher Deck<br/>Normal ou Egípcio]
+    
+    SelectDeck --> SelectSpread[Escolher Spread<br/>1 carta, 3 cartas ou Cruz Celta]
+    
+    SelectSpread --> Shuffle[Animação de<br/>Embaralhamento]
+    
+    Shuffle --> DrawCards[Sorteio/Seleção<br/>de Cartas]
+    
+    DrawCards --> Reveal[Revelação das Cartas<br/>com Animação Flip]
+    
+    Reveal --> CheckPremium{Usuário é<br/>Premium?}
+    
+    CheckPremium -->|Não| Teaser[Exibir Teaser<br/>Interpretação Parcial<br/>Borrada]
+    CheckPremium -->|Sim| FullInterpretation
+    
+    Teaser --> PaymentCTA[CTA de Pagamento<br/>R$ 9,90 única ou<br/>R$ 29,90/mês]
+    
+    PaymentCTA --> PaymentChoice{Escolha do<br/>Usuário}
+    
+    PaymentChoice -->|Pagar Agora| Payment[Processamento<br/>Stripe Checkout]
+    PaymentChoice -->|Depois| SaveTeaser[Salvar Tiragem<br/>Parcial no Histórico]
+    
+    Payment --> PaymentSuccess{Pagamento<br/>Aprovado?}
+    
+    PaymentSuccess -->|Sim| UpdateStatus[Atualizar Status<br/>Premium/Tiragem]
+    PaymentSuccess -->|Não| PaymentFailed[Exibir Erro<br/>Pagamento]
+    
+    PaymentFailed --> PaymentCTA
+    
+    UpdateStatus --> FullInterpretation[Gerar Interpretação<br/>Completa com IA Groq]
+    
+    FullInterpretation --> AstroIntegration{Dados astrais<br/>disponíveis?}
+    
+    AstroIntegration -->|Sim| FetchAstro[Buscar Dados<br/>AstroSeek API]
+    AstroIntegration -->|Não| DisplayReading
+    
+    FetchAstro --> CrossReference[Cruzar Cartas com<br/>Mapa Astral<br/>Ex: Torre + Áries]
+    
+    CrossReference --> DisplayReading[Exibir Leitura<br/>Completa com<br/>Integração Astrológica]
+    
+    DisplayReading --> SaveReading[Salvar no<br/>Histórico Premium]
+    
+    SaveReading --> PostReading{O que fazer<br/>agora?}
+    
+    PostReading -->|Nova Tiragem| SelectDeck
+    PostReading -->|Ver Histórico| History[Dashboard<br/>Histórico de Tiragens]
+    PostReading -->|Ver Mapa Astral| BirthChart[Visualizar<br/>Mapa Astral Completo]
+    PostReading -->|Previsões| Transits[Previsões Diárias<br/>Trânsitos Planetários]
+    PostReading -->|Sair| End([Fim da Sessão])
+    
+    SaveTeaser --> Dashboard
+    History --> Dashboard
+    BirthChart --> Dashboard
+    Transits --> Dashboard
+    
+    %% Subfluxo de Notificações
+    Dashboard -.Notificação Diária.-> Notification[Email/SMS<br/>Nova Previsão]
+    Notification --> Dashboard
+    
+    %% Estilo dos Nós
+    classDef process fill:#8b5cf6,stroke:#6d28d9,stroke-width:2px,color:#fff
+    classDef decision fill:#ec4899,stroke:#be185d,stroke-width:2px,color:#fff
+    classDef payment fill:#fbbf24,stroke:#d97706,stroke-width:2px,color:#000
+    classDef api fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+    
+    class Register,Login,Dashboard,SelectDeck,SelectSpread,Shuffle,DrawCards,Reveal,DisplayReading,SaveReading,History,BirthChart,Transits process
+    class Choice,ProfileData,CheckPremium,PaymentChoice,PaymentSuccess,AstroIntegration,PostReading decision
+    class PaymentCTA,Payment,UpdateStatus,PaymentFailed payment
+    class FetchAstro,CrossReference,FullInterpretation,Notification api
+```
+
+## Legenda do Fluxo
+
+**Pontos-Chave:**
+- 🟣 **Roxo**: Processos principais do usuário
+- 🔴 **Rosa**: Decisões críticas
+- 🟡 **Amarelo**: Fluxo de pagamentos
+- 🟢 **Verde**: Integrações de API (AstroSeek, Groq, Notificações)
+
+**Fluxo Freemium:**
+1. Usuário não-premium vê teaser borrado
+2. CTA para pagamento único (R$ 9,90) ou assinatura (R$ 29,90/mês)
+3. Após pagamento, desbloqueia interpretação completa + integração astrológica
+
+**Integrações:**
+- **AstroSeek API**: Mapas astrais e trânsitos (se dados disponíveis)
+- **Groq AI**: Interpretações personalizadas das cartas
+- **Stripe**: Checkout e webhooks para pagamentos
+- **SendGrid/Twilio**: Notificações diárias
+
+**Retenção:**
+- Histórico de tiragens salvo
+- Dashboard com mapa astral permanente
+- Previsões diárias baseadas em trânsitos
+- Notificações para re-engajamento

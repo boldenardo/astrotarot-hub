@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Enums para tipos fixos
+enum DeckType {
+  NORMAL     // Rider-Waite
+  EGIPCIO    // Thoth-inspired
+}
+
+enum SpreadType {
+  SINGLE     // 1 carta
+  THREE_CARD // Passado/Presente/Futuro
+  CELTIC_CROSS // 10 cartas
+}
+
+enum SubscriptionPlan {
+  FREE              // Apenas jogo de 4 cartas grátis
+  SINGLE_READING    // R$ 9,90 - 1 tiragem do tarot egípcio
+  PREMIUM_MONTHLY   // R$ 29,90/mês - Acesso total
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentType {
+  SINGLE_READING    // Pagamento único para tiragem
+  SUBSCRIPTION      // Pagamento recorrente mensal
+}
+
+// Modelo principal: Usuário
+model User {
+  id             String         @id @default(auto()) @map("_id") @db.ObjectId
+  email          String         @unique
+  passwordHash   String?
+  name           String?
+  birthDate      DateTime?
+  birthTime      String?
+  birthLocation  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  subscription   Subscription?
+  subscriptionId String?        @db.ObjectId
+  readings       TarotReading[]
+  birthChart     BirthChart?
+  payments       Payment[]
+}
+
+// Modelo: Tiragem de Tarot
+model TarotReading {
+  id                     String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId                 String    @db.ObjectId
+  deckType               DeckType
+  spreadType             SpreadType
+  cards                  Json
+  interpretation         String?
+  astrologicalIntegration Json?
+  isPremium              Boolean   @default(false)
+  createdAt              DateTime  @default(now())
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments               Payment[]
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+}
+
+// Modelo: Mapa Astral
+model BirthChart {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId @unique
+  chartData  Json
+  transits   Json?
+  generatedAt DateTime @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Modelo: Assinatura
+model Subscription {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String            @db.ObjectId @unique
+  plan            SubscriptionPlan  @default(FREE)
+  status          String            @default("active")
+  startDate       DateTime          @default(now())
+  endDate         DateTime?
+  pixupCustomerId String?           // ID do cliente no PixUp
+  pixupSubId      String?           // ID da assinatura no PixUp
+  autoRenew       Boolean           @default(true)
+  readingsLeft    Int               @default(0) // Para plano SINGLE_READING
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Modelo: Pagamento
+model Payment {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String         @db.ObjectId
+  amount        Float
+  currency      String         @default("BRL")
+  status        PaymentStatus  @default(PENDING)
+  paymentType   PaymentType
+  pixupId       String?        // ID da transação no PixUp
+  pixupQrCode   String?        // QR Code PIX para pagamento
+  pixupQrString String?        // String PIX copia e cola
+  readingId     String?        @db.ObjectId
+  expiresAt     DateTime?      // Validade do PIX
+  paidAt        DateTime?
+  createdAt     DateTime       @default(now())
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reading       TarotReading?  @relation(fields: [readingId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([pixupId])
+}

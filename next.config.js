@@ -1,0 +1,51 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ["localhost", "cdn.pixabay.com", "i.pinimg.com"],
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400, // Cache de 24 horas
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
+  env: {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
+  swcMinify: true,
+  poweredByHeader: false,
+  compress: true,
+  // Otimizações de performance
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizeCss: true,
+  },
+  // Headers de cache
+  async headers() {
+    return [
+      {
+        source: "/:all*(svg|jpg|jpeg|png|gif|ico|webp|avif)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/_next/static/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;

@@ -1,0 +1,471 @@
+export interface TarotCard {
+  id: number;
+  name: string;
+  nameEn: string;
+  suit?: string;
+  number?: number;
+  upright: string[];
+  reversed: string[];
+  keywords: string[];
+  imageUrl: string;
+}
+
+export const RIDER_WAITE_DECK: TarotCard[] = [
+  // Major Arcana
+  {
+    id: 0,
+    name: "O Louco",
+    nameEn: "The Fool",
+    upright: ["Novos começos", "Inocência", "Espontaneidade", "Livre espírito"],
+    reversed: ["Imprudência", "Risco desnecessário", "Tolice"],
+    keywords: ["início", "liberdade", "aventura"],
+    imageUrl: "/cards/rider-waite/00-fool.jpg",
+  },
+  {
+    id: 1,
+    name: "O Mago",
+    nameEn: "The Magician",
+    upright: ["Manifestação", "Poder", "Ação", "Concentração"],
+    reversed: ["Manipulação", "Talentos desperdiçados", "Ilusão"],
+    keywords: ["poder", "ação", "criação"],
+    imageUrl: "/cards/rider-waite/01-magician.jpg",
+  },
+  {
+    id: 2,
+    name: "A Sacerdotisa",
+    nameEn: "The High Priestess",
+    upright: ["Intuição", "Mistério", "Sabedoria interior", "Subconsciente"],
+    reversed: ["Segredos", "Desconexão da intuição", "Repressão"],
+    keywords: ["intuição", "mistério", "sabedoria"],
+    imageUrl: "/cards/rider-waite/02-high-priestess.jpg",
+  },
+  {
+    id: 3,
+    name: "A Imperatriz",
+    nameEn: "The Empress",
+    upright: ["Feminilidade", "Abundância", "Natureza", "Nutrição"],
+    reversed: ["Dependência", "Sufocamento", "Bloqueio criativo"],
+    keywords: ["abundância", "natureza", "fertilidade"],
+    imageUrl: "/cards/rider-waite/03-empress.jpg",
+  },
+  {
+    id: 4,
+    name: "O Imperador",
+    nameEn: "The Emperor",
+    upright: ["Autoridade", "Estrutura", "Controle", "Paternidade"],
+    reversed: ["Tirania", "Rigidez", "Dominação"],
+    keywords: ["autoridade", "estrutura", "liderança"],
+    imageUrl: "/cards/rider-waite/04-emperor.jpg",
+  },
+  {
+    id: 5,
+    name: "O Hierofante",
+    nameEn: "The Hierophant",
+    upright: ["Tradição", "Conformidade", "Moralidade", "Ética"],
+    reversed: ["Rebelião", "Subversão", "Novos métodos"],
+    keywords: ["tradição", "sabedoria", "educação"],
+    imageUrl: "/cards/rider-waite/05-hierophant.jpg",
+  },
+  {
+    id: 6,
+    name: "Os Amantes",
+    nameEn: "The Lovers",
+    upright: ["Amor", "Harmonia", "Relacionamentos", "Escolhas"],
+    reversed: ["Desarmonia", "Desequilíbrio", "Conflito de valores"],
+    keywords: ["amor", "união", "escolhas"],
+    imageUrl: "/cards/rider-waite/06-lovers.jpg",
+  },
+  {
+    id: 7,
+    name: "O Carro",
+    nameEn: "The Chariot",
+    upright: ["Controle", "Força de vontade", "Vitória", "Determinação"],
+    reversed: ["Falta de controle", "Agressividade", "Derrota"],
+    keywords: ["vitória", "determinação", "controle"],
+    imageUrl: "/cards/rider-waite/07-chariot.jpg",
+  },
+  {
+    id: 8,
+    name: "A Força",
+    nameEn: "Strength",
+    upright: ["Coragem", "Paciência", "Controle", "Compaixão"],
+    reversed: ["Fraqueza", "Auto-dúvida", "Falta de disciplina"],
+    keywords: ["coragem", "paciência", "compaixão"],
+    imageUrl: "/cards/rider-waite/08-strength.jpg",
+  },
+  {
+    id: 9,
+    name: "O Eremita",
+    nameEn: "The Hermit",
+    upright: ["Introspecção", "Busca interior", "Orientação", "Solidão"],
+    reversed: ["Isolamento", "Solidão forçada", "Retirada excessiva"],
+    keywords: ["introspecção", "sabedoria", "busca"],
+    imageUrl: "/cards/rider-waite/09-hermit.jpg",
+  },
+  {
+    id: 10,
+    name: "A Roda da Fortuna",
+    nameEn: "Wheel of Fortune",
+    upright: ["Mudança", "Ciclos", "Destino", "Ponto de virada"],
+    reversed: ["Má sorte", "Resistência à mudança", "Ciclo negativo"],
+    keywords: ["mudança", "destino", "ciclos"],
+    imageUrl: "/cards/rider-waite/10-wheel.jpg",
+  },
+  {
+    id: 11,
+    name: "A Justiça",
+    nameEn: "Justice",
+    upright: ["Justiça", "Equidade", "Verdade", "Lei"],
+    reversed: ["Injustiça", "Desonestidade", "Falta de responsabilidade"],
+    keywords: ["justiça", "verdade", "equilíbrio"],
+    imageUrl: "/cards/rider-waite/11-justice.jpg",
+  },
+  {
+    id: 12,
+    name: "O Enforcado",
+    nameEn: "The Hanged Man",
+    upright: ["Suspensão", "Sacrifício", "Nova perspectiva", "Espera"],
+    reversed: ["Estagnação", "Resistência", "Atrasos"],
+    keywords: ["sacrifício", "pausa", "perspectiva"],
+    imageUrl: "/cards/rider-waite/12-hanged.jpg",
+  },
+  {
+    id: 13,
+    name: "A Morte",
+    nameEn: "Death",
+    upright: ["Fim", "Transformação", "Transição", "Renascimento"],
+    reversed: ["Resistência à mudança", "Estagnação", "Fim difícil"],
+    keywords: ["transformação", "fim", "renovação"],
+    imageUrl: "/cards/rider-waite/13-death.jpg",
+  },
+  {
+    id: 14,
+    name: "A Temperança",
+    nameEn: "Temperance",
+    upright: ["Equilíbrio", "Moderação", "Paciência", "Propósito"],
+    reversed: ["Desequilíbrio", "Excesso", "Falta de harmonia"],
+    keywords: ["equilíbrio", "moderação", "harmonia"],
+    imageUrl: "/cards/rider-waite/14-temperance.jpg",
+  },
+  {
+    id: 15,
+    name: "O Diabo",
+    nameEn: "The Devil",
+    upright: ["Escravidão", "Materialismo", "Vícios", "Dependência"],
+    reversed: ["Libertação", "Desapego", "Rompimento"],
+    keywords: ["vícios", "materialismo", "aprisionamento"],
+    imageUrl: "/cards/rider-waite/15-devil.jpg",
+  },
+  {
+    id: 16,
+    name: "A Torre",
+    nameEn: "The Tower",
+    upright: ["Mudança súbita", "Revelação", "Caos", "Destruição"],
+    reversed: ["Evitar desastre", "Medo da mudança", "Catarse"],
+    keywords: ["mudança", "revelação", "ruptura"],
+    imageUrl: "/cards/rider-waite/16-tower.jpg",
+  },
+  {
+    id: 17,
+    name: "A Estrela",
+    nameEn: "The Star",
+    upright: ["Esperança", "Fé", "Renovação", "Inspiração"],
+    reversed: ["Desesperança", "Desânimo", "Falta de fé"],
+    keywords: ["esperança", "inspiração", "serenidade"],
+    imageUrl: "/cards/rider-waite/17-star.jpg",
+  },
+  {
+    id: 18,
+    name: "A Lua",
+    nameEn: "The Moon",
+    upright: ["Ilusão", "Medo", "Ansiedade", "Subconsciente"],
+    reversed: ["Liberação do medo", "Verdade revelada", "Clareza"],
+    keywords: ["ilusão", "intuição", "mistério"],
+    imageUrl: "/cards/rider-waite/18-moon.jpg",
+  },
+  {
+    id: 19,
+    name: "O Sol",
+    nameEn: "The Sun",
+    upright: ["Sucesso", "Alegria", "Vitalidade", "Confiança"],
+    reversed: ["Otimismo exagerado", "Depressão", "Tristeza"],
+    keywords: ["sucesso", "alegria", "vitalidade"],
+    imageUrl: "/cards/rider-waite/19-sun.jpg",
+  },
+  {
+    id: 20,
+    name: "O Julgamento",
+    nameEn: "Judgement",
+    upright: ["Julgamento", "Renascimento", "Despertar", "Decisão"],
+    reversed: ["Auto-dúvida", "Julgamento injusto", "Falta de perdão"],
+    keywords: ["julgamento", "renovação", "decisão"],
+    imageUrl: "/cards/rider-waite/20-judgement.jpg",
+  },
+  {
+    id: 21,
+    name: "O Mundo",
+    nameEn: "The World",
+    upright: ["Conclusão", "Realização", "Viagem", "Completude"],
+    reversed: ["Incompletude", "Falta de fechamento", "Buscar"],
+    keywords: ["conclusão", "realização", "sucesso"],
+    imageUrl: "/cards/rider-waite/21-world.jpg",
+  },
+];
+
+export const EGYPTIAN_DECK: TarotCard[] = [
+  {
+    id: 1,
+    name: "O Mago",
+    nameEn: "Le Bateleur - El Mago",
+    upright: ["Manifestação", "Poder pessoal", "Iniciativa", "Criatividade"],
+    reversed: ["Manipulação", "Ilusão", "Falta de ação"],
+    keywords: ["poder", "manifestação", "ação"],
+    imageUrl:
+      "https://2.bp.blogspot.com/-iaBqerZTpps/WSzL2rWHOeI/AAAAAAAAE18/peVFholDD9kz0mJdxUC632-NNGP_LLWPgCLcB/s1600/1.jpg",
+  },
+  {
+    id: 2,
+    name: "A Papisa",
+    nameEn: "La Papesse - La Sacerdotisa",
+    upright: ["Intuição", "Mistério", "Sabedoria oculta", "Subconsciente"],
+    reversed: [
+      "Segredos revelados",
+      "Desconexão espiritual",
+      "Falta de intuição",
+    ],
+    keywords: ["intuição", "mistério", "conhecimento oculto"],
+    imageUrl:
+      "https://3.bp.blogspot.com/-XlDgx5ZEEDw/WTB2BrDZQsI/AAAAAAAABC4/IiNc812ZZ-kwbfXI13OL0VIkuB6ekN5TwCLcB/s1600/2.jpg",
+  },
+  {
+    id: 3,
+    name: "A Imperatriz",
+    nameEn: "L´Impératrice - La Emperatriz",
+    upright: ["Abundância", "Natureza", "Fertilidade", "Nutrição"],
+    reversed: ["Dependência", "Bloqueio criativo", "Falta de progresso"],
+    keywords: ["abundância", "maternidade", "criação"],
+    imageUrl:
+      "https://1.bp.blogspot.com/-H-m3ld9xOOM/WTHanN-T1wI/AAAAAAAAE4c/4WaHtdyIYgcFd0_9Zt22KkxzLGVDjWSaACLcB/s1600/3.jpg",
+  },
+  {
+    id: 4,
+    name: "O Imperador",
+    nameEn: "L´Empereur - El Emperador",
+    upright: ["Autoridade", "Estrutura", "Controle", "Estabilidade"],
+    reversed: ["Tirania", "Rigidez", "Dominação excessiva"],
+    keywords: ["autoridade", "liderança", "estrutura"],
+    imageUrl:
+      "https://3.bp.blogspot.com/-5BQ9ruertEc/WTMzlK4ndpI/AAAAAAAAE5c/45qszfk5de0CwlWll0zct2S3WxY_HgyXwCLcB/s1600/4.jpg",
+  },
+  {
+    id: 5,
+    name: "O Papa",
+    nameEn: "Le Pape - El Sumo Sacerdote",
+    upright: [
+      "Tradição",
+      "Conhecimento",
+      "Orientação espiritual",
+      "Conformidade",
+    ],
+    reversed: ["Rebelião", "Dogma", "Rigidez espiritual"],
+    keywords: ["tradição", "sabedoria", "orientação"],
+    imageUrl:
+      "https://1.bp.blogspot.com/-CY1u8sm7dQE/WTNzziZeTyI/AAAAAAAABDM/tcxhPA_R74wODzQlptuY6g8s7Qi4vNwFgCLcB/s1600/5.jpg",
+  },
+  {
+    id: 6,
+    name: "O Enamorado",
+    nameEn: "L´Amoureux - El Enamorado",
+    upright: ["Amor", "Escolhas", "União", "Harmonia"],
+    reversed: ["Desequilíbrio", "Desarmonia", "Má escolha"],
+    keywords: ["amor", "união", "decisão"],
+    imageUrl:
+      "https://2.bp.blogspot.com/-XCuJQx8gyUg/WTRs-tdYM4I/AAAAAAAABEU/EED3PD-UN84F0KcxkG7nHd1w5CuJcwxDwCLcB/s1600/6.jpg",
+  },
+  {
+    id: 7,
+    name: "O Caballeiro",
+    nameEn: "Le Chariot - El Caballero",
+    upright: ["Vitória", "Determinação", "Controle", "Força de vontade"],
+    reversed: ["Falta de direção", "Agressão", "Derrota"],
+    keywords: ["vitória", "determinação", "progresso"],
+    imageUrl:
+      "https://4.bp.blogspot.com/-pWWrB4xMihs/WTR9HXa_1XI/AAAAAAAABFw/BOMKLflHtN8QQOYW_DswN_1fyUkNt9oAgCLcB/s1600/7.jpg",
+  },
+  {
+    id: 8,
+    name: "A Justiça",
+    nameEn: "La Justice - La Justicia",
+    upright: ["Justiça", "Verdade", "Equilíbrio", "Lei"],
+    reversed: ["Injustiça", "Desonestidade", "Falta de responsabilidade"],
+    keywords: ["justiça", "verdade", "equilíbrio"],
+    imageUrl:
+      "https://4.bp.blogspot.com/-DBMu2ZA6J6I/WTW5C_4Ep9I/AAAAAAAABHc/0E342GIFouMO9Moej7CwoHiIwxAFAcOdACLcB/s1600/8.jpg",
+  },
+  {
+    id: 9,
+    name: "O Eremita",
+    nameEn: "L´Hermite - El Ermitaño",
+    upright: ["Introspecção", "Sabedoria", "Busca interior", "Solidão"],
+    reversed: ["Isolamento", "Paranoia", "Reclusão excessiva"],
+    keywords: ["sabedoria", "solidão", "introspecção"],
+    imageUrl:
+      "https://2.bp.blogspot.com/-gNme-Bd_2b4/WTXnbPJ1OiI/AAAAAAAABJA/xyd9OwT0rVIdQgEIbnTs0RNjnYzvELZ2QCLcB/s1600/9.jpg",
+  },
+  {
+    id: 10,
+    name: "A Roda da Fortuna",
+    nameEn: "La Roue de Fortune - La Rueda de la Fortuna",
+    upright: ["Destino", "Mudança", "Ciclos", "Sorte"],
+    reversed: ["Má sorte", "Resistência à mudança", "Ciclo negativo"],
+    keywords: ["destino", "mudança", "ciclos"],
+    imageUrl:
+      "https://1.bp.blogspot.com/-PF2eY_pjPY8/WTYIo77qDHI/AAAAAAAABKY/nWXH2r1M1X4tUCk0sKmke4SZiFHHHkqZACLcB/s1600/10.jpg",
+  },
+  {
+    id: 11,
+    name: "A Força",
+    nameEn: "La Force - La Fuerza",
+    upright: ["Força", "Coragem", "Paciência", "Compaixão"],
+    reversed: ["Fraqueza", "Auto-dúvida", "Falta de disciplina"],
+    keywords: ["coragem", "força interior", "compaixão"],
+    imageUrl:
+      "https://3.bp.blogspot.com/-vI163D-siik/WTcTgstZgZI/AAAAAAAABL4/TXGcb9WfiVcW5Cfm94OJ8ocDp7VJpTVpwCLcB/s1600/11.jpg",
+  },
+  {
+    id: 12,
+    name: "O Enforcado",
+    nameEn: "Le Pendu - El Colgado",
+    upright: ["Suspensão", "Nova perspectiva", "Sacrifício", "Espera"],
+    reversed: ["Estagnação", "Resistência", "Indecisão"],
+    keywords: ["sacrifício", "perspectiva", "pausa"],
+    imageUrl:
+      "https://1.bp.blogspot.com/-_ootOZLdl6I/WTckXo7k1qI/AAAAAAAABNQ/J2lEkZdabto5_ZPhDdR4q2I7DOCMetbHQCLcB/s1600/12.jpg",
+  },
+  {
+    id: 13,
+    name: "A Morte",
+    nameEn: "L´Arcane sans nom - El Arcano sin nombre",
+    upright: ["Fim", "Transformação", "Transição", "Renascimento"],
+    reversed: ["Resistência à mudança", "Estagnação", "Medo"],
+    keywords: ["transformação", "fim", "renascimento"],
+    imageUrl:
+      "https://2.bp.blogspot.com/-F92LRfD55fI/WTc0Da-fASI/AAAAAAAABOk/p0DhX3x1LocQUOWd58EEiTlUvqreA3KIACLcB/s1600/13.jpg",
+  },
+  {
+    id: 14,
+    name: "A Temperança",
+    nameEn: "Tempérance - La Templanza",
+    upright: ["Equilíbrio", "Moderação", "Paciência", "Harmonia"],
+    reversed: ["Desequilíbrio", "Excessos", "Impaciência"],
+    keywords: ["equilíbrio", "moderação", "harmonia"],
+    imageUrl:
+      "https://3.bp.blogspot.com/-WBHIIoA_DWU/WTdYHk9sGXI/AAAAAAAABQA/3jffw6NhyEkQ7gzW5GrxwW63-yvcg9OkACLcB/s1600/14.jpg",
+  },
+  {
+    id: 15,
+    name: "O Diabo",
+    nameEn: "Le Diable - El Diablo",
+    upright: ["Materialismo", "Vícios", "Escravidão", "Tentação"],
+    reversed: ["Libertação", "Desapego", "Superação"],
+    keywords: ["vícios", "materialismo", "aprisionamento"],
+    imageUrl:
+      "https://4.bp.blogspot.com/-zbHDOphnLxY/WTduYyAbibI/AAAAAAAABRk/MbyP_09E3XkYgiFjdwhS1NBqm3kRWg-BwCLcB/s1600/15.jpg",
+  },
+  {
+    id: 16,
+    name: "A Torre",
+    nameEn: "La Maison Dieu - La Casa de Dios",
+    upright: ["Destruição", "Mudança súbita", "Revelação", "Libertação"],
+    reversed: ["Evitar desastre", "Medo da mudança", "Adiamento"],
+    keywords: ["ruptura", "revelação", "mudança"],
+    imageUrl:
+      "https://4.bp.blogspot.com/-3noIkCkmswg/WTh2Xlpm21I/AAAAAAAABTE/ZE7TndotpRUAdneTDPArchLmGq8xhLOxgCLcB/s1600/16.jpg",
+  },
+  {
+    id: 17,
+    name: "A Estrela",
+    nameEn: "L´Étoile - La Estrella",
+    upright: ["Esperança", "Fé", "Inspiração", "Renovação"],
+    reversed: ["Desesperança", "Falta de fé", "Desânimo"],
+    keywords: ["esperança", "inspiração", "serenidade"],
+    imageUrl:
+      "https://2.bp.blogspot.com/--zr0lAM0_jA/WTitW45K3RI/AAAAAAAABTo/3F26O8ew3vEXFzT57ZQhg1NtE3V0AWgOQCEw/s1600/17.jpg",
+  },
+  {
+    id: 18,
+    name: "A Lua",
+    nameEn: "La Lune - La Luna",
+    upright: ["Ilusão", "Medo", "Ansiedade", "Mistério"],
+    reversed: ["Clareza", "Superação de medos", "Verdade revelada"],
+    keywords: ["ilusão", "intuição", "mistério"],
+    imageUrl:
+      "https://2.bp.blogspot.com/-Q9YnGHulIbY/WTnBCkjeHdI/AAAAAAAABV0/akWV1ppX_DANW1HDQToBOMSPyMrdvoCuACEw/s1600/18.jpg",
+  },
+  {
+    id: 19,
+    name: "O Sol",
+    nameEn: "Le Soleil - El Sol",
+    upright: ["Sucesso", "Alegria", "Vitalidade", "Positividade"],
+    reversed: ["Otimismo exagerado", "Depressão", "Falta de entusiasmo"],
+    keywords: ["sucesso", "alegria", "vitalidade"],
+    imageUrl:
+      "https://1.bp.blogspot.com/-tQQV04ZINs4/WTnQUZ6dHRI/AAAAAAAABXc/cTrXSsa7Vm0UbPoCEj71vh5UyW4N6mrKgCLcB/s1600/19.jpg",
+  },
+  {
+    id: 20,
+    name: "O Julgamento",
+    nameEn: "Le Jugement - El Juicio",
+    upright: ["Julgamento", "Renascimento", "Perdão", "Chamado"],
+    reversed: ["Auto-julgamento", "Dúvida", "Falta de perdão"],
+    keywords: ["julgamento", "renovação", "chamado"],
+    imageUrl:
+      "https://2.bp.blogspot.com/-vbBUgjCSKjo/WTnvuWRKQFI/AAAAAAAABXw/_fDRf0F7bdo4TfBDrijqlCOUyvvTl3B5wCLcB/s1600/20.jpg",
+  },
+  {
+    id: 21,
+    name: "O Mundo",
+    nameEn: "Le Monde - El Mundo",
+    upright: ["Conclusão", "Realização", "Viagem", "Sucesso"],
+    reversed: ["Incompletude", "Falta de fechamento", "Atrasos"],
+    keywords: ["conclusão", "realização", "totalidade"],
+    imageUrl:
+      "https://4.bp.blogspot.com/-F8_mRBZ57Qk/WToM4yunK8I/AAAAAAAABZQ/fbJ3zu2_tHI3e5jeasZ67lLT1Gho-UCxwCLcB/s1600/21.jpg",
+  },
+  {
+    id: 22,
+    name: "O Louco",
+    nameEn: "Le Mat - El Loco",
+    upright: ["Novos começos", "Inocência", "Liberdade", "Aventura"],
+    reversed: ["Imprudência", "Tolice", "Risco desnecessário"],
+    keywords: ["início", "liberdade", "espontaneidade"],
+    imageUrl:
+      "https://4.bp.blogspot.com/-cNXKdHVFdGU/WTs80n3mNLI/AAAAAAAABag/qjjt7YMluF8OekvzrtTgvET-5_-Twev7QCLcB/s1600/22.jpg",
+  },
+];
+
+export const SPREAD_TYPES = {
+  SINGLE: {
+    name: "Uma Carta",
+    positions: ["Presente"],
+  },
+  THREE_CARD: {
+    name: "Três Cartas",
+    positions: ["Passado", "Presente", "Futuro"],
+  },
+  CELTIC_CROSS: {
+    name: "Cruz Celta",
+    positions: [
+      "Situação Presente",
+      "Desafio",
+      "Passado",
+      "Futuro Próximo",
+      "Acima (Objetivo)",
+      "Abaixo (Fundação)",
+      "Conselho",
+      "Influências Externas",
+      "Esperanças e Medos",
+      "Resultado Final",
+    ],
+  },
+};
