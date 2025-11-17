@@ -11,7 +11,8 @@
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
     "check:pixup": "node scripts/check-pixup-config.js",
-    "test:pixup": "node scripts/check-pixup-config.js --test-connection"
+    "test:pixup": "node scripts/check-pixup-config.js --test-connection",
+    "quick:pixup": "./scripts/quick-check.sh"
   },
   "dependencies": {
     "@prisma/client": "^5.7.0",
