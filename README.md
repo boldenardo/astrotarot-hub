@@ -180,6 +180,8 @@ npm run dev              # Servidor desenvolvimento (localhost:3000)
 npm run build            # Build para produção
 npm run start            # Servidor produção
 npm run lint             # ESLint
+npm run check:pixup      # Verificar configuração do PixUp
+npm run test:pixup       # Testar conexão com API do PixUp
 npx prisma studio        # Interface visual do banco
 npx prisma generate      # Regenerar Prisma Client
 npx prisma db push       # Aplicar mudanças no schema
@@ -222,6 +224,7 @@ npm run test:coverage     # Coverage (TODO)
 
 ## 📚 Documentação
 
+- **PIXUP_CONFIG.md**: Guia completo de configuração do PixUp
 - **SECURITY_CHECKLIST.md**: Auditoria completa de segurança
 - **PAYMENT_SYSTEM.md**: Documentação do sistema de pagamentos
 - **Prisma Schema**: `prisma/schema.prisma`
