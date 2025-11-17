@@ -248,9 +248,9 @@ npm run test:pixup
 **Solução**: ℹ️ Não bloqueia o build. Pode ser ignorado ou otimizado depois
 
 ### Vulnerabilidades npm
-**Problema**: `5 high severity vulnerabilities`
-**Causa**: Dependências transitivas de pacotes deprecados
-**Solução**: ✅ Não afetam funcionalidade. Execute `npm audit fix` se necessário
+**Problema**: `3 high severity vulnerabilities` (após atualização)
+**Causa**: Dependência glob via tailwindcss (build-time apenas)
+**Solução**: ✅ Não afetam runtime de produção. Vulnerabilidades são de build-time apenas
 
 ---
 
@@ -260,6 +260,7 @@ npm run test:pixup
 - `PIXUP_CONFIG.md` - Guia completo de configuração do PixUp
 - `PIXUP_STATUS.md` - Status das APIs do PixUp
 - `PAYMENT_SYSTEM.md` - Documentação do sistema de pagamentos
+- `DEPENDENCIES_UPDATE.md` - **Guia de atualização de dependências**
 - `SECURITY_CHECKLIST.md` - Checklist de segurança
 - `GETTING_STARTED.md` - Guia de início rápido
 - `QUICK_START.md` - Início rápido
