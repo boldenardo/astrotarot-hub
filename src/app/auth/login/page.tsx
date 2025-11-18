@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,25 +23,17 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      // Usar Supabase Auth
+      const { session } = await signIn(formData);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao fazer login");
+      if (!session) {
+        throw new Error("Erro ao criar sessão");
       }
-
-      // Salvar token no localStorage
-      localStorage.setItem("token", data.token);
 
       // Redirecionar para dashboard
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Erro ao fazer login");
     } finally {
       setLoading(false);
     }

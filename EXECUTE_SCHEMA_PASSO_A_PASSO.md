@@ -3,6 +3,7 @@
 ## ⚠️ IMPORTANTE: Execute na ORDEM exata!
 
 ### 🔹 PASSO 1: Abrir SQL Editor
+
 1. Acesse: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/sql/new
 2. Certifique-se de estar logado no projeto correto
 
@@ -190,11 +191,11 @@ RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.users (auth_id, email, name, subscription_plan, subscription_status, readings_left)
   VALUES (
-    NEW.id, 
-    NEW.email, 
+    NEW.id,
+    NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'name', ''),
-    'FREE', 
-    'active', 
+    'FREE',
+    'active',
     4
   );
   RETURN NEW;
@@ -226,6 +227,7 @@ CREATE TRIGGER on_auth_user_created
 ## 🎉 VERIFICAÇÃO FINAL
 
 ### 1️⃣ Verificar Tabelas Criadas
+
 1. Acesse: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/editor
 2. Deve mostrar 4 tabelas:
    - ✅ users
@@ -234,23 +236,26 @@ CREATE TRIGGER on_auth_user_created
    - ✅ birth_charts
 
 ### 2️⃣ Verificar Políticas RLS
+
 Execute este comando no SQL Editor para verificar:
 
 ```sql
 -- Verificar políticas criadas
-SELECT schemaname, tablename, policyname 
-FROM pg_policies 
+SELECT schemaname, tablename, policyname
+FROM pg_policies
 WHERE schemaname = 'public'
 ORDER BY tablename, policyname;
 ```
 
 Deve mostrar 8 políticas:
+
 - users: 3 políticas
 - payments: 2 políticas
 - tarot_readings: 2 políticas
 - birth_charts: 2 políticas
 
 ### 3️⃣ Verificar Triggers
+
 Execute este comando:
 
 ```sql
@@ -262,6 +267,7 @@ ORDER BY event_object_table;
 ```
 
 Deve mostrar 3 triggers:
+
 - update_users_updated_at (users)
 - update_birth_charts_updated_at (birth_charts)
 - on_auth_user_created (auth.users)
@@ -273,6 +279,7 @@ Deve mostrar 3 triggers:
 Se todos os passos acima executaram sem erros, seu banco está pronto! 🎉
 
 ### Próximos Passos:
+
 1. Configurar secrets (GROQ_API_KEY, PIXUP_CLIENT_ID, etc.)
 2. Deploy das Edge Functions
 3. Testar autenticação

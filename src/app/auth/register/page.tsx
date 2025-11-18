@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signUp } from "@/lib/auth-client";
 
 interface WelcomeOffer {
   message: string;
@@ -83,38 +84,57 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          birthDate: formData.birthDate,
-          birthTime: formData.birthTime,
-          birthLocation: formData.birthLocation,
-        }),
+      // Usar Supabase Auth
+      const { user, session } = await signUp({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        birthDate: formData.birthDate,
+        birthTime: formData.birthTime,
+        birthLocation: formData.birthLocation,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Erro ao criar conta");
+      if (!session) {
+        throw new Error("Erro ao criar sessão");
       }
 
-      // Salvar token no localStorage
-      localStorage.setItem("token", data.token);
-
-      // Mostrar modal de boas-vindas com ofertas
-      if (data.welcomeOffer) {
-        setWelcomeData(data);
-        setShowWelcomeModal(true);
-      } else {
-        // Redirecionar para dashboard se não houver oferta
-        router.push("/dashboard");
-      }
+      // Mostrar modal de boas-vindas
+      setWelcomeData({
+        message:
+          "🎉 Bem-vindo(a) ao seu portal místico! Sua jornada de transformação começa AGORA.",
+        welcomeOffer: {
+          freeTrial: {
+            title: "🎁 JOGUE GRÁTIS AGORA",
+            description: "Tarot das 4 Cartas - Sem custo, sem compromisso",
+            ctaText: "Começar Agora",
+            ctaLink: "/challenge",
+          },
+          premiumPlan: {
+            title: "⭐ OFERTA ESPECIAL DE BOAS-VINDAS",
+            description: "Acesso TOTAL por apenas R$ 29,90/mês",
+            benefits: [
+              "✨ Tarot Egípcio Ilimitado",
+              "🌙 Mapa Astral Personalizado",
+              "💖 Compatibilidade Amorosa",
+              "🔮 Previsões Diárias",
+              "💰 Ritual de Abundância",
+              "🤖 Guia Espiritual com IA",
+            ],
+            price: "R$ 29,90/mês",
+            ctaText: "Ativar Plano Premium",
+            ctaLink: "/cart",
+          },
+          singleReading: {
+            title: "🌟 EXPERIMENTE UMA LEITURA COMPLETA",
+            description: "Tiragem do Tarot Egípcio por apenas R$ 9,90",
+            ctaText: "Fazer 1 Leitura",
+            ctaLink: "/tarot",
+          },
+        },
+      });
+      setShowWelcomeModal(true);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Erro ao criar conta");
     } finally {
       setLoading(false);
     }
