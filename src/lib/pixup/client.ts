@@ -4,17 +4,27 @@
  */
 
 interface PixUpConfig {
-  apiKey: string;
-  apiSecret: string;
+  clientId: string;
+  clientSecret: string;
   baseUrl?: string;
 }
 
 // Configuração padrão com variáveis de ambiente
 const defaultConfig: PixUpConfig = {
-  apiKey: process.env.PIXUP_API_KEY || "",
-  apiSecret: process.env.PIXUP_API_SECRET || "",
-  baseUrl: "https://api.pixupbr.com/v1",
+  clientId: process.env.PIXUP_CLIENT_ID || "",
+  clientSecret: process.env.PIXUP_CLIENT_SECRET || "",
+  baseUrl: process.env.PIXUP_BASE_URL || "https://api.pixupbr.com/v1",
 };
+
+/**
+ * Gera o header de autenticação Basic Auth para PixUp
+ * Concatena client_id:client_secret e codifica em base64
+ */
+function generateBasicAuthHeader(clientId: string, clientSecret: string): string {
+  const credentials = `${clientId}:${clientSecret}`;
+  const base64Credentials = Buffer.from(credentials).toString('base64');
+  return `Basic ${base64Credentials}`;
+}
 
 interface CreatePixPaymentParams {
   amount: number; // Valor em centavos (990 = R$ 9,90)
@@ -57,14 +67,16 @@ interface SubscriptionResponse {
 }
 
 class PixUpClient {
-  private apiKey: string;
-  private apiSecret: string;
+  private clientId: string;
+  private clientSecret: string;
   private baseUrl: string;
+  private authHeader: string;
 
   constructor(config: PixUpConfig) {
-    this.apiKey = config.apiKey;
-    this.apiSecret = config.apiSecret;
+    this.clientId = config.clientId;
+    this.clientSecret = config.clientSecret;
     this.baseUrl = config.baseUrl || "https://api.pixupbr.com/v1";
+    this.authHeader = generateBasicAuthHeader(this.clientId, this.clientSecret);
   }
 
   private async makeRequest(
@@ -74,8 +86,7 @@ class PixUpClient {
   ): Promise<any> {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-      "X-API-Key": this.apiKey,
-      "X-API-Secret": this.apiSecret,
+      "Authorization": this.authHeader,
     };
 
     const config: RequestInit = {
