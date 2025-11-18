@@ -76,32 +76,29 @@ export default function AbundancePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setResult(null);
 
     try {
-      // Simulação de chamada API
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      setResult({
-        currentCycle: "Júpiter em trígono com seu Sol natal",
-        favorablePeriods: [
-          "15-30 de Novembro: Excelente para novos investimentos",
-          "10-20 de Dezembro: Período de expansão profissional",
-          "5-15 de Janeiro: Oportunidades inesperadas de ganhos",
-        ],
-        houses: {
-          second: "Vênus em Touro - Estabilidade financeira",
-          eighth: "Plutão em aspecto favorável - Transformação financeira",
-          tenth: "Júpiter expandindo carreira e reconhecimento",
+      const response = await fetch("/api/abundance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        recommendations: [
-          "Invista em ativos de longo prazo durante Júpiter em sua 2ª casa",
-          "Período ideal para pedir aumento ou promoção",
-          "Considere empreender com parcerias estratégicas",
-          "Evite grandes gastos entre 20-30 de Dezembro (Mercúrio retrógrado)",
-        ],
+        body: JSON.stringify({
+          birthData: formData,
+        }),
       });
+
+      const data = await response.json();
+
+      if (data.success && data.analysis) {
+        setResult(data.analysis);
+      } else {
+        throw new Error(data.error || "Erro ao gerar análise");
+      }
     } catch (error) {
       console.error("Erro ao buscar análise:", error);
+      alert("Erro ao gerar análise de abundância. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -295,6 +292,45 @@ export default function AbundancePage() {
                 <p className="text-lg text-white">{result.currentCycle}</p>
               </div>
 
+              {/* Abundance Scores */}
+              {result.scores && (
+                <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
+                  <h3 className="text-2xl font-bold mb-6">
+                    Potencial de Abundância
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                      <DollarSign className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-yellow-300">
+                        {result.scores.financial}
+                      </div>
+                      <div className="text-sm text-gray-400">Finanças</div>
+                    </div>
+                    <div className="text-center p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                      <Briefcase className="w-8 h-8 text-green-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-green-300">
+                        {result.scores.career}
+                      </div>
+                      <div className="text-sm text-gray-400">Carreira</div>
+                    </div>
+                    <div className="text-center p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                      <PiggyBank className="w-8 h-8 text-blue-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-blue-300">
+                        {result.scores.investments}
+                      </div>
+                      <div className="text-sm text-gray-400">Investimentos</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                      <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-purple-300">
+                        {result.scores.opportunities}
+                      </div>
+                      <div className="text-sm text-gray-400">Oportunidades</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Favorable Periods */}
               <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
                 <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -319,31 +355,57 @@ export default function AbundancePage() {
               {/* Houses Analysis */}
               <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
                 <h3 className="text-2xl font-bold mb-6">Casas de Abundância</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                    <h4 className="font-semibold text-green-400 mb-2">
-                      Casa 2 - Recursos
-                    </h4>
-                    <p className="text-sm text-gray-300">
-                      {result.houses.second}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                    <h4 className="font-semibold text-purple-400 mb-2">
-                      Casa 8 - Transformação
-                    </h4>
-                    <p className="text-sm text-gray-300">
-                      {result.houses.eighth}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                    <h4 className="font-semibold text-blue-400 mb-2">
-                      Casa 10 - Carreira
-                    </h4>
-                    <p className="text-sm text-gray-300">
-                      {result.houses.tenth}
-                    </p>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {result.houses?.house2 && (
+                    <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
+                      <h4 className="font-semibold text-green-400 mb-2">
+                        Casa 2 - Recursos
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        {result.houses.house2}
+                      </p>
+                    </div>
+                  )}
+                  {result.houses?.house8 && (
+                    <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                      <h4 className="font-semibold text-purple-400 mb-2">
+                        Casa 8 - Transformação
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        {result.houses.house8}
+                      </p>
+                    </div>
+                  )}
+                  {result.houses?.house10 && (
+                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+                      <h4 className="font-semibold text-blue-400 mb-2">
+                        Casa 10 - Carreira
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        {result.houses.house10}
+                      </p>
+                    </div>
+                  )}
+                  {result.houses?.house11 && (
+                    <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                      <h4 className="font-semibold text-yellow-400 mb-2">
+                        Casa 11 - Ganhos
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        {result.houses.house11}
+                      </p>
+                    </div>
+                  )}
+                  {result.jupiterPosition && (
+                    <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                      <h4 className="font-semibold text-amber-400 mb-2">
+                        Júpiter - Expansão
+                      </h4>
+                      <p className="text-sm text-gray-300">
+                        {result.jupiterPosition}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

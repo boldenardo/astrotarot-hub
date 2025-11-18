@@ -13,11 +13,13 @@ O PixUp utiliza **HTTP Basic Authentication** para autenticação de suas APIs.
 ### Como Funciona
 
 1. **Concatenar credenciais** com o símbolo `:` (dois pontos)
+
    ```
    client_id:client_secret
    ```
 
 2. **Codificar em Base64**
+
    ```
    Base64(client_id:client_secret)
    ```
@@ -31,11 +33,12 @@ O PixUp utiliza **HTTP Basic Authentication** para autenticação de suas APIs.
 
 ```typescript
 const clientId = "usuarioteste_63c4ff6423765as";
-const clientSecret = "9237b2e061cb412ea6c5f751071f31debe33fb9ac04c73387c2b7ad21e24df7d";
+const clientSecret =
+  "9237b2e061cb412ea6c5f751071f31debe33fb9ac04c73387c2b7ad21e24df7d";
 
 // Concatena e codifica
 const credentials = `${clientId}:${clientSecret}`;
-const base64Credentials = Buffer.from(credentials).toString('base64');
+const base64Credentials = Buffer.from(credentials).toString("base64");
 
 // Header pronto
 const authHeader = `Basic ${base64Credentials}`;
@@ -54,9 +57,12 @@ PIXUP_BASE_URL="https://api.pixupbr.com/v1"
 O arquivo `src/lib/pixup/client.ts` já implementa a autenticação corretamente:
 
 ```typescript
-function generateBasicAuthHeader(clientId: string, clientSecret: string): string {
+function generateBasicAuthHeader(
+  clientId: string,
+  clientSecret: string
+): string {
   const credentials = `${clientId}:${clientSecret}`;
-  const base64Credentials = Buffer.from(credentials).toString('base64');
+  const base64Credentials = Buffer.from(credentials).toString("base64");
   return `Basic ${base64Credentials}`;
 }
 ```
@@ -64,6 +70,7 @@ function generateBasicAuthHeader(clientId: string, clientSecret: string): string
 ### Responses
 
 #### ✅ 200 - Sucesso
+
 ```json
 {
   "success": true,
@@ -72,6 +79,7 @@ function generateBasicAuthHeader(clientId: string, clientSecret: string): string
 ```
 
 #### ❌ 401 - Não Autorizado
+
 ```json
 {
   "error": "Invalid credentials",

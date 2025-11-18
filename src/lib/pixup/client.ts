@@ -20,9 +20,12 @@ const defaultConfig: PixUpConfig = {
  * Gera o header de autenticação Basic Auth para PixUp
  * Concatena client_id:client_secret e codifica em base64
  */
-function generateBasicAuthHeader(clientId: string, clientSecret: string): string {
+function generateBasicAuthHeader(
+  clientId: string,
+  clientSecret: string
+): string {
   const credentials = `${clientId}:${clientSecret}`;
-  const base64Credentials = Buffer.from(credentials).toString('base64');
+  const base64Credentials = Buffer.from(credentials).toString("base64");
   return `Basic ${base64Credentials}`;
 }
 
@@ -86,7 +89,7 @@ class PixUpClient {
   ): Promise<any> {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
-      "Authorization": this.authHeader,
+      Authorization: this.authHeader,
     };
 
     const config: RequestInit = {
