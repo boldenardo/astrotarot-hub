@@ -217,7 +217,8 @@ let pixupClient: PixUpClient | null = null;
 export function getPixUpClient(): PixUpClient {
   if (!pixupClient) {
     const clientId = process.env.PIXUP_CLIENT_ID || process.env.PIXUP_API_KEY;
-    const clientSecret = process.env.PIXUP_CLIENT_SECRET || process.env.PIXUP_API_SECRET;
+    const clientSecret =
+      process.env.PIXUP_CLIENT_SECRET || process.env.PIXUP_API_SECRET;
 
     if (!clientId || !clientSecret) {
       throw new Error(

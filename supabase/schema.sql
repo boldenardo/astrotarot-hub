@@ -4,30 +4,33 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
   name TEXT,
+  birth_date TEXT,
+  birth_time TEXT,
+  birth_location TEXT,
   subscription_plan TEXT DEFAULT 'FREE' CHECK (subscription_plan IN ('FREE', 'SINGLE_READING', 'PREMIUM_MONTHLY')),
-  subscription_status TEXT DEFAULT 'active' CHECK (subscription_status IN ('active', 'cancelled', 'suspended')),
+  subscription_status TEXT DEFAULT 'active' CHECK (subscription_status IN ('active', 'pending', 'cancelled', 'suspended')),
+  subscription_start_date TIMESTAMP WITH TIME ZONE,
+  subscription_end_date TIMESTAMP WITH TIME ZONE,
   readings_left INTEGER DEFAULT 4,
   pixup_customer_id TEXT,
   pixup_subscription_id TEXT,
-  auto_renew BOOLEAN DEFAULT false,
-  current_period_end TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Payments table
-CREATE TABLE payments (
+CREATE TABLE IF NOT EXISTS payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  amount INTEGER NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
   currency TEXT DEFAULT 'BRL',
-  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'paid', 'cancelled', 'expired')),
-  payment_type TEXT CHECK (payment_type IN ('single', 'subscription')),
+  status TEXT DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED')),
+  payment_type TEXT CHECK (payment_type IN ('SINGLE_READING', 'SUBSCRIPTION')),
   pixup_payment_id TEXT,
   pixup_qr_code TEXT,
   pixup_qr_string TEXT,
@@ -37,26 +40,32 @@ CREATE TABLE payments (
 );
 
 -- Tarot Readings table
-CREATE TABLE tarot_readings (
+CREATE TABLE IF NOT EXISTS tarot_readings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  deck_type TEXT,
+  spread_type TEXT,
   cards JSONB NOT NULL,
   interpretation TEXT,
-  question TEXT,
+  is_premium BOOLEAN DEFAULT false,
+  astrological_integration JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Birth Charts table
-CREATE TABLE birth_charts (
+CREATE TABLE IF NOT EXISTS birth_charts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-  birth_date DATE NOT NULL,
-  birth_time TIME NOT NULL,
-  birth_place TEXT NOT NULL,
-  latitude DECIMAL(10, 8) NOT NULL,
-  longitude DECIMAL(11, 8) NOT NULL,
+  birth_date TEXT NOT NULL,
+  birth_time TEXT NOT NULL,
+  birth_location TEXT NOT NULL,
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
   chart_data JSONB NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  transits JSONB,
+  generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Indexes for better performance
