@@ -1,4 +1,19 @@
--- AstroTarot Hub - Supabase Database Schema
+# 🎯 GUIA PASSO A PASSO - Executar Schema no Supabase
+
+## ⚠️ IMPORTANTE: Execute na ORDEM exata!
+
+### 🔹 PASSO 1: Abrir SQL Editor
+1. Acesse: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/sql/new
+2. Certifique-se de estar logado no projeto correto
+
+---
+
+### 🔹 PASSO 2: Executar Parte 1 - Extensions e Tabelas
+
+**Cole EXATAMENTE este código** (Parte 1 de 3):
+
+```sql
+-- Parte 1: Extensions e Criação das Tabelas
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -75,6 +90,19 @@ CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
 CREATE INDEX IF NOT EXISTS idx_tarot_readings_user_id ON tarot_readings(user_id);
 CREATE INDEX IF NOT EXISTS idx_birth_charts_user_id ON birth_charts(user_id);
+```
+
+✅ **Clique em "Run"** (Ctrl+Enter)
+✅ **Verifique:** Deve mostrar "Success. No rows returned"
+
+---
+
+### 🔹 PASSO 3: Executar Parte 2 - Row Level Security (RLS)
+
+**Cole EXATAMENTE este código** (Parte 2 de 3):
+
+```sql
+-- Parte 2: Habilitar RLS e Criar Políticas
 
 -- Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -133,6 +161,19 @@ CREATE POLICY "Users can create own charts"
   WITH CHECK (EXISTS (
     SELECT 1 FROM users WHERE users.id = user_id AND users.auth_id = auth.uid()
   ));
+```
+
+✅ **Clique em "Run"** (Ctrl+Enter)
+✅ **Verifique:** Deve mostrar "Success. No rows returned"
+
+---
+
+### 🔹 PASSO 4: Executar Parte 3 - Functions e Triggers
+
+**Cole EXATAMENTE este código** (Parte 3 de 3):
+
+```sql
+-- Parte 3: Functions e Triggers
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -161,7 +202,13 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger for users table
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger for birth_charts table
+DROP TRIGGER IF EXISTS update_birth_charts_updated_at ON birth_charts;
+CREATE TRIGGER update_birth_charts_updated_at BEFORE UPDATE ON birth_charts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Trigger for auth.users to create profile
@@ -169,8 +216,65 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+```
 
--- Insert default admin user (optional)
--- Password should be hashed with bcrypt before inserting
--- INSERT INTO users (email, password, name, subscription_plan)
--- VALUES ('admin@astrotarot.com', 'hashed_password_here', 'Admin', 'PREMIUM_MONTHLY');
+✅ **Clique em "Run"** (Ctrl+Enter)
+✅ **Verifique:** Deve mostrar "Success. No rows returned"
+
+---
+
+## 🎉 VERIFICAÇÃO FINAL
+
+### 1️⃣ Verificar Tabelas Criadas
+1. Acesse: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/editor
+2. Deve mostrar 4 tabelas:
+   - ✅ users
+   - ✅ payments
+   - ✅ tarot_readings
+   - ✅ birth_charts
+
+### 2️⃣ Verificar Políticas RLS
+Execute este comando no SQL Editor para verificar:
+
+```sql
+-- Verificar políticas criadas
+SELECT schemaname, tablename, policyname 
+FROM pg_policies 
+WHERE schemaname = 'public'
+ORDER BY tablename, policyname;
+```
+
+Deve mostrar 8 políticas:
+- users: 3 políticas
+- payments: 2 políticas
+- tarot_readings: 2 políticas
+- birth_charts: 2 políticas
+
+### 3️⃣ Verificar Triggers
+Execute este comando:
+
+```sql
+-- Verificar triggers criados
+SELECT trigger_name, event_object_table, action_statement
+FROM information_schema.triggers
+WHERE trigger_schema = 'public' OR trigger_schema = 'auth'
+ORDER BY event_object_table;
+```
+
+Deve mostrar 3 triggers:
+- update_users_updated_at (users)
+- update_birth_charts_updated_at (birth_charts)
+- on_auth_user_created (auth.users)
+
+---
+
+## ✅ SUCESSO!
+
+Se todos os passos acima executaram sem erros, seu banco está pronto! 🎉
+
+### Próximos Passos:
+1. Configurar secrets (GROQ_API_KEY, PIXUP_CLIENT_ID, etc.)
+2. Deploy das Edge Functions
+3. Testar autenticação
+
+**Precisa de ajuda?** Me avise qual parte deu erro e eu te ajudo a resolver!

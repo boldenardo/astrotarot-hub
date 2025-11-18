@@ -30,17 +30,20 @@ supabase status
 ## 🗄️ PASSO 2: Executar Schema SQL
 
 ### Opção A: Via Dashboard (RECOMENDADO)
+
 1. Abra: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/sql/new
 2. Cole todo o conteúdo de `supabase/schema.sql`
 3. Clique em "Run" (Ctrl+Enter)
 4. Verifique "Success. No rows returned"
 
 ### Opção B: Via CLI
+
 ```bash
 supabase db push
 ```
 
 ### Verificar Tabelas Criadas:
+
 ```bash
 # Ver todas as tabelas
 supabase db diff
@@ -87,6 +90,7 @@ supabase functions list
 ```
 
 ### URLs das Functions (após deploy):
+
 - **Tarot Reading**: `https://workzjugpmwbbbkxdgtu.supabase.co/functions/v1/create-tarot-reading`
 - **Payment**: `https://workzjugpmwbbbkxdgtu.supabase.co/functions/v1/create-payment`
 
@@ -95,19 +99,22 @@ supabase functions list
 ## 🔐 PASSO 5: Configurar Autenticação
 
 ### 5.1 - Habilitar Email/Password:
+
 1. Acesse: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/auth/providers
 2. Em "Email", certifique-se que está **habilitado**
 3. **Desabilite** "Confirm email" (para testes rápidos)
 4. Salvar
 
 ### 5.2 - Configurar URL do Site:
+
 1. Acesse: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/auth/url-configuration
 2. Site URL: `http://localhost:3000` (desenvolvimento) ou `https://seu-dominio.vercel.app` (produção)
-3. Redirect URLs: 
+3. Redirect URLs:
    - `http://localhost:3000/**`
    - `https://seu-dominio.vercel.app/**`
 
 ### 5.3 - Testar Autenticação:
+
 ```bash
 # Via Dashboard
 # https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/auth/users
@@ -120,57 +127,63 @@ supabase functions list
 ## 🧪 PASSO 6: Testar Edge Functions
 
 ### Teste 1: Registro de Usuário (via Supabase Auth SDK)
+
 ```javascript
 // No navegador ou em um arquivo de teste
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  'https://workzjugpmwbbbkxdgtu.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvcmt6anVncG13YmJia3hkZ3R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY5NzU3OTAsImV4cCI6MjA1MjU1MTc5MH0.qXw0kKe3aKBJd5_m7dOHnfDLvtQWvM8xUvW9CjNXeYM'
-)
+  "https://workzjugpmwbbbkxdgtu.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indvcmt6anVncG13YmJia3hkZ3R1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY5NzU3OTAsImV4cCI6MjA1MjU1MTc5MH0.qXw0kKe3aKBJd5_m7dOHnfDLvtQWvM8xUvW9CjNXeYM"
+);
 
 // Registrar
 const { data, error } = await supabase.auth.signUp({
-  email: 'teste@example.com',
-  password: 'senha123',
+  email: "teste@example.com",
+  password: "senha123",
   options: {
     data: {
-      name: 'Teste User'
-    }
-  }
-})
+      name: "Teste User",
+    },
+  },
+});
 
-console.log('User:', data.user)
-console.log('Session:', data.session)
+console.log("User:", data.user);
+console.log("Session:", data.session);
 ```
 
 ### Teste 2: Criar Leitura de Tarot
+
 ```javascript
 // Depois de fazer login
-const { data, error } = await supabase.functions.invoke('create-tarot-reading', {
-  body: {
-    selectedCards: [
-      { name: 'A Sacerdotisa', number: 2, meaning: 'Intuição e mistério' },
-      { name: 'O Mago', number: 1, meaning: 'Manifestação e poder' },
-    ],
-    question: 'Qual o meu propósito?'
+const { data, error } = await supabase.functions.invoke(
+  "create-tarot-reading",
+  {
+    body: {
+      selectedCards: [
+        { name: "A Sacerdotisa", number: 2, meaning: "Intuição e mistério" },
+        { name: "O Mago", number: 1, meaning: "Manifestação e poder" },
+      ],
+      question: "Qual o meu propósito?",
+    },
   }
-})
+);
 
-console.log('Reading:', data)
+console.log("Reading:", data);
 ```
 
 ### Teste 3: Criar Pagamento
-```javascript
-const { data, error } = await supabase.functions.invoke('create-payment', {
-  body: {
-    type: 'SINGLE_READING',
-    customerName: 'Teste User'
-  }
-})
 
-console.log('Payment:', data)
-console.log('QR Code:', data.payment.qrCode)
+```javascript
+const { data, error } = await supabase.functions.invoke("create-payment", {
+  body: {
+    type: "SINGLE_READING",
+    customerName: "Teste User",
+  },
+});
+
+console.log("Payment:", data);
+console.log("QR Code:", data.payment.qrCode);
 ```
 
 ---
@@ -178,6 +191,7 @@ console.log('QR Code:', data.payment.qrCode)
 ## 📊 PASSO 7: Monitoramento
 
 ### Ver Logs das Functions:
+
 ```bash
 # Logs em tempo real
 supabase functions logs create-tarot-reading
@@ -188,11 +202,13 @@ supabase functions logs create-payment
 ```
 
 ### Ver Logs do Database:
+
 ```bash
 # https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/logs/postgres-logs
 ```
 
 ### Ver Usuários Cadastrados:
+
 ```bash
 # https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/auth/users
 ```
@@ -241,6 +257,7 @@ supabase functions serve create-tarot-reading
 ## 🐛 TROUBLESHOOTING
 
 ### Erro: "Function not found"
+
 ```bash
 # Verificar se function foi deployada
 supabase functions list
@@ -250,6 +267,7 @@ supabase functions deploy create-tarot-reading
 ```
 
 ### Erro: "Row Level Security policy violation"
+
 ```bash
 # Verificar se trigger foi criado
 # Ir no SQL Editor e executar:
@@ -257,6 +275,7 @@ SELECT * FROM pg_trigger WHERE tgname = 'on_auth_user_created';
 ```
 
 ### Erro: "GROQ_API_KEY not set"
+
 ```bash
 # Verificar secrets
 supabase secrets list
