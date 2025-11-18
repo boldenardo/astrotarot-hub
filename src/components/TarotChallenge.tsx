@@ -266,7 +266,7 @@ export default function TarotChallenge() {
       >
         <p className="text-sm md:text-base">
           💡 Clique na carta do topo para embaralhar • Passe o mouse e clique em
-          "Revelar" para ver o significado
+          &ldquo;Revelar&rdquo; para ver o significado
         </p>
       </motion.div>
 

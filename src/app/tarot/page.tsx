@@ -160,9 +160,9 @@ export default function EgyptianTarotPage() {
           </div>
           <p className="text-xl text-gray-300 mb-2">Arcanos Maiores</p>
           <p className="text-sm text-gray-500 max-w-3xl mx-auto italic">
-            "A Kábala se perde na noite dos séculos, onde o Universo se gestou
+            &ldquo;A Kábala se perde na noite dos séculos, onde o Universo se gestou
             no ventre de Maha Kundalini, a Grande Mãe. O Anjo METATRON nos
-            deixou o Tarot, no qual se encerra toda a Sabedoria Divina."
+            deixou o Tarot, no qual se encerra toda a Sabedoria Divina.&rdquo;
           </p>
         </motion.div>
 

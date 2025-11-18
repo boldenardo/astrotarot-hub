@@ -2,7 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["localhost", "cdn.pixabay.com", "i.pinimg.com"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'cdn.pixabay.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.pinimg.com',
+      },
+    ],
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400, // Cache de 24 horas
     dangerouslyAllowSVG: true,
@@ -15,13 +24,10 @@ const nextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
-  swcMinify: true,
   poweredByHeader: false,
-  compress: true,
   // Otimizações de performance
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
-    optimizeCss: true,
   },
   // Headers de cache
   async headers() {
