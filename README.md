@@ -267,11 +267,26 @@ MIT License - Veja `LICENSE` para detalhes.
 - Middleware de autenticação
 - HTTPS obrigatório em produção
 
+## 🔒 Segurança
+
+⚠️ **IMPORTANTE**: Veja o [Guia de Segurança](./SECURITY_GUIDE.md) para informações sobre:
+- Como proteger suas API keys
+- Melhores práticas de segurança
+- O que fazer em caso de exposição de chaves
+- Validação de variáveis de ambiente
+
+**Scripts de Segurança:**
+```bash
+# Validar variáveis de ambiente
+npm run validate:env
+```
+
 ## 📄 Documentação
 
 - [PRD Completo](./PRD)
 - [Schema Prisma](./Schema_prisma)
 - [Flowchart](./Flowchart)
+- [**Guia de Segurança**](./SECURITY_GUIDE.md) ⚠️ **LEIA PRIMEIRO**
 
 ## 🤝 Contribuindo
 
