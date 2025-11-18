@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { hashPassword, generateToken } from "@/lib/auth";
+import { getUserByEmail, createUser } from "@/lib/supabase";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -20,75 +20,36 @@ export async function POST(req: NextRequest) {
     // Hash da senha
     const passwordHash = await hashPassword(validatedData.password);
 
-    // Tentar conectar ao MongoDB
-    let user;
-    try {
-      // Verificar se usuário já existe
-      const existingUser = await prisma.user.findUnique({
-        where: { email: validatedData.email },
-      });
+    // Verificar se usuário já existe
+    const existingUser = await getUserByEmail(validatedData.email);
 
-      if (existingUser) {
-        return NextResponse.json(
-          { error: "Email já cadastrado" },
-          { status: 400 }
-        );
-      }
-
-      // Criar usuário com assinatura FREE
-      user = await prisma.user.create({
-        data: {
-          email: validatedData.email,
-          passwordHash,
-          name: validatedData.name,
-          birthDate: validatedData.birthDate
-            ? new Date(validatedData.birthDate)
-            : undefined,
-          birthTime: validatedData.birthTime,
-          birthLocation: validatedData.birthLocation,
-          subscription: {
-            create: {
-              plan: "FREE",
-              status: "active",
-              startDate: new Date(),
-            },
-          },
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          createdAt: true,
-          subscription: {
-            select: {
-              plan: true,
-              status: true,
-            },
-          },
-        },
-      });
-    } catch (dbError: any) {
-      // Fallback: MongoDB não disponível, usar mock temporário
-      console.warn(
-        "MongoDB não disponível, usando dados mock:",
-        dbError.message
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Email já cadastrado" },
+        { status: 400 }
       );
-      const mockId = `mock_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-      user = {
-        id: mockId,
-        email: validatedData.email,
-        name: validatedData.name || null,
-        birthDate: validatedData.birthDate || null,
-        birthTime: validatedData.birthTime || null,
-        birthLocation: validatedData.birthLocation || null,
-        createdAt: new Date(),
-        subscription: {
-          plan: "FREE" as const,
-          status: "active",
-        },
-      };
+    }
+
+    // Criar usuário com plano FREE
+    const user = await createUser({
+      email: validatedData.email,
+      password: passwordHash,
+      name: validatedData.name,
+      birth_date: validatedData.birthDate
+        ? new Date(validatedData.birthDate).toISOString()
+        : undefined,
+      birth_time: validatedData.birthTime,
+      birth_location: validatedData.birthLocation,
+      subscription_plan: "FREE",
+      subscription_status: "active",
+      readings_left: 4, // 4 leituras grátis
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Erro ao criar usuário" },
+        { status: 500 }
+      );
     }
 
     // Gerar token
@@ -96,7 +57,16 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        user,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          createdAt: user.created_at,
+          subscription: {
+            plan: user.subscription_plan,
+            status: user.subscription_status,
+          },
+        },
         token,
         message:
           "🎉 Bem-vindo(a) ao seu portal místico! Sua jornada de transformação começa AGORA. Faça sua primeira tiragem GRÁTIS do Tarot das 4 Cartas ou assine o plano Premium por apenas R$ 29,90/mês e tenha acesso ILIMITADO a todas as leituras do Tarot Egípcio, Mapa Astral Completo e Previsões Personalizadas. Não deixe seu destino esperando! 🌟",

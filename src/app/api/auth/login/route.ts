@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { comparePasswords, generateToken } from "@/lib/auth";
+import { getUserByEmail } from "@/lib/supabase";
 import { z } from "zod";
 
 const loginSchema = z.object({
@@ -14,11 +14,9 @@ export async function POST(req: NextRequest) {
     const validatedData = loginSchema.parse(body);
 
     // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { email: validatedData.email },
-    });
+    const user = await getUserByEmail(validatedData.email);
 
-    if (!user || !user.passwordHash) {
+    if (!user || !user.password) {
       return NextResponse.json(
         { error: "Credenciais inválidas" },
         { status: 401 }
@@ -28,7 +26,7 @@ export async function POST(req: NextRequest) {
     // Verificar senha
     const isPasswordValid = await comparePasswords(
       validatedData.password,
-      user.passwordHash
+      user.password
     );
 
     if (!isPasswordValid) {
@@ -46,6 +44,9 @@ export async function POST(req: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
+        subscription_plan: user.subscription_plan,
+        subscription_status: user.subscription_status,
+        readings_left: user.readings_left,
       },
       token,
     });

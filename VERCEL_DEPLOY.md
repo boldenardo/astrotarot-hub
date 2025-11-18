@@ -1,6 +1,7 @@
 # 🚀 Deploy na Vercel - AstroTarot Hub
 
 ## ✅ Status Atual
+
 - ✅ Código no GitHub: `https://github.com/boldenardo/astrotarot-hub`
 - ✅ Branch: `main`
 - ✅ Último commit: `8e8eb2f` - Análise de Abundância
@@ -10,19 +11,23 @@
 ## 📋 Passo a Passo para Deploy
 
 ### 1️⃣ Acessar Vercel
+
 1. Acesse: https://vercel.com
 2. Faça login com sua conta GitHub
 3. Clique em **"Add New..."** → **"Project"**
 
 ### 2️⃣ Importar Repositório
+
 1. Selecione **"Import Git Repository"**
 2. Procure por: `boldenardo/astrotarot-hub`
 3. Clique em **"Import"**
 
 ### 3️⃣ Configurar Projeto
+
 **Framework Preset:** Next.js (detectado automaticamente)
 
 **Build Settings (deixar padrão):**
+
 - Build Command: `npm run build`
 - Output Directory: `.next`
 - Install Command: `npm install`
@@ -32,6 +37,7 @@
 Clique em **"Environment Variables"** e adicione:
 
 #### 🔐 Essenciais (obrigatórias):
+
 ```bash
 # Database
 DATABASE_URL=mongodb+srv://seu-usuario:senha@cluster.mongodb.net/astrotarot
@@ -60,15 +66,18 @@ NODE_ENV=production
 #### ⚠️ **Ações Necessárias:**
 
 1. **MongoDB Atlas** (obrigatório):
+
    - Criar cluster gratuito em: https://cloud.mongodb.com
    - Obter connection string
    - Substituir `DATABASE_URL`
 
 2. **JWT_SECRET** (obrigatório):
+
    - Gerar com: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
    - Ou use: `openssl rand -hex 32`
 
 3. **PIXUP_CLIENT_ID** (obrigatório para pagamentos):
+
    - Obter client_id real da conta PixUp
    - Substituir na variável
 
@@ -76,6 +85,7 @@ NODE_ENV=production
    - Após deploy, atualizar com URL da Vercel
 
 ### 5️⃣ Deploy
+
 1. Clique em **"Deploy"**
 2. Aguarde o build (3-5 minutos)
 3. ✅ Pronto! Seu site estará no ar
@@ -83,11 +93,13 @@ NODE_ENV=production
 ### 6️⃣ Pós-Deploy
 
 #### Atualizar Webhook PixUp:
+
 ```
 URL do Webhook: https://seu-dominio.vercel.app/api/payment/webhook
 ```
 
 #### Testar Funcionalidades:
+
 - ✅ `/` - Landing page
 - ✅ `/auth/register` - Registro
 - ✅ `/auth/login` - Login
@@ -100,29 +112,36 @@ URL do Webhook: https://seu-dominio.vercel.app/api/payment/webhook
 ## 🔧 Troubleshooting
 
 ### Erro: "Module not found: @prisma/client"
+
 **Solução:** Já resolvido! O `postinstall` script gera o Prisma Client automaticamente.
 
 ### Erro: "Invalid JWT_SECRET"
+
 **Solução:** Certifique-se que JWT_SECRET tem no mínimo 32 caracteres.
 
 ### Erro: "Database connection failed"
+
 **Solução:** Verifique se:
+
 1. MongoDB Atlas está ativo
 2. IP da Vercel está na whitelist (use `0.0.0.0/0` para permitir todos)
 3. Connection string está correta
 
 ### Erro: "GROQ API Key invalid"
+
 **Solução:** A chave já está configurada. Se der erro, verifique se não há espaços extras.
 
 ## 📊 Monitoramento
 
 ### Logs da Vercel:
+
 1. Acesse seu projeto na Vercel
 2. Vá em **"Deployments"**
 3. Clique no deployment atual
 4. Veja **"Function Logs"** para erros
 
 ### Teste de APIs:
+
 ```bash
 # Testar previsões
 curl https://seu-dominio.vercel.app/api/predictions
@@ -148,6 +167,7 @@ curl https://seu-dominio.vercel.app/api/abundance
 ## 🚀 Deploy Automático
 
 Após configuração inicial, todo `git push` para a branch `main` irá:
+
 1. ✅ Acionar build automático na Vercel
 2. ✅ Executar testes
 3. ✅ Fazer deploy automaticamente

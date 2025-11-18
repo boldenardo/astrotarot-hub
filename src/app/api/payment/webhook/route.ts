@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import crypto from "crypto";
 
 /**
@@ -78,56 +78,56 @@ export async function POST(req: NextRequest) {
 async function handlePaymentPaid(data: any) {
   console.log("💰 Pagamento confirmado:", data.id);
 
-  const payment = await prisma.payment.findFirst({
-    where: { pixupId: data.id },
-    include: { user: { include: { subscription: true } } },
-  });
+  const { data: payment, error } = await supabase
+    .from("payments")
+    .select("*, users(*)")
+    .eq("pixup_payment_id", data.id)
+    .single();
 
-  if (!payment) {
+  if (error || !payment) {
     console.error("Pagamento não encontrado:", data.id);
     return;
   }
 
   // Atualizar status do pagamento
-  await prisma.payment.update({
-    where: { id: payment.id },
-    data: {
+  await supabase
+    .from("payments")
+    .update({
       status: "COMPLETED",
-      paidAt: new Date(),
-    },
-  });
+      paid_at: new Date().toISOString(),
+    })
+    .eq("id", payment.id);
 
   // Se for pagamento de tiragem única
-  if (payment.paymentType === "SINGLE_READING") {
+  if (payment.payment_type === "SINGLE_READING") {
+    const user = payment.users;
     // Adicionar 1 tiragem ao contador do usuário
-    await prisma.subscription.update({
-      where: { userId: payment.userId },
-      data: {
-        readingsLeft: {
-          increment: 1,
-        },
-      },
-    });
+    await supabase
+      .from("users")
+      .update({
+        readings_left: (user.readings_left || 0) + 1,
+      })
+      .eq("id", payment.user_id);
 
-    console.log(`✅ Usuário ${payment.userId} ganhou 1 tiragem`);
+    console.log(`✅ Usuário ${payment.user_id} ganhou 1 tiragem`);
   }
 
   // Se for assinatura
-  if (payment.paymentType === "SUBSCRIPTION") {
+  if (payment.payment_type === "SUBSCRIPTION") {
     const nextMonth = new Date();
     nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-    await prisma.subscription.update({
-      where: { userId: payment.userId },
-      data: {
-        plan: "PREMIUM_MONTHLY",
-        status: "active",
-        startDate: new Date(),
-        endDate: nextMonth,
-      },
-    });
+    await supabase
+      .from("users")
+      .update({
+        subscription_plan: "PREMIUM_MONTHLY",
+        subscription_status: "active",
+        subscription_start_date: new Date().toISOString(),
+        subscription_end_date: nextMonth.toISOString(),
+      })
+      .eq("id", payment.user_id);
 
-    console.log(`✅ Assinatura Premium ativada para usuário ${payment.userId}`);
+    console.log(`✅ Assinatura Premium ativada para usuário ${payment.user_id}`);
   }
 
   // TODO: Enviar email de confirmação
@@ -136,57 +136,57 @@ async function handlePaymentPaid(data: any) {
 async function handlePaymentExpired(data: any) {
   console.log("⏰ Pagamento expirado:", data.id);
 
-  await prisma.payment.updateMany({
-    where: { pixupId: data.id },
-    data: { status: "FAILED" },
-  });
+  await supabase
+    .from("payments")
+    .update({ status: "FAILED" })
+    .eq("pixup_payment_id", data.id);
 }
 
 async function handlePaymentCancelled(data: any) {
   console.log("❌ Pagamento cancelado:", data.id);
 
-  await prisma.payment.updateMany({
-    where: { pixupId: data.id },
-    data: { status: "CANCELLED" },
-  });
+  await supabase
+    .from("payments")
+    .update({ status: "CANCELLED" })
+    .eq("pixup_payment_id", data.id);
 }
 
 async function handleSubscriptionRenewed(data: any) {
   console.log("🔄 Assinatura renovada:", data.subscriptionId);
 
-  const subscription = await prisma.subscription.findFirst({
-    where: { pixupSubId: data.subscriptionId },
-  });
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("pixup_subscription_id", data.subscriptionId)
+    .single();
 
-  if (!subscription) {
+  if (error || !user) {
     console.error("Assinatura não encontrada:", data.subscriptionId);
     return;
   }
 
   // Criar registro de pagamento da renovação
-  await prisma.payment.create({
-    data: {
-      userId: subscription.userId,
-      amount: 29.9,
-      currency: "BRL",
-      status: "COMPLETED",
-      paymentType: "SUBSCRIPTION",
-      pixupId: data.paymentId,
-      paidAt: new Date(),
-    },
+  await supabase.from("payments").insert({
+    user_id: user.id,
+    amount: 29.9,
+    currency: "BRL",
+    status: "COMPLETED",
+    payment_type: "SUBSCRIPTION",
+    pixup_payment_id: data.paymentId,
+    paid_at: new Date().toISOString(),
   });
 
   // Estender período da assinatura
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
 
-  await prisma.subscription.update({
-    where: { id: subscription.id },
-    data: {
-      status: "active",
-      endDate: nextMonth,
-    },
-  });
+  await supabase
+    .from("users")
+    .update({
+      subscription_status: "active",
+      subscription_end_date: nextMonth.toISOString(),
+    })
+    .eq("id", user.id);
 
   console.log(`✅ Assinatura renovada até ${nextMonth.toLocaleDateString()}`);
 }
@@ -194,10 +194,10 @@ async function handleSubscriptionRenewed(data: any) {
 async function handleSubscriptionFailed(data: any) {
   console.log("⚠️ Falha na renovação da assinatura:", data.subscriptionId);
 
-  await prisma.subscription.updateMany({
-    where: { pixupSubId: data.subscriptionId },
-    data: { status: "suspended" },
-  });
+  await supabase
+    .from("users")
+    .update({ subscription_status: "suspended" })
+    .eq("pixup_subscription_id", data.subscriptionId);
 
   // TODO: Enviar email notificando falha no pagamento
 }
@@ -205,13 +205,12 @@ async function handleSubscriptionFailed(data: any) {
 async function handleSubscriptionCancelled(data: any) {
   console.log("🚫 Assinatura cancelada:", data.subscriptionId);
 
-  await prisma.subscription.updateMany({
-    where: { pixupSubId: data.subscriptionId },
-    data: {
-      status: "cancelled",
-      autoRenew: false,
-    },
-  });
+  await supabase
+    .from("users")
+    .update({
+      subscription_status: "cancelled",
+    })
+    .eq("pixup_subscription_id", data.subscriptionId);
 
   // TODO: Enviar email de cancelamento
 }

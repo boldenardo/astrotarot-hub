@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Middleware de autenticação e verificação de permissões
@@ -10,11 +10,9 @@ export interface AuthenticatedRequest extends NextRequest {
   user?: {
     id: string;
     email: string;
-    subscription?: {
-      plan: string;
-      status: string;
-      readingsLeft: number;
-    };
+    subscription_plan?: string;
+    subscription_status?: string;
+    readings_left?: number;
   };
 }
 
@@ -43,12 +41,13 @@ export async function requireAuth(
     };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: decoded.userId },
-    include: { subscription: true },
-  });
+  const { data: user, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", decoded.userId)
+    .single();
 
-  if (!user) {
+  if (error || !user) {
     return {
       user: null,
       error: NextResponse.json(
@@ -65,20 +64,24 @@ export async function requireAuth(
  * Verifica se o usuário tem permissão para acessar conteúdo premium
  */
 export function checkPremiumAccess(user: any): boolean {
-  if (!user.subscription) return false;
-
-  const sub = user.subscription;
+  if (!user) return false;
 
   // Plano premium ativo
-  if (sub.plan === "PREMIUM_MONTHLY" && sub.status === "active") {
+  if (
+    user.subscription_plan === "PREMIUM_MONTHLY" &&
+    user.subscription_status === "active"
+  ) {
     // Verificar se não expirou
-    if (sub.endDate && new Date(sub.endDate) > new Date()) {
+    if (
+      user.subscription_end_date &&
+      new Date(user.subscription_end_date) > new Date()
+    ) {
       return true;
     }
   }
 
   // Tem tiragens disponíveis
-  if (sub.plan === "SINGLE_READING" && sub.readingsLeft > 0) {
+  if (user.subscription_plan === "SINGLE_READING" && user.readings_left > 0) {
     return true;
   }
 
@@ -92,22 +95,26 @@ export function canMakeReading(user: any): {
   allowed: boolean;
   reason?: string;
 } {
-  if (!user.subscription) {
-    return { allowed: false, reason: "Nenhuma assinatura encontrada" };
+  if (!user) {
+    return { allowed: false, reason: "Usuário não encontrado" };
   }
 
-  const sub = user.subscription;
-
   // Premium ativo
-  if (sub.plan === "PREMIUM_MONTHLY" && sub.status === "active") {
-    if (sub.endDate && new Date(sub.endDate) > new Date()) {
+  if (
+    user.subscription_plan === "PREMIUM_MONTHLY" &&
+    user.subscription_status === "active"
+  ) {
+    if (
+      user.subscription_end_date &&
+      new Date(user.subscription_end_date) > new Date()
+    ) {
       return { allowed: true };
     }
     return { allowed: false, reason: "Assinatura expirada" };
   }
 
   // Tiragem única
-  if (sub.readingsLeft > 0) {
+  if (user.readings_left > 0) {
     return { allowed: true };
   }
 
@@ -123,30 +130,34 @@ export function canMakeReading(user: any): {
  */
 export async function consumeReading(userId: string): Promise<boolean> {
   try {
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId },
-    });
+    const { data: user, error } = await supabase
+      .from("users")
+      .select("subscription_plan, subscription_status, readings_left")
+      .eq("id", userId)
+      .single();
 
-    if (!subscription) return false;
+    if (error || !user) return false;
 
     // Se for premium, não consome
     if (
-      subscription.plan === "PREMIUM_MONTHLY" &&
-      subscription.status === "active"
+      user.subscription_plan === "PREMIUM_MONTHLY" &&
+      user.subscription_status === "active"
     ) {
       return true;
     }
 
     // Se tiver tiragens, consome uma
-    if (subscription.readingsLeft > 0) {
-      await prisma.subscription.update({
-        where: { userId },
-        data: {
-          readingsLeft: {
-            decrement: 1,
-          },
-        },
-      });
+    if (user.readings_left > 0) {
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ readings_left: user.readings_left - 1 })
+        .eq("id", userId);
+
+      if (updateError) {
+        console.error("Erro ao consumir tiragem:", updateError);
+        return false;
+      }
+
       return true;
     }
 
