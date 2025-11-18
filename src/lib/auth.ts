@@ -1,10 +1,11 @@
 import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
+import type { StringValue } from "ms";
 import bcrypt from "bcryptjs";
 
 // Ensure JWT_SECRET is always defined
 const JWT_SECRET = process.env.JWT_SECRET as string;
-// JWT_EXPIRES_IN needs to be typed as the literal value or what comes from env
-const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || "7d") as string | number;
+// JWT_EXPIRES_IN must be compatible with jsonwebtoken's StringValue type or number
+const JWT_EXPIRES_IN: StringValue | number = (process.env.JWT_EXPIRES_IN as StringValue) || "7d";
 
 // Validate JWT_SECRET at module load time
 if (!JWT_SECRET || JWT_SECRET === "your-secret-key") {
@@ -59,11 +60,9 @@ export const generateToken = (payload: JWTPayload): string => {
     email: payload.email,
   };
 
-  const options: SignOptions = {
-    expiresIn: JWT_EXPIRES_IN as SignOptions["expiresIn"],
-  };
-
-  return jwt.sign(tokenPayload, SAFE_JWT_SECRET, options);
+  return jwt.sign(tokenPayload, SAFE_JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  });
 };
 
 /**
