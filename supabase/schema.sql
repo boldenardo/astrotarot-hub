@@ -3,11 +3,11 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table
+-- Users table (extensão do auth.users do Supabase)
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT UNIQUE NOT NULL,
-  password TEXT NOT NULL,
   name TEXT,
   birth_date TEXT,
   birth_time TEXT,
@@ -69,11 +69,12 @@ CREATE TABLE IF NOT EXISTS birth_charts (
 );
 
 -- Indexes for better performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_payments_user_id ON payments(user_id);
-CREATE INDEX idx_payments_status ON payments(status);
-CREATE INDEX idx_tarot_readings_user_id ON tarot_readings(user_id);
-CREATE INDEX idx_birth_charts_user_id ON birth_charts(user_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_auth_id ON users(auth_id);
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_tarot_readings_user_id ON tarot_readings(user_id);
+CREATE INDEX IF NOT EXISTS idx_birth_charts_user_id ON birth_charts(user_id);
 
 -- Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -82,40 +83,56 @@ ALTER TABLE tarot_readings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE birth_charts ENABLE ROW LEVEL SECURITY;
 
 -- Policies for users table
-CREATE POLICY "Users can view own data"
+CREATE POLICY "Users can view own profile"
   ON users FOR SELECT
-  USING (auth.uid()::text = id::text);
+  USING (auth.uid() = auth_id);
 
-CREATE POLICY "Users can update own data"
+CREATE POLICY "Users can update own profile"
   ON users FOR UPDATE
-  USING (auth.uid()::text = id::text);
+  USING (auth.uid() = auth_id);
+
+CREATE POLICY "System can create user profiles"
+  ON users FOR INSERT
+  WITH CHECK (true);
 
 -- Policies for payments table
 CREATE POLICY "Users can view own payments"
   ON payments FOR SELECT
-  USING (auth.uid()::text = user_id::text);
+  USING (EXISTS (
+    SELECT 1 FROM users WHERE users.id = payments.user_id AND users.auth_id = auth.uid()
+  ));
 
 CREATE POLICY "Users can create own payments"
   ON payments FOR INSERT
-  WITH CHECK (auth.uid()::text = user_id::text);
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM users WHERE users.id = NEW.user_id AND users.auth_id = auth.uid()
+  ));
 
 -- Policies for tarot_readings table
 CREATE POLICY "Users can view own readings"
   ON tarot_readings FOR SELECT
-  USING (auth.uid()::text = user_id::text);
+  USING (EXISTS (
+    SELECT 1 FROM users WHERE users.id = tarot_readings.user_id AND users.auth_id = auth.uid()
+  ));
 
 CREATE POLICY "Users can create own readings"
   ON tarot_readings FOR INSERT
-  WITH CHECK (auth.uid()::text = user_id::text);
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM users WHERE users.id = NEW.user_id AND users.auth_id = auth.uid()
+  ));
 
 -- Policies for birth_charts table
 CREATE POLICY "Users can view own charts"
   ON birth_charts FOR SELECT
-  USING (auth.uid()::text = user_id::text);
+  USING (EXISTS (
+    SELECT 1 FROM users WHERE users.id = birth_charts.user_id AND users.auth_id = auth.uid()
+  ));
 
 CREATE POLICY "Users can create own charts"
   ON birth_charts FOR INSERT
-  WITH CHECK (auth.uid()::text = user_id::text);
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM users WHERE users.id = NEW.user_id AND users.auth_id = auth.uid()
+  ));
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -126,9 +143,32 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Function to create user profile on auth signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (auth_id, email, name, subscription_plan, subscription_status, readings_left)
+  VALUES (
+    NEW.id, 
+    NEW.email, 
+    COALESCE(NEW.raw_user_meta_data->>'name', ''),
+    'FREE', 
+    'active', 
+    4
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Trigger for users table
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger for auth.users to create profile
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- Insert default admin user (optional)
 -- Password should be hashed with bcrypt before inserting
