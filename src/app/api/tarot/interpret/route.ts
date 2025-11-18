@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { EGYPTIAN_DECK, RIDER_WAITE_DECK } from "@/lib/tarot-data";
 import Groq from "groq-sdk";
 
-const groqClient = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+function getGroqClient() {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY || "",
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,6 +66,7 @@ Comece sua interpretação:`;
     let interpretation = "";
 
     try {
+      const groqClient = getGroqClient();
       const chatCompletion = await groqClient.chat.completions.create({
         messages: [
           {

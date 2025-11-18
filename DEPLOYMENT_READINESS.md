@@ -237,10 +237,10 @@ npm run test:pixup
 
 ## ⚠️ Problemas Conhecidos e Soluções
 
-### Build Falha (Google Fonts)
+### Build Falha (Google Fonts) - ✅ RESOLVIDO
 **Problema**: `Failed to fetch Inter from Google Fonts`
-**Causa**: Restrições de rede no ambiente de desenvolvimento
-**Solução**: ✅ Funcionará normalmente na Vercel
+**Causa**: Restrições de rede no ambiente de desenvolvimento e build da Vercel
+**Solução**: ✅ RESOLVIDO - Removido Google Fonts, usando fonte do sistema via Tailwind (font-sans)
 
 ### ESLint Warnings
 **Problema**: Avisos sobre `<img>` vs `<Image />`

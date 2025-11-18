@@ -3,9 +3,12 @@ import { AstrologerService } from "@/lib/astroseek";
 import Groq from "groq-sdk";
 
 const astrologerService = new AstrologerService();
-const groqClient = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+
+function getGroqClient() {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY || "",
+  });
+}
 
 // Mapeamento de signos para elementos
 const signElements: { [key: string]: string } = {
@@ -375,6 +378,7 @@ Use linguagem acolhedora, inspiradora e empoderadora. Seja específica e evite g
     let aiInterpretation = "";
 
     try {
+      const groqClient = getGroqClient();
       const chatCompletion = await groqClient.chat.completions.create({
         messages: [
           {
