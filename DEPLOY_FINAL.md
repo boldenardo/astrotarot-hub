@@ -14,17 +14,20 @@
 ## 🔥 DEPLOY DAS EDGE FUNCTIONS (OBRIGATÓRIO)
 
 ### 1. Instalar Supabase CLI (se ainda não tiver):
+
 ```bash
 npm install -g supabase
 ```
 
 ### 2. Login e Vincular Projeto:
+
 ```bash
 supabase login
 supabase link --project-ref workzjugpmwbbbkxdgtu
 ```
 
 ### 3. Deploy das Functions:
+
 ```bash
 cd "c:\Users\luiss\OneDrive\Área de Trabalho\Astrologia saas"
 
@@ -36,6 +39,7 @@ supabase functions deploy create-payment
 ```
 
 ### 4. Configurar Secrets (CRÍTICO):
+
 ```bash
 supabase secrets set GROQ_API_KEY=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
 supabase secrets set RAPIDAPI_KEY=e8c7dd832bmsh5827d578ec63c6cp142643jsn0cd4dd73bbd9
@@ -57,27 +61,32 @@ supabase secrets set PIXUP_CLIENT_SECRET=SEU_SECRET_AQUI
 ## 🧪 TESTAR LOCALMENTE
 
 ### 1. Iniciar servidor:
+
 ```bash
 npm run dev
 ```
 
 ### 2. Testar Registro:
+
 - Acesse: http://localhost:3000/auth/register
 - Crie uma conta
 - Verifique se redireciona para dashboard
 
 ### 3. Testar Login:
+
 - Acesse: http://localhost:3000/auth/login
 - Faça login
 - Verifique se entra no dashboard
 
 ### 4. Testar Leitura de Tarot:
+
 - No dashboard, clique em "Tarot Egípcio"
 - Selecione 4 cartas
 - Faça uma pergunta
 - Verifique se a interpretação aparece
 
 ### 5. Verificar no Supabase:
+
 - Table Editor: https://supabase.com/dashboard/project/workzjugpmwbbbkxdgtu/editor
 - Veja tabela `users` - deve ter seu usuário
 - Veja tabela `tarot_readings` - deve ter sua leitura
@@ -87,11 +96,13 @@ npm run dev
 ## 🚀 DEPLOY NA VERCEL
 
 ### 1. Conectar ao GitHub:
+
 1. Acesse: https://vercel.com
 2. Clique em "New Project"
 3. Importe: `boldenardo/astrotarot-hub`
 
 ### 2. Configurar Variáveis de Ambiente:
+
 Na Vercel, adicione:
 
 ```env
@@ -111,6 +122,7 @@ PIXUP_CLIENT_SECRET=SEU_SECRET_AQUI
 ```
 
 ### 3. Deploy:
+
 - Clique em "Deploy"
 - Aguarde build (2-3 minutos)
 - Teste no domínio gerado (ex: astrotarot-hub.vercel.app)
@@ -177,18 +189,22 @@ git push origin main
 ## 🐛 TROUBLESHOOTING
 
 ### Erro: "Function not found"
+
 - Execute: `supabase functions deploy create-tarot-reading`
 - Execute: `supabase functions deploy create-payment`
 
 ### Erro: "GROQ_API_KEY not set"
+
 - Execute: `supabase secrets set GROQ_API_KEY=...`
 - Verifique: `supabase secrets list`
 
 ### Erro: "User not found"
+
 - Verifique se o trigger foi criado no SQL Editor
 - Execute a Parte 3 do EXECUTE_SCHEMA_PASSO_A_PASSO.md novamente
 
 ### Erro de CORS
+
 - Verifique Redirect URLs no Supabase Auth
 - Adicione seu domínio Vercel
 
@@ -197,6 +213,7 @@ git push origin main
 ## 🎉 PRONTO PARA LANÇAR!
 
 Após executar todos os passos acima:
+
 1. ✅ Backend 100% no Supabase
 2. ✅ Frontend usando Supabase Auth
 3. ✅ Edge Functions deployadas
