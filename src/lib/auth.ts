@@ -2,7 +2,6 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 export interface JWTPayload {
   userId: string;
@@ -21,7 +20,8 @@ export const comparePasswords = async (
 };
 
 export const generateToken = (payload: JWTPayload): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  // @ts-ignore - JWT expiresIn aceita string
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 };
 
 export const verifyToken = (token: string): JWTPayload | null => {
