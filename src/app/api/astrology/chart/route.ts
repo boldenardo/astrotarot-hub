@@ -49,9 +49,7 @@ async function handler(req: AuthRequest) {
 
     // Gerar novo mapa astral
     // NOTA: Implementar geocoding para converter birthLocation em lat/long
-    const [year, month, day] = user.birth_date
-      .split("T")[0]
-      .split("-");
+    const [year, month, day] = user.birth_date.split("T")[0].split("-");
     const [hour, minute] = user.birth_time.split(":");
 
     const birthData = {
@@ -72,7 +70,8 @@ async function handler(req: AuthRequest) {
     const transits = await astroSeekService.getTransits(birthData);
 
     // Verificar se já existe mapa astral
-    const existingChart = birthCharts && birthCharts.length > 0 ? birthCharts[0] : null;
+    const existingChart =
+      birthCharts && birthCharts.length > 0 ? birthCharts[0] : null;
 
     let birthChart;
     if (existingChart) {
@@ -87,7 +86,7 @@ async function handler(req: AuthRequest) {
         .eq("id", existingChart.id)
         .select()
         .single();
-      
+
       if (error) throw error;
       birthChart = data;
     } else {
@@ -104,7 +103,7 @@ async function handler(req: AuthRequest) {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       birthChart = data;
     }
