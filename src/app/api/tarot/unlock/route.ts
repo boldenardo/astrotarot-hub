@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth, AuthRequest } from "@/lib/middleware";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { groqService } from "@/lib/groq";
 import { astroSeekService } from "@/lib/astroseek";
 
@@ -10,30 +10,33 @@ async function handler(req: AuthRequest) {
     const userId = req.userId!;
 
     // Buscar tiragem
-    const reading = await prisma.tarotReading.findUnique({
-      where: { id: readingId },
-      include: { user: { include: { birthChart: true } } },
-    });
+    const { data: reading, error: readingError } = await supabase
+      .from("tarot_readings")
+      .select("*, users(*, birth_charts(*))")
+      .eq("id", readingId)
+      .single();
 
-    if (!reading || reading.userId !== userId) {
+    if (readingError || !reading || reading.user_id !== userId) {
       return NextResponse.json(
         { error: "Tiragem não encontrada" },
         { status: 404 }
       );
     }
 
-    if (reading.isPremium && reading.interpretation) {
+    if (reading.is_premium && reading.interpretation) {
       return NextResponse.json({ interpretation: reading.interpretation });
     }
 
     // Verificar se usuário pagou por esta tiragem
-    const hasPaidForReading = await prisma.payment.findFirst({
-      where: {
-        userId,
-        readingId,
-        status: "COMPLETED",
-      },
-    });
+    const { data: payment } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("reading_id", readingId)
+      .eq("status", "COMPLETED")
+      .single();
+
+    const hasPaidForReading = !!payment;
 
     if (!hasPaidForReading) {
       return NextResponse.json(
@@ -56,12 +59,13 @@ async function handler(req: AuthRequest) {
     let astrologicalContext = "";
 
     // Se usuário tem mapa astral, integrar
-    if (reading.user.birthChart) {
+    const birthCharts = reading.users?.birth_charts;
+    if (birthCharts && birthCharts.length > 0) {
       const firstCard = cards[0];
       astrologicalContext = await astroSeekService.crossReferenceWithTarot(
         firstCard.cardName,
         firstCard.keywords,
-        reading.user.birthChart.chartData as any
+        birthCharts[0].chart_data as any
       );
     }
 
@@ -73,21 +77,21 @@ async function handler(req: AuthRequest) {
         isUpright: card.upright,
         keywords: card.keywords,
       })),
-      reading.spreadType,
+      reading.spread_type,
       astrologicalContext
     );
 
     // Atualizar tiragem com interpretação
-    await prisma.tarotReading.update({
-      where: { id: readingId },
-      data: {
+    await supabase
+      .from("tarot_readings")
+      .update({
         interpretation,
-        astrologicalIntegration: astrologicalContext
+        astrological_integration: astrologicalContext
           ? { context: astrologicalContext }
           : null,
-        isPremium: true,
-      },
-    });
+        is_premium: true,
+      })
+      .eq("id", readingId);
 
     return NextResponse.json({
       interpretation,

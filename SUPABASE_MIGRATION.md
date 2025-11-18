@@ -9,21 +9,26 @@ O projeto foi completamente migrado de **MongoDB + Prisma** para **Supabase (Pos
 ## 📋 O Que Foi Feito
 
 ### 1. ✅ Desinstalação do Prisma
+
 ```bash
 npm uninstall @prisma/client prisma
 ```
+
 - Removidos 7 pacotes do Prisma
 - `prisma/` diretório deletado
 - `src/lib/prisma.ts` deletado
 
 ### 2. ✅ Instalação do Supabase
+
 ```bash
 npm install @supabase/supabase-js
 ```
+
 - Adicionados 9 pacotes do Supabase
 - Cliente Supabase configurado
 
 ### 3. ✅ Criação do Cliente Supabase
+
 **Arquivo:** `src/lib/supabase.ts`
 
 ```typescript
@@ -50,6 +55,7 @@ export const getUserReadings = async (userId: string) => { ... }
 ```
 
 ### 4. ✅ Schema SQL do Supabase
+
 **Arquivo:** `supabase/schema.sql`
 
 ```sql
@@ -77,6 +83,7 @@ CREATE TABLE users (
 ### 5. ✅ Rotas de Autenticação Atualizadas
 
 **`src/app/api/auth/register/route.ts`:**
+
 ```typescript
 import { getUserByEmail, createUser } from "@/lib/supabase";
 
@@ -93,6 +100,7 @@ const user = await createUser({
 ```
 
 **`src/app/api/auth/login/route.ts`:**
+
 ```typescript
 import { getUserByEmail } from "@/lib/supabase";
 
@@ -105,6 +113,7 @@ const user = await getUserByEmail(validatedData.email);
 ### 6. ✅ Middleware de Autenticação Atualizado
 
 **`src/lib/authMiddleware.ts`:**
+
 ```typescript
 import { supabase } from "@/lib/supabase";
 
@@ -115,7 +124,7 @@ export async function requireAuth(req: NextRequest) {
     .select("*")
     .eq("id", decoded.userId)
     .single();
-  
+
   return { user };
 }
 
@@ -131,6 +140,7 @@ export async function consumeReading(userId: string) {
 ### 7. ✅ Webhooks de Pagamento Atualizados
 
 **`src/app/api/payment/webhook/route.ts`:**
+
 ```typescript
 import { supabase } from "@/lib/supabase";
 
@@ -141,19 +151,19 @@ async function handlePaymentPaid(data: any) {
     .select("*, users(*)")
     .eq("pixup_payment_id", data.id)
     .single();
-  
+
   // Atualiza status
   await supabase
     .from("payments")
     .update({ status: "COMPLETED" })
     .eq("id", payment.id);
-  
+
   // Adiciona tiragem ou ativa premium
   await supabase
     .from("users")
-    .update({ 
+    .update({
       subscription_plan: "PREMIUM_MONTHLY",
-      subscription_status: "active"
+      subscription_status: "active",
     })
     .eq("id", payment.user_id);
 }
@@ -162,11 +172,12 @@ async function handlePaymentPaid(data: any) {
 ### 8. ✅ Arquivos de Configuração Limpos
 
 **`package.json`:**
+
 ```json
 {
   "scripts": {
     "dev": "next dev",
-    "build": "next build",  // Removido "prisma generate"
+    "build": "next build", // Removido "prisma generate"
     "start": "next start",
     "lint": "next lint"
     // Removidos: prisma:*, postinstall
@@ -175,13 +186,15 @@ async function handlePaymentPaid(data: any) {
 ```
 
 **`vercel.json`:**
+
 ```json
 {
-  "buildCommand": "next build"  // Removido "prisma generate"
+  "buildCommand": "next build" // Removido "prisma generate"
 }
 ```
 
 **`.env.example`:**
+
 ```bash
 # Supabase (substituiu DATABASE_URL)
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
@@ -224,6 +237,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Arquivo `.env.local` (criar):**
+
 ```bash
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL="https://seu-projeto.supabase.co"
@@ -259,6 +273,7 @@ npm run dev
 ```
 
 **Testes a fazer:**
+
 1. ✅ Criar nova conta (registro)
 2. ✅ Fazer login
 3. ✅ Acessar dashboard
@@ -268,6 +283,7 @@ npm run dev
 ### 5. Deploy no Vercel
 
 1. Commit e push das mudanças:
+
 ```bash
 git add .
 git commit -m "feat: migração completa para Supabase"
@@ -275,6 +291,7 @@ git push origin main
 ```
 
 2. No Vercel Dashboard:
+
    - Vá para **Settings → Environment Variables**
    - Adicione todas as variáveis de `.env.local`
    - Clique em **"Redeploy"**
@@ -287,17 +304,17 @@ git push origin main
 
 ## 📊 Comparação: Antes vs Depois
 
-| Aspecto | MongoDB + Prisma | Supabase |
-|---------|------------------|----------|
-| **Setup** | MongoDB Atlas + Prisma Client | Apenas Supabase |
-| **Schema** | `prisma/schema.prisma` | `supabase/schema.sql` |
-| **Queries** | Prisma ORM | Supabase Client (SQL-like) |
-| **Auth** | JWT manual | JWT + Supabase Auth (opcional) |
-| **Deploy** | `prisma generate` necessário | Zero configuração extra |
-| **Latência** | Variável | Otimizada (edge) |
-| **Custo Free Tier** | 512MB storage | 500MB DB + 1GB storage |
-| **Real-time** | ❌ Não disponível | ✅ Built-in |
-| **RLS** | ❌ Manual | ✅ Nativo |
+| Aspecto             | MongoDB + Prisma              | Supabase                       |
+| ------------------- | ----------------------------- | ------------------------------ |
+| **Setup**           | MongoDB Atlas + Prisma Client | Apenas Supabase                |
+| **Schema**          | `prisma/schema.prisma`        | `supabase/schema.sql`          |
+| **Queries**         | Prisma ORM                    | Supabase Client (SQL-like)     |
+| **Auth**            | JWT manual                    | JWT + Supabase Auth (opcional) |
+| **Deploy**          | `prisma generate` necessário  | Zero configuração extra        |
+| **Latência**        | Variável                      | Otimizada (edge)               |
+| **Custo Free Tier** | 512MB storage                 | 500MB DB + 1GB storage         |
+| **Real-time**       | ❌ Não disponível             | ✅ Built-in                    |
+| **RLS**             | ❌ Manual                     | ✅ Nativo                      |
 
 ---
 
@@ -330,6 +347,7 @@ CREATE POLICY "Users can view own payments" ON payments
 **Causa:** Variáveis de ambiente não configuradas.
 
 **Solução:**
+
 1. Copie `.env.example` para `.env.local`
 2. Preencha com suas credenciais do Supabase
 3. Reinicie o servidor: `npm run dev`
@@ -339,6 +357,7 @@ CREATE POLICY "Users can view own payments" ON payments
 **Causa:** Schema SQL não foi executado no Supabase.
 
 **Solução:**
+
 1. Acesse Supabase Dashboard → SQL Editor
 2. Execute todo o conteúdo de `supabase/schema.sql`
 3. Verifique em Table Editor se as tabelas foram criadas
@@ -348,6 +367,7 @@ CREATE POLICY "Users can view own payments" ON payments
 **Causa:** Usando Service Role Key ao invés de Anon Key.
 
 **Solução:**
+
 - Use a **Anon Key** (pública) para `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - A Service Role Key é secreta e só deve ser usada no backend
 
@@ -356,6 +376,7 @@ CREATE POLICY "Users can view own payments" ON payments
 **Causa:** Domínio não autorizado.
 
 **Solução:**
+
 1. Supabase Dashboard → Authentication → URL Configuration
 2. Adicione seus domínios:
    - `http://localhost:3000` (desenvolvimento)

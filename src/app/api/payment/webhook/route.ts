@@ -127,7 +127,9 @@ async function handlePaymentPaid(data: any) {
       })
       .eq("id", payment.user_id);
 
-    console.log(`✅ Assinatura Premium ativada para usuário ${payment.user_id}`);
+    console.log(
+      `✅ Assinatura Premium ativada para usuário ${payment.user_id}`
+    );
   }
 
   // TODO: Enviar email de confirmação

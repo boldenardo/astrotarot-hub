@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth, AuthRequest } from "@/lib/middleware";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import {
   RIDER_WAITE_DECK,
   EGYPTIAN_DECK,
@@ -51,27 +51,41 @@ async function handler(req: AuthRequest) {
     const userId = req.userId!;
 
     // Verificar se usuário é premium
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { subscription: true },
-    });
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
-    const isPremium = user?.subscription?.status === "active";
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    const isPremium = user.subscription_status === "active";
 
     // Sortear cartas
     const cards = drawCards(validatedData.deckType, validatedData.spreadType);
 
     // Salvar tiragem
-    const reading = await prisma.tarotReading.create({
-      data: {
-        userId,
-        deckType: validatedData.deckType,
-        spreadType: validatedData.spreadType,
+    const { data: reading, error: readingError } = await supabase
+      .from("tarot_readings")
+      .insert({
+        user_id: userId,
+        deck_type: validatedData.deckType,
+        spread_type: validatedData.spreadType,
         cards: cards,
         interpretation: isPremium ? null : generateTeaser(cards), // Teaser se não premium
-        isPremium: isPremium,
-      },
-    });
+        is_premium: isPremium,
+      })
+      .select()
+      .single();
+
+    if (readingError) {
+      throw readingError;
+    }
 
     return NextResponse.json({
       reading: {

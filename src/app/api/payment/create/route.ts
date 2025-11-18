@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { verifyToken } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { getPixUpClient } from "@/lib/pixup/client";
 import { z } from "zod";
 
@@ -26,12 +26,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Buscar usuário
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      include: { subscription: true },
-    });
+    const { data: user, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", decoded.userId)
+      .single();
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.json(
         { error: "Usuário não encontrado" },
         { status: 404 }
@@ -61,28 +62,34 @@ export async function POST(req: NextRequest) {
       });
 
       // Criar registro de pagamento
-      const payment = await prisma.payment.create({
-        data: {
-          userId: user.id,
+      const { data: payment, error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          user_id: user.id,
           amount: 9.9,
           currency: "BRL",
           status: "PENDING",
-          paymentType: "SINGLE_READING",
-          pixupId: pixPayment.id,
-          pixupQrCode: pixPayment.qrCode,
-          pixupQrString: pixPayment.qrCodeString,
-          expiresAt: new Date(pixPayment.expiresAt),
-        },
-      });
+          payment_type: "SINGLE_READING",
+          pixup_payment_id: pixPayment.id,
+          pixup_qr_code: pixPayment.qrCode,
+          pixup_qr_string: pixPayment.qrCodeString,
+          expires_at: new Date(pixPayment.expiresAt).toISOString(),
+        })
+        .select()
+        .single();
+
+      if (paymentError) {
+        throw paymentError;
+      }
 
       return NextResponse.json({
         payment: {
           id: payment.id,
           amount: payment.amount,
           status: payment.status,
-          qrCode: payment.pixupQrCode,
-          qrCodeString: payment.pixupQrString,
-          expiresAt: payment.expiresAt,
+          qrCode: payment.pixup_qr_code,
+          qrCodeString: payment.pixup_qr_string,
+          expiresAt: payment.expires_at,
         },
         message: "Pagamento criado. Escaneie o QR Code para pagar.",
       });
@@ -99,16 +106,15 @@ export async function POST(req: NextRequest) {
       });
 
       // Atualizar assinatura do usuário
-      await prisma.subscription.update({
-        where: { userId: user.id },
-        data: {
-          plan: "PREMIUM_MONTHLY",
-          status: "pending", // Aguardando primeiro pagamento
-          pixupCustomerId: subscription.customerId,
-          pixupSubId: subscription.id,
-          autoRenew: true,
-        },
-      });
+      await supabase
+        .from("users")
+        .update({
+          subscription_plan: "PREMIUM_MONTHLY",
+          subscription_status: "pending", // Aguardando primeiro pagamento
+          pixup_customer_id: subscription.customerId,
+          pixup_subscription_id: subscription.id,
+        })
+        .eq("id", user.id);
 
       // Criar primeiro pagamento PIX da assinatura
       const firstPayment = await pixupClient.createPixPayment({
@@ -127,28 +133,34 @@ export async function POST(req: NextRequest) {
       });
 
       // Criar registro de pagamento
-      const payment = await prisma.payment.create({
-        data: {
-          userId: user.id,
+      const { data: payment, error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          user_id: user.id,
           amount: 29.9,
           currency: "BRL",
           status: "PENDING",
-          paymentType: "SUBSCRIPTION",
-          pixupId: firstPayment.id,
-          pixupQrCode: firstPayment.qrCode,
-          pixupQrString: firstPayment.qrCodeString,
-          expiresAt: new Date(firstPayment.expiresAt),
-        },
-      });
+          payment_type: "SUBSCRIPTION",
+          pixup_payment_id: firstPayment.id,
+          pixup_qr_code: firstPayment.qrCode,
+          pixup_qr_string: firstPayment.qrCodeString,
+          expires_at: new Date(firstPayment.expiresAt).toISOString(),
+        })
+        .select()
+        .single();
+
+      if (paymentError) {
+        throw paymentError;
+      }
 
       return NextResponse.json({
         payment: {
           id: payment.id,
           amount: payment.amount,
           status: payment.status,
-          qrCode: payment.pixupQrCode,
-          qrCodeString: payment.pixupQrString,
-          expiresAt: payment.expiresAt,
+          qrCode: payment.pixup_qr_code,
+          qrCodeString: payment.pixup_qr_string,
+          expiresAt: payment.expires_at,
         },
         subscription: {
           plan: "PREMIUM_MONTHLY",
@@ -189,11 +201,16 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     }
 
-    const payments = await prisma.payment.findMany({
-      where: { userId: decoded.userId },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
+    const { data: payments, error } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("user_id", decoded.userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({ payments });
   } catch (error) {
