@@ -25,6 +25,7 @@
 7. Verifique se apareceu **"Success. No rows returned"**
 
 **Verificação:**
+
 - Vá em **Table Editor** no menu lateral
 - Você deve ver 4 tabelas: `users`, `payments`, `tarot_readings`, `birth_charts`
 
@@ -43,21 +44,25 @@ http://localhost:3000
 **Testes a fazer:**
 
 #### A. Criar Nova Conta
+
 1. Acesse `/auth/register`
 2. Crie uma conta
 3. Verifique no Supabase Table Editor se o usuário foi criado
 
 #### B. Fazer Login
+
 1. Acesse `/auth/login`
 2. Faça login com a conta criada
 3. Verifique se recebeu o token JWT
 
 #### C. Fazer Tiragem de Tarot
+
 1. Acesse `/tarot` (autenticado)
 2. Faça uma tiragem
 3. Verifique se foi salvo em `tarot_readings`
 
 #### D. Criar Pagamento
+
 1. Acesse `/cart`
 2. Tente criar um pagamento
 3. Verifique se apareceu QR Code do PIX
@@ -95,7 +100,8 @@ NEXT_PUBLIC_APP_URL=https://seu-dominio.vercel.app
 NODE_ENV=production
 ```
 
-**Importante:** 
+**Importante:**
+
 - Marque todas como **"Production"**, **"Preview"** e **"Development"**
 - Clique em **"Save"**
 
@@ -111,6 +117,7 @@ git push origin main
 O Vercel vai detectar automaticamente e fazer o deploy.
 
 **Ou deploy manual:**
+
 ```bash
 npm run build
 vercel --prod
@@ -137,12 +144,14 @@ vercel --prod
 ## 🔍 Verificação Final (Checklist)
 
 ### Backend (Supabase)
+
 - [ ] Schema SQL executado com sucesso
 - [ ] 4 tabelas criadas (users, payments, tarot_readings, birth_charts)
 - [ ] RLS policies ativas
 - [ ] Indexes criados
 
 ### Testes Locais
+
 - [ ] Registro de usuário funciona
 - [ ] Login funciona
 - [ ] Tiragem de tarot salva no banco
@@ -150,12 +159,14 @@ vercel --prod
 - [ ] Histórico de leituras carrega
 
 ### Deploy
+
 - [ ] Variáveis de ambiente configuradas no Vercel
 - [ ] Build passa sem erros
 - [ ] Site acessível
 - [ ] Testes em produção funcionam
 
 ### Integração PixUp
+
 - [ ] Webhook configurado
 - [ ] Pagamento real testado
 - [ ] Notificação de pagamento recebida
@@ -166,18 +177,22 @@ vercel --prod
 ## 🐛 Troubleshooting
 
 ### Erro: "relation 'users' does not exist"
+
 **Causa:** Schema SQL não foi executado.  
 **Solução:** Execute o arquivo `supabase/schema.sql` no SQL Editor.
 
 ### Erro: "Invalid API key"
+
 **Causa:** Usando Service Role Key ao invés de Anon Key.  
-**Solução:** Use a **Anon Key** (pública) nas variáveis NEXT_PUBLIC_*.
+**Solução:** Use a **Anon Key** (pública) nas variáveis NEXT*PUBLIC*\*.
 
 ### Erro: Build falha no Vercel
+
 **Causa:** Variáveis de ambiente não configuradas.  
 **Solução:** Configure todas as variáveis no Vercel Settings.
 
 ### Erro: Webhook não recebe notificações
+
 **Causa:** URL do webhook incorreta ou eventos não configurados.  
 **Solução:** Verifique URL e eventos ativos no dashboard do PixUp.
 

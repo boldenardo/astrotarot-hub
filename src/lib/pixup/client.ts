@@ -216,18 +216,18 @@ let pixupClient: PixUpClient | null = null;
 
 export function getPixUpClient(): PixUpClient {
   if (!pixupClient) {
-    const apiKey = process.env.PIXUP_API_KEY;
-    const apiSecret = process.env.PIXUP_API_SECRET;
+    const clientId = process.env.PIXUP_CLIENT_ID || process.env.PIXUP_API_KEY;
+    const clientSecret = process.env.PIXUP_CLIENT_SECRET || process.env.PIXUP_API_SECRET;
 
-    if (!apiKey || !apiSecret) {
+    if (!clientId || !clientSecret) {
       throw new Error(
-        "PixUp credentials not configured. Set PIXUP_API_KEY and PIXUP_API_SECRET environment variables."
+        "PixUp credentials not configured. Set PIXUP_CLIENT_ID and PIXUP_CLIENT_SECRET environment variables."
       );
     }
 
     pixupClient = new PixUpClient({
-      apiKey,
-      apiSecret,
+      clientId,
+      clientSecret,
       baseUrl: process.env.PIXUP_BASE_URL,
     });
   }

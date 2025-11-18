@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Busca mapa natal
-    const natalChart = await astrologerService.getNatalChart({
+    const natalChart = await astrologerService.generateBirthChart({
       year: birthData.year,
       month: birthData.month,
       day: birthData.day,

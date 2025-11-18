@@ -14,14 +14,17 @@ export interface User {
   id: string;
   email: string;
   password: string;
-  name: string;
+  name?: string;
+  birth_date?: string;
+  birth_time?: string;
+  birth_location?: string;
   subscription_plan: "FREE" | "SINGLE_READING" | "PREMIUM_MONTHLY";
-  subscription_status: "active" | "cancelled" | "suspended";
+  subscription_status: "active" | "cancelled" | "suspended" | "pending";
+  subscription_start_date?: string;
+  subscription_end_date?: string;
   readings_left: number;
   pixup_customer_id?: string;
   pixup_subscription_id?: string;
-  auto_renew: boolean;
-  current_period_end?: string;
   created_at: string;
   updated_at: string;
 }
