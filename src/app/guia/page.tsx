@@ -46,8 +46,35 @@ export default function GuiaEspiritualPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/guia/chat", {
-        method: "POST",
+      // Usar Supabase Edge Function
+      const { supabase } = await import("@/lib/supabase");
+      
+      const { data, error } = await supabase.functions.invoke('spiritual-guide', {
+        body: { message: userMessage.content },
+      });
+
+      if (error) throw error;
+
+      const assistantMessage: Message = {
+        role: "assistant",
+        content: data.message,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.error("Erro ao enviar mensagem:", error);
+      const errorMessage: Message = {
+        role: "assistant",
+        content:
+          "Desculpe, não consegui processar sua mensagem neste momento. Por favor, tente novamente em instantes. 💜",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: [...messages, userMessage].map((m) => ({

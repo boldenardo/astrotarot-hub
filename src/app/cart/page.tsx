@@ -8,9 +8,11 @@ import {
   Minus,
   Sparkles,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { createPayment } from "@/lib/payment-client";
 
 interface CartItem {
   id: string;
@@ -32,6 +34,8 @@ export default function CartPage() {
       quantity: 1,
     },
   ]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
 
   const removeItem = (id: string) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
@@ -45,6 +49,28 @@ export default function CartPage() {
           : item
       )
     );
+  };
+
+  const handleCheckout = async () => {
+    if (cartItems.length === 0) return;
+    
+    setIsProcessing(true);
+    try {
+      const firstItem = cartItems[0];
+      const result = await createPayment({
+        type: firstItem.type,
+        customerName: "Cliente"
+      });
+      
+      if (result.success) {
+        setPaymentData(result.payment);
+      }
+    } catch (error: any) {
+      console.error("Erro ao criar pagamento:", error);
+      alert("Erro ao processar pagamento. Tente novamente.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const subtotal = cartItems.reduce(
@@ -203,20 +229,64 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {cartItems.length > 0 && (
+              {cartItems.length > 0 && !paymentData && (
                 <>
-                  <Link
-                    href="/checkout"
-                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg shadow-purple-500/50 flex items-center justify-center gap-2 mb-4"
+                  <button
+                    onClick={handleCheckout}
+                    disabled={isProcessing}
+                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg shadow-purple-500/50 flex items-center justify-center gap-2 mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Finalizar Compra
-                    <ArrowRight className="w-5 h-5" />
-                  </Link>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        Finalizar Compra
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
 
                   <p className="text-xs text-gray-500 text-center">
                     Pagamento seguro via PIX • Confirmação instantânea
                   </p>
                 </>
+              )}
+
+              {/* QR Code Payment */}
+              {paymentData && (
+                <div className="mt-6 p-6 bg-gradient-to-br from-green-500/10 to-blue-500/10 rounded-2xl border border-green-500/30">
+                  <h3 className="text-xl font-bold mb-4 text-center">
+                    🎉 Pagamento Criado!
+                  </h3>
+                  <p className="text-gray-300 text-center mb-4">
+                    Escaneie o QR Code abaixo para pagar via PIX
+                  </p>
+                  {paymentData.qrCode && (
+                    <div className="bg-white p-4 rounded-xl mb-4 flex justify-center">
+                      <img 
+                        src={paymentData.qrCode} 
+                        alt="QR Code PIX" 
+                        className="w-64 h-64"
+                      />
+                    </div>
+                  )}
+                  {paymentData.qrString && (
+                    <div className="bg-black/50 p-4 rounded-lg mb-4">
+                      <p className="text-xs text-gray-400 mb-2 text-center">
+                        Ou copie o código PIX:
+                      </p>
+                      <p className="text-xs text-purple-300 break-all text-center">
+                        {paymentData.qrString}
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-sm text-gray-400 text-center">
+                    ⏰ Expira em: {new Date(paymentData.expiresAt).toLocaleTimeString()}
+                  </p>
+                </div>
               )}
 
               {/* Add More Items */}
