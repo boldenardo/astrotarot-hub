@@ -1,0 +1,67 @@
+name: Security Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Check for exposed secrets in code
+        run: |
+          echo "🔍 Scanning for potential exposed secrets..."
+          # Check for API key patterns in code
+          if grep -r "gsk_[a-zA-Z0-9]\{48\}" --include="*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir=node_modules .; then
+            echo "❌ Found potential Groq API key in code!"
+            exit 1
+          fi
+          
+          if grep -r "sk_test_[a-zA-Z0-9]\{24,\}" --include="*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir=node_modules .; then
+            echo "❌ Found potential Stripe API key in code!"
+            exit 1
+          fi
+          
+          echo "✅ No exposed secrets found in code"
+          
+      - name: Check for dangerous console.log statements
+        run: |
+          echo "🔍 Checking for dangerous console.log statements..."
+          # Look for console.log with environment variables
+          if grep -r "console\.log.*process\.env" --include="*.ts" --include="*.js" --include="*.tsx" --include="*.jsx" --exclude-dir=node_modules .; then
+            echo "⚠️  Warning: Found console.log statements with process.env"
+            echo "   Make sure you're not logging sensitive data!"
+          fi
+          
+      - name: Validate .gitignore
+        run: |
+          echo "🔍 Validating .gitignore..."
+          if ! grep -q "^\.env$" .gitignore; then
+            echo "❌ .env is not in .gitignore!"
+            exit 1
+          fi
+          echo "✅ .gitignore properly configured"
+          
+      - name: Check for committed .env files
+        run: |
+          echo "🔍 Checking for committed .env files..."
+          if git ls-files | grep -E "^\.env$|^\.env\.production$|^\.env\.local$"; then
+            echo "❌ Found committed .env files!"
+            exit 1
+          fi
+          echo "✅ No .env files committed"
