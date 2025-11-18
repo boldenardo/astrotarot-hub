@@ -242,7 +242,7 @@ export default function Home() {
                     ))}
                   </div>
                   <p className="text-gray-300 text-lg mb-6 leading-relaxed italic">
-                    "{testimonial.text}"
+                    &ldquo;{testimonial.text}&rdquo;
                   </p>
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center text-xl font-bold">

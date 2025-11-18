@@ -3,9 +3,12 @@ import { AstrologerService } from "@/lib/astroseek";
 import Groq from "groq-sdk";
 
 const astrologerService = new AstrologerService();
-const groqClient = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+
+function getGroqClient() {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY || "",
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -307,6 +310,7 @@ IMPORTANTE:
 Comece a análise:`;
 
   try {
+    const groqClient = getGroqClient();
     const chatCompletion = await groqClient.chat.completions.create({
       messages: [
         {
