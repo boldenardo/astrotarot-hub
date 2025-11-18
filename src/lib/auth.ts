@@ -1,9 +1,10 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 // Ensure JWT_SECRET is always defined
 const JWT_SECRET = process.env.JWT_SECRET as string;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+// JWT_EXPIRES_IN needs to be typed as the literal value or what comes from env
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || "7d") as string | number;
 
 // Validate JWT_SECRET at module load time
 if (!JWT_SECRET || JWT_SECRET === "your-secret-key") {
@@ -13,7 +14,7 @@ if (!JWT_SECRET || JWT_SECRET === "your-secret-key") {
 }
 
 // Use a secure fallback only for development
-const SAFE_JWT_SECRET =
+const SAFE_JWT_SECRET: Secret =
   JWT_SECRET && JWT_SECRET !== "your-secret-key"
     ? JWT_SECRET
     : "development-fallback-secret-min-32-chars-change-in-production";
@@ -58,10 +59,11 @@ export const generateToken = (payload: JWTPayload): string => {
     email: payload.email,
   };
 
-  // Type assertion to handle string value for expiresIn
-  return jwt.sign(tokenPayload, SAFE_JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN as string | number,
-  } as jwt.SignOptions);
+  const options: SignOptions = {
+    expiresIn: JWT_EXPIRES_IN as SignOptions["expiresIn"],
+  };
+
+  return jwt.sign(tokenPayload, SAFE_JWT_SECRET, options);
 };
 
 /**
