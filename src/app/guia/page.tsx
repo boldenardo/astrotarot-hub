@@ -48,10 +48,13 @@ export default function GuiaEspiritualPage() {
     try {
       // Usar Supabase Edge Function
       const { supabase } = await import("@/lib/supabase");
-      
-      const { data, error } = await supabase.functions.invoke('spiritual-guide', {
-        body: { message: userMessage.content },
-      });
+
+      const { data, error } = await supabase.functions.invoke(
+        "spiritual-guide",
+        {
+          body: { message: userMessage.content },
+        }
+      );
 
       if (error) throw error;
 
@@ -68,38 +71,6 @@ export default function GuiaEspiritualPage() {
         role: "assistant",
         content:
           "Desculpe, não consegui processar sua mensagem neste momento. Por favor, tente novamente em instantes. 💜",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.reply) {
-        const assistantMessage: Message = {
-          role: "assistant",
-          content: data.reply,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-      }
-    } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
-      const errorMessage: Message = {
-        role: "assistant",
-        content:
-          "Desculpe, tive dificuldades para responder. Por favor, tente novamente.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);

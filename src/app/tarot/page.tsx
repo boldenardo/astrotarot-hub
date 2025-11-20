@@ -86,10 +86,13 @@ export default function EgyptianTarotPage() {
       // Usar Edge Function do Supabase
       const { createTarotReading } = await import("@/lib/tarot-client");
 
-      const result = await createTarotReading(
-        cards.map((c) => c.name),
-        "Interpretação geral da tiragem"
-      );
+      const result = await createTarotReading({
+        selectedCards: cards.map((c) => ({
+          name: c.name,
+          number: c.id,
+        })),
+        question: "Interpretação geral da tiragem",
+      });
 
       setAiInterpretation(
         result.interpretation || "Interpretação indisponível no momento."
