@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
+import { trackLogin, trackPageView } from "@/lib/analytics";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +17,10 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
+
+  useEffect(() => {
+    trackPageView("/auth/login", "Login");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +34,9 @@ export default function LoginPage() {
       if (!session) {
         throw new Error("Erro ao criar sessão");
       }
+
+      // Track login
+      trackLogin("email");
 
       // Redirecionar para dashboard
       router.push("/dashboard");

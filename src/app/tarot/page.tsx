@@ -83,19 +83,16 @@ export default function EgyptianTarotPage() {
     setIsLoadingAI(true);
 
     try {
-      const response = await fetch("/api/tarot/interpret", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cards: cards.map((c) => ({ name: c.name, position: c.position })),
-          deckType: "EGYPTIAN",
-          question: "Interpretação geral da tiragem",
-        }),
-      });
+      // Usar Edge Function do Supabase
+      const { createTarotReading } = await import("@/lib/tarot-client");
 
-      const data = await response.json();
+      const result = await createTarotReading(
+        cards.map((c) => c.name),
+        "Interpretação geral da tiragem"
+      );
+
       setAiInterpretation(
-        data.interpretation || "Interpretação indisponível no momento."
+        result.interpretation || "Interpretação indisponível no momento."
       );
     } catch (error) {
       console.error("Erro ao gerar interpretação:", error);
@@ -160,9 +157,10 @@ export default function EgyptianTarotPage() {
           </div>
           <p className="text-xl text-gray-300 mb-2">Arcanos Maiores</p>
           <p className="text-sm text-gray-500 max-w-3xl mx-auto italic">
-            &ldquo;A Kábala se perde na noite dos séculos, onde o Universo se gestou
-            no ventre de Maha Kundalini, a Grande Mãe. O Anjo METATRON nos
-            deixou o Tarot, no qual se encerra toda a Sabedoria Divina.&rdquo;
+            &ldquo;A Kábala se perde na noite dos séculos, onde o Universo se
+            gestou no ventre de Maha Kundalini, a Grande Mãe. O Anjo METATRON
+            nos deixou o Tarot, no qual se encerra toda a Sabedoria
+            Divina.&rdquo;
           </p>
         </motion.div>
 

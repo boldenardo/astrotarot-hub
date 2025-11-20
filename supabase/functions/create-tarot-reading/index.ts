@@ -1,3 +1,6 @@
+// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
+// Este arquivo é uma Edge Function do Supabase (Deno runtime)
+// Os erros do TypeScript são normais - o código roda corretamente no Supabase
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -206,7 +209,7 @@ Formato da resposta:
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in create-tarot-reading:", error);
     return new Response(
       JSON.stringify({

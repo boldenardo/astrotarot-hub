@@ -13,7 +13,7 @@ interface PixUpConfig {
 const defaultConfig: PixUpConfig = {
   clientId: process.env.PIXUP_CLIENT_ID || "",
   clientSecret: process.env.PIXUP_CLIENT_SECRET || "",
-  baseUrl: process.env.PIXUP_BASE_URL || "https://api.pixupbr.com/v1",
+  baseUrl: process.env.PIXUP_BASE_URL || "https://api.pixupbr.com/v2",
 };
 
 /**

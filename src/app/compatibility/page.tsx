@@ -192,7 +192,9 @@ export default function CompatibilityPage() {
       setStep(3);
     } catch (error) {
       console.error("Erro ao calcular:", error);
-      alert("Erro ao calcular compatibilidade. Tente novamente.");
+      alert(
+        "Funcionalidade em desenvolvimento. Em breve você poderá calcular compatibilidade."
+      );
     } finally {
       setLoading(false);
     }

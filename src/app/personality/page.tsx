@@ -158,7 +158,9 @@ export default function PersonalityReportPage() {
       setInterpretation(data.interpretation);
       setStep("results");
     } catch (err) {
-      setError("Erro ao gerar relatório. Tente novamente.");
+      setError(
+        "Funcionalidade em desenvolvimento. Use o dashboard para ver seu signo solar."
+      );
       setStep("form");
     }
   };

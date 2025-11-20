@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth-client";
+import { trackSignUp, trackPageView } from "@/lib/analytics";
 
 interface WelcomeOffer {
   message: string;
@@ -133,6 +134,9 @@ export default function RegisterPage() {
         },
       });
       setShowWelcomeModal(true);
+
+      // Track successful signup
+      trackSignUp("email");
     } catch (err: any) {
       setError(err.message || "Erro ao criar conta");
     } finally {

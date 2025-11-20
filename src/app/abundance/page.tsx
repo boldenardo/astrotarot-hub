@@ -94,10 +94,13 @@ export default function AbundancePage() {
       if (data.success && data.analysis) {
         setResult(data.analysis);
       } else {
-        throw new Error(data.error || "Erro ao gerar análise");
+        throw new Error(data.error || "Funcionalidade em desenvolvimento");
       }
     } catch (error) {
       console.error("Erro ao buscar análise:", error);
+      alert(
+        "Funcionalidade de rituais de abundância em desenvolvimento. Em breve você terá acesso a rituais personalizados."
+      );
       alert("Erro ao gerar análise de abundância. Por favor, tente novamente.");
     } finally {
       setLoading(false);

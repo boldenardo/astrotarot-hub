@@ -1,3 +1,6 @@
+// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
+// Este arquivo é uma Edge Function do Supabase (Deno runtime)
+// Os erros do TypeScript são normais - o código roda corretamente no Supabase
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -6,7 +9,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -90,7 +93,7 @@ Mantenha respostas entre 3-5 parágrafos curtos para facilitar a leitura.`,
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in spiritual-guide:", error);
     return new Response(
       JSON.stringify({

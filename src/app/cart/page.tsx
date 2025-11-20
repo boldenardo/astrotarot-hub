@@ -11,8 +11,14 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPayment } from "@/lib/payment-client";
+import {
+  trackPageView,
+  trackPaymentInitiated,
+  trackPaymentCompleted,
+  trackPaymentFailed,
+} from "@/lib/analytics";
 
 interface CartItem {
   id: string;
@@ -37,6 +43,10 @@ export default function CartPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
 
+  useEffect(() => {
+    trackPageView("/cart", "Carrinho de Compras");
+  }, []);
+
   const removeItem = (id: string) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
   };
@@ -53,20 +63,29 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) return;
-    
+
     setIsProcessing(true);
+    const firstItem = cartItems[0];
+
+    // Track payment initiation
+    trackPaymentInitiated(firstItem.type, firstItem.price);
+
     try {
-      const firstItem = cartItems[0];
       const result = await createPayment({
         type: firstItem.type,
-        customerName: "Cliente"
+        customerName: "Cliente",
       });
-      
+
       if (result.success) {
         setPaymentData(result.payment);
+        // Track payment creation success
+        trackPaymentCompleted(firstItem.type, firstItem.price);
+      } else {
+        trackPaymentFailed(firstItem.type, "payment_creation_failed");
       }
     } catch (error: any) {
       console.error("Erro ao criar pagamento:", error);
+      trackPaymentFailed(firstItem.type, error.message || "unknown_error");
       alert("Erro ao processar pagamento. Tente novamente.");
     } finally {
       setIsProcessing(false);
@@ -266,9 +285,9 @@ export default function CartPage() {
                   </p>
                   {paymentData.qrCode && (
                     <div className="bg-white p-4 rounded-xl mb-4 flex justify-center">
-                      <img 
-                        src={paymentData.qrCode} 
-                        alt="QR Code PIX" 
+                      <img
+                        src={paymentData.qrCode}
+                        alt="QR Code PIX"
                         className="w-64 h-64"
                       />
                     </div>
@@ -284,7 +303,8 @@ export default function CartPage() {
                     </div>
                   )}
                   <p className="text-sm text-gray-400 text-center">
-                    ⏰ Expira em: {new Date(paymentData.expiresAt).toLocaleTimeString()}
+                    ⏰ Expira em:{" "}
+                    {new Date(paymentData.expiresAt).toLocaleTimeString()}
                   </p>
                 </div>
               )}

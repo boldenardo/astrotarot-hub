@@ -190,7 +190,9 @@ export default function PredictionsPage() {
       setPrediction(data.prediction);
       setStep("results");
     } catch (err) {
-      setError("Erro ao gerar previsões. Tente novamente.");
+      setError(
+        "Funcionalidade em desenvolvimento. Em breve você poderá acessar suas previsões personalizadas."
+      );
       setStep("form");
     }
   };

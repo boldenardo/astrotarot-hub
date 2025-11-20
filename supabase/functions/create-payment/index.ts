@@ -1,3 +1,6 @@
+// @deno-types="https://deno.land/std@0.168.0/http/server.ts"
+// Este arquivo é uma Edge Function do Supabase (Deno runtime)
+// Os erros do TypeScript são normais - o código roda corretamente no Supabase
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -7,7 +10,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -70,18 +73,15 @@ serve(async (req) => {
     }
 
     // Authenticate with PixUp
-    const authResponse = await fetch(
-      "https://api.pixup.com.br/v1/oauth/token",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          grant_type: "client_credentials",
-          client_id: pixupClientId,
-          client_secret: pixupClientSecret,
-        }),
-      }
-    );
+    const authResponse = await fetch("https://api.pixupbr.com/v2/oauth/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type: "client_credentials",
+        client_id: pixupClientId,
+        client_secret: pixupClientSecret,
+      }),
+    });
 
     if (!authResponse.ok) {
       const errorText = await authResponse.text();
@@ -98,25 +98,22 @@ serve(async (req) => {
         : "AstroTarot Hub - Plano Premium Mensal";
 
     // Create payment on PixUp
-    const paymentResponse = await fetch(
-      "https://api.pixup.com.br/v1/payments",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${access_token}`,
-          "Content-Type": "application/json",
+    const paymentResponse = await fetch("https://api.pixupbr.com/v2/payments", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        amount: amount,
+        currency: "BRL",
+        description: description,
+        customer: {
+          name: customerName || profile.name || "Cliente",
+          email: profile.email,
         },
-        body: JSON.stringify({
-          amount: amount,
-          currency: "BRL",
-          description: description,
-          customer: {
-            name: customerName || profile.name || "Cliente",
-            email: profile.email,
-          },
-        }),
-      }
-    );
+      }),
+    });
 
     if (!paymentResponse.ok) {
       const errorText = await paymentResponse.text();
@@ -170,7 +167,7 @@ serve(async (req) => {
         status: 200,
       }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in create-payment:", error);
     return new Response(
       JSON.stringify({
