@@ -324,8 +324,7 @@ export default function BirthChartPage() {
                           </p>
                           <p className="text-xs text-gray-500">
                             {Math.floor(planet.degree)}°{" "}
-                            {Math.round((planet.degree % 1) * 60)}&apos;
-                            {planet.retrograde && " (R)"}
+                            {Math.round((planet.degree % 1) * 60)}{"'"}{planet.retrograde && " (R)"}
                           </p>
                         </div>
                       </div>
@@ -356,7 +355,7 @@ export default function BirthChartPage() {
                           </p>
                           <p className="text-xs text-gray-500">
                             {Math.floor(house.degree)}°{" "}
-                            {Math.round((house.degree % 1) * 60)}&apos;
+                            {Math.round((house.degree % 1) * 60)}{"'"}
                           </p>
                         </div>
                       </div>
