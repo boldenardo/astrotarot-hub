@@ -19,6 +19,26 @@ if (typeof window !== "undefined") {
     console.error(
       "❌ A chave do Supabase (Anon Key) parece inválida. Ela deve começar com 'eyJ'. Verifique suas variáveis de ambiente."
     );
+  } else {
+    try {
+      const [, payload] = supabaseAnonKey.split(".");
+      const decoded = JSON.parse(atob(payload));
+      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
+      
+      console.log("🔍 Supabase Diagnostics:", {
+        urlProjectRef: projectRef,
+        keyProjectRef: decoded.ref,
+        match: projectRef === decoded.ref,
+        iat: new Date(decoded.iat * 1000).toISOString(),
+        exp: new Date(decoded.exp * 1000).toISOString(),
+      });
+
+      if (projectRef && decoded.ref && projectRef !== decoded.ref) {
+        console.error(`❌ MISMATCH: A URL do Supabase aponta para o projeto '${projectRef}', mas a chave (Anon Key) pertence ao projeto '${decoded.ref}'. Corrija as variáveis de ambiente.`);
+      }
+    } catch (e) {
+      console.error("❌ Erro ao decodificar a chave do Supabase:", e);
+    }
   }
 }
 
