@@ -55,16 +55,22 @@ Deno.serve(async (req) => {
     // Verificar se já existe um mapa astral salvo para este usuário
     const { data: existingChart } = await supabaseClient
       .from("birth_charts")
-      .select("chart_data")
+      .select("chart_data, transits")
       .eq("user_id", userProfile.id)
       .single();
 
     if (existingChart) {
       console.log("Retornando mapa astral do cache (banco de dados)");
-      return new Response(JSON.stringify(existingChart.chart_data), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+      return new Response(
+        JSON.stringify({
+          ...existingChart.chart_data,
+          raw_data: existingChart.transits,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
 
     const { birthDate, birthTime, birthLocation, name, latitude, longitude } =
@@ -208,10 +214,16 @@ Deno.serve(async (req) => {
       chartData = { error: "Erro ao gerar interpretação" };
     }
 
-    return new Response(JSON.stringify(chartData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({
+        ...chartData,
+        raw_data: realChartData,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

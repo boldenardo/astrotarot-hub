@@ -568,7 +568,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white/5 p-6 rounded-xl">
+            <div className="bg-white/5 p-6 rounded-xl mb-6">
               <h4 className="font-bold mb-2 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-400" />
                 Interpretação Geral
@@ -576,6 +576,16 @@ export default function DashboardPage() {
               <p className="text-gray-300 leading-relaxed">
                 {birthChart.interpretation}
               </p>
+            </div>
+
+            <div className="text-center">
+              <Link
+                href="/dashboard/birth-chart"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/50 rounded-xl font-semibold transition-all text-purple-300 hover:text-white"
+              >
+                <Star className="w-4 h-4" />
+                Ver Mapa Completo (Planetas e Casas)
+              </Link>
             </div>
           </motion.div>
         ) : (
