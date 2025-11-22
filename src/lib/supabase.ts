@@ -3,6 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
+// Debug para verificar credenciais no console do navegador
+if (typeof window !== "undefined") {
+  console.log("🔌 Supabase Config:", {
+    url: supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    keyLength: supabaseAnonKey?.length,
+  });
+}
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("⚠️ Supabase credentials not configured. Using mock data.");
 }

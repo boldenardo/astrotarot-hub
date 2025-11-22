@@ -4,12 +4,12 @@ const nextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'cdn.pixabay.com',
+        protocol: "https",
+        hostname: "cdn.pixabay.com",
       },
       {
-        protocol: 'https',
-        hostname: 'i.pinimg.com',
+        protocol: "https",
+        hostname: "i.pinimg.com",
       },
     ],
     formats: ["image/avif", "image/webp"],
@@ -20,10 +20,12 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
-  compiler: {
-    removeConsole: process.env.NODE_ENV === "production",
-  },
+  // compiler: {
+  //   removeConsole: process.env.NODE_ENV === "production",
+  // },
   poweredByHeader: false,
   // Otimizações de performance
   experimental: {
