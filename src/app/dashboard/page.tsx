@@ -229,108 +229,113 @@ export default function DashboardPage() {
 
   useEffect(() => {
     trackPageView("/dashboard", "Dashboard");
+
+    async function getCoordinates(city: string) {
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(
+            city
+          )}&country=Brazil&format=json&limit=1`
+        );
+        const data = await response.json();
+        if (data && data.length > 0) {
+          return {
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon),
+          };
+        }
+      } catch (error) {
+        console.error("Erro ao buscar coordenadas:", error);
+      }
+      return { latitude: -23.5505, longitude: -46.6333 }; // Default SP
+    }
+
+    async function loadUserData() {
+      try {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
+          router.push("/auth/login");
+          return;
+        }
+
+        // Buscar perfil do usuário
+        const { data: profile, error: profileError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("auth_id", authUser.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        setUser({
+          id: profile.id,
+          email: authUser.email || "",
+          name: profile.name,
+          birth_date: profile.birth_date,
+          birth_time: profile.birth_time,
+          birth_location: profile.birth_location,
+          subscription_plan: profile.subscription_plan,
+          subscription_status: profile.subscription_status,
+          readings_left: profile.readings_left,
+        });
+
+        // Buscar últimas leituras
+        const { data: readingsData } = await supabase
+          .from("tarot_readings")
+          .select("*")
+          .eq("user_id", profile.id)
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (readingsData) {
+          setReadings(readingsData);
+        }
+
+        // Gerar Mapa Astral Simplificado se tiver dados
+        if (
+          profile.birth_date &&
+          profile.birth_time &&
+          profile.birth_location
+        ) {
+          console.log("Iniciando geração do mapa astral..."); // Debug
+          setLoadingChart(true);
+
+          const coords = await getCoordinates(profile.birth_location);
+          console.log("Coordenadas encontradas:", coords); // Debug
+
+          const { data: chartData, error: chartError } =
+            await supabase.functions.invoke("generate-birth-chart", {
+              body: {
+                birthDate: profile.birth_date,
+                birthTime: profile.birth_time,
+                birthLocation: profile.birth_location,
+                name: profile.name,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              },
+            });
+
+          if (chartError) {
+            console.error("Erro na função generate-birth-chart:", chartError);
+          }
+
+          if (chartData) {
+            console.log("Dados do mapa recebidos:", chartData); // Debug
+            setBirthChart(chartData);
+          }
+          setLoadingChart(false);
+        } else {
+          console.log("Dados de nascimento incompletos para o mapa astral"); // Debug
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
     loadUserData();
-  }, []);
-
-  async function getCoordinates(city: string) {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(
-          city
-        )}&country=Brazil&format=json&limit=1`
-      );
-      const data = await response.json();
-      if (data && data.length > 0) {
-        return {
-          latitude: parseFloat(data[0].lat),
-          longitude: parseFloat(data[0].lon),
-        };
-      }
-    } catch (error) {
-      console.error("Erro ao buscar coordenadas:", error);
-    }
-    return { latitude: -23.5505, longitude: -46.6333 }; // Default SP
-  }
-
-  async function loadUserData() {
-    try {
-      const authUser = await getCurrentUser();
-      if (!authUser) {
-        router.push("/auth/login");
-        return;
-      }
-
-      // Buscar perfil do usuário
-      const { data: profile, error: profileError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("auth_id", authUser.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      setUser({
-        id: profile.id,
-        email: authUser.email || "",
-        name: profile.name,
-        birth_date: profile.birth_date,
-        birth_time: profile.birth_time,
-        birth_location: profile.birth_location,
-        subscription_plan: profile.subscription_plan,
-        subscription_status: profile.subscription_status,
-        readings_left: profile.readings_left,
-      });
-
-      // Buscar últimas leituras
-      const { data: readingsData } = await supabase
-        .from("tarot_readings")
-        .select("*")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
-
-      if (readingsData) {
-        setReadings(readingsData);
-      }
-
-      // Gerar Mapa Astral Simplificado se tiver dados
-      if (profile.birth_date && profile.birth_time && profile.birth_location) {
-        console.log("Iniciando geração do mapa astral..."); // Debug
-        setLoadingChart(true);
-
-        const coords = await getCoordinates(profile.birth_location);
-        console.log("Coordenadas encontradas:", coords); // Debug
-
-        const { data: chartData, error: chartError } =
-          await supabase.functions.invoke("generate-birth-chart", {
-            body: {
-              birthDate: profile.birth_date,
-              birthTime: profile.birth_time,
-              birthLocation: profile.birth_location,
-              name: profile.name,
-              latitude: coords.latitude,
-              longitude: coords.longitude,
-            },
-          });
-
-        if (chartError) {
-          console.error("Erro na função generate-birth-chart:", chartError);
-        }
-
-        if (chartData) {
-          console.log("Dados do mapa recebidos:", chartData); // Debug
-          setBirthChart(chartData);
-        }
-        setLoadingChart(false);
-      } else {
-        console.log("Dados de nascimento incompletos para o mapa astral"); // Debug
-      }
-    } catch (error) {
-      console.error("Erro ao carregar dados:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+  }, [router]);
 
   async function handleLogout() {
     await signOut();

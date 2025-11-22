@@ -35,40 +35,41 @@ export default function ProfilePage() {
 
   useEffect(() => {
     trackPageView("/profile", "Profile");
-    loadUserData();
-  }, []);
 
-  async function loadUserData() {
-    try {
-      const authUser = await getCurrentUser();
-      if (!authUser) {
-        router.push("/auth/login");
-        return;
+    async function loadUserData() {
+      try {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
+          router.push("/auth/login");
+          return;
+        }
+
+        const { data: profile, error } = await supabase
+          .from("users")
+          .select("*")
+          .eq("auth_id", authUser.id)
+          .single();
+
+        if (error) throw error;
+
+        if (profile) {
+          setFormData({
+            name: profile.name || "",
+            birthDate: profile.birth_date || "",
+            birthTime: profile.birth_time || "",
+            birthLocation: profile.birth_location || "",
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao carregar perfil:", error);
+        setMessage({ type: "error", text: "Erro ao carregar seus dados." });
+      } finally {
+        setLoading(false);
       }
-
-      const { data: profile, error } = await supabase
-        .from("users")
-        .select("*")
-        .eq("auth_id", authUser.id)
-        .single();
-
-      if (error) throw error;
-
-      if (profile) {
-        setFormData({
-          name: profile.name || "",
-          birthDate: profile.birth_date || "",
-          birthTime: profile.birth_time || "",
-          birthLocation: profile.birth_location || "",
-        });
-      }
-    } catch (error) {
-      console.error("Erro ao carregar perfil:", error);
-      setMessage({ type: "error", text: "Erro ao carregar seus dados." });
-    } finally {
-      setLoading(false);
     }
-  }
+
+    loadUserData();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

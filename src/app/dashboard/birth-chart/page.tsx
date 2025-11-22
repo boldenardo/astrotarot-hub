@@ -85,49 +85,50 @@ export default function BirthChartPage() {
 
   useEffect(() => {
     trackPageView("/dashboard/birth-chart", "Full Birth Chart");
-    loadChartData();
-  }, []);
 
-  async function loadChartData() {
-    try {
-      const authUser = await getCurrentUser();
-      if (!authUser) {
-        router.push("/auth/login");
-        return;
+    async function loadChartData() {
+      try {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
+          router.push("/auth/login");
+          return;
+        }
+
+        // Buscar perfil do usuário
+        const { data: profile, error: profileError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("auth_id", authUser.id)
+          .single();
+
+        if (profileError) throw profileError;
+        setUserData(profile);
+
+        // Buscar mapa astral salvo
+        const { data: chart, error: chartError } = await supabase
+          .from("birth_charts")
+          .select("chart_data, transits")
+          .eq("user_id", profile.id)
+          .single();
+
+        if (chart) {
+          setChartData({
+            ...chart.chart_data,
+            raw_data: chart.transits,
+          });
+        } else {
+          // Se não tiver mapa, redirecionar para dashboard para gerar
+          router.push("/dashboard");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar mapa:", error);
+      } finally {
+        setLoading(false);
       }
-
-      // Buscar perfil do usuário
-      const { data: profile, error: profileError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("auth_id", authUser.id)
-        .single();
-
-      if (profileError) throw profileError;
-      setUserData(profile);
-
-      // Buscar mapa astral salvo
-      const { data: chart, error: chartError } = await supabase
-        .from("birth_charts")
-        .select("chart_data, transits")
-        .eq("user_id", profile.id)
-        .single();
-
-      if (chart) {
-        setChartData({
-          ...chart.chart_data,
-          raw_data: chart.transits,
-        });
-      } else {
-        // Se não tiver mapa, redirecionar para dashboard para gerar
-        router.push("/dashboard");
-      }
-    } catch (error) {
-      console.error("Erro ao carregar mapa:", error);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    loadChartData();
+  }, [router]);
 
   if (loading) {
     return (
@@ -323,7 +324,8 @@ export default function BirthChartPage() {
                           </p>
                           <p className="text-xs text-gray-500">
                             {Math.floor(planet.degree)}°{" "}
-                            {Math.round((planet.degree % 1) * 60)}&apos;
+                            {Math.round((planet.degree % 1) * 60)}
+                            {"'"}
                             {planet.retrograde && " (R)"}
                           </p>
                         </div>
@@ -355,7 +357,8 @@ export default function BirthChartPage() {
                           </p>
                           <p className="text-xs text-gray-500">
                             {Math.floor(house.degree)}°{" "}
-                            {Math.round((house.degree % 1) * 60)}&apos;
+                            {Math.round((house.degree % 1) * 60)}
+                            {"'"}
                           </p>
                         </div>
                       </div>
