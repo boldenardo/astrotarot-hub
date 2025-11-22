@@ -23,8 +23,10 @@ if (typeof window !== "undefined") {
     try {
       const [, payload] = supabaseAnonKey.split(".");
       const decoded = JSON.parse(atob(payload));
-      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1];
-      
+      const projectRef = supabaseUrl.match(
+        /https:\/\/([^.]+)\.supabase\.co/
+      )?.[1];
+
       console.log("🔍 Supabase Diagnostics:", {
         urlProjectRef: projectRef,
         keyProjectRef: decoded.ref,
@@ -34,7 +36,9 @@ if (typeof window !== "undefined") {
       });
 
       if (projectRef && decoded.ref && projectRef !== decoded.ref) {
-        console.error(`❌ MISMATCH: A URL do Supabase aponta para o projeto '${projectRef}', mas a chave (Anon Key) pertence ao projeto '${decoded.ref}'. Corrija as variáveis de ambiente.`);
+        console.error(
+          `❌ MISMATCH: A URL do Supabase aponta para o projeto '${projectRef}', mas a chave (Anon Key) pertence ao projeto '${decoded.ref}'. Corrija as variáveis de ambiente.`
+        );
       }
     } catch (e) {
       console.error("❌ Erro ao decodificar a chave do Supabase:", e);

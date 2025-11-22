@@ -24,6 +24,7 @@ export async function signUp(data: SignUpData) {
     email,
     password,
     options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback`,
       data: {
         name: name || "",
         birth_date: birthDate,
