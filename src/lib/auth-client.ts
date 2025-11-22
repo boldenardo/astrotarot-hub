@@ -37,9 +37,19 @@ export async function signUp(data: SignUpData) {
     throw new Error(error.message);
   }
 
+  // Se o usuário foi criado mas não tem sessão, é porque precisa confirmar email
+  if (authData.user && !authData.session) {
+    return {
+      user: authData.user,
+      session: null,
+      requiresConfirmation: true,
+    };
+  }
+
   return {
     user: authData.user,
     session: authData.session,
+    requiresConfirmation: false,
   };
 }
 

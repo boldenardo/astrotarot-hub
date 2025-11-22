@@ -86,7 +86,7 @@ export default function RegisterPage() {
 
     try {
       // Usar Supabase Auth
-      const { user, session } = await signUp({
+      const { user, session, requiresConfirmation } = await signUp({
         email: formData.email,
         password: formData.password,
         name: formData.name,
@@ -94,6 +94,14 @@ export default function RegisterPage() {
         birthTime: formData.birthTime,
         birthLocation: formData.birthLocation,
       });
+
+      if (requiresConfirmation) {
+        alert(
+          "Conta criada com sucesso! Verifique seu email para confirmar o cadastro antes de fazer login."
+        );
+        router.push("/auth/login");
+        return;
+      }
 
       if (!session) {
         throw new Error("Erro ao criar sessão");
