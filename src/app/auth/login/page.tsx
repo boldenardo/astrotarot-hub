@@ -173,12 +173,17 @@ export default function LoginPage() {
 
             {/* Forgot Password */}
             <div className="text-right">
-              <Link
-                href="/auth/forgot-password"
+              <button
+                type="button"
+                onClick={() =>
+                  alert(
+                    "Funcionalidade em desenvolvimento. Entre em contato com o suporte."
+                  )
+                }
                 className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
               >
                 Esqueceu a senha?
-              </Link>
+              </button>
             </div>
 
             {/* Submit Button */}

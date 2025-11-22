@@ -60,6 +60,11 @@ export async function middleware(req: NextRequest) {
     data: { session },
   } = await supabase.auth.getSession();
 
+  // Atualizar sessão se existir (importante para manter o cookie vivo)
+  if (session) {
+    await supabase.auth.getUser();
+  }
+
   // Rotas protegidas
   const protectedRoutes = [
     "/dashboard",
