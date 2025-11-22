@@ -13,7 +13,7 @@ import {
   Loader2,
   Star,
 } from "lucide-react";
-import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 interface PersonData {
   name: string;
@@ -35,6 +35,14 @@ interface CompatibilityResult {
   communication: number;
   values: number;
   longTerm: number;
+  synastry_analysis: {
+    strengths: string[];
+    challenges: string[];
+    emotional_connection: string;
+    sexual_chemistry: string;
+    communication_style: string;
+  };
+  final_verdict: string;
 }
 
 const zodiacSigns = [
@@ -161,10 +169,7 @@ export default function CompatibilityPage() {
     timezone: "America/Sao_Paulo",
   });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{
-    compatibility: CompatibilityResult;
-    analysis: string;
-  } | null>(null);
+  const [result, setResult] = useState<CompatibilityResult | null>(null);
 
   const handleCalculate = async () => {
     setLoading(true);
@@ -181,19 +186,22 @@ export default function CompatibilityPage() {
         longitude: person2.longitude || -46.6333,
       };
 
-      const response = await fetch("/api/compatibility", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ person1: data1, person2: data2 }),
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "generate-compatibility",
+        {
+          body: { personA: data1, personB: data2 },
+        }
+      );
 
-      const data = await response.json();
-      setResult(data);
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      setResult(data.analysis);
       setStep(3);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao calcular:", error);
       alert(
-        "Funcionalidade em desenvolvimento. Em breve você poderá calcular compatibilidade."
+        error.message || "Erro ao calcular compatibilidade. Tente novamente."
       );
     } finally {
       setLoading(false);
@@ -709,13 +717,11 @@ function ResultScreen({
   person2Name,
   onReset,
 }: {
-  result: { compatibility: CompatibilityResult; analysis: string };
+  result: CompatibilityResult;
   person1Name: string;
   person2Name: string;
   onReset: () => void;
 }) {
-  const { compatibility } = result;
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -731,7 +737,7 @@ function ResultScreen({
           className="mb-8"
         >
           <div className="text-8xl font-bold bg-gradient-to-r from-pink-300 via-purple-300 to-pink-400 bg-clip-text text-transparent mb-4">
-            {compatibility.overall}%
+            {result.overall}%
           </div>
           <div className="flex items-center justify-center gap-3 text-2xl">
             <span>{person1Name}</span>
@@ -743,14 +749,14 @@ function ResultScreen({
         {/* Score Breakdown */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Amor", value: compatibility.love, icon: "💕" },
+            { label: "Amor", value: result.love, icon: "💕" },
             {
               label: "Comunicação",
-              value: compatibility.communication,
+              value: result.communication,
               icon: "💬",
             },
-            { label: "Valores", value: compatibility.values, icon: "💎" },
-            { label: "Longo Prazo", value: compatibility.longTerm, icon: "♾️" },
+            { label: "Valores", value: result.values, icon: "💎" },
+            { label: "Longo Prazo", value: result.longTerm, icon: "♾️" },
           ].map((item, i) => (
             <motion.div
               key={i}
@@ -774,16 +780,68 @@ function ResultScreen({
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-gradient-to-br from-purple-950/50 via-purple-900/30 to-pink-950/50 backdrop-blur-xl border border-purple-500/30 rounded-3xl p-8 md:p-12"
+        className="bg-gradient-to-br from-purple-950/50 via-purple-900/30 to-pink-950/50 backdrop-blur-xl border border-purple-500/30 rounded-3xl p-8 md:p-12 space-y-8"
       >
         <div className="flex items-center gap-3 mb-6">
           <Sparkles className="w-6 h-6 text-yellow-400" />
           <h2 className="text-2xl font-bold">Análise Completa</h2>
         </div>
-        <div className="prose prose-invert prose-pink max-w-none">
-          <div className="text-gray-300 leading-relaxed whitespace-pre-line">
-            {result.analysis}
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <h3 className="text-xl font-semibold text-pink-300 mb-3">
+              Pontos Fortes
+            </h3>
+            <ul className="space-y-2">
+              {result.synastry_analysis.strengths.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-gray-300">
+                  <span className="text-green-400">✓</span> {item}
+                </li>
+              ))}
+            </ul>
           </div>
+          <div>
+            <h3 className="text-xl font-semibold text-purple-300 mb-3">
+              Desafios
+            </h3>
+            <ul className="space-y-2">
+              {result.synastry_analysis.challenges.map((item, i) => (
+                <li key={i} className="flex items-start gap-2 text-gray-300">
+                  <span className="text-red-400">!</span> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Conexão Emocional
+            </h3>
+            <p className="text-gray-300">
+              {result.synastry_analysis.emotional_connection}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2">Química</h3>
+            <p className="text-gray-300">
+              {result.synastry_analysis.sexual_chemistry}
+            </p>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Comunicação
+            </h3>
+            <p className="text-gray-300">
+              {result.synastry_analysis.communication_style}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-black/30 p-6 rounded-xl border border-purple-500/20">
+          <h3 className="text-xl font-bold text-white mb-3">Veredito Final</h3>
+          <p className="text-gray-300 italic">{result.final_verdict}</p>
         </div>
       </motion.div>
 

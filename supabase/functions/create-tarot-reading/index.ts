@@ -158,7 +158,14 @@ Formato da resposta:
     }
 
     const groqData = await groqResponse.json();
-    const interpretation = groqData.choices[0].message.content;
+    console.log("GROQ Response:", JSON.stringify(groqData)); // Debug log
+
+    const interpretation = groqData.choices[0]?.message?.content;
+
+    if (!interpretation) {
+      console.error("GROQ returned empty content");
+      throw new Error("A interpretação do Tarot veio vazia. Tente novamente.");
+    }
 
     // Save reading to database
     const { data: reading, error: readingError } = await supabaseClient

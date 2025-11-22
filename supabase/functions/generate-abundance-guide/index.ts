@@ -168,15 +168,36 @@ Deno.serve(async (req) => {
     );
 
     const groqData = await response.json();
+    console.log("GROQ Response:", JSON.stringify(groqData)); // Debug log
+
     const content = groqData.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error("GROQ retornou conteúdo vazio");
+    }
 
     let analysisData;
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      analysisData = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+      // Limpar markdown code blocks se existirem
+      const cleanContent = content.replace(/```json\n?|\n?```/g, "").trim();
+
+      // Tentar encontrar o primeiro { e o último }
+      const firstBrace = cleanContent.indexOf("{");
+      const lastBrace = cleanContent.lastIndexOf("}");
+
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        const jsonString = cleanContent.substring(firstBrace, lastBrace + 1);
+        analysisData = JSON.parse(jsonString);
+      } else {
+        analysisData = JSON.parse(cleanContent);
+      }
     } catch (e) {
       console.error("Erro ao fazer parse do JSON:", content);
-      throw new Error("Falha ao gerar guia de abundância");
+      console.error("Erro detalhado:", e);
+      // Fallback para um objeto de erro estruturado em vez de lançar
+      analysisData = {
+        error: "Falha ao interpretar resposta da IA",
+        raw_content: content,
+      };
     }
 
     return new Response(

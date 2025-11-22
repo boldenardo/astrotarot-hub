@@ -3,6 +3,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
+import MiniBirthChart from "@/components/MiniBirthChart";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, Star, Sparkles } from "lucide-react";
@@ -12,6 +13,8 @@ export default function Home() {
     <main className="min-h-screen bg-black overflow-x-hidden">
       <Navbar />
       <HeroSection />
+
+      <MiniBirthChart />
 
       {/* Rounded Divider */}
       <div className="relative h-32 bg-gradient-to-b from-black to-purple-950/30">

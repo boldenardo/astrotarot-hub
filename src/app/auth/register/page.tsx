@@ -168,6 +168,27 @@ export default function RegisterPage() {
     }
   };
 
+  useEffect(() => {
+    trackPageView("/auth/register", "Register");
+
+    // Check for pending birth chart data
+    const pendingData = localStorage.getItem("pendingBirthChart");
+    if (pendingData) {
+      try {
+        const parsed = JSON.parse(pendingData);
+        setFormData((prev) => ({
+          ...prev,
+          name: parsed.name || prev.name,
+          birthDate: parsed.date || prev.birthDate,
+          birthTime: parsed.time || prev.birthTime,
+          birthLocation: parsed.city || prev.birthLocation,
+        }));
+      } catch (e) {
+        console.error("Error parsing pending birth chart data", e);
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden py-12">
       {/* Background */}
