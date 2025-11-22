@@ -38,6 +38,35 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Buscar o ID interno do usuário na tabela 'users'
+    const { data: userProfile, error: profileError } = await supabaseClient
+      .from("users")
+      .select("id")
+      .eq("auth_id", user.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      return new Response(JSON.stringify({ error: "Perfil não encontrado" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 404,
+      });
+    }
+
+    // Verificar se já existe um mapa astral salvo para este usuário
+    const { data: existingChart } = await supabaseClient
+      .from("birth_charts")
+      .select("chart_data")
+      .eq("user_id", userProfile.id)
+      .single();
+
+    if (existingChart) {
+      console.log("Retornando mapa astral do cache (banco de dados)");
+      return new Response(JSON.stringify(existingChart.chart_data), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     const { birthDate, birthTime, birthLocation, name, latitude, longitude } =
       await req.json();
 
@@ -160,6 +189,20 @@ Deno.serve(async (req) => {
       // Tentar limpar o markdown se houver
       const jsonStr = content.replace(/```json\n?|\n?```/g, "").trim();
       chartData = JSON.parse(jsonStr);
+
+      // Salvar no banco de dados para cache
+      if (chartData && !chartData.error) {
+        await supabaseClient.from("birth_charts").insert({
+          user_id: userProfile.id,
+          birth_date: birthDate,
+          birth_time: birthTime,
+          birth_location: birthLocation,
+          latitude: latitude,
+          longitude: longitude,
+          chart_data: chartData,
+          transits: realChartData, // Salva os dados brutos da API também, se houver
+        });
+      }
     } catch (e) {
       console.error("Erro ao parsear JSON do Groq:", content);
       chartData = { error: "Erro ao gerar interpretação" };

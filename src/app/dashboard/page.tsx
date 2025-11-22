@@ -592,16 +592,16 @@ export default function DashboardPage() {
             </p>
             <Link
               href="/profile" // Assuming there is a profile page, or maybe just show a modal?
-              // Actually, I don't see a profile page in the file list. 
-              // I'll point to a settings page or just leave it as a placeholder for now, 
+              // Actually, I don't see a profile page in the file list.
+              // I'll point to a settings page or just leave it as a placeholder for now,
               // or maybe redirect to a "complete profile" flow.
-              // The user said "usando os dados de cadastro". 
+              // The user said "usando os dados de cadastro".
               // If they are missing, they need to add them.
               // Let's assume for now they have it or I'll point to a generic edit profile.
-              // Since I don't have a profile page, I'll create a simple button that alerts or does nothing for now, 
+              // Since I don't have a profile page, I'll create a simple button that alerts or does nothing for now,
               // OR better, I'll check if I can easily add a profile editing feature.
               // But to be safe and stick to the request "move to dashboard", I'll just show the message.
-              // Wait, the user said "usando os dados de cadastro". 
+              // Wait, the user said "usando os dados de cadastro".
               // If the user just registered, they SHOULD have the data.
               // So this fallback is mostly for old users or if something failed.
               // I'll point to "/settings" (which might not exist) or just hide the button.
