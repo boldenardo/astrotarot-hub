@@ -13,6 +13,7 @@ import {
   Loader2,
   Star,
 } from "lucide-react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 interface PersonData {
