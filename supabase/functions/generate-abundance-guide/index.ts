@@ -38,10 +38,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { birthDate, birthTime, birthLocation, name, latitude, longitude } =
-      await req.json();
+    const { birthData } = await req.json();
 
-    if (!birthDate || !birthTime || !birthLocation) {
+    if (!birthData) {
       return new Response(
         JSON.stringify({ error: "Dados de nascimento incompletos" }),
         {
@@ -51,12 +50,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse date and time
-    const [year, month, day] = birthDate.split("-");
-    const [hour, minute] = birthTime.split(":");
-
     // 1. Buscar Mapa Astral na RapidAPI
-    let realChartData = null;
+    let chartData = null;
     if (RAPIDAPI_KEY) {
       try {
         const chartResponse = await fetch(
@@ -70,16 +65,16 @@ Deno.serve(async (req) => {
             },
             body: JSON.stringify({
               subject: {
-                year: parseInt(year),
-                month: parseInt(month),
-                day: parseInt(day),
-                hour: parseInt(hour),
-                minute: parseInt(minute),
-                latitude: latitude || -23.55,
-                longitude: longitude || -46.63,
-                city: birthLocation,
-                nation: "BR",
-                timezone: "America/Sao_Paulo",
+                year: parseInt(birthData.year),
+                month: parseInt(birthData.month),
+                day: parseInt(birthData.day),
+                hour: parseInt(birthData.hour),
+                minute: parseInt(birthData.minute),
+                latitude: birthData.latitude || -23.55,
+                longitude: birthData.longitude || -46.63,
+                city: birthData.city,
+                nation: birthData.nation || "BR",
+                timezone: birthData.timezone || "America/Sao_Paulo",
                 zodiac_type: "Tropic",
                 perspective_type: "Apparent Geocentric",
                 houses_system_identifier: "P",
@@ -92,7 +87,7 @@ Deno.serve(async (req) => {
         );
 
         if (chartResponse.ok) {
-          realChartData = await chartResponse.json();
+          chartData = await chartResponse.json();
         } else {
           console.error("RapidAPI Error:", await chartResponse.text());
         }
@@ -101,31 +96,51 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Prompt para o Groq gerar o mapa astral simplificado
     const prompt = `
-      Você é um astrólogo especialista. Gere um resumo do mapa astral para:
-      Nome: ${name || "Usuário"}
-      Data: ${birthDate}
-      Hora: ${birthTime}
-      Local: ${birthLocation}
+      Você é um astrólogo especialista em finanças e carreira. Gere um Guia de Abundância personalizado para:
+      Nascimento: ${birthData.day}/${birthData.month}/${birthData.year} às ${
+      birthData.hour
+    }:${birthData.minute}
+      Local: ${birthData.city}, ${birthData.nation}
 
       ${
-        realChartData
+        chartData
           ? `DADOS REAIS DO MAPA ASTRAL (Use estes dados para a análise): ${JSON.stringify(
-              realChartData
+              chartData
             ).substring(0, 3000)}`
-          : "Por favor, calcule mentalmente as posições aproximadas (Sol, Lua, Ascendente) e forneça uma interpretação curta e inspiradora."
+          : "Analise o potencial de riqueza, carreira e sorte no mapa astral (Casas 2, 6, 8 e 10, Júpiter, Vênus)."
       }
-      
-      Formato da resposta (JSON):
+
+      Formato da resposta (JSON estrito):
       {
-        "sun": {"sign": "Signo", "house": "Casa (ex: 5)", "interpretation": "Texto curto"},
-        "moon": {"sign": "Signo", "house": "Casa (ex: 10)", "interpretation": "Texto curto"},
-        "ascendant": {"sign": "Signo", "interpretation": "Texto curto"},
-        "interpretation": "Um conselho curto e místico para o momento atual da pessoa."
+        "financial_prosperity": {
+          "score": 85,
+          "summary": "Resumo do potencial financeiro",
+          "advice": "Conselho prático para ganhar dinheiro",
+          "best_periods": ["Mês/Ano", "Mês/Ano"]
+        },
+        "professional_success": {
+          "score": 75,
+          "summary": "Resumo do potencial de carreira",
+          "ideal_careers": ["Carreira 1", "Carreira 2"],
+          "advice": "Como crescer profissionalmente"
+        },
+        "investments": {
+          "score": 60,
+          "risk_profile": "Conservador/Moderado/Arrojado",
+          "advice": "Onde focar investimentos (imóveis, ações, etc)"
+        },
+        "opportunities": {
+          "score": 90,
+          "luck_factor": "Alta/Média/Baixa",
+          "upcoming_opportunities": "O que esperar em breve"
+        },
+        "power_colors": ["Cor 1", "Cor 2"],
+        "wealth_stones": ["Pedra 1", "Pedra 2"],
+        "mantra": "Um mantra curto para atrair abundância"
       }
       
-      Responda APENAS o JSON válido, sem markdown.
+      Responda APENAS o JSON válido.
     `;
 
     const response = await fetch(
@@ -142,12 +157,12 @@ Deno.serve(async (req) => {
             {
               role: "system",
               content:
-                "Você é um astrólogo místico e preciso. Responda sempre em JSON.",
+                "Você é um astrólogo financeiro experiente. Responda sempre em JSON válido.",
             },
             { role: "user", content: prompt },
           ],
           temperature: 0.7,
-          max_tokens: 1000,
+          max_tokens: 1500,
         }),
       }
     );
@@ -155,20 +170,22 @@ Deno.serve(async (req) => {
     const groqData = await response.json();
     const content = groqData.choices[0]?.message?.content;
 
-    let chartData;
+    let analysisData;
     try {
-      // Tentar limpar o markdown se houver
-      const jsonStr = content.replace(/```json\n?|\n?```/g, "").trim();
-      chartData = JSON.parse(jsonStr);
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      analysisData = JSON.parse(jsonMatch ? jsonMatch[0] : content);
     } catch (e) {
-      console.error("Erro ao parsear JSON do Groq:", content);
-      chartData = { error: "Erro ao gerar interpretação" };
+      console.error("Erro ao fazer parse do JSON:", content);
+      throw new Error("Falha ao gerar guia de abundância");
     }
 
-    return new Response(JSON.stringify(chartData), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ success: true, analysis: analysisData }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -17,6 +17,8 @@ import {
   PiggyBank,
 } from "lucide-react";
 
+import { supabase } from "@/lib/supabase";
+
 interface BirthData {
   year: number;
   month: number;
@@ -79,22 +81,21 @@ export default function AbundancePage() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/abundance", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          birthData: formData,
-        }),
-      });
+      const { data, error } = await supabase.functions.invoke(
+        "generate-abundance-guide",
+        {
+          body: {
+            birthData: formData,
+          },
+        }
+      );
 
-      const data = await response.json();
+      if (error) throw error;
 
       if (data.success && data.analysis) {
         setResult(data.analysis);
       } else {
-        throw new Error(data.error || "Funcionalidade em desenvolvimento");
+        throw new Error(data.error || "Erro ao gerar análise");
       }
     } catch (error) {
       console.error("Erro ao buscar análise:", error);

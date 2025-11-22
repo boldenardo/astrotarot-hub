@@ -232,6 +232,26 @@ export default function DashboardPage() {
     loadUserData();
   }, []);
 
+  async function getCoordinates(city: string) {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(
+          city
+        )}&country=Brazil&format=json&limit=1`
+      );
+      const data = await response.json();
+      if (data && data.length > 0) {
+        return {
+          latitude: parseFloat(data[0].lat),
+          longitude: parseFloat(data[0].lon),
+        };
+      }
+    } catch (error) {
+      console.error("Erro ao buscar coordenadas:", error);
+    }
+    return { latitude: -23.5505, longitude: -46.6333 }; // Default SP
+  }
+
   async function loadUserData() {
     try {
       const authUser = await getCurrentUser();
@@ -276,6 +296,9 @@ export default function DashboardPage() {
       // Gerar Mapa Astral Simplificado se tiver dados
       if (profile.birth_date && profile.birth_time && profile.birth_location) {
         setLoadingChart(true);
+
+        const coords = await getCoordinates(profile.birth_location);
+
         const { data: chartData, error: chartError } =
           await supabase.functions.invoke("generate-birth-chart", {
             body: {
@@ -283,6 +306,8 @@ export default function DashboardPage() {
               birthTime: profile.birth_time,
               birthLocation: profile.birth_location,
               name: profile.name,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
             },
           });
 

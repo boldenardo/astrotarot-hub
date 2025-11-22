@@ -19,6 +19,8 @@ import {
   Star,
 } from "lucide-react";
 
+import { supabase } from "@/lib/supabase";
+
 interface BirthData {
   name: string;
   day: string;
@@ -159,40 +161,32 @@ export default function PredictionsPage() {
     try {
       const coords = await getCoordinates(birthData.city, birthData.nation);
 
-      const requestData = {
-        birthData: {
-          name: birthData.name,
-          year: parseInt(birthData.year),
-          month: parseInt(birthData.month),
-          day: parseInt(birthData.day),
-          hour: parseInt(birthData.hour),
-          minute: parseInt(birthData.minute),
-          city: birthData.city,
-          nation: birthData.nation,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          timezone: birthData.timezone,
-        },
-        targetDate: currentDate.toISOString(),
-      };
+      const { data, error } = await supabase.functions.invoke(
+        "generate-daily-prediction",
+        {
+          body: {
+            name: birthData.name,
+            year: parseInt(birthData.year),
+            month: parseInt(birthData.month),
+            day: parseInt(birthData.day),
+            hour: parseInt(birthData.hour),
+            minute: parseInt(birthData.minute),
+            city: birthData.city,
+            nation: birthData.nation,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+            timezone: birthData.timezone,
+          },
+        }
+      );
 
-      const response = await fetch("/api/predictions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
-      });
+      if (error) throw error;
 
-      if (!response.ok) {
-        throw new Error("Erro ao processar dados");
-      }
-
-      const data = await response.json();
-      setPrediction(data.prediction);
+      setPrediction(data);
       setStep("results");
     } catch (err) {
-      setError(
-        "Funcionalidade em desenvolvimento. Em breve você poderá acessar suas previsões personalizadas."
-      );
+      console.error(err);
+      setError("Erro ao gerar previsão. Por favor, tente novamente.");
       setStep("form");
     }
   };
