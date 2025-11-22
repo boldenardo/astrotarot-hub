@@ -22,17 +22,17 @@ export default function LoginPage() {
 
   useEffect(() => {
     trackPageView("/auth/login", "Login");
-    
+
     // Verificar mensagens na URL
     const message = searchParams.get("message");
     const email = searchParams.get("email");
-    
+
     if (message) {
       setSuccessMessage(message);
     }
-    
+
     if (email) {
-      setFormData(prev => ({ ...prev, email }));
+      setFormData((prev) => ({ ...prev, email }));
     }
   }, [searchParams]);
 
