@@ -34,6 +34,12 @@ export async function signUp(data: SignUpData) {
   });
 
   if (error) {
+    console.error("❌ Erro detalhado no SignUp:", {
+      message: error.message,
+      status: error.status,
+      name: error.name,
+      code: error.code // Se disponível
+    });
     throw new Error(error.message);
   }
 
