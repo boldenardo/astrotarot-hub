@@ -9,6 +9,7 @@ if (typeof window !== "undefined") {
     url: supabaseUrl,
     hasKey: !!supabaseAnonKey,
     keyLength: supabaseAnonKey?.length,
+    keyStart: supabaseAnonKey?.substring(0, 5) + "...",
   });
 }
 

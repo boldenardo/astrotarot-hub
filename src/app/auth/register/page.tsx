@@ -162,7 +162,14 @@ export default function RegisterPage() {
       // Track successful signup
       trackSignUp("email");
     } catch (err: any) {
-      setError(err.message || "Erro ao criar conta");
+      console.error("Signup error:", err);
+      if (err.message?.includes("Invalid API key")) {
+        setError(
+          "Erro de configuração do sistema (API Key inválida). Contate o suporte."
+        );
+      } else {
+        setError(err.message || "Erro ao criar conta");
+      }
     } finally {
       setLoading(false);
     }
