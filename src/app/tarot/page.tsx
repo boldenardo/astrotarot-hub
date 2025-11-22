@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shuffle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 import { EGYPTIAN_DECK } from "@/lib/tarot-data";
 
 interface DrawnCard {
@@ -15,12 +17,38 @@ interface DrawnCard {
 }
 
 export default function EgyptianTarotPage() {
+  const router = useRouter();
   const [numCards, setNumCards] = useState<number>(3);
   const [drawnCards, setDrawnCards] = useState<DrawnCard[]>([]);
   const [isDrawing, setIsDrawing] = useState(false);
   const [aiInterpretation, setAiInterpretation] = useState<string>("");
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [showCards, setShowCards] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Verifica se o usuário está logado
+  useEffect(() => {
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/auth/login");
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  // Mostra loading enquanto verifica autenticação
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
+        <div className="text-white text-xl">Verificando acesso...</div>
+      </div>
+    );
+  }
 
   const spreadTypes: { [key: number]: string[] } = {
     1: ["Presente"],
