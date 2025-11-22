@@ -147,11 +147,14 @@ $$ language 'plpgsql';
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.users (auth_id, email, name, subscription_plan, subscription_status, readings_left)
+  INSERT INTO public.users (auth_id, email, name, birth_date, birth_time, birth_location, subscription_plan, subscription_status, readings_left)
   VALUES (
     NEW.id, 
     NEW.email, 
     COALESCE(NEW.raw_user_meta_data->>'name', ''),
+    NEW.raw_user_meta_data->>'birth_date',
+    NEW.raw_user_meta_data->>'birth_time',
+    NEW.raw_user_meta_data->>'birth_location',
     'FREE', 
     'active', 
     4
