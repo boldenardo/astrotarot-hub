@@ -96,9 +96,25 @@ export default function RegisterPage() {
       });
 
       if (requiresConfirmation) {
+        // Limpar formulário
+        setFormData({
+          name: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          birthDate: "",
+          birthTime: "",
+          birthLocation: "",
+        });
+
+        // Mostrar mensagem na tela em vez de alert
+        setError(""); // Limpar erros anteriores
         alert(
-          "Conta criada com sucesso! Verifique seu email para confirmar o cadastro antes de fazer login."
+          "✅ Conta criada! Um link de confirmação foi enviado para " +
+            formData.email +
+            ". Verifique sua caixa de entrada e spam."
         );
+
         router.push("/auth/login");
         return;
       }

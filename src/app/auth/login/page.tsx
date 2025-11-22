@@ -41,7 +41,16 @@ export default function LoginPage() {
       // Redirecionar para dashboard
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Erro ao fazer login");
+      console.error("Login error:", err);
+      if (err.message.includes("Email not confirmed")) {
+        setError(
+          "Email não confirmado. Verifique sua caixa de entrada (e spam)."
+        );
+      } else if (err.message.includes("Invalid login credentials")) {
+        setError("Email ou senha incorretos.");
+      } else {
+        setError(err.message || "Erro ao fazer login");
+      }
     } finally {
       setLoading(false);
     }
