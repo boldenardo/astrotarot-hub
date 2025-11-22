@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+const supabaseAnonKey = (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "").trim();
 
 // Debug para verificar credenciais no console do navegador
 if (typeof window !== "undefined") {
@@ -10,7 +10,12 @@ if (typeof window !== "undefined") {
     hasKey: !!supabaseAnonKey,
     keyLength: supabaseAnonKey?.length,
     keyStart: supabaseAnonKey?.substring(0, 5) + "...",
+    isJWT: supabaseAnonKey?.startsWith("eyJ"),
   });
+
+  if (!supabaseAnonKey.startsWith("eyJ")) {
+    console.error("❌ A chave do Supabase (Anon Key) parece inválida. Ela deve começar com 'eyJ'. Verifique suas variáveis de ambiente.");
+  }
 }
 
 if (!supabaseUrl || !supabaseAnonKey) {
