@@ -113,31 +113,26 @@ Deno.serve(async (req) => {
 
       Formato da resposta (JSON estrito):
       {
-        "financial_prosperity": {
-          "score": 85,
-          "summary": "Resumo do potencial financeiro",
-          "advice": "Conselho prático para ganhar dinheiro",
-          "best_periods": ["Mês/Ano", "Mês/Ano"]
+        "currentCycle": "Nome do ciclo atual (ex: Expansão Jupteriana)",
+        "scores": {
+          "financial": 85,
+          "career": 75,
+          "investments": 60,
+          "opportunities": 90
         },
-        "professional_success": {
-          "score": 75,
-          "summary": "Resumo do potencial de carreira",
-          "ideal_careers": ["Carreira 1", "Carreira 2"],
-          "advice": "Como crescer profissionalmente"
+        "favorablePeriods": ["Mês/Ano - Motivo", "Mês/Ano - Motivo"],
+        "houses": {
+          "house2": "Análise da Casa 2 (Recursos)",
+          "house8": "Análise da Casa 8 (Transformação)",
+          "house10": "Análise da Casa 10 (Carreira)",
+          "house11": "Análise da Casa 11 (Ganhos)"
         },
-        "investments": {
-          "score": 60,
-          "risk_profile": "Conservador/Moderado/Arrojado",
-          "advice": "Onde focar investimentos (imóveis, ações, etc)"
-        },
-        "opportunities": {
-          "score": 90,
-          "luck_factor": "Alta/Média/Baixa",
-          "upcoming_opportunities": "O que esperar em breve"
-        },
-        "power_colors": ["Cor 1", "Cor 2"],
-        "wealth_stones": ["Pedra 1", "Pedra 2"],
-        "mantra": "Um mantra curto para atrair abundância"
+        "jupiterPosition": "Júpiter em [Signo/Casa] - Significado",
+        "recommendations": [
+          "Recomendação prática 1",
+          "Recomendação prática 2",
+          "Recomendação prática 3"
+        ]
       }
       
       Responda APENAS o JSON válido.

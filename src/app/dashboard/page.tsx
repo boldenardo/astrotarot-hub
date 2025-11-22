@@ -295,9 +295,11 @@ export default function DashboardPage() {
 
       // Gerar Mapa Astral Simplificado se tiver dados
       if (profile.birth_date && profile.birth_time && profile.birth_location) {
+        console.log("Iniciando geração do mapa astral..."); // Debug
         setLoadingChart(true);
 
         const coords = await getCoordinates(profile.birth_location);
+        console.log("Coordenadas encontradas:", coords); // Debug
 
         const { data: chartData, error: chartError } =
           await supabase.functions.invoke("generate-birth-chart", {
@@ -311,10 +313,17 @@ export default function DashboardPage() {
             },
           });
 
-        if (!chartError && chartData) {
+        if (chartError) {
+          console.error("Erro na função generate-birth-chart:", chartError);
+        }
+
+        if (chartData) {
+          console.log("Dados do mapa recebidos:", chartData); // Debug
           setBirthChart(chartData);
         }
         setLoadingChart(false);
+      } else {
+        console.log("Dados de nascimento incompletos para o mapa astral"); // Debug
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);

@@ -123,7 +123,9 @@ export default function EgyptianTarotPage() {
       });
 
       setAiInterpretation(
-        result.interpretation || "Interpretação indisponível no momento."
+        result.reading?.interpretation ||
+          result.interpretation ||
+          "Interpretação indisponível no momento."
       );
     } catch (error) {
       console.error("Erro ao gerar interpretação:", error);

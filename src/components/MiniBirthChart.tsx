@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, Star, ArrowRight, Loader2 } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Star,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function MiniBirthChart() {
@@ -33,7 +40,7 @@ export default function MiniBirthChart() {
     <section className="py-20 px-4 relative overflow-hidden">
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/20 to-black" />
-      
+
       <div className="max-w-4xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <motion.div
@@ -42,7 +49,10 @@ export default function MiniBirthChart() {
             viewport={{ once: true }}
             className="inline-block mb-4"
           >
-            <Star className="w-12 h-12 text-yellow-400 mx-auto mb-4" fill="currentColor" />
+            <Star
+              className="w-12 h-12 text-yellow-400 mx-auto mb-4"
+              fill="currentColor"
+            />
             <h2 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-yellow-200 via-amber-200 to-yellow-400 bg-clip-text text-transparent mb-4">
               Descubra seu Mapa Astral
             </h2>
@@ -68,7 +78,9 @@ export default function MiniBirthChart() {
                   type="text"
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full px-4 py-3 bg-black/50 border border-purple-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-600"
                   placeholder="Seu nome"
                 />
@@ -76,13 +88,16 @@ export default function MiniBirthChart() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-purple-400" /> Cidade de Nascimento
+                  <MapPin className="w-4 h-4 text-purple-400" /> Cidade de
+                  Nascimento
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.city}
-                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, city: e.target.value })
+                  }
                   className="w-full px-4 py-3 bg-black/50 border border-purple-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-600"
                   placeholder="Ex: São Paulo, SP"
                 />
@@ -90,25 +105,31 @@ export default function MiniBirthChart() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-purple-400" /> Data de Nascimento
+                  <Calendar className="w-4 h-4 text-purple-400" /> Data de
+                  Nascimento
                 </label>
                 <input
                   type="date"
                   required
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                   className="w-full px-4 py-3 bg-black/50 border border-purple-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-600 [color-scheme:dark]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-purple-400" /> Horário (Opcional)
+                  <Clock className="w-4 h-4 text-purple-400" /> Horário
+                  (Opcional)
                 </label>
                 <input
                   type="time"
                   value={formData.time}
-                  onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, time: e.target.value })
+                  }
                   className="w-full px-4 py-3 bg-black/50 border border-purple-500/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-white placeholder-gray-600 [color-scheme:dark]"
                 />
               </div>
@@ -133,7 +154,8 @@ export default function MiniBirthChart() {
                 )}
               </button>
               <p className="text-center text-gray-500 text-sm mt-4">
-                *Ao clicar, você será redirecionado para criar sua conta gratuita e visualizar o resultado.
+                *Ao clicar, você será redirecionado para criar sua conta
+                gratuita e visualizar o resultado.
               </p>
             </div>
           </form>
