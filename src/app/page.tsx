@@ -3,7 +3,6 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
-import MiniBirthChart from "@/components/MiniBirthChart";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Heart, Star, Sparkles } from "lucide-react";
@@ -13,30 +12,6 @@ export default function Home() {
     <main className="min-h-screen bg-black overflow-x-hidden">
       <Navbar />
       <HeroSection />
-
-      <MiniBirthChart />
-
-      {/* Rounded Divider */}
-      <div className="relative h-32 bg-gradient-to-b from-black to-purple-950/30">
-        <svg
-          className="absolute bottom-0 w-full"
-          viewBox="0 0 1440 100"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M0,32L80,37.3C160,43,320,53,480,58.7C640,64,800,64,960,58.7C1120,53,1280,43,1360,37.3L1440,32L1440,100L1360,100C1280,100,1120,100,960,100C800,100,640,100,480,100C320,100,160,100,80,100L0,100Z"
-            fill="url(#gradient1)"
-          />
-          <defs>
-            <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#581c87" stopOpacity="0.3" />
-              <stop offset="50%" stopColor="#9333ea" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#581c87" stopOpacity="0.3" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
 
       <FeaturesSection />
 

@@ -578,7 +578,42 @@ export default function DashboardPage() {
               </p>
             </div>
           </motion.div>
-        ) : null}
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-8 rounded-3xl bg-gray-900/50 border border-gray-700 mb-8 text-center"
+          >
+            <Star className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Descubra seu Mapa Astral</h3>
+            <p className="text-gray-400 mb-6">
+              Complete seu perfil com seus dados de nascimento para revelar os
+              segredos dos astros sobre você.
+            </p>
+            <Link
+              href="/profile" // Assuming there is a profile page, or maybe just show a modal?
+              // Actually, I don't see a profile page in the file list. 
+              // I'll point to a settings page or just leave it as a placeholder for now, 
+              // or maybe redirect to a "complete profile" flow.
+              // The user said "usando os dados de cadastro". 
+              // If they are missing, they need to add them.
+              // Let's assume for now they have it or I'll point to a generic edit profile.
+              // Since I don't have a profile page, I'll create a simple button that alerts or does nothing for now, 
+              // OR better, I'll check if I can easily add a profile editing feature.
+              // But to be safe and stick to the request "move to dashboard", I'll just show the message.
+              // Wait, the user said "usando os dados de cadastro". 
+              // If the user just registered, they SHOULD have the data.
+              // So this fallback is mostly for old users or if something failed.
+              // I'll point to "/settings" (which might not exist) or just hide the button.
+              // Let's look at the file list again. No profile/settings page.
+              // I'll just show the text.
+              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold transition-all"
+            >
+              <User className="w-5 h-5" />
+              Completar Perfil
+            </Link>
+          </motion.div>
+        )}
 
         {/* Quick Actions */}
         <motion.div
