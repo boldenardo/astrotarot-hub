@@ -19,6 +19,7 @@ import {
   trackPaymentCompleted,
   trackPaymentFailed,
 } from "@/lib/analytics";
+import Image from "next/image";
 
 interface CartItem {
   id: string;
@@ -285,10 +286,13 @@ export default function CartPage() {
                   </p>
                   {paymentData.qrCode && (
                     <div className="bg-white p-4 rounded-xl mb-4 flex justify-center">
-                      <img
+                      <Image
                         src={paymentData.qrCode}
                         alt="QR Code PIX"
+                        width={256}
+                        height={256}
                         className="w-64 h-64"
+                        unoptimized // Since it might be a data URL or external without config
                       />
                     </div>
                   )}

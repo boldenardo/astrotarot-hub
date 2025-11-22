@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Shuffle, Sparkles } from "lucide-react";
+import Image from "next/image";
 
 interface TarotCard {
   id: number;
@@ -227,13 +228,13 @@ export default function TarotChallenge() {
                   }}
                 >
                   {/* Card Image */}
-                  <img
+                  <Image
                     src={card.image}
                     alt={card.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                     draggable={false}
-                    loading="lazy"
-                    decoding="async"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
 
                   {/* Overlay for reveal button */}

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { EGYPTIAN_DECK } from "@/lib/tarot-data";
+import Image from "next/image";
 
 interface DrawnCard {
   id: number;
@@ -290,11 +291,13 @@ export default function EgyptianTarotPage() {
                     transition={{ delay: index * 0.2, duration: 0.6 }}
                     className="group relative"
                   >
-                    <div className="relative rounded-2xl overflow-hidden border-4 border-yellow-600/50 shadow-2xl hover:shadow-yellow-500/50 transition-all hover:scale-105">
-                      <img
+                    <div className="relative rounded-2xl overflow-hidden border-4 border-yellow-600/50 shadow-2xl hover:shadow-yellow-500/50 transition-all hover:scale-105 aspect-[2/3]">
+                      <Image
                         src={card.image}
                         alt={card.name}
-                        className="w-full h-auto object-cover filter grayscale-0 group-hover:brightness-110 transition-all"
+                        fill
+                        className="object-cover filter grayscale-0 group-hover:brightness-110 transition-all"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
                       <div className="absolute bottom-0 left-0 right-0 p-4">
