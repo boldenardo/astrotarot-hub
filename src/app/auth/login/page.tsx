@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
 import { trackLogin, trackPageView } from "@/lib/analytics";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -20,7 +22,19 @@ export default function LoginPage() {
 
   useEffect(() => {
     trackPageView("/auth/login", "Login");
-  }, []);
+    
+    // Verificar mensagens na URL
+    const message = searchParams.get("message");
+    const email = searchParams.get("email");
+    
+    if (message) {
+      setSuccessMessage(message);
+    }
+    
+    if (email) {
+      setFormData(prev => ({ ...prev, email }));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

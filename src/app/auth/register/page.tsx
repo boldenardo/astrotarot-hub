@@ -109,13 +109,12 @@ export default function RegisterPage() {
 
         // Mostrar mensagem na tela em vez de alert
         setError(""); // Limpar erros anteriores
-        alert(
-          "✅ Conta criada! Um link de confirmação foi enviado para " +
-            formData.email +
-            ". Verifique sua caixa de entrada e spam."
-        );
-
-        router.push("/auth/login");
+        
+        // Redirecionar para login com mensagem de sucesso
+        const params = new URLSearchParams();
+        params.set("message", "Conta criada! Verifique seu email para confirmar.");
+        params.set("email", formData.email);
+        router.push(`/auth/login?${params.toString()}`);
         return;
       }
 

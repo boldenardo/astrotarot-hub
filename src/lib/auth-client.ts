@@ -38,13 +38,15 @@ export async function signUp(data: SignUpData) {
       message: error.message,
       status: error.status,
       name: error.name,
-      code: error.code // Se disponível
+      code: error.code, // Se disponível
     });
     throw new Error(error.message);
   }
 
   // Se o usuário foi criado mas não tem sessão, é porque precisa confirmar email
+  // OU se o Supabase retornou user mas sem session (comum quando email confirm is on)
   if (authData.user && !authData.session) {
+    console.log("✅ Usuário criado, aguardando confirmação de email.");
     return {
       user: authData.user,
       session: null,
