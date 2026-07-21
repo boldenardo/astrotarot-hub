@@ -1,12 +1,26 @@
 import type { Metadata } from "next";
+import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
 
+const display = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const sans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "AstroTarot Hub - Tarot e Astrologia",
+  title: "AstroTarot Hub — Tarot & Astrology",
   description:
-    "Plataforma de tiragens de tarot integradas com análises astrológicas personalizadas",
+    "Personalized tarot readings integrated with detailed astrological insights to illuminate your path.",
 };
 
 export default function RootLayout({
@@ -18,7 +32,7 @@ export default function RootLayout({
   const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
   return (
-    <html lang="pt-BR">
+    <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <head>
         {/* Google Analytics */}
         {GA_MEASUREMENT_ID && (

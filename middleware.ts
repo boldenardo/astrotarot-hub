@@ -75,6 +75,7 @@ export async function middleware(req: NextRequest) {
     "/predictions",
     "/abundance",
     "/guia",
+    "/numerology",
   ];
 
   // Verificar se a rota atual é protegida
@@ -111,6 +112,7 @@ export const config = {
     "/predictions/:path*",
     "/abundance/:path*",
     "/guia/:path*",
+    "/numerology/:path*",
     "/auth/:path*",
   ],
 };

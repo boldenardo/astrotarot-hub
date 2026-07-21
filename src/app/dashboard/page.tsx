@@ -10,16 +10,17 @@ import {
   Heart,
   Gift,
   Zap,
-  Clock,
   Star,
   ArrowRight,
   LogOut,
   User,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, signOut } from "@/lib/auth-client";
 import { supabase } from "@/lib/supabase";
+import { isPremium as isPremiumPlan } from "@/lib/plans";
 import {
   trackPageView,
   trackSubscriptionUpgradeClicked,
@@ -52,7 +53,6 @@ interface ZodiacSign {
   ruler: string;
   dates: string;
   traits: string[];
-  color: string;
 }
 
 const zodiacSigns: Record<string, ZodiacSign> = {
@@ -60,17 +60,10 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     name: "Áries",
     symbol: "♈",
     element: "Fogo",
-    quality: "Cardeal",
+    quality: "Cardinal",
     ruler: "Marte",
-    dates: "21/03 - 19/04",
-    traits: [
-      "Corajoso",
-      "Determinado",
-      "Líder natural",
-      "Impulsivo",
-      "Energético",
-    ],
-    color: "from-red-500 to-orange-500",
+    dates: "21 Mar - 19 Abr",
+    traits: ["Corajoso", "Determinado", "Líder nato", "Impulsivo", "Energético"],
   },
   taurus: {
     name: "Touro",
@@ -78,9 +71,8 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Terra",
     quality: "Fixo",
     ruler: "Vênus",
-    dates: "20/04 - 20/05",
+    dates: "20 Abr - 20 Mai",
     traits: ["Confiável", "Paciente", "Prático", "Determinado", "Leal"],
-    color: "from-green-600 to-emerald-500",
   },
   gemini: {
     name: "Gêmeos",
@@ -88,19 +80,17 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Ar",
     quality: "Mutável",
     ruler: "Mercúrio",
-    dates: "21/05 - 20/06",
+    dates: "21 Mai - 20 Jun",
     traits: ["Comunicativo", "Versátil", "Curioso", "Inteligente", "Adaptável"],
-    color: "from-yellow-400 to-amber-400",
   },
   cancer: {
     name: "Câncer",
     symbol: "♋",
     element: "Água",
-    quality: "Cardeal",
+    quality: "Cardinal",
     ruler: "Lua",
-    dates: "21/06 - 22/07",
-    traits: ["Intuitivo", "Emocional", "Protetor", "Sensível", "Carinhoso"],
-    color: "from-blue-400 to-cyan-400",
+    dates: "21 Jun - 22 Jul",
+    traits: ["Intuitivo", "Emocional", "Protetor", "Sensível", "Acolhedor"],
   },
   leo: {
     name: "Leão",
@@ -108,9 +98,8 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Fogo",
     quality: "Fixo",
     ruler: "Sol",
-    dates: "23/07 - 22/08",
+    dates: "23 Jul - 22 Ago",
     traits: ["Confiante", "Generoso", "Criativo", "Carismático", "Leal"],
-    color: "from-orange-500 to-yellow-500",
   },
   virgo: {
     name: "Virgem",
@@ -118,25 +107,17 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Terra",
     quality: "Mutável",
     ruler: "Mercúrio",
-    dates: "23/08 - 22/09",
-    traits: [
-      "Analítico",
-      "Prático",
-      "Perfeccionista",
-      "Trabalhador",
-      "Modesto",
-    ],
-    color: "from-green-500 to-teal-500",
+    dates: "23 Ago - 22 Set",
+    traits: ["Analítico", "Prático", "Perfeccionista", "Trabalhador", "Modesto"],
   },
   libra: {
     name: "Libra",
     symbol: "♎",
     element: "Ar",
-    quality: "Cardeal",
+    quality: "Cardinal",
     ruler: "Vênus",
-    dates: "23/09 - 22/10",
-    traits: ["Diplomático", "Justo", "Social", "Harmonioso", "Charmoso"],
-    color: "from-pink-400 to-rose-400",
+    dates: "23 Set - 22 Out",
+    traits: ["Diplomático", "Justo", "Sociável", "Harmonioso", "Encantador"],
   },
   scorpio: {
     name: "Escorpião",
@@ -144,9 +125,8 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Água",
     quality: "Fixo",
     ruler: "Plutão",
-    dates: "23/10 - 21/11",
+    dates: "23 Out - 21 Nov",
     traits: ["Intenso", "Apaixonado", "Misterioso", "Transformador", "Leal"],
-    color: "from-purple-600 to-fuchsia-600",
   },
   sagittarius: {
     name: "Sagitário",
@@ -154,19 +134,17 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Fogo",
     quality: "Mutável",
     ruler: "Júpiter",
-    dates: "22/11 - 21/12",
+    dates: "22 Nov - 21 Dez",
     traits: ["Otimista", "Aventureiro", "Filosófico", "Honesto", "Livre"],
-    color: "from-indigo-500 to-purple-500",
   },
   capricorn: {
     name: "Capricórnio",
     symbol: "♑",
     element: "Terra",
-    quality: "Cardeal",
+    quality: "Cardinal",
     ruler: "Saturno",
-    dates: "22/12 - 19/01",
+    dates: "22 Dez - 19 Jan",
     traits: ["Ambicioso", "Disciplinado", "Responsável", "Prático", "Paciente"],
-    color: "from-gray-600 to-slate-600",
   },
   aquarius: {
     name: "Aquário",
@@ -174,15 +152,8 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Ar",
     quality: "Fixo",
     ruler: "Urano",
-    dates: "20/01 - 18/02",
-    traits: [
-      "Inovador",
-      "Independente",
-      "Humanitário",
-      "Original",
-      "Intelectual",
-    ],
-    color: "from-cyan-500 to-blue-500",
+    dates: "20 Jan - 18 Fev",
+    traits: ["Inovador", "Independente", "Humanitário", "Original", "Intelectual"],
   },
   pisces: {
     name: "Peixes",
@@ -190,9 +161,8 @@ const zodiacSigns: Record<string, ZodiacSign> = {
     element: "Água",
     quality: "Mutável",
     ruler: "Netuno",
-    dates: "19/02 - 20/03",
+    dates: "19 Fev - 20 Mar",
     traits: ["Intuitivo", "Compassivo", "Artístico", "Sensível", "Espiritual"],
-    color: "from-teal-500 to-cyan-500",
   },
 };
 
@@ -226,6 +196,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [birthChart, setBirthChart] = useState<any>(null);
   const [loadingChart, setLoadingChart] = useState(false);
+  const [showChartTeaser, setShowChartTeaser] = useState(false);
 
   useEffect(() => {
     trackPageView("/dashboard", "Dashboard");
@@ -245,9 +216,9 @@ export default function DashboardPage() {
           };
         }
       } catch (error) {
-        console.error("Erro ao buscar coordenadas:", error);
+        console.error("Failed to fetch coordinates:", error);
       }
-      return { latitude: -23.5505, longitude: -46.6333 }; // Default SP
+      return { latitude: -23.5505, longitude: -46.6333 }; // Padrão: São Paulo
     }
 
     async function loadUserData() {
@@ -258,7 +229,7 @@ export default function DashboardPage() {
           return;
         }
 
-        // Buscar perfil do usuário
+        // Busca o perfil do usuário
         const { data: profile, error: profileError } = await supabase
           .from("users")
           .select("*")
@@ -279,7 +250,7 @@ export default function DashboardPage() {
           readings_left: profile.readings_left,
         });
 
-        // Buscar últimas leituras
+        // Busca as leituras mais recentes
         const { data: readingsData } = await supabase
           .from("tarot_readings")
           .select("*")
@@ -291,44 +262,56 @@ export default function DashboardPage() {
           setReadings(readingsData);
         }
 
-        // Gerar Mapa Astral Simplificado se tiver dados
+        // Gera o mini mapa astral se os dados estiverem completos.
+        // A rota /api/birth-chart agora exige Premium, então só buscamos
+        // para assinantes; usuários FREE veem um teaser de upgrade.
         if (
           profile.birth_date &&
           profile.birth_time &&
           profile.birth_location
         ) {
-          console.log("Iniciando geração do mapa astral..."); // Debug
-          setLoadingChart(true);
+          if (isPremiumPlan(profile)) {
+            setLoadingChart(true);
 
-          const coords = await getCoordinates(profile.birth_location);
-          console.log("Coordenadas encontradas:", coords); // Debug
+            const coords = await getCoordinates(profile.birth_location);
 
-          const { data: chartData, error: chartError } =
-            await supabase.functions.invoke("generate-birth-chart", {
-              body: {
-                birthDate: profile.birth_date,
-                birthTime: profile.birth_time,
-                birthLocation: profile.birth_location,
-                name: profile.name,
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-              },
-            });
+            try {
+              const chartResponse = await fetch("/api/birth-chart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  birthDate: profile.birth_date,
+                  birthTime: profile.birth_time,
+                  birthLocation: profile.birth_location,
+                  name: profile.name,
+                  latitude: coords.latitude,
+                  longitude: coords.longitude,
+                }),
+              });
 
-          if (chartError) {
-            console.error("Erro na função generate-birth-chart:", chartError);
+              if (chartResponse.ok) {
+                const chartData = await chartResponse.json();
+                setBirthChart(chartData);
+              } else if (chartResponse.status === 403) {
+                // Assinatura expirada/sem acesso: mostra teaser sem erro
+                setShowChartTeaser(true);
+              } else {
+                console.error(
+                  "Falha ao gerar o mapa astral:",
+                  chartResponse.status
+                );
+              }
+            } catch (chartError) {
+              console.error("Falha ao gerar o mapa astral:", chartError);
+            }
+            setLoadingChart(false);
+          } else {
+            // Usuário FREE: não chama a rota premium, exibe teaser
+            setShowChartTeaser(true);
           }
-
-          if (chartData) {
-            console.log("Dados do mapa recebidos:", chartData); // Debug
-            setBirthChart(chartData);
-          }
-          setLoadingChart(false);
-        } else {
-          console.log("Dados de nascimento incompletos para o mapa astral"); // Debug
         }
       } catch (error) {
-        console.error("Erro ao carregar dados:", error);
+        console.error("Falha ao carregar os dados:", error);
       } finally {
         setLoading(false);
       }
@@ -344,21 +327,21 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <motion.div
-            className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mx-auto mb-4"
+            className="w-16 h-16 border-4 border-gold-400/40 border-t-gold-400 rounded-full mx-auto mb-4"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <p className="text-gray-400">Carregando seu portal místico...</p>
+          <p className="text-ink-400">Carregando seu portal místico...</p>
         </div>
       </div>
     );
   }
 
-  const isPremium = user?.subscription_plan === "PREMIUM_MONTHLY";
-  const isFree = user?.subscription_plan === "FREE";
+  const premium = isPremiumPlan(user);
+  const isFree = !premium;
 
   const zodiacSign = user?.birth_date
     ? {
@@ -367,11 +350,62 @@ export default function DashboardPage() {
       }
     : null;
 
+  const quickActions = [
+    {
+      href: "/challenge",
+      icon: Gift,
+      title: "Jogo Grátis",
+      description: "Tire suas 4 cartas místicas",
+      cta: "Jogar Agora",
+      premiumOnly: false,
+    },
+    {
+      href: "/tarot",
+      icon: Sparkles,
+      title: "Tarot Completo",
+      description: "Leitura completa com IA",
+      cta: "Iniciar Leitura",
+      premiumOnly: false,
+    },
+    {
+      href: "/guia",
+      icon: Heart,
+      title: "Guia Espiritual",
+      description: "Converse com a Luna IA",
+      cta: "Conversar",
+      premiumOnly: false,
+    },
+    {
+      href: "/compatibility",
+      icon: Heart,
+      title: "Compatibilidade",
+      description: "Análise astrológica do amor",
+      cta: "Analisar",
+      premiumOnly: true,
+    },
+    {
+      href: "/predictions",
+      icon: TrendingUp,
+      title: "Previsões",
+      description: "Seu futuro nos astros",
+      cta: "Ver Previsões",
+      premiumOnly: true,
+    },
+    {
+      href: "/abundance",
+      icon: Zap,
+      title: "Prosperidade",
+      description: "Rituais de prosperidade",
+      cta: "Abrir",
+      premiumOnly: true,
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-ink-200">
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(124,92,255,0.12),transparent_60%)]" />
         {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
@@ -393,104 +427,113 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Content */}
+      {/* Conteúdo */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
+        {/* Cabeçalho */}
         <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="text-2xl font-bold">
-            ✨ AstroTarot Hub
+          <Link
+            href="/"
+            className="font-display text-2xl font-semibold text-ink-50"
+          >
+            Astro<span className="text-gold">Tarot</span> Hub
           </Link>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-xl transition-all"
+            className="btn-ghost flex items-center gap-2 rounded-full px-5 py-2.5 text-sm"
           >
             <LogOut className="w-4 h-4" />
             Sair
           </button>
         </div>
 
-        {/* User Welcome */}
+        {/* Boas-vindas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold mb-2">
-            Bem-vindo(a), {user?.name || "Místico(a)"}! 🌟
+          <h1 className="font-display text-4xl font-semibold text-ink-50 mb-2">
+            Bem-vindo(a) de volta,{" "}
+            <span className="text-gold">{user?.name || "Buscador(a)"}</span>
           </h1>
-          <p className="text-gray-400">{user?.email}</p>
+          <p className="text-ink-600">{user?.email}</p>
         </motion.div>
 
-        {/* Subscription Status */}
+        {/* Status da assinatura */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className={`p-6 rounded-2xl mb-8 ${
-            isPremium
-              ? "bg-gradient-to-r from-yellow-600/20 to-amber-600/20 border-2 border-yellow-500/50"
-              : "bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-2 border-purple-500/50"
+          className={`glass rounded-3xl p-6 mb-8 ${
+            premium ? "glass-gold" : "border-white/5"
           }`}
         >
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              {isPremium ? (
-                <Crown className="w-12 h-12 text-yellow-400" />
+              {premium ? (
+                <Crown className="w-12 h-12 text-gold-300" />
               ) : (
-                <Gift className="w-12 h-12 text-purple-400" />
+                <Gift className="w-12 h-12 text-ink-300" />
               )}
               <div>
-                <h3 className="text-2xl font-bold">
-                  {isPremium ? "✨ Plano Premium Ativo" : "🎁 Plano Gratuito"}
+                <h3 className="font-display text-2xl font-semibold text-ink-50">
+                  {premium ? "Premium Ilimitado Ativo" : "Plano Gratuito"}
                 </h3>
-                <p className="text-gray-400">
-                  {isPremium
-                    ? "Acesso ilimitado a todas as funcionalidades"
-                    : `${
-                        user?.readings_left || 0
-                      } leituras gratuitas restantes`}
+                <p className="text-ink-400">
+                  {premium
+                    ? "Leituras ilimitadas + todas as features"
+                    : `${user?.readings_left || 0} leituras restantes`}
                 </p>
               </div>
             </div>
             {isFree && (
-              <Link
-                href="/cart"
-                onClick={() =>
-                  trackSubscriptionUpgradeClicked("premium_monthly")
-                }
-                className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 rounded-xl font-bold transition-all hover:scale-105"
-              >
-                <Crown className="w-5 h-5 inline mr-2" />
-                Seja Premium
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Link
+                  href="/cart?plan=pack5"
+                  className="btn-ghost flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold"
+                >
+                  <Sparkles className="w-4 h-4 text-gold-300" />
+                  Pacote 5 Leituras — US$ 9,99
+                </Link>
+                <Link
+                  href="/cart?plan=premium"
+                  onClick={() =>
+                    trackSubscriptionUpgradeClicked("premium_monthly")
+                  }
+                  className="btn-gold flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm"
+                >
+                  <Crown className="w-5 h-5" />
+                  Premium Ilimitado — US$ 29,90/mês
+                </Link>
+              </div>
             )}
           </div>
         </motion.div>
 
-        {/* Zodiac Sign Card */}
+        {/* Card do signo */}
         {zodiacSign && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className={`p-8 rounded-3xl bg-gradient-to-br ${zodiacSign.sign.color} mb-8 relative overflow-hidden`}
+            className="glass glass-gold rounded-3xl p-8 mb-8 relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 text-[200px] opacity-10 leading-none">
+            <div className="absolute top-0 right-0 text-[200px] leading-none text-gold-400/10">
               {zodiacSign.sign.symbol}
             </div>
             <div className="relative z-10">
-              <p className="text-white/80 text-sm font-semibold mb-2">
-                SEU SIGNO SOLAR
+              <p className="text-gold-300 text-sm font-semibold uppercase tracking-wider mb-2">
+                Seu Signo Solar
               </p>
-              <h3 className="text-5xl font-bold text-white mb-2">
+              <h3 className="font-display text-5xl font-semibold text-ink-50 mb-2">
                 {zodiacSign.sign.symbol} {zodiacSign.sign.name}
               </h3>
-              <p className="text-white/90 mb-4">{zodiacSign.sign.dates}</p>
+              <p className="text-ink-400 mb-4">{zodiacSign.sign.dates}</p>
               <div className="flex flex-wrap gap-2">
                 {zodiacSign.sign.traits.map((trait: string) => (
                   <span
                     key={trait}
-                    className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-sm font-semibold"
+                    className="px-3 py-1 rounded-full border border-gold-400/30 bg-gold-400/10 text-gold-300 text-sm font-semibold"
                   >
                     {trait}
                   </span>
@@ -500,85 +543,85 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Mini Birth Chart (AI Generated) */}
+        {/* Mini mapa astral (gerado por IA) */}
         {loadingChart ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-8 rounded-3xl bg-gray-900/50 border border-purple-500/20 mb-8 text-center"
+            className="glass rounded-3xl p-8 border-white/5 mb-8 text-center"
           >
-            <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-4 animate-pulse" />
-            <h3 className="text-xl font-bold mb-2">
-              Gerando seu Mapa Astral...
+            <Sparkles className="w-8 h-8 text-gold-300 mx-auto mb-4 animate-pulse" />
+            <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
+              Gerando seu mapa astral...
             </h3>
-            <p className="text-gray-400">
-              Os astros estão se alinhando para você
-            </p>
+            <p className="text-ink-400">Os astros estão se alinhando para você</p>
           </motion.div>
         ) : birthChart ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-8 rounded-3xl bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/20 mb-8"
+            className="glass glass-gold rounded-3xl p-8 mb-8"
           >
             <div className="flex items-center gap-3 mb-6">
-              <Star className="w-6 h-6 text-yellow-400" />
-              <h3 className="text-2xl font-bold">Seu Mapa Astral Essencial</h3>
+              <Star className="w-6 h-6 text-gold-300" />
+              <h3 className="font-display text-2xl font-semibold text-ink-50">
+                Seu Mapa Astral Essencial
+              </h3>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {/* Sun */}
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5">
-                <div className="flex items-center gap-2 mb-2 text-yellow-400">
+              {/* Sol */}
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-2 mb-2 text-gold-300">
                   <span className="text-xl">☉</span>
-                  <span className="font-bold">
+                  <span className="font-semibold">
                     Sol em {birthChart.sun.sign}
                   </span>
                 </div>
-                <p className="text-sm text-gray-300 mb-2">
+                <p className="text-sm text-ink-300 mb-2">
                   Casa {birthChart.sun.house}
                 </p>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-ink-400 leading-relaxed">
                   {birthChart.sun.interpretation}
                 </p>
               </div>
 
-              {/* Moon */}
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5">
-                <div className="flex items-center gap-2 mb-2 text-blue-300">
+              {/* Lua */}
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-2 mb-2 text-amethyst-300">
                   <span className="text-xl">☽</span>
-                  <span className="font-bold">
+                  <span className="font-semibold">
                     Lua em {birthChart.moon.sign}
                   </span>
                 </div>
-                <p className="text-sm text-gray-300 mb-2">
+                <p className="text-sm text-ink-300 mb-2">
                   Casa {birthChart.moon.house}
                 </p>
-                <p className="text-sm text-gray-400 leading-relaxed">
+                <p className="text-sm text-ink-400 leading-relaxed">
                   {birthChart.moon.interpretation}
                 </p>
               </div>
 
-              {/* Ascendant */}
-              <div className="bg-black/30 p-4 rounded-xl border border-white/5">
-                <div className="flex items-center gap-2 mb-2 text-purple-300">
+              {/* Ascendente */}
+              <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div className="flex items-center gap-2 mb-2 text-ink-300">
                   <span className="text-xl">↑</span>
-                  <span className="font-bold">
+                  <span className="font-semibold">
                     Ascendente em {birthChart.ascendant.sign}
                   </span>
                 </div>
-                <p className="text-sm text-gray-400 leading-relaxed mt-6">
+                <p className="text-sm text-ink-400 leading-relaxed mt-6">
                   {birthChart.ascendant.interpretation}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white/5 p-6 rounded-xl mb-6">
-              <h4 className="font-bold mb-2 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
+            <div className="bg-white/5 p-6 rounded-2xl mb-6">
+              <h4 className="font-semibold text-ink-50 mb-2 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-gold-300" />
                 Interpretação Geral
               </h4>
-              <p className="text-gray-300 leading-relaxed">
+              <p className="text-ink-300 leading-relaxed">
                 {birthChart.interpretation}
               </p>
             </div>
@@ -586,10 +629,41 @@ export default function DashboardPage() {
             <div className="text-center">
               <Link
                 href="/dashboard/birth-chart"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/50 rounded-xl font-semibold transition-all text-purple-300 hover:text-white"
+                className="btn-ghost inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold"
               >
-                <Star className="w-4 h-4" />
+                <Star className="w-4 h-4 text-gold-300" />
                 Ver Mapa Completo (Planetas e Casas)
+              </Link>
+            </div>
+          </motion.div>
+        ) : showChartTeaser ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass glass-gold rounded-3xl p-8 mb-8 text-center relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 text-[160px] leading-none text-gold-400/10 pointer-events-none">
+              ★
+            </div>
+            <div className="relative z-10">
+              <Lock className="w-12 h-12 text-gold-300 mx-auto mb-4" />
+              <h3 className="font-display text-2xl font-semibold text-ink-50 mb-2">
+                Mapa astral é Premium
+              </h3>
+              <p className="text-ink-300 mb-6 max-w-xl mx-auto">
+                Seu mapa astral completo — Sol, Lua, Ascendente, planetas e
+                casas — está a um passo. Desbloqueie com o plano Premium
+                Ilimitado.
+              </p>
+              <Link
+                href="/cart?plan=premium"
+                onClick={() =>
+                  trackSubscriptionUpgradeClicked("premium_monthly")
+                }
+                className="btn-gold inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
+              >
+                <Crown className="w-6 h-6" />
+                Desbloquear com Premium Ilimitado — US$ 29,90/mês
               </Link>
             </div>
           </motion.div>
@@ -597,32 +671,19 @@ export default function DashboardPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-8 rounded-3xl bg-gray-900/50 border border-gray-700 mb-8 text-center"
+            className="glass rounded-3xl p-8 border-white/5 mb-8 text-center"
           >
-            <Star className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Descubra seu Mapa Astral</h3>
-            <p className="text-gray-400 mb-6">
-              Complete seu perfil com seus dados de nascimento para revelar os
-              segredos dos astros sobre você.
+            <Star className="w-12 h-12 text-ink-600 mx-auto mb-4" />
+            <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
+              Descubra Seu Mapa Astral
+            </h3>
+            <p className="text-ink-400 mb-6">
+              Complete seu perfil com seus dados de nascimento para revelar o
+              que os astros dizem sobre você.
             </p>
             <Link
-              href="/profile" // Assuming there is a profile page, or maybe just show a modal?
-              // Actually, I don't see a profile page in the file list.
-              // I'll point to a settings page or just leave it as a placeholder for now,
-              // or maybe redirect to a "complete profile" flow.
-              // The user said "usando os dados de cadastro".
-              // If they are missing, they need to add them.
-              // Let's assume for now they have it or I'll point to a generic edit profile.
-              // Since I don't have a profile page, I'll create a simple button that alerts or does nothing for now,
-              // OR better, I'll check if I can easily add a profile editing feature.
-              // But to be safe and stick to the request "move to dashboard", I'll just show the message.
-              // Wait, the user said "usando os dados de cadastro".
-              // If the user just registered, they SHOULD have the data.
-              // So this fallback is mostly for old users or if something failed.
-              // I'll point to "/settings" (which might not exist) or just hide the button.
-              // Let's look at the file list again. No profile/settings page.
-              // I'll just show the text.
-              className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold transition-all"
+              href="/profile"
+              className="btn-gold inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold"
             >
               <User className="w-5 h-5" />
               Completar Perfil
@@ -630,117 +691,66 @@ export default function DashboardPage() {
           </motion.div>
         )}
 
-        {/* Quick Actions */}
+        {/* Ações rápidas */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
           className="mb-8"
         >
-          <h2 className="text-2xl font-bold mb-4">⚡ Ações Rápidas</h2>
+          <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4">
+            Ações Rápidas
+          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Link
-              href="/challenge"
-              className="p-6 bg-gradient-to-br from-green-600/20 to-emerald-600/20 border-2 border-green-500/50 rounded-2xl hover:border-green-400 transition-all hover:scale-105"
-            >
-              <Gift className="w-10 h-10 text-green-400 mb-3" />
-              <h3 className="text-xl font-bold mb-2">🎁 Jogo Gratuito</h3>
-              <p className="text-gray-400 text-sm mb-3">
-                Tire suas 4 cartas místicas
-              </p>
-              <div className="flex items-center gap-2 text-green-400 font-semibold">
-                Jogar Agora <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            <Link
-              href="/tarot"
-              className="p-6 bg-gradient-to-br from-purple-600/20 to-pink-600/20 border-2 border-purple-500/50 rounded-2xl hover:border-purple-400 transition-all hover:scale-105"
-            >
-              <Sparkles className="w-10 h-10 text-purple-400 mb-3" />
-              <h3 className="text-xl font-bold mb-2">🔮 Tarot Completo</h3>
-              <p className="text-gray-400 text-sm mb-3">
-                Leitura completa com IA
-              </p>
-              <div className="flex items-center gap-2 text-purple-400 font-semibold">
-                Iniciar Leitura <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            <Link
-              href="/guia"
-              className="p-6 bg-gradient-to-br from-pink-600/20 to-rose-600/20 border-2 border-pink-500/50 rounded-2xl hover:border-pink-400 transition-all hover:scale-105"
-            >
-              <Heart className="w-10 h-10 text-pink-400 mb-3" />
-              <h3 className="text-xl font-bold mb-2">💜 Guia Espiritual</h3>
-              <p className="text-gray-400 text-sm mb-3">Chat com IA Luna</p>
-              <div className="flex items-center gap-2 text-pink-400 font-semibold">
-                Conversar <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            <Link
-              href="/compatibility"
-              className="p-6 bg-gradient-to-br from-red-600/20 to-pink-600/20 border-2 border-red-500/50 rounded-2xl hover:border-red-400 transition-all hover:scale-105"
-            >
-              <Heart className="w-10 h-10 text-red-400 mb-3" />
-              <h3 className="text-xl font-bold mb-2">💕 Compatibilidade</h3>
-              <p className="text-gray-400 text-sm mb-3">
-                Análise astrológica amorosa
-              </p>
-              <div className="flex items-center gap-2 text-red-400 font-semibold">
-                Analisar <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            <Link
-              href="/predictions"
-              className="p-6 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 border-2 border-blue-500/50 rounded-2xl hover:border-blue-400 transition-all hover:scale-105"
-            >
-              <TrendingUp className="w-10 h-10 text-blue-400 mb-3" />
-              <h3 className="text-xl font-bold mb-2">🌙 Previsões</h3>
-              <p className="text-gray-400 text-sm mb-3">
-                Seu futuro nas estrelas
-              </p>
-              <div className="flex items-center gap-2 text-blue-400 font-semibold">
-                Ver Previsões <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
-
-            <Link
-              href="/abundance"
-              className="p-6 bg-gradient-to-br from-yellow-600/20 to-orange-600/20 border-2 border-yellow-500/50 rounded-2xl hover:border-yellow-400 transition-all hover:scale-105"
-            >
-              <Zap className="w-10 h-10 text-yellow-400 mb-3" />
-              <h3 className="text-xl font-bold mb-2">💰 Abundância</h3>
-              <p className="text-gray-400 text-sm mb-3">
-                Rituais de prosperidade
-              </p>
-              <div className="flex items-center gap-2 text-yellow-400 font-semibold">
-                Acessar <ArrowRight className="w-4 h-4" />
-              </div>
-            </Link>
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              const showPremiumBadge = action.premiumOnly && isFree;
+              return (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="glass relative rounded-3xl p-6 border-white/5 transition-all hover:border-gold-400/30"
+                >
+                  {showPremiumBadge && (
+                    <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full border border-gold-400/30 bg-gold-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold-300">
+                      <Lock className="w-3 h-3" />
+                      Premium
+                    </span>
+                  )}
+                  <Icon className="w-10 h-10 text-gold-300 mb-3" />
+                  <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
+                    {action.title}
+                  </h3>
+                  <p className="text-ink-400 text-sm mb-3">
+                    {action.description}
+                  </p>
+                  <div className="flex items-center gap-2 text-gold-300 font-semibold">
+                    {action.cta} <ArrowRight className="w-4 h-4" />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </motion.div>
 
-        {/* Recent Readings */}
+        {/* Leituras recentes */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <h2 className="text-2xl font-bold mb-4">
-            📜 Minhas Últimas Leituras
+          <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4">
+            Minhas Leituras Recentes
           </h2>
           {readings.length === 0 ? (
-            <div className="p-8 bg-gray-900/50 border border-gray-700 rounded-2xl text-center">
-              <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 mb-4">
-                Você ainda não realizou nenhuma leitura
+            <div className="glass rounded-3xl p-8 border-white/5 text-center">
+              <Calendar className="w-16 h-16 text-ink-600 mx-auto mb-4" />
+              <p className="text-ink-400 mb-4">
+                Você ainda não fez nenhuma leitura
               </p>
               <Link
                 href="/challenge"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl font-semibold transition-all"
+                className="btn-gold inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold"
               >
                 <Sparkles className="w-5 h-5" />
                 Fazer Minha Primeira Leitura
@@ -751,16 +761,16 @@ export default function DashboardPage() {
               {readings.map((reading) => (
                 <div
                   key={reading.id}
-                  className="p-6 bg-gray-900/50 border border-gray-700 rounded-2xl hover:border-purple-500/50 transition-all"
+                  className="glass rounded-3xl p-6 border-white/5 transition-all hover:border-gold-400/30"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <Sparkles className="w-6 h-6 text-purple-400" />
+                      <Sparkles className="w-6 h-6 text-gold-300" />
                       <div>
-                        <p className="font-bold text-lg">
+                        <p className="font-semibold text-ink-50 text-lg">
                           {reading.question || "Leitura Geral"}
                         </p>
-                        <p className="text-sm text-gray-400">
+                        <p className="text-sm text-ink-600">
                           {new Date(reading.created_at).toLocaleDateString(
                             "pt-BR",
                             {
@@ -773,7 +783,7 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-gray-300 line-clamp-2">
+                  <p className="text-ink-300 line-clamp-2">
                     {reading.interpretation}
                   </p>
                 </div>
@@ -782,33 +792,42 @@ export default function DashboardPage() {
           )}
         </motion.div>
 
-        {/* Premium Upgrade CTA */}
+        {/* CTA de upgrade Premium */}
         {isFree && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="mt-8 p-8 bg-gradient-to-r from-yellow-600/20 to-amber-600/20 border-2 border-yellow-500/50 rounded-2xl"
+            className="glass glass-gold rounded-3xl p-8 mt-8"
           >
             <div className="text-center">
-              <Crown className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
-              <h3 className="text-3xl font-bold mb-3">
+              <Crown className="w-20 h-20 text-gold-300 mx-auto mb-4" />
+              <h3 className="font-display text-3xl font-semibold text-ink-50 mb-3">
                 Desbloqueie Todo o Poder Místico
               </h3>
-              <p className="text-xl text-gray-300 mb-6">
+              <p className="text-xl text-ink-300 mb-6">
                 Por apenas{" "}
-                <span className="text-yellow-400 font-bold">R$ 29,90/mês</span>
+                <span className="text-gold font-bold">US$ 29,90/mês</span>
               </p>
-              <Link
-                href="/cart"
-                onClick={() =>
-                  trackSubscriptionUpgradeClicked("premium_monthly")
-                }
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all hover:scale-105"
-              >
-                <Crown className="w-6 h-6" />
-                Assinar Agora
-              </Link>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link
+                  href="/cart?plan=premium"
+                  onClick={() =>
+                    trackSubscriptionUpgradeClicked("premium_monthly")
+                  }
+                  className="btn-gold inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
+                >
+                  <Crown className="w-6 h-6" />
+                  Assinar Agora
+                </Link>
+                <Link
+                  href="/cart?plan=pack5"
+                  className="btn-ghost inline-flex items-center gap-2 rounded-full px-8 py-4"
+                >
+                  <Sparkles className="w-5 h-5 text-gold-300" />
+                  Ou compre 5 leituras por US$ 9,99
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

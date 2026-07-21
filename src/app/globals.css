@@ -3,20 +3,80 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 26, 11, 46;
-  --background-end-rgb: 10, 5, 25;
+  --font-display: "Cormorant Garamond", serif;
+  --font-sans: "Inter", system-ui, sans-serif;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  min-height: 100vh;
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    color: #e8e4f5;
+    background: radial-gradient(
+        1200px 600px at 50% -10%,
+        rgba(124, 92, 255, 0.1),
+        transparent 60%
+      ),
+      radial-gradient(
+        900px 500px at 85% 8%,
+        rgba(212, 175, 55, 0.06),
+        transparent 55%
+      ),
+      #07050d;
+    min-height: 100vh;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: rgba(212, 175, 55, 0.25);
+  }
+}
+
+@layer components {
+  /* Gold gradient text */
+  .text-gold {
+    background: linear-gradient(135deg, #f7ecc9, #d4af37 55%, #a9822f);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Frosted glass surface */
+  .glass {
+    background: rgba(20, 14, 32, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .glass-gold {
+    border: 1px solid rgba(212, 175, 55, 0.22);
+  }
+  /* Primary gold button */
+  .btn-gold {
+    background: linear-gradient(135deg, #edd9a3, #d4af37 55%, #a9822f);
+    color: #1a1330;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .btn-gold:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 30px -10px rgba(212, 175, 55, 0.5);
+  }
+  /* Subtle outline button */
+  .btn-ghost {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #e8e4f5;
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .btn-ghost:hover {
+    border-color: rgba(212, 175, 55, 0.5);
+    background: rgba(212, 175, 55, 0.06);
+  }
 }
 
 @layer utilities {
@@ -25,12 +85,26 @@ body {
   }
 }
 
-/* Animações customizadas para cartas */
+/* Refined scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0713;
+}
+::-webkit-scrollbar-thumb {
+  background: #241a42;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #322553;
+}
+
+/* Tarot card flip (kept from before) */
 .card-back {
   transform-style: preserve-3d;
   transition: transform 0.6s;
 }
-
 .card-back.flipped {
   transform: rotateY(180deg);
 }

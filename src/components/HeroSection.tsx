@@ -1,94 +1,70 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Heart,
-  Sparkles,
-  TrendingUp,
-  Shield,
-  Zap,
-  Moon,
-  Crown,
-} from "lucide-react";
+import { Sparkles, Shield, Zap, Star, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 
 const FortuneTeller3D = dynamic(() => import("./FortuneTeller3D"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-[400px] flex items-center justify-center">
-      <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+    <div className="flex h-[400px] w-full items-center justify-center">
+      <div className="h-16 w-16 animate-spin rounded-full border-4 border-gold-400/40 border-t-gold-400" />
     </div>
   ),
 });
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Galaxy Background */}
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
+      {/* Ambient background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(124,92,255,0.14),transparent_60%)]" />
+        <div className="absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.08),transparent_45%)]" />
 
-        {/* Static pattern (removed animation for performance) */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-
-        {/* Reduced stars from 15 to 8 for performance */}
-        {[...Array(8)].map((_, i) => (
-          <motion.div
+        {/* Subtle stars */}
+        {[
+          [12, 22],
+          [82, 18],
+          [68, 62],
+          [24, 74],
+          [46, 12],
+          [90, 48],
+          [8, 52],
+          [58, 84],
+        ].map(([left, top], i) => (
+          <motion.span
             key={i}
-            className="absolute w-1 h-1 bg-white rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              opacity: [0.3, 1, 0.3],
-            }}
+            className="absolute h-1 w-1 rounded-full bg-white"
+            style={{ left: `${left}%`, top: `${top}%` }}
+            animate={{ opacity: [0.2, 0.9, 0.2] }}
             transition={{
-              duration: 3,
-              delay: Math.random() * 3,
+              duration: 3 + (i % 3),
+              delay: i * 0.4,
               repeat: Infinity,
-              ease: "linear",
+              ease: "easeInOut",
             }}
           />
         ))}
 
-        {/* Zodiac Wheel Background */}
+        {/* Rotating zodiac wheel */}
         <motion.div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-10"
+          className="absolute left-1/2 top-1/2 h-[820px] w-[820px] -translate-x-1/2 -translate-y-1/2 opacity-[0.12]"
           animate={{ rotate: 360 }}
-          transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 160, repeat: Infinity, ease: "linear" }}
         >
-          <svg viewBox="0 0 200 200" className="w-full h-full">
-            <circle
-              cx="100"
-              cy="100"
-              r="90"
-              stroke="url(#gradient)"
-              strokeWidth="0.5"
-              fill="none"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="70"
-              stroke="url(#gradient)"
-              strokeWidth="0.5"
-              fill="none"
-            />
-            <circle
-              cx="100"
-              cy="100"
-              r="50"
-              stroke="url(#gradient)"
-              strokeWidth="0.5"
-              fill="none"
-            />
+          <svg viewBox="0 0 200 200" className="h-full w-full">
+            {[90, 70, 50].map((r) => (
+              <circle
+                key={r}
+                cx="100"
+                cy="100"
+                r={r}
+                stroke="url(#goldGrad)"
+                strokeWidth="0.4"
+                fill="none"
+              />
+            ))}
             {[...Array(12)].map((_, i) => {
               const angle = (i * 30 * Math.PI) / 180;
               return (
@@ -98,15 +74,15 @@ export default function HeroSection() {
                   y1="100"
                   x2={100 + 90 * Math.cos(angle)}
                   y2={100 + 90 * Math.sin(angle)}
-                  stroke="url(#gradient)"
-                  strokeWidth="0.3"
+                  stroke="url(#goldGrad)"
+                  strokeWidth="0.25"
                 />
               );
             })}
             <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#a855f7" />
-                <stop offset="100%" stopColor="#ec4899" />
+              <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#F7ECC9" />
+                <stop offset="100%" stopColor="#A9822F" />
               </linearGradient>
             </defs>
           </svg>
@@ -114,162 +90,113 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-32 pb-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Text Content */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-32">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="text-center lg:text-left">
-            {/* Badge */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600/80 to-pink-600/80 backdrop-blur-sm border border-purple-400/30 rounded-full mb-8"
+              className="glass glass-gold mb-8 inline-flex items-center gap-2 rounded-full px-4 py-2"
             >
-              <Sparkles className="w-4 h-4 text-purple-300" />
-              <span className="text-sm font-medium text-white">
-                ✨ Descubra seu caminho através das estrelas
+              <Sparkles className="h-4 w-4 text-gold-300" />
+              <span className="text-sm font-medium text-ink-200">
+                Descubra seu caminho através dos astros
               </span>
             </motion.div>
 
-            {/* Main Heading */}
             <motion.h1
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight"
+              transition={{ duration: 0.7, delay: 0.15 }}
+              className="font-display text-5xl font-semibold leading-[1.05] text-ink-50 md:text-7xl lg:text-[5.25rem]"
             >
-              <span className="block bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-                Descubra Seu Poder Interior
-              </span>
-              <span className="block bg-gradient-to-r from-pink-300 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-                com Tarot & Astrologia
-              </span>
+              Descubra seu <span className="text-gold">poder interior</span>
+              <br />
+              com Tarot e Astrologia
             </motion.h1>
 
-            {/* Subheading */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto lg:mx-0 mb-4 leading-relaxed"
+              transition={{ duration: 0.7, delay: 0.3 }}
+              className="mx-auto mt-6 max-w-xl text-lg text-ink-400 lg:mx-0 lg:text-xl"
             >
-              Conecte-se com o universo através de{" "}
-              <span className="text-pink-400 font-semibold">
-                leituras de tarot personalizadas
-              </span>
-              ,{" "}
-              <span className="text-purple-400 font-semibold">
-                mapas astrais detalhados
-              </span>{" "}
-              e orientações celestiais para iluminar seu caminho.
+              Conecte-se com o universo através de leituras de tarot
+              personalizadas, mapas astrais detalhados e orientação celestial
+              para iluminar seu caminho.
             </motion.p>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-              className="text-lg text-gray-400 max-w-2xl mx-auto lg:mx-0 mb-8"
-            >
-              ✨ Milhares de pessoas encontraram clareza e direção através das
-              nossas leituras
-            </motion.p>
-
-            {/* Freemium Badge */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.7 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600/90 to-pink-600/90 text-white px-6 py-3 rounded-full text-sm font-medium mb-8"
-            >
-              <Sparkles className="w-4 h-4" />
-              🎁 Experimente gratuitamente - Sem compromisso
-            </motion.div>
-
-            {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-16"
+              transition={{ duration: 0.7, delay: 0.45 }}
+              className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start"
             >
               <Link
                 href="/challenge"
-                className="group relative px-8 py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full font-semibold text-lg shadow-xl shadow-purple-500/30 hover:shadow-purple-500/50 transition-all hover:scale-105"
+                className="btn-gold flex items-center gap-2 rounded-full px-8 py-4 text-base"
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5" />
-                  Começar Gratuitamente
-                </span>
+                <Sparkles className="h-5 w-5" />
+                Começar Grátis
               </Link>
               <Link
-                href="/auth/register"
-                className="group relative px-8 py-5 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 text-white rounded-full font-semibold text-lg shadow-xl shadow-pink-500/30 hover:shadow-pink-500/50 transition-all hover:scale-105"
+                href="/cart?plan=premium"
+                className="btn-ghost flex items-center gap-2 rounded-full px-8 py-4 text-base font-medium"
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  <Crown className="w-5 h-5" />
-                  Acesso Premium - R$ 29,90/mês
-                </span>
-              </Link>
-
-              <Link
-                href="#features"
-                className="px-8 py-5 bg-black/50 backdrop-blur-sm border-2 border-purple-500/50 hover:border-purple-400 rounded-full font-medium text-lg transition-all hover:scale-105 hover:bg-purple-900/30"
-              >
-                Saiba Mais ✨
+                <Star className="h-5 w-5 text-gold-300" />
+                Desbloquear Premium
               </Link>
             </motion.div>
 
-            {/* Trust Badges */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1 }}
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-8 text-sm text-gray-400"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 0.7 }}
+              className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-ink-400 lg:justify-start"
             >
-              <div className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-green-400" />
-                <span>100% Seguro e Confidencial</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-400" />
-                <span>Resultados Instantâneos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Heart className="w-5 h-5 text-pink-400" fill="currentColor" />
-                <span>4.9/5 de Satisfação</span>
-              </div>
+              <span className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-gold-400" />
+                Privado e seguro
+              </span>
+              <span className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-gold-400" />
+                Resultados instantâneos
+              </span>
+              <span className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-gold-400" fill="currentColor" />
+                4,9/5 de satisfação
+              </span>
             </motion.div>
           </div>
 
-          {/* 3D Model Column */}
+          {/* 3D model */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="hidden lg:block h-[600px] w-full relative"
+            transition={{ duration: 1, delay: 0.4 }}
+            className="relative hidden h-[600px] w-full lg:block"
           >
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/10 to-transparent rounded-full blur-3xl" />
+            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amethyst-500/10 to-transparent blur-3xl" />
             <FortuneTeller3D />
           </motion.div>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
+      {/* Scroll indicator */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 1 }}
+        transition={{ delay: 1.6, duration: 1 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
         <motion.div
-          animate={{ y: [0, 10, 0] }}
+          animate={{ y: [0, 8, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="flex flex-col items-center gap-2 text-purple-400"
+          className="flex flex-col items-center gap-2 text-ink-400"
         >
-          <Moon className="w-6 h-6" />
-          <span className="text-xs uppercase tracking-wider">
-            Descubra mais
-          </span>
+          <span className="text-xs uppercase tracking-[0.2em]">Explorar</span>
+          <ChevronDown className="h-5 w-5 text-gold-400" />
         </motion.div>
       </motion.div>
     </section>

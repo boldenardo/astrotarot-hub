@@ -1,7 +1,31 @@
 import { supabase } from "./supabase";
 
+/** Erro de API com status HTTP e código de negócio (ex.: NO_READINGS_LEFT). */
+export class TarotApiError extends Error {
+  status: number;
+  code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "TarotApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export interface TarotReadingResponse {
+  success: true;
+  reading: {
+    id: string;
+    cards: unknown;
+    interpretation: string;
+    createdAt: string;
+  };
+  readingsLeft: number | "ilimitado";
+}
+
 /**
- * Cria uma nova leitura de Tarot usando Edge Function
+ * Cria uma nova leitura de Tarot via rota de API do Next.js
  */
 export async function createTarotReading(data: {
   selectedCards: Array<{
@@ -11,19 +35,24 @@ export async function createTarotReading(data: {
     description?: string;
   }>;
   question?: string;
-}) {
-  const { data: result, error } = await supabase.functions.invoke(
-    "create-tarot-reading",
-    {
-      body: data,
-    }
-  );
+}): Promise<TarotReadingResponse> {
+  const res = await fetch("/api/tarot/reading", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
 
-  if (error) {
-    throw new Error(error.message);
+  const result = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new TarotApiError(
+      result?.error || "Não foi possível gerar sua leitura agora.",
+      res.status,
+      result?.code
+    );
   }
 
-  return result;
+  return result as TarotReadingResponse;
 }
 
 /**

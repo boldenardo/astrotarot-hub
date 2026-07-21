@@ -29,10 +29,10 @@ export async function GET(request: Request) {
     );
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Sucesso! Redirecionar para dashboard
+      // Success — redirect to the dashboard
       return NextResponse.redirect(`${origin}${next}`);
     } else {
-      console.error("❌ Erro no callback:", error);
+      console.error("Auth callback error:", error);
     }
   }
 

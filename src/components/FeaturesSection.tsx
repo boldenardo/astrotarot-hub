@@ -7,123 +7,105 @@ import { Heart, TrendingUp, Sparkles, Shield, Star, Zap } from "lucide-react";
 const features = [
   {
     icon: Heart,
-    title: "Atração do Amor Verdadeiro",
+    title: "Atraia o Amor Verdadeiro",
     description:
-      "Descubra quando e como o amor da sua vida vai aparecer. Entenda sua compatibilidade astrológica e desbloqueie relacionamentos profundos e duradouros.",
-    gradient: "from-pink-500 to-rose-500",
-    bgGlow: "bg-pink-500/20",
+      "Descubra quando e como o amor vai entrar na sua vida. Entenda sua compatibilidade astrológica e desbloqueie relações profundas e duradouras.",
     link: "/compatibility",
   },
   {
     icon: TrendingUp,
     title: "Prosperidade Financeira",
     description:
-      "Identifique os ciclos de abundância no seu mapa astral. Saiba os melhores momentos para investir, empreender e multiplicar sua riqueza material.",
-    gradient: "from-yellow-500 to-amber-500",
-    bgGlow: "bg-yellow-500/20",
+      "Identifique os ciclos de abundância no seu mapa astral. Saiba os melhores momentos para investir, lançar projetos e crescer materialmente.",
     link: "/abundance",
   },
   {
     icon: Sparkles,
     title: "Limpeza Energética",
     description:
-      "Remova bloqueios espirituais que impedem seu crescimento. Técnicas personalizadas baseadas no seu mapa para limpar caminhos e atrair positividade.",
-    gradient: "from-purple-500 to-violet-500",
-    bgGlow: "bg-purple-500/20",
+      "Liberte-se dos bloqueios espirituais que travam seu crescimento. Técnicas personalizadas com base no seu mapa para limpar o caminho e atrair positividade.",
   },
   {
     icon: Shield,
     title: "Proteção Espiritual",
     description:
-      "Fortaleça sua aura e proteja-se de energias negativas. Rituais personalizados conforme as fases lunares e sua carta natal.",
-    gradient: "from-indigo-500 to-blue-500",
-    bgGlow: "bg-indigo-500/20",
+      "Fortaleça sua aura e proteja-se de energias negativas. Rituais alinhados às fases da lua e ao seu mapa natal.",
   },
   {
     icon: Star,
     title: "Propósito de Vida",
     description:
-      "Entenda sua missão nesta encarnação através do Nodo Norte. Descubra seus dons únicos e como usá-los para impactar o mundo.",
-    gradient: "from-cyan-500 to-teal-500",
-    bgGlow: "bg-cyan-500/20",
+      "Compreenda sua missão nesta vida através do Nodo Norte. Descubra seus dons únicos e como usá-los para impactar o mundo.",
     link: "/personality",
   },
   {
     icon: Zap,
-    title: "Momento Certo para Agir",
+    title: "A Hora Certa de Agir",
     description:
-      "Nunca mais perca oportunidades! Saiba os dias e horários mais favoráveis para tomar decisões importantes, viajar e iniciar projetos.",
-    gradient: "from-orange-500 to-red-500",
-    bgGlow: "bg-orange-500/20",
+      "Nunca mais perca uma oportunidade. Conheça os dias e horários mais favoráveis para decisões importantes, viagens e novos projetos.",
     link: "/predictions",
   },
 ];
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="relative py-32 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black via-purple-950/20 to-black" />
+    <section id="features" className="relative overflow-hidden py-32">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-night-900/40 to-transparent" />
+      <div className="absolute left-10 top-20 h-72 w-72 rounded-full bg-amethyst-500/10 blur-3xl" />
+      <div className="absolute bottom-20 right-10 h-96 w-96 rounded-full bg-gold-500/[0.07] blur-3xl" />
 
-      {/* Decorative Elements */}
-      <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl" />
-
-      <div className="relative z-10 max-w-7xl mx-auto px-4">
-        {/* Section Header */}
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="mx-auto mb-20 max-w-3xl text-center"
         >
-          <div className="inline-block mb-6">
-            <Sparkles className="w-16 h-16 text-purple-400 mx-auto" />
-          </div>
-
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-            Transforme Sua Vida Com
+          <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
+            <Sparkles className="h-7 w-7 text-night-900" />
+          </span>
+          <h2 className="font-display text-4xl font-semibold text-ink-50 md:text-6xl">
+            Transforme sua vida com
             <br />
-            Sabedoria Ancestral
+            <span className="text-gold">sabedoria ancestral</span>
           </h2>
-          <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Milhares de mulheres já descobriram seu poder interior. Chegou a sua
-            vez de brilhar! ✨
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-ink-400">
+            Milhares de pessoas já descobriram seu poder interior. Agora é a
+            sua vez de brilhar.
           </p>
         </motion.div>
 
-        {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              <FeatureCard feature={feature} index={index} />
+              <FeatureCard feature={feature} />
             </motion.div>
           ))}
         </div>
 
-        {/* CTA */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          className="text-center mt-20"
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-20 text-center"
         >
-          <a
+          <Link
             href="/auth/register"
-            className="inline-block px-10 py-5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full font-bold text-xl shadow-2xl shadow-purple-500/50 hover:shadow-purple-500/70 transition-all hover:scale-105"
+            className="btn-gold inline-flex items-center gap-2 rounded-full px-10 py-5 text-lg"
           >
-            🌟 Começar Minha Transformação Agora
-          </a>
-          <p className="mt-4 text-sm text-gray-500">
-            Primeiros 7 dias grátis • Cancele quando quiser
+            <Sparkles className="h-5 w-5" />
+            Comece sua transformação
+          </Link>
+          <p className="mt-4 text-sm text-ink-600">
+            Comece grátis &bull; Cancele quando quiser
           </p>
         </motion.div>
       </div>
@@ -131,63 +113,28 @@ export default function FeaturesSection() {
   );
 }
 
-function FeatureCard({
-  feature,
-  index,
-}: {
-  feature: (typeof features)[0];
-  index: number;
-}) {
+function FeatureCard({ feature }: { feature: (typeof features)[0] }) {
   const Icon = feature.icon;
 
   const CardContent = (
-    <>
-      {/* Glow Effect */}
-      <div
-        className={`absolute -inset-0.5 ${feature.bgGlow} rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
-      />
-
-      {/* Card */}
-      <div className="relative h-full bg-gradient-to-br from-purple-950/50 via-black to-purple-950/30 backdrop-blur-sm border border-purple-500/30 rounded-3xl p-8 transition-all duration-300 group-hover:border-purple-400/50">
-        {/* Icon */}
-        <div className="mb-6">
-          <div
-            className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${feature.gradient} shadow-lg`}
-          >
-            <Icon className="w-8 h-8 text-white" />
-          </div>
-        </div>
-
-        {/* Content */}
-        <h3 className="text-2xl font-bold mb-4 text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 group-hover:bg-clip-text transition-all">
-          {feature.title}
-        </h3>
-        <p className="text-gray-400 leading-relaxed group-hover:text-gray-300 transition-colors">
-          {feature.description}
-        </p>
-
-        {/* Decorative corner */}
-        <div className="absolute top-4 right-4 opacity-20 group-hover:opacity-40 transition-opacity">
-          <Sparkles className="w-6 h-6 text-purple-400" />
-        </div>
-
-        {/* Link indicator */}
-        {feature.link && (
-          <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-purple-400 text-sm font-semibold">
-              Explorar →
-            </span>
-          </div>
-        )}
+    <div className="glass relative h-full rounded-3xl border-white/5 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold-400/30">
+      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-gold-400/20 bg-gold-400/10">
+        <Icon className="h-7 w-7 text-gold-300" />
       </div>
-    </>
+      <h3 className="mb-3 font-display text-2xl font-semibold text-ink-50">
+        {feature.title}
+      </h3>
+      <p className="leading-relaxed text-ink-400">{feature.description}</p>
+      {feature.link && (
+        <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-gold-300 opacity-0 transition-opacity group-hover:opacity-100">
+          Explorar &rarr;
+        </span>
+      )}
+    </div>
   );
 
   return (
-    <motion.div
-      whileHover={{ y: -8, scale: 1.02 }}
-      className="group relative h-full"
-    >
+    <div className="group h-full">
       {feature.link ? (
         <Link href={feature.link} className="block h-full">
           {CardContent}
@@ -195,6 +142,6 @@ function FeatureCard({
       ) : (
         CardContent
       )}
-    </motion.div>
+    </div>
   );
 }

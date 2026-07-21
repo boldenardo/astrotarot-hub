@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -17,7 +19,7 @@ import {
   PiggyBank,
 } from "lucide-react";
 
-import { supabase } from "@/lib/supabase";
+import PremiumGate from "@/components/PremiumGate";
 
 interface BirthData {
   year: number;
@@ -35,31 +37,32 @@ interface BirthData {
 const abundanceAreas = [
   {
     icon: DollarSign,
-    title: "Prosperidade Financeira",
-    description: "Ciclos de abundância no seu mapa astral",
-    gradient: "from-yellow-500 to-amber-500",
+    title: "Financial Prosperity",
+    description: "Abundance cycles within your natal chart",
+    gradient: "from-gold-200 to-gold-600",
   },
   {
     icon: Briefcase,
-    title: "Sucesso Profissional",
-    description: "Melhores momentos para crescer na carreira",
-    gradient: "from-green-500 to-emerald-500",
+    title: "Professional Success",
+    description: "The best moments to grow your career",
+    gradient: "from-gold-200 to-gold-600",
   },
   {
     icon: PiggyBank,
-    title: "Investimentos",
-    description: "Períodos favoráveis para multiplicar recursos",
-    gradient: "from-blue-500 to-cyan-500",
+    title: "Investments",
+    description: "Favorable periods to multiply your resources",
+    gradient: "from-gold-200 to-gold-600",
   },
   {
     icon: Coins,
-    title: "Oportunidades",
-    description: "Momentos de sorte e expansão material",
-    gradient: "from-purple-500 to-pink-500",
+    title: "Opportunities",
+    description: "Moments of fortune and material expansion",
+    gradient: "from-gold-200 to-gold-600",
   },
 ];
 
 export default function AbundancePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<BirthData>({
     year: 1990,
@@ -74,49 +77,64 @@ export default function AbundancePage() {
     timezone: "America/Sao_Paulo",
   });
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string>("");
+  const [premiumRequired, setPremiumRequired] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setResult(null);
+    setError("");
+    setPremiumRequired(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke(
-        "generate-abundance-guide",
-        {
-          body: {
-            birthData: formData,
-          },
+      const response = await fetch("/api/abundance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ birthData: formData }),
+      });
+
+      if (response.status === 401) {
+        router.push("/auth/login");
+        return;
+      }
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (data?.code === "PREMIUM_REQUIRED") {
+          setPremiumRequired(true);
+          setError("Este recurso é exclusivo do plano Premium Ilimitado.");
+          return;
         }
-      );
+        throw new Error(data?.error || "Falha ao gerar a análise");
+      }
 
-      if (error) throw error;
-
-      if (data.success && data.analysis) {
+      if (data?.success && data.analysis) {
         setResult(data.analysis);
       } else {
-        throw new Error(data.error || "Erro ao gerar análise");
+        throw new Error(data?.error || "Falha ao gerar a análise");
       }
-    } catch (error) {
-      console.error("Erro ao buscar análise:", error);
-      alert(
-        "Funcionalidade de rituais de abundância em desenvolvimento. Em breve você terá acesso a rituais personalizados."
+    } catch (err) {
+      console.error("Failed to fetch analysis:", err);
+      setError(
+        "Não foi possível gerar sua análise de abundância agora. Tente novamente em instantes."
       );
-      alert("Erro ao gerar análise de abundância. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-black text-white pt-24">
+    <PremiumGate feature="prosperity">
+    <main className="min-h-screen text-ink-200 pt-24">
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-yellow-900/30 via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(212,175,55,0.08),transparent_60%)]" />
 
         {/* Animated background elements */}
-        <div className="absolute top-20 left-10 w-72 h-72 bg-yellow-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-gold-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-amethyst-500/10 rounded-full blur-3xl animate-pulse" />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4">
           <motion.div
@@ -125,22 +143,22 @@ export default function AbundancePage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/20 to-amber-500/20 rounded-full border border-yellow-500/30 mb-6">
-              <TrendingUp className="w-4 h-4 text-yellow-400" />
-              <span className="text-yellow-300 text-sm font-medium">
-                Astrologia da Abundância
+            <div className="inline-flex items-center gap-2 px-4 py-2 border border-gold-400/30 bg-gold-400/10 rounded-full mb-6">
+              <TrendingUp className="w-4 h-4 text-gold-300" />
+              <span className="text-gold-300 text-sm font-medium">
+                Abundance Astrology
               </span>
             </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-yellow-300 via-amber-300 to-yellow-400 bg-clip-text text-transparent">
-              Desbloqueie Sua
+            <h1 className="font-display text-5xl md:text-7xl font-semibold text-ink-50 mb-6">
+              Unlock Your
               <br />
-              Prosperidade
+              <span className="text-gold">Prosperity</span>
             </h1>
 
-            <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-              Descubra os ciclos de abundância no seu mapa astral e saiba
-              exatamente quando agir para multiplicar sua riqueza material
+            <p className="text-xl text-ink-400 max-w-3xl mx-auto leading-relaxed">
+              Discover the abundance cycles within your natal chart and learn
+              exactly when to act to multiply your material wealth
             </p>
           </motion.div>
 
@@ -154,14 +172,16 @@ export default function AbundancePage() {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 className="group relative"
               >
-                <div className="relative p-6 rounded-2xl bg-gradient-to-br from-gray-900/50 to-black/50 border border-gray-800 backdrop-blur-xl hover:border-yellow-500/50 transition-all duration-300">
+                <div className="glass relative p-6 rounded-3xl border-white/5 hover:border-gold-400/40 transition-all duration-300">
                   <div
-                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${area.gradient} flex items-center justify-center mb-4`}
+                    className={`w-12 h-12 rounded-xl bg-gradient-to-br ${area.gradient} shadow-gold flex items-center justify-center mb-4`}
                   >
-                    <area.icon className="w-6 h-6 text-white" />
+                    <area.icon className="w-6 h-6 text-night-900" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">{area.title}</h3>
-                  <p className="text-sm text-gray-400">{area.description}</p>
+                  <h3 className="font-display text-lg font-semibold text-ink-50 mb-2">
+                    {area.title}
+                  </h3>
+                  <p className="text-sm text-ink-400">{area.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -176,15 +196,14 @@ export default function AbundancePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-gray-800"
+            className="glass glass-gold rounded-3xl p-8 md:p-12"
           >
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-300 to-amber-300 bg-clip-text text-transparent">
-                Análise de Abundância Personalizada
+              <h2 className="font-display text-3xl font-semibold text-ink-50 mb-4">
+                Personalized <span className="text-gold">Abundance</span> Analysis
               </h2>
-              <p className="text-gray-400">
-                Preencha seus dados de nascimento para descobrir seus ciclos de
-                prosperidade
+              <p className="text-ink-400">
+                Enter your birth details to uncover your cycles of prosperity
               </p>
             </div>
 
@@ -192,14 +211,14 @@ export default function AbundancePage() {
               {/* Date and Time Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Data de Nascimento
+                  <label className="block text-sm font-medium text-ink-200 mb-2">
+                    <Calendar className="w-4 h-4 inline mr-2 text-gold-300" />
+                    Date of Birth
                   </label>
                   <input
                     type="date"
                     required
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20 transition-all"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                     onChange={(e) => {
                       const date = new Date(e.target.value);
                       setFormData({
@@ -213,14 +232,14 @@ export default function AbundancePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    <Clock className="w-4 h-4 inline mr-2" />
-                    Hora
+                  <label className="block text-sm font-medium text-ink-200 mb-2">
+                    <Clock className="w-4 h-4 inline mr-2 text-gold-300" />
+                    Time
                   </label>
                   <input
                     type="time"
                     required
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20 transition-all"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                     onChange={(e) => {
                       const [hour, minute] = e.target.value.split(":");
                       setFormData({
@@ -233,15 +252,15 @@ export default function AbundancePage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    <MapPin className="w-4 h-4 inline mr-2" />
-                    Cidade
+                  <label className="block text-sm font-medium text-ink-200 mb-2">
+                    <MapPin className="w-4 h-4 inline mr-2 text-gold-300" />
+                    City
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="São Paulo"
-                    className="w-full px-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500/20 transition-all"
+                    placeholder="New York"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
@@ -253,20 +272,34 @@ export default function AbundancePage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 rounded-xl font-semibold text-black transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-yellow-500/50"
+                className="btn-gold w-full rounded-full py-4 font-semibold text-lg disabled:opacity-50"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Analisando seu mapa...
+                    Analyzing your chart...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
                     <Sparkles className="w-5 h-5" />
-                    Revelar Minha Abundância
+                    Reveal My Abundance
                   </span>
                 )}
               </button>
+
+              {error && (
+                <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-center text-red-200">
+                  <p>{error}</p>
+                  {premiumRequired && (
+                    <Link
+                      href="/cart?plan=premium"
+                      className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
+                    >
+                      Assinar Premium Ilimitado — US$ 29,90/mês
+                    </Link>
+                  )}
+                </div>
+              )}
             </form>
           </motion.div>
 
@@ -279,77 +312,77 @@ export default function AbundancePage() {
               className="mt-12 space-y-6"
             >
               {/* Current Cycle */}
-              <div className="bg-gradient-to-br from-yellow-900/30 to-amber-900/30 backdrop-blur-xl rounded-2xl p-8 border border-yellow-500/30">
+              <div className="glass glass-gold rounded-3xl p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center">
-                    <Star className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold flex items-center justify-center">
+                    <Star className="w-6 h-6 text-night-900" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-yellow-300">
-                      Ciclo Atual de Prosperidade
+                    <h3 className="font-display text-xl font-semibold text-gold-300">
+                      Current Prosperity Cycle
                     </h3>
-                    <p className="text-gray-400 text-sm">
-                      Fase astrológica ativa
+                    <p className="text-ink-400 text-sm">
+                      Active astrological phase
                     </p>
                   </div>
                 </div>
-                <p className="text-lg text-white">{result.currentCycle}</p>
+                <p className="text-lg text-ink-200">{result.currentCycle}</p>
               </div>
 
               {/* Abundance Scores */}
               {result.scores && (
-                <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
-                  <h3 className="text-2xl font-bold mb-6">
-                    Potencial de Abundância
+                <div className="glass rounded-3xl p-8 border-white/5">
+                  <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6">
+                    Abundance Potential
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                      <DollarSign className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-yellow-300">
+                    <div className="text-center p-4 bg-gold-400/10 rounded-xl border border-gold-400/20">
+                      <DollarSign className="w-8 h-8 text-gold-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-gold-300">
                         {result.scores.financial}
                       </div>
-                      <div className="text-sm text-gray-400">Finanças</div>
+                      <div className="text-sm text-ink-400">Finances</div>
                     </div>
-                    <div className="text-center p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                      <Briefcase className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-green-300">
+                    <div className="text-center p-4 bg-gold-400/10 rounded-xl border border-gold-400/20">
+                      <Briefcase className="w-8 h-8 text-gold-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-gold-300">
                         {result.scores.career}
                       </div>
-                      <div className="text-sm text-gray-400">Carreira</div>
+                      <div className="text-sm text-ink-400">Career</div>
                     </div>
-                    <div className="text-center p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                      <PiggyBank className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-blue-300">
+                    <div className="text-center p-4 bg-gold-400/10 rounded-xl border border-gold-400/20">
+                      <PiggyBank className="w-8 h-8 text-gold-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-gold-300">
                         {result.scores.investments}
                       </div>
-                      <div className="text-sm text-gray-400">Investimentos</div>
+                      <div className="text-sm text-ink-400">Investments</div>
                     </div>
-                    <div className="text-center p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                      <Sparkles className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                      <div className="text-3xl font-bold text-purple-300">
+                    <div className="text-center p-4 bg-gold-400/10 rounded-xl border border-gold-400/20">
+                      <Sparkles className="w-8 h-8 text-gold-400 mx-auto mb-2" />
+                      <div className="text-3xl font-bold text-gold-300">
                         {result.scores.opportunities}
                       </div>
-                      <div className="text-sm text-gray-400">Oportunidades</div>
+                      <div className="text-sm text-ink-400">Opportunities</div>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Favorable Periods */}
-              <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
-                <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                  <Target className="w-6 h-6 text-yellow-400" />
-                  Períodos Favoráveis
+              <div className="glass rounded-3xl p-8 border-white/5">
+                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
+                  <Target className="w-6 h-6 text-gold-400" />
+                  Favorable Periods
                 </h3>
                 <div className="space-y-4">
                   {result.favorablePeriods.map(
                     (period: string, index: number) => (
                       <div
                         key={index}
-                        className="flex items-start gap-3 p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20"
+                        className="flex items-start gap-3 p-4 bg-gold-400/5 rounded-xl border border-gold-400/15"
                       >
-                        <div className="w-2 h-2 rounded-full bg-yellow-400 mt-2" />
-                        <p className="text-gray-300">{period}</p>
+                        <div className="w-2 h-2 rounded-full bg-gold-400 mt-2" />
+                        <p className="text-ink-400">{period}</p>
                       </div>
                     )
                   )}
@@ -357,55 +390,57 @@ export default function AbundancePage() {
               </div>
 
               {/* Houses Analysis */}
-              <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
-                <h3 className="text-2xl font-bold mb-6">Casas de Abundância</h3>
+              <div className="glass rounded-3xl p-8 border-white/5">
+                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6">
+                  Houses of Abundance
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {result.houses?.house2 && (
-                    <div className="p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                      <h4 className="font-semibold text-green-400 mb-2">
-                        Casa 2 - Recursos
+                    <div className="p-4 bg-gold-400/5 rounded-xl border border-gold-400/15">
+                      <h4 className="font-semibold text-gold-300 mb-2">
+                        House 2 - Resources
                       </h4>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-sm text-ink-400">
                         {result.houses.house2}
                       </p>
                     </div>
                   )}
                   {result.houses?.house8 && (
-                    <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                      <h4 className="font-semibold text-purple-400 mb-2">
-                        Casa 8 - Transformação
+                    <div className="p-4 bg-gold-400/5 rounded-xl border border-gold-400/15">
+                      <h4 className="font-semibold text-gold-300 mb-2">
+                        House 8 - Transformation
                       </h4>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-sm text-ink-400">
                         {result.houses.house8}
                       </p>
                     </div>
                   )}
                   {result.houses?.house10 && (
-                    <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
-                      <h4 className="font-semibold text-blue-400 mb-2">
-                        Casa 10 - Carreira
+                    <div className="p-4 bg-gold-400/5 rounded-xl border border-gold-400/15">
+                      <h4 className="font-semibold text-gold-300 mb-2">
+                        House 10 - Career
                       </h4>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-sm text-ink-400">
                         {result.houses.house10}
                       </p>
                     </div>
                   )}
                   {result.houses?.house11 && (
-                    <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
-                      <h4 className="font-semibold text-yellow-400 mb-2">
-                        Casa 11 - Ganhos
+                    <div className="p-4 bg-gold-400/5 rounded-xl border border-gold-400/15">
+                      <h4 className="font-semibold text-gold-300 mb-2">
+                        House 11 - Gains
                       </h4>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-sm text-ink-400">
                         {result.houses.house11}
                       </p>
                     </div>
                   )}
                   {result.jupiterPosition && (
-                    <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/20">
-                      <h4 className="font-semibold text-amber-400 mb-2">
-                        Júpiter - Expansão
+                    <div className="p-4 bg-gold-400/5 rounded-xl border border-gold-400/15">
+                      <h4 className="font-semibold text-gold-300 mb-2">
+                        Jupiter - Expansion
                       </h4>
-                      <p className="text-sm text-gray-300">
+                      <p className="text-sm text-ink-400">
                         {result.jupiterPosition}
                       </p>
                     </div>
@@ -414,40 +449,44 @@ export default function AbundancePage() {
               </div>
 
               {/* Recommendations */}
-              <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-2xl p-8 border border-gray-800">
-                <h3 className="text-2xl font-bold mb-6">
-                  Recomendações Estratégicas
+              <div className="glass rounded-3xl p-8 border-white/5">
+                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6">
+                  Strategic Recommendations
                 </h3>
                 <div className="space-y-3">
                   {result.recommendations.map((rec: string, index: number) => (
                     <div
                       key={index}
-                      className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-xl"
+                      className="flex items-start gap-3 p-4 bg-white/5 rounded-xl"
                     >
-                      <Sparkles className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-                      <p className="text-gray-300">{rec}</p>
+                      <Sparkles className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-ink-400">{rec}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Upgrade CTA */}
-              <div className="bg-gradient-to-r from-yellow-500/20 to-amber-500/20 backdrop-blur-xl rounded-2xl p-8 border border-yellow-500/30 text-center">
-                <h3 className="text-2xl font-bold mb-4">
-                  Desbloqueie Análise Completa
+              <div className="glass glass-gold rounded-3xl p-8 text-center">
+                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-4">
+                  Unlock the Full Analysis
                 </h3>
-                <p className="text-gray-300 mb-6">
-                  Acesse previsões mensais detalhadas, rituais de abundância
-                  personalizados e alertas de oportunidades em tempo real
+                <p className="text-ink-400 mb-6">
+                  Access detailed monthly forecasts, personalized abundance
+                  rituals, and real-time opportunity alerts
                 </p>
-                <button className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 rounded-xl font-semibold text-black transition-all hover:scale-105 shadow-lg shadow-yellow-500/50">
-                  Assinar Premium - R$ 29,90/mês
-                </button>
+                <Link
+                  href="/cart?plan=premium"
+                  className="btn-gold inline-block rounded-full px-8 py-3 font-semibold"
+                >
+                  Assinar Premium Ilimitado — US$ 29,90/mês
+                </Link>
               </div>
             </motion.div>
           )}
         </div>
       </section>
     </main>
+    </PremiumGate>
   );
 }

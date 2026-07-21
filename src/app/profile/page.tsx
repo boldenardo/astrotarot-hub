@@ -10,7 +10,6 @@ import {
   Save,
   ArrowLeft,
   Loader2,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,8 +60,8 @@ export default function ProfilePage() {
           });
         }
       } catch (error) {
-        console.error("Erro ao carregar perfil:", error);
-        setMessage({ type: "error", text: "Erro ao carregar seus dados." });
+        console.error("Failed to load profile:", error);
+        setMessage({ type: "error", text: "Failed to load your data." });
       } finally {
         setLoading(false);
       }
@@ -78,7 +77,7 @@ export default function ProfilePage() {
 
     try {
       const authUser = await getCurrentUser();
-      if (!authUser) throw new Error("Usuário não autenticado");
+      if (!authUser) throw new Error("User not authenticated");
 
       const { error } = await supabase
         .from("users")
@@ -92,8 +91,8 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      // Limpar cache do mapa astral antigo se houver, para gerar um novo com os novos dados
-      // Primeiro pegamos o ID interno do usuário
+      // Clear any old cached birth chart so a new one is generated with the updated data.
+      // First we get the user's internal ID
       const { data: userProfile } = await supabase
         .from("users")
         .select("id")
@@ -107,17 +106,17 @@ export default function ProfilePage() {
           .eq("user_id", userProfile.id);
       }
 
-      setMessage({ type: "success", text: "Perfil atualizado com sucesso!" });
+      setMessage({ type: "success", text: "Profile updated successfully!" });
 
-      // Redirecionar de volta para o dashboard após um breve delay
+      // Redirect back to the dashboard after a short delay
       setTimeout(() => {
         router.push("/dashboard");
       }, 1500);
     } catch (error: any) {
-      console.error("Erro ao atualizar perfil:", error);
+      console.error("Failed to update profile:", error);
       setMessage({
         type: "error",
-        text: error.message || "Erro ao atualizar perfil.",
+        text: error.message || "Failed to update profile.",
       });
     } finally {
       setSaving(false);
@@ -126,40 +125,42 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-gold-400 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <div className="min-h-screen text-ink-200 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/20 via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(124,92,255,0.1),transparent_60%)]" />
       </div>
 
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-12">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-ink-400 hover:text-ink-50 mb-8 transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" /> Voltar para Dashboard
+          <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900/50 backdrop-blur-xl border border-purple-500/20 rounded-3xl p-8 shadow-2xl"
+          className="glass glass-gold rounded-3xl p-8 shadow-glass"
         >
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-              <User className="w-6 h-6 text-purple-400" />
+            <div className="w-12 h-12 rounded-full border border-gold-400/25 bg-gold-400/10 flex items-center justify-center">
+              <User className="w-6 h-6 text-gold-300" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Seu Perfil Astral</h1>
-              <p className="text-gray-400 text-sm">
-                Mantenha seus dados atualizados para previsões precisas
+              <h1 className="font-display text-2xl font-semibold text-ink-50">
+                Your Astral Profile
+              </h1>
+              <p className="text-ink-400 text-sm">
+                Keep your details up to date for accurate forecasts
               </p>
             </div>
           </div>
@@ -179,13 +180,13 @@ export default function ProfilePage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nome */}
+            {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Nome Completo
+              <label className="block text-sm font-medium text-ink-300 mb-2">
+                Full Name
               </label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-600" />
                 <input
                   type="text"
                   required
@@ -193,19 +194,19 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                  placeholder="Seu nome místico"
+                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 placeholder-ink-600"
+                  placeholder="Your mystical name"
                 />
               </div>
             </div>
 
-            {/* Data de Nascimento */}
+            {/* Date of Birth */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Data de Nascimento
+              <label className="block text-sm font-medium text-ink-300 mb-2">
+                Date of Birth
               </label>
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-600" />
                 <input
                   type="date"
                   required
@@ -213,18 +214,18 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, birthDate: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none text-white [color-scheme:dark]"
+                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 [color-scheme:dark]"
                 />
               </div>
             </div>
 
-            {/* Hora de Nascimento */}
+            {/* Time of Birth */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Hora de Nascimento
+              <label className="block text-sm font-medium text-ink-300 mb-2">
+                Time of Birth
               </label>
               <div className="relative">
-                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-600" />
                 <input
                   type="time"
                   required
@@ -232,21 +233,21 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, birthTime: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none text-white [color-scheme:dark]"
+                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 [color-scheme:dark]"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1 ml-1">
-                Essencial para calcular seu Ascendente e Casas
+              <p className="text-xs text-ink-600 mt-1 ml-1">
+                Essential to calculate your Ascendant and Houses
               </p>
             </div>
 
-            {/* Local de Nascimento */}
+            {/* City of Birth */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Cidade de Nascimento
+              <label className="block text-sm font-medium text-ink-300 mb-2">
+                City of Birth
               </label>
               <div className="relative">
-                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-ink-600" />
                 <input
                   type="text"
                   required
@@ -254,8 +255,8 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, birthLocation: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                  placeholder="Ex: São Paulo, SP"
+                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 placeholder-ink-600"
+                  placeholder="e.g. São Paulo, Brazil"
                 />
               </div>
             </div>
@@ -263,17 +264,17 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-bold text-lg transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2"
+              className="btn-gold w-full py-4 rounded-full font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Salvando...
+                  Saving...
                 </>
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  Salvar Alterações
+                  Save Changes
                 </>
               )}
             </button>

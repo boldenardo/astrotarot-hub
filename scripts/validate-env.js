@@ -6,14 +6,12 @@
 
 const sensitiveEnvVars = [
   'GROQ_API_KEY',
-  'PIXUP_API_KEY',
-  'PIXUP_API_SECRET',
-  'PIXUP_WEBHOOK_SECRET',
-  'JWT_SECRET',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
-  'DATABASE_URL',
-  'RAPIDAPI_KEY'
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'ASTROLOGY_API_KEY',
+  'JWT_SECRET',
+  'DATABASE_URL'
 ];
 
 console.log('🔒 Validating environment variables security...\n');

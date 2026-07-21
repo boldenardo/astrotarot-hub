@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Send, Heart, Sparkles, Moon } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -12,11 +13,12 @@ interface Message {
 }
 
 export default function GuiaEspiritualPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content:
-        "Olá, querida! 💜 Sou seu Guia Espiritual. Este é um espaço seguro para você compartilhar seus sentimentos, desafios e sonhos. Como posso te acolher hoje?",
+        "Olá, querida alma. Eu sou a Luna, sua guia espiritual. Este é um espaço seguro para compartilhar seus sentimentos, desafios e sonhos. Como posso te acolher hoje?",
       timestamp: new Date(),
     },
   ]);
@@ -41,22 +43,33 @@ export default function GuiaEspiritualPage() {
       timestamp: new Date(),
     };
 
+    // Últimas 10 mensagens como contexto para a Luna
+    const history = messages.slice(-10).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
-      // Usar Supabase Edge Function
-      const { supabase } = await import("@/lib/supabase");
+      const response = await fetch("/api/spiritual-guide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage.content, history }),
+      });
 
-      const { data, error } = await supabase.functions.invoke(
-        "spiritual-guide",
-        {
-          body: { message: userMessage.content },
-        }
-      );
+      if (response.status === 401) {
+        router.push("/auth/login");
+        return;
+      }
 
-      if (error) throw error;
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || !data?.message) {
+        throw new Error(data?.error || "Falha ao enviar a mensagem");
+      }
 
       const assistantMessage: Message = {
         role: "assistant",
@@ -65,12 +78,12 @@ export default function GuiaEspiritualPage() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error: any) {
-      console.error("Erro ao enviar mensagem:", error);
+    } catch (error) {
+      console.error("Error sending message:", error);
       const errorMessage: Message = {
         role: "assistant",
         content:
-          "Desculpe, não consegui processar sua mensagem neste momento. Por favor, tente novamente em instantes. 💜",
+          "Desculpe, não consegui processar sua mensagem agora. Tente novamente em instantes.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -87,9 +100,9 @@ export default function GuiaEspiritualPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-black text-white overflow-hidden">
-      {/* Background */}
-      <div className="fixed inset-0 bg-gradient-to-b from-purple-950 via-black to-black" />
+    <main className="relative min-h-screen overflow-hidden text-ink-200">
+      {/* Ambient background */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,92,255,0.10),transparent_60%)]" />
 
       {/* Stars */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -124,14 +137,14 @@ export default function GuiaEspiritualPage() {
             className="text-center mb-8"
           >
             <div className="flex items-center justify-center gap-3 mb-4">
-              <Heart className="w-8 h-8 text-pink-400" fill="currentColor" />
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-300 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-                Guia Espiritual
+              <Heart className="w-8 h-8 text-gold-300" fill="currentColor" />
+              <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50">
+                Guia <span className="text-gold">Espiritual</span>
               </h1>
-              <Moon className="w-8 h-8 text-purple-400" />
+              <Moon className="w-8 h-8 text-gold-400" />
             </div>
-            <p className="text-gray-400 text-sm">
-              Um espaço seguro para acolhimento e orientação emocional
+            <p className="text-ink-400 text-sm">
+              Um espaço seguro de acolhimento e orientação emocional
             </p>
           </motion.div>
 
@@ -139,10 +152,10 @@ export default function GuiaEspiritualPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative bg-purple-950/30 backdrop-blur-xl border border-purple-500/30 rounded-3xl overflow-hidden shadow-2xl"
+            className="glass glass-gold relative rounded-3xl overflow-hidden shadow-glass"
           >
             {/* Messages Area */}
-            <div className="h-[500px] overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-transparent">
+            <div className="h-[500px] overflow-y-auto p-6 space-y-4">
               {messages.map((message, index) => (
                 <motion.div
                   key={index}
@@ -156,22 +169,22 @@ export default function GuiaEspiritualPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl p-4 ${
                       message.role === "user"
-                        ? "bg-gradient-to-r from-pink-600 to-purple-600 text-white"
-                        : "bg-purple-900/50 border border-purple-500/30 text-gray-200"
+                        ? "bg-gold-400/10 border border-gold-400/20 text-ink-100"
+                        : "glass text-ink-200"
                     }`}
                   >
                     {message.role === "assistant" && (
                       <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-4 h-4 text-pink-400" />
-                        <span className="text-xs text-pink-400 font-semibold">
-                          Guia Espiritual
+                        <Sparkles className="w-4 h-4 text-gold-300" />
+                        <span className="text-xs text-gold-300 font-semibold">
+                          Luna
                         </span>
                       </div>
                     )}
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {message.content}
                     </p>
-                    <span className="text-xs opacity-50 mt-2 block">
+                    <span className="text-xs text-ink-600 mt-2 block">
                       {message.timestamp.toLocaleTimeString("pt-BR", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -187,20 +200,20 @@ export default function GuiaEspiritualPage() {
                   animate={{ opacity: 1 }}
                   className="flex justify-start"
                 >
-                  <div className="bg-purple-900/50 border border-purple-500/30 rounded-2xl p-4">
+                  <div className="glass rounded-2xl p-4">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce" />
+                        <div className="w-2 h-2 bg-gold-400 rounded-full animate-bounce" />
                         <div
-                          className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
+                          className="w-2 h-2 bg-gold-300 rounded-full animate-bounce"
                           style={{ animationDelay: "0.2s" }}
                         />
                         <div
-                          className="w-2 h-2 bg-pink-400 rounded-full animate-bounce"
+                          className="w-2 h-2 bg-gold-400 rounded-full animate-bounce"
                           style={{ animationDelay: "0.4s" }}
                         />
                       </div>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-ink-400">
                         Refletindo...
                       </span>
                     </div>
@@ -212,27 +225,28 @@ export default function GuiaEspiritualPage() {
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-purple-500/30 p-4 bg-purple-950/50">
+            <div className="border-t border-white/5 p-4">
               <div className="flex gap-3">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Compartilhe seus pensamentos..."
-                  className="flex-1 bg-purple-900/30 border border-purple-500/30 rounded-2xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-400/50 resize-none"
+                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none resize-none"
                   rows={2}
                   disabled={isLoading}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
-                  className="px-6 py-3 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl transition-all hover:scale-105 shadow-lg shadow-pink-500/30"
+                  className="btn-gold flex items-center justify-center rounded-2xl px-6 py-3 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-2 text-center">
-                Pressione Enter para enviar • Shift + Enter para nova linha
+              <p className="text-xs text-ink-600 mt-2 text-center">
+                Pressione Enter para enviar &bull; Shift + Enter para nova
+                linha
               </p>
             </div>
           </motion.div>
@@ -243,17 +257,17 @@ export default function GuiaEspiritualPage() {
               {
                 icon: <Heart className="w-5 h-5" />,
                 title: "Acolhimento",
-                text: "Espaço seguro e sem julgamentos",
+                text: "Um espaço seguro e sem julgamentos",
               },
               {
                 icon: <Sparkles className="w-5 h-5" />,
                 title: "Orientação",
-                text: "Insights para seu crescimento",
+                text: "Insights para o seu crescimento",
               },
               {
                 icon: <Moon className="w-5 h-5" />,
                 title: "Confidencial",
-                text: "Suas conversas são privadas",
+                text: "Suas conversas permanecem privadas",
               },
             ].map((card, i) => (
               <motion.div
@@ -261,13 +275,13 @@ export default function GuiaEspiritualPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 + i * 0.1 }}
-                className="bg-purple-950/30 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-4 text-center"
+                className="glass rounded-2xl border-white/5 p-4 text-center"
               >
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-r from-pink-600 to-purple-600 text-white mb-2">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-gold-400/25 bg-gold-400/10 text-gold-300 mb-2">
                   {card.icon}
                 </div>
-                <h3 className="font-semibold text-white mb-1">{card.title}</h3>
-                <p className="text-xs text-gray-400">{card.text}</p>
+                <h3 className="font-semibold text-ink-50 mb-1">{card.title}</h3>
+                <p className="text-xs text-ink-400">{card.text}</p>
               </motion.div>
             ))}
           </div>

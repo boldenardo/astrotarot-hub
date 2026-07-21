@@ -17,6 +17,8 @@ import {
   Crown,
   Zap,
   X,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -71,21 +73,21 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
 
-    // Validações
+    // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("As senhas não conferem");
+      setError("Passwords do not match");
       return;
     }
 
     if (formData.password.length < 6) {
-      setError("A senha deve ter pelo menos 6 caracteres");
+      setError("Password must be at least 6 characters");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Usar Supabase Auth
+      // Use Supabase Auth
       const { user, session, requiresConfirmation } = await signUp({
         email: formData.email,
         password: formData.password,
@@ -96,7 +98,7 @@ export default function RegisterPage() {
       });
 
       if (requiresConfirmation) {
-        // Limpar formulário
+        // Clear the form
         setFormData({
           name: "",
           email: "",
@@ -107,14 +109,14 @@ export default function RegisterPage() {
           birthLocation: "",
         });
 
-        // Mostrar mensagem na tela em vez de alert
-        setError(""); // Limpar erros anteriores
+        // Show an on-screen message instead of an alert
+        setError(""); // Clear previous errors
 
-        // Redirecionar para login com mensagem de sucesso
+        // Redirect to login with a success message
         const params = new URLSearchParams();
         params.set(
           "message",
-          "Conta criada! Verifique seu email para confirmar."
+          "Account created. Please check your email to confirm."
         );
         params.set("email", formData.email);
         router.push(`/auth/login?${params.toString()}`);
@@ -122,39 +124,39 @@ export default function RegisterPage() {
       }
 
       if (!session) {
-        throw new Error("Erro ao criar sessão");
+        throw new Error("Failed to create session");
       }
 
-      // Mostrar modal de boas-vindas
+      // Show the welcome modal
       setWelcomeData({
         message:
-          "🎉 Bem-vindo(a) ao seu portal místico! Sua jornada de transformação começa AGORA.",
+          "Welcome to your mystical portal. Your journey of transformation begins now.",
         welcomeOffer: {
           freeTrial: {
-            title: "🎁 JOGUE GRÁTIS AGORA",
-            description: "Tarot das 4 Cartas - Sem custo, sem compromisso",
-            ctaText: "Começar Agora",
+            title: "Play for free now",
+            description: "The 4-Card Tarot reading, at no cost and no commitment",
+            ctaText: "Start now",
             ctaLink: "/challenge",
           },
           premiumPlan: {
-            title: "⭐ OFERTA ESPECIAL DE BOAS-VINDAS",
-            description: "Acesso TOTAL por apenas R$ 29,90/mês",
+            title: "Special welcome offer",
+            description: "Full access for only $9.99/mo",
             benefits: [
-              "✨ Tarot Egípcio Ilimitado",
-              "🌙 Mapa Astral Personalizado",
-              "💖 Compatibilidade Amorosa",
-              "🔮 Previsões Diárias",
-              "💰 Ritual de Abundância",
-              "🤖 Guia Espiritual com IA",
+              "Unlimited Egyptian Tarot",
+              "Personalized birth chart",
+              "Love compatibility",
+              "Daily forecasts",
+              "Abundance ritual",
+              "AI Spiritual Guide",
             ],
-            price: "R$ 29,90/mês",
-            ctaText: "Ativar Plano Premium",
+            price: "$9.99/mo",
+            ctaText: "Activate Premium Plan",
             ctaLink: "/cart",
           },
           singleReading: {
-            title: "🌟 EXPERIMENTE UMA LEITURA COMPLETA",
-            description: "Tiragem do Tarot Egípcio por apenas R$ 9,90",
-            ctaText: "Fazer 1 Leitura",
+            title: "Try a complete reading",
+            description: "An Egyptian Tarot spread for only $2.99",
+            ctaText: "Get one reading",
             ctaLink: "/tarot",
           },
         },
@@ -167,10 +169,10 @@ export default function RegisterPage() {
       console.error("Signup error:", err);
       if (err.message?.includes("Invalid API key")) {
         setError(
-          "Erro de configuração do sistema (API Key inválida). Contate o suporte."
+          "System configuration error (invalid API key). Please contact support."
         );
       } else {
-        setError(err.message || "Erro ao criar conta");
+        setError(err.message || "Unable to create account");
       }
     } finally {
       setLoading(false);
@@ -199,14 +201,15 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden py-12">
-      {/* Background */}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden py-12 text-ink-100">
+      {/* Ambient background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(124,92,255,0.12),transparent_60%)]" />
+        <div className="absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.06),transparent_45%)]" />
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
+            className="absolute h-1 w-1 rounded-full bg-white/40"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -231,64 +234,64 @@ export default function RegisterPage() {
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-2xl px-6"
       >
-        <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-3xl p-8 md:p-10 border border-purple-500/30 shadow-2xl shadow-purple-500/20">
+        <div className="glass glass-gold rounded-3xl p-8 shadow-glass md:p-10">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="mb-8 text-center">
             <motion.div
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="inline-block mb-4"
+              className="mb-4 inline-block"
             >
-              <Sparkles className="w-12 h-12 text-purple-400" />
+              <Sparkles className="h-12 w-12 text-gold-400" />
             </motion.div>
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-              Criar Conta Grátis
+            <h1 className="mb-2 font-display text-3xl font-semibold text-ink-50">
+              Create a <span className="text-gold">free</span> account
             </h1>
-            <p className="text-gray-400 text-sm">
-              Comece sua jornada espiritual hoje mesmo
+            <p className="text-sm text-ink-400">
+              Begin your spiritual journey today
             </p>
           </div>
 
           {/* Progress Steps */}
-          <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="mb-8 flex items-center justify-center gap-4">
             <div
               className={`flex items-center gap-2 ${
-                step >= 1 ? "text-purple-400" : "text-gray-600"
+                step >= 1 ? "text-gold-300" : "text-ink-600"
               }`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
                   step >= 1
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600"
-                    : "bg-gray-800"
+                    ? "bg-gradient-to-br from-gold-200 to-gold-600 text-night-900"
+                    : "bg-white/5 text-ink-600"
                 }`}
               >
                 1
               </div>
-              <span className="text-sm hidden md:inline">Conta</span>
+              <span className="hidden text-sm md:inline">Account</span>
             </div>
             <div
-              className={`w-16 h-1 ${
+              className={`h-1 w-16 ${
                 step >= 2
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600"
-                  : "bg-gray-800"
+                  ? "bg-gradient-to-r from-gold-200 to-gold-600"
+                  : "bg-white/10"
               }`}
             />
             <div
               className={`flex items-center gap-2 ${
-                step >= 2 ? "text-purple-400" : "text-gray-600"
+                step >= 2 ? "text-gold-300" : "text-ink-600"
               }`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
                   step >= 2
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600"
-                    : "bg-gray-800"
+                    ? "bg-gradient-to-br from-gold-200 to-gold-600 text-night-900"
+                    : "bg-white/5 text-ink-600"
                 }`}
               >
                 2
               </div>
-              <span className="text-sm hidden md:inline">Dados Astrais</span>
+              <span className="hidden text-sm md:inline">Birth Details</span>
             </div>
           </div>
 
@@ -297,7 +300,7 @@ export default function RegisterPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm"
+              className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"
             >
               {error}
             </motion.div>
@@ -309,11 +312,11 @@ export default function RegisterPage() {
               <>
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Nome Completo
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
+                    Full Name
                   </label>
                   <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type="text"
                       required
@@ -321,19 +324,19 @@ export default function RegisterPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                      placeholder="Seu nome"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
+                      placeholder="Your name"
                     />
                   </div>
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type="email"
                       required
@@ -341,19 +344,19 @@ export default function RegisterPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                      placeholder="seu@email.com"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
+                      placeholder="you@email.com"
                     />
                   </div>
                 </div>
 
                 {/* Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Senha
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
+                    Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
@@ -361,18 +364,18 @@ export default function RegisterPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, password: e.target.value })
                       }
-                      className="w-full pl-12 pr-12 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                      placeholder="Mínimo 6 caracteres"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-12 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
+                      placeholder="At least 6 characters"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-400 transition-colors hover:text-gold-300"
                     >
                       {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
+                        <EyeOff className="h-5 w-5" />
                       ) : (
-                        <Eye className="w-5 h-5" />
+                        <Eye className="h-5 w-5" />
                       )}
                     </button>
                   </div>
@@ -380,11 +383,11 @@ export default function RegisterPage() {
 
                 {/* Confirm Password */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Confirmar Senha
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
+                    Confirm Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
@@ -395,8 +398,8 @@ export default function RegisterPage() {
                           confirmPassword: e.target.value,
                         })
                       }
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                      placeholder="Repita a senha"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
+                      placeholder="Repeat your password"
                     />
                   </div>
                 </div>
@@ -415,70 +418,70 @@ export default function RegisterPage() {
                         setStep(2);
                         setError("");
                       } else {
-                        setError("As senhas não conferem");
+                        setError("Passwords do not match");
                       }
                     }
                   }}
-                  className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold transition-all hover:scale-105 shadow-lg shadow-purple-500/50"
+                  className="btn-gold w-full rounded-full py-4 font-semibold"
                 >
-                  Continuar
+                  Continue
                 </button>
               </>
             )}
 
             {step === 2 && (
               <>
-                <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/30 rounded-xl">
-                  <p className="text-sm text-purple-300">
-                    💫 <strong>Opcional:</strong> Forneça seus dados de
-                    nascimento para análises astrológicas personalizadas mais
-                    precisas. Você pode pular esta etapa.
+                <div className="mb-6 rounded-2xl border border-gold-400/25 bg-gold-400/10 p-4">
+                  <p className="text-sm text-ink-300">
+                    <strong className="text-gold-300">Optional:</strong> Provide
+                    your birth details for more accurate, personalized
+                    astrological insights. You can skip this step.
                   </p>
                 </div>
 
                 {/* Birth Date */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Data de Nascimento (Opcional)
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
+                    Date of Birth (Optional)
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Calendar className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type="date"
                       value={formData.birthDate}
                       onChange={(e) =>
                         setFormData({ ...formData, birthDate: e.target.value })
                       }
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
                     />
                   </div>
                 </div>
 
                 {/* Birth Time */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Hora de Nascimento (Opcional)
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
+                    Time of Birth (Optional)
                   </label>
                   <div className="relative">
-                    <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Clock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type="time"
                       value={formData.birthTime}
                       onChange={(e) =>
                         setFormData({ ...formData, birthTime: e.target.value })
                       }
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
                     />
                   </div>
                 </div>
 
                 {/* Birth Location */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Local de Nascimento (Opcional)
+                  <label className="mb-2 block text-sm font-medium text-ink-300">
+                    Place of Birth (Optional)
                   </label>
                   <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <MapPin className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                     <input
                       type="text"
                       value={formData.birthLocation}
@@ -488,8 +491,8 @@ export default function RegisterPage() {
                           birthLocation: e.target.value,
                         })
                       }
-                      className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                      placeholder="São Paulo, Brasil"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
+                      placeholder="New York, USA"
                     />
                   </div>
                 </div>
@@ -499,22 +502,22 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="w-1/3 py-3 bg-gray-800 hover:bg-gray-700 rounded-xl font-semibold transition-all"
+                    className="btn-ghost w-1/3 rounded-full py-3 font-semibold"
                   >
-                    Voltar
+                    Back
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-purple-500/50"
+                    className="btn-gold flex-1 rounded-full py-3 font-semibold disabled:opacity-50"
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Criando conta...
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Creating account...
                       </span>
                     ) : (
-                      "Criar Conta"
+                      "Create Account"
                     )}
                   </button>
                 </div>
@@ -524,37 +527,38 @@ export default function RegisterPage() {
 
           {/* Login Link */}
           <div className="mt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              Já tem uma conta?{" "}
+            <p className="text-sm text-ink-400">
+              Already have an account?{" "}
               <Link
                 href="/auth/login"
-                className="text-purple-400 hover:text-purple-300 font-semibold transition-colors"
+                className="font-semibold text-gold-300 transition-colors hover:text-gold-200"
               >
-                Fazer login
+                Sign in
               </Link>
             </p>
           </div>
         </div>
 
         {/* Back to Home */}
-        <div className="text-center mt-6">
+        <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-ink-400 transition-colors hover:text-ink-100"
           >
-            ← Voltar para home
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
           </Link>
         </div>
       </motion.div>
 
-      {/* Modal de Boas-Vindas com Ofertas */}
+      {/* Welcome modal with offers */}
       <AnimatePresence>
         {showWelcomeModal && welcomeData && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-night-950/80 p-4 backdrop-blur-sm"
             onClick={() => {
               setShowWelcomeModal(false);
               router.push("/challenge");
@@ -565,7 +569,7 @@ export default function RegisterPage() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-b from-purple-900/90 to-black/90 backdrop-blur-xl border-2 border-purple-500/50 rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl shadow-purple-500/50 relative"
+              className="glass glass-gold relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl shadow-glass"
             >
               {/* Close Button */}
               <button
@@ -573,87 +577,88 @@ export default function RegisterPage() {
                   setShowWelcomeModal(false);
                   router.push("/challenge");
                 }}
-                className="absolute top-6 right-6 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-all"
+                className="absolute right-6 top-6 rounded-full border border-white/10 bg-white/5 p-2 text-ink-200 transition-all hover:border-gold-400/50 hover:text-gold-300"
               >
-                <X className="w-5 h-5" />
+                <X className="h-5 w-5" />
               </button>
 
               {/* Header */}
-              <div className="text-center p-8 pb-6">
+              <div className="p-8 pb-6 text-center">
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 0.5, repeat: 3 }}
-                  className="inline-block mb-4"
+                  className="mb-4 inline-block"
                 >
-                  <Sparkles className="w-16 h-16 text-yellow-400" />
+                  <Sparkles className="h-16 w-16 text-gold-400" />
                 </motion.div>
-                <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
-                  🎉 Conta Criada com Sucesso!
+                <h2 className="mb-4 font-display text-4xl font-semibold text-ink-50">
+                  Account created{" "}
+                  <span className="text-gold">successfully</span>
                 </h2>
-                <p className="text-lg text-gray-300 leading-relaxed max-w-2xl mx-auto">
+                <p className="mx-auto max-w-2xl text-lg leading-relaxed text-ink-400">
                   {welcomeData.message}
                 </p>
               </div>
 
               {/* Offers Grid */}
-              <div className="grid md:grid-cols-3 gap-6 p-8 pt-0">
+              <div className="grid gap-6 p-8 pt-0 md:grid-cols-3">
                 {/* Free Trial */}
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 border-2 border-green-500/50 rounded-2xl p-6 text-center"
+                  whileHover={{ scale: 1.03 }}
+                  className="glass rounded-3xl border-white/5 p-6 text-center"
                 >
-                  <Gift className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-2 text-green-300">
+                  <Gift className="mx-auto mb-4 h-12 w-12 text-gold-300" />
+                  <h3 className="mb-2 font-display text-xl font-semibold text-ink-50">
                     {welcomeData.welcomeOffer.freeTrial.title}
                   </h3>
-                  <p className="text-gray-300 text-sm mb-4">
+                  <p className="mb-4 text-sm text-ink-400">
                     {welcomeData.welcomeOffer.freeTrial.description}
                   </p>
                   <Link
                     href={welcomeData.welcomeOffer.freeTrial.ctaLink}
-                    className="block w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl font-bold transition-all shadow-lg"
+                    className="btn-ghost block w-full rounded-full py-3 font-semibold"
                   >
                     {welcomeData.welcomeOffer.freeTrial.ctaText}
                   </Link>
                 </motion.div>
 
-                {/* Premium Plan - DESTAQUE */}
+                {/* Premium Plan - Highlighted */}
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-br from-yellow-600/20 to-amber-600/20 border-4 border-yellow-500/70 rounded-2xl p-6 text-center relative overflow-hidden"
+                  whileHover={{ scale: 1.03 }}
+                  className="glass glass-gold relative overflow-hidden rounded-3xl p-6 text-center"
                 >
-                  {/* Badge "RECOMENDADO" */}
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-yellow-500 to-amber-500 text-black text-xs font-bold px-4 py-1 rounded-bl-xl">
-                    ⭐ RECOMENDADO
+                  {/* Recommended badge */}
+                  <div className="absolute right-0 top-0 rounded-bl-xl bg-gradient-to-r from-gold-200 to-gold-600 px-4 py-1 text-xs font-bold text-night-900">
+                    Recommended
                   </div>
 
-                  <Crown className="w-12 h-12 text-yellow-400 mx-auto mb-4 mt-4" />
-                  <h3 className="text-2xl font-bold mb-2 text-yellow-300">
+                  <Crown className="mx-auto mb-4 mt-4 h-12 w-12 text-gold-400" />
+                  <h3 className="mb-2 font-display text-2xl font-semibold text-gold-300">
                     {welcomeData.welcomeOffer.premiumPlan.title}
                   </h3>
-                  <p className="text-gray-300 text-sm mb-3">
+                  <p className="mb-3 text-sm text-ink-400">
                     {welcomeData.welcomeOffer.premiumPlan.description}
                   </p>
 
                   {/* Benefits */}
-                  <ul className="text-left text-sm space-y-2 mb-4">
+                  <ul className="mb-4 space-y-2 text-left text-sm">
                     {welcomeData.welcomeOffer.premiumPlan.benefits.map(
                       (benefit, idx) => (
                         <li key={idx} className="flex items-start gap-2">
-                          <Zap className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
-                          <span className="text-gray-200">{benefit}</span>
+                          <Zap className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold-400" />
+                          <span className="text-ink-200">{benefit}</span>
                         </li>
                       )
                     )}
                   </ul>
 
-                  <div className="text-3xl font-bold text-yellow-300 mb-4">
+                  <div className="mb-4 text-3xl font-bold text-gold">
                     {welcomeData.welcomeOffer.premiumPlan.price}
                   </div>
 
                   <Link
                     href={welcomeData.welcomeOffer.premiumPlan.ctaLink}
-                    className="block w-full py-4 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 rounded-xl font-bold text-lg transition-all shadow-2xl shadow-yellow-500/50 animate-pulse"
+                    className="btn-gold block w-full rounded-full py-4 text-lg"
                   >
                     {welcomeData.welcomeOffer.premiumPlan.ctaText}
                   </Link>
@@ -661,19 +666,19 @@ export default function RegisterPage() {
 
                 {/* Single Reading */}
                 <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 border-2 border-purple-500/50 rounded-2xl p-6 text-center"
+                  whileHover={{ scale: 1.03 }}
+                  className="glass rounded-3xl border-white/5 p-6 text-center"
                 >
-                  <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-2 text-purple-300">
+                  <Sparkles className="mx-auto mb-4 h-12 w-12 text-gold-300" />
+                  <h3 className="mb-2 font-display text-xl font-semibold text-ink-50">
                     {welcomeData.welcomeOffer.singleReading.title}
                   </h3>
-                  <p className="text-gray-300 text-sm mb-4">
+                  <p className="mb-4 text-sm text-ink-400">
                     {welcomeData.welcomeOffer.singleReading.description}
                   </p>
                   <Link
                     href={welcomeData.welcomeOffer.singleReading.ctaLink}
-                    className="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-bold transition-all shadow-lg"
+                    className="btn-ghost block w-full rounded-full py-3 font-semibold"
                   >
                     {welcomeData.welcomeOffer.singleReading.ctaText}
                   </Link>
@@ -681,19 +686,20 @@ export default function RegisterPage() {
               </div>
 
               {/* Footer */}
-              <div className="text-center p-8 pt-0">
-                <p className="text-sm text-gray-400 mb-4">
-                  💫 Suas escolhas definem seu destino. Comece agora sua jornada
-                  de transformação!
+              <div className="p-8 pt-0 text-center">
+                <p className="mb-4 text-sm text-ink-600">
+                  Your choices shape your destiny. Begin your journey of
+                  transformation now.
                 </p>
                 <button
                   onClick={() => {
                     setShowWelcomeModal(false);
                     router.push("/challenge");
                   }}
-                  className="text-purple-400 hover:text-purple-300 text-sm font-semibold transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-gold-300 transition-colors hover:text-gold-200"
                 >
-                  Ir para o Jogo Gratuito →
+                  Go to the free game
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               </div>
             </motion.div>

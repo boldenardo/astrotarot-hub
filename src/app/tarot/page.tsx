@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Shuffle, ArrowLeft } from "lucide-react";
+import { Sparkles, Shuffle, ArrowLeft, Moon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { EGYPTIAN_DECK } from "@/lib/tarot-data";
+import { createTarotReading, TarotApiError } from "@/lib/tarot-client";
 import Image from "next/image";
 
 interface DrawnCard {
@@ -26,8 +27,13 @@ export default function EgyptianTarotPage() {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [showCards, setShowCards] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [aiError, setAiError] = useState<string>("");
+  const [noReadingsLeft, setNoReadingsLeft] = useState(false);
+  const [readingsLeft, setReadingsLeft] = useState<
+    number | "ilimitado" | null
+  >(null);
 
-  // Verifica se o usuário está logado
+  // Check whether the user is signed in
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -42,54 +48,58 @@ export default function EgyptianTarotPage() {
     checkAuth();
   }, [router]);
 
-  // Mostra loading enquanto verifica autenticação
+  // Show a loader while authentication is being verified
   if (isCheckingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
-        <div className="text-white text-xl">Verificando acesso...</div>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="glass glass-gold rounded-2xl px-6 py-4 text-lg text-ink-200">
+          Verifying access...
+        </div>
       </div>
     );
   }
 
   const spreadTypes: { [key: number]: string[] } = {
-    1: ["Presente"],
-    3: ["Passado", "Presente", "Futuro"],
+    1: ["Present"],
+    3: ["Past", "Present", "Future"],
     5: [
-      "Situação",
-      "Obstáculo",
-      "Conselho",
-      "Resultado Próximo",
-      "Resultado Final",
+      "Situation",
+      "Obstacle",
+      "Guidance",
+      "Near Outcome",
+      "Final Outcome",
     ],
     7: [
-      "Passado",
-      "Presente",
-      "Futuro",
-      "Você",
-      "Ambiente",
-      "Esperanças",
-      "Resultado",
+      "Past",
+      "Present",
+      "Future",
+      "You",
+      "Environment",
+      "Hopes",
+      "Outcome",
     ],
   };
 
   const drawCards = async () => {
     if (numCards > 22 || numCards < 1) {
-      alert("Escolha entre 1 e 22 cartas!");
+      alert("Escolha entre 1 e 22 cartas.");
       return;
     }
 
     setIsDrawing(true);
     setShowCards(false);
     setAiInterpretation("");
+    setAiError("");
+    setNoReadingsLeft(false);
 
-    // Simula embaralhamento
+    // Simulate shuffling
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Sorteia cartas únicas
+    // Draw unique cards
     const shuffled = [...EGYPTIAN_DECK].sort(() => Math.random() - 0.5);
     const positions =
       spreadTypes[numCards] ||
-      Array.from({ length: numCards }, (_, i) => `Posição ${i + 1}`);
+      Array.from({ length: numCards }, (_, i) => `Position ${i + 1}`);
 
     const selected: DrawnCard[] = shuffled
       .slice(0, numCards)
@@ -97,24 +107,23 @@ export default function EgyptianTarotPage() {
         id: card.id,
         name: card.name,
         image: card.imageUrl,
-        position: positions[index] || `Posição ${index + 1}`,
+        position: positions[index] || `Position ${index + 1}`,
       }));
 
     setDrawnCards(selected);
     setIsDrawing(false);
     setShowCards(true);
 
-    // Gera interpretação com IA
+    // Generate the AI interpretation
     await generateAIInterpretation(selected);
   };
 
   const generateAIInterpretation = async (cards: DrawnCard[]) => {
     setIsLoadingAI(true);
+    setAiError("");
+    setNoReadingsLeft(false);
 
     try {
-      // Usar Edge Function do Supabase
-      const { createTarotReading } = await import("@/lib/tarot-client");
-
       const result = await createTarotReading({
         selectedCards: cards.map((c) => ({
           name: c.name,
@@ -123,15 +132,24 @@ export default function EgyptianTarotPage() {
         question: "Interpretação geral da tiragem",
       });
 
-      setAiInterpretation(
-        result.reading?.interpretation ||
-          result.interpretation ||
-          "Interpretação indisponível no momento."
-      );
+      setAiInterpretation(result.reading?.interpretation || "");
+      setReadingsLeft(result.readingsLeft ?? null);
     } catch (error) {
-      console.error("Erro ao gerar interpretação:", error);
-      setAiInterpretation(
-        "✨ Suas cartas revelam uma jornada de transformação. Cada carta carrega uma mensagem profunda do Tarot Egípcio, guiando você através dos mistérios ancestrais."
+      console.error("Error generating interpretation:", error);
+
+      if (error instanceof TarotApiError) {
+        if (error.status === 401 || error.code === "AUTH_REQUIRED") {
+          router.push("/auth/login");
+          return;
+        }
+        if (error.status === 402 || error.code === "NO_READINGS_LEFT") {
+          setNoReadingsLeft(true);
+          return;
+        }
+      }
+
+      setAiError(
+        "Não foi possível gerar a interpretação das suas cartas agora. Tente novamente em instantes."
       );
     } finally {
       setIsLoadingAI(false);
@@ -139,14 +157,14 @@ export default function EgyptianTarotPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Background mystical effect */}
-      <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 via-black to-black" />
+    <div className="relative min-h-screen overflow-hidden text-ink-200">
+      {/* Ambient background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,92,255,0.10),transparent_60%)]" />
       <div className="absolute inset-0">
         {[...Array(40)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-yellow-400/30 rounded-full"
+            className="absolute h-1 w-1 rounded-full bg-gold-300/30"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -165,36 +183,38 @@ export default function EgyptianTarotPage() {
       </div>
 
       {/* Back button */}
-      <div className="fixed top-6 left-6 z-50">
+      <div className="fixed left-6 top-6 z-50">
         <Link
           href="/"
-          className="flex items-center gap-2 px-4 py-2 bg-purple-900/50 hover:bg-purple-800/50 border border-purple-600/50 rounded-full transition-colors backdrop-blur-sm"
+          className="glass glass-gold flex items-center gap-2 rounded-full px-4 py-2 text-ink-200 transition-colors hover:text-gold-300"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Voltar</span>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm">Back</span>
         </Link>
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-16">
+      <div className="container relative z-10 mx-auto px-4 py-16">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="mb-12 text-center"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-8 h-8 text-yellow-400" />
-            <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 bg-clip-text text-transparent">
-              Tarot Egípcio
+          <div className="mb-4 flex items-center justify-center gap-3">
+            <Sparkles className="h-8 w-8 text-gold-300" />
+            <h1 className="font-display text-5xl font-semibold text-ink-50 md:text-6xl">
+              Egyptian <span className="text-gold">Tarot</span>
             </h1>
-            <Sparkles className="w-8 h-8 text-yellow-400" />
+            <Sparkles className="h-8 w-8 text-gold-300" />
           </div>
-          <p className="text-xl text-gray-300 mb-2">Arcanos Maiores</p>
-          <p className="text-sm text-gray-500 max-w-3xl mx-auto italic">
-            &ldquo;A Kábala se perde na noite dos séculos, onde o Universo se
-            gestou no ventre de Maha Kundalini, a Grande Mãe. O Anjo METATRON
-            nos deixou o Tarot, no qual se encerra toda a Sabedoria
-            Divina.&rdquo;
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
+            Major Arcana
+          </p>
+          <p className="mx-auto max-w-3xl text-sm italic text-ink-600">
+            &ldquo;The Kabbalah is lost in the night of ages, where the Universe
+            was conceived in the womb of Maha Kundalini, the Great Mother. The
+            Angel Metatron left us the Tarot, in which all Divine Wisdom is
+            contained.&rdquo;
           </p>
         </motion.div>
 
@@ -203,32 +223,32 @@ export default function EgyptianTarotPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="max-w-md mx-auto bg-gradient-to-br from-purple-900/40 to-indigo-900/40 backdrop-blur-sm rounded-3xl p-8 border border-purple-500/30 shadow-2xl"
+            className="glass glass-gold mx-auto max-w-md rounded-3xl p-8 shadow-glass"
           >
-            <h2 className="text-2xl font-bold text-center mb-6">
-              Quantas cartas deseja tirar?
+            <h2 className="mb-6 text-center font-display text-2xl font-semibold text-ink-50">
+              How many cards would you like to draw?
             </h2>
 
-            <div className="space-y-4 mb-6">
+            <div className="mb-6 space-y-4">
               {[1, 3, 5, 7].map((num) => (
                 <button
                   key={num}
                   onClick={() => setNumCards(num)}
-                  className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${
+                  className={`w-full rounded-2xl px-6 py-3 font-semibold transition-all ${
                     numCards === num
-                      ? "bg-gradient-to-r from-yellow-500 to-amber-600 text-black shadow-lg scale-105"
-                      : "bg-purple-800/50 hover:bg-purple-700/50 border border-purple-600/50"
+                      ? "scale-[1.02] bg-gradient-to-br from-gold-200 to-gold-600 text-night-900 shadow-gold"
+                      : "border border-white/10 bg-white/5 text-ink-200 hover:border-gold-400/40 hover:text-gold-300"
                   }`}
                 >
-                  {num} {num === 1 ? "Carta" : "Cartas"} -{" "}
-                  {spreadTypes[num]?.[0] || "Tiragem Personalizada"}
+                  {num} {num === 1 ? "Card" : "Cards"} -{" "}
+                  {spreadTypes[num]?.[0] || "Custom Spread"}
                 </button>
               ))}
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm mb-2 text-gray-400">
-                Ou escolha um número (1-22):
+              <label className="mb-2 block text-sm text-ink-400">
+                Or choose a number (1-22):
               </label>
               <input
                 type="number"
@@ -240,14 +260,14 @@ export default function EgyptianTarotPage() {
                     Math.min(22, Math.max(1, parseInt(e.target.value) || 1))
                   )
                 }
-                className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full rounded-2xl border border-white/10 bg-night-900/60 px-4 py-3 text-ink-100 focus:border-gold-400/40 focus:outline-none focus:ring-2 focus:ring-gold-400/40"
               />
             </div>
 
             <button
               onClick={drawCards}
               disabled={isDrawing}
-              className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full font-bold text-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl flex items-center justify-center gap-2"
+              className="btn-gold flex w-full items-center justify-center gap-2 rounded-full py-4 text-lg font-bold disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isDrawing ? (
                 <>
@@ -259,14 +279,14 @@ export default function EgyptianTarotPage() {
                       ease: "linear",
                     }}
                   >
-                    <Shuffle className="w-5 h-5" />
+                    <Shuffle className="h-5 w-5" />
                   </motion.div>
-                  Embaralhando...
+                  Shuffling...
                 </>
               ) : (
                 <>
-                  <Shuffle className="w-5 h-5" />
-                  Tirar Cartas
+                  <Shuffle className="h-5 w-5" />
+                  Draw Cards
                 </>
               )}
             </button>
@@ -282,7 +302,7 @@ export default function EgyptianTarotPage() {
               exit={{ opacity: 0 }}
             >
               {/* Cards grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+              <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {drawnCards.map((card, index) => (
                   <motion.div
                     key={card.id}
@@ -291,20 +311,22 @@ export default function EgyptianTarotPage() {
                     transition={{ delay: index * 0.2, duration: 0.6 }}
                     className="group relative"
                   >
-                    <div className="relative rounded-2xl overflow-hidden border-4 border-yellow-600/50 shadow-2xl hover:shadow-yellow-500/50 transition-all hover:scale-105 aspect-[2/3]">
+                    <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-gold-400/30 shadow-gold transition-all hover:scale-105 hover:border-gold-400/60">
                       <Image
                         src={card.image}
                         alt={card.name}
                         fill
-                        className="object-cover filter grayscale-0 group-hover:brightness-110 transition-all"
+                        className="object-cover transition-all group-hover:brightness-110"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-night-950 via-transparent to-transparent opacity-80" />
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <p className="text-xs text-yellow-400 font-semibold mb-1">
+                        <p className="mb-1 text-xs font-semibold text-gold-300">
                           {card.position}
                         </p>
-                        <h3 className="text-lg font-bold">{card.name}</h3>
+                        <h3 className="text-lg font-bold text-ink-50">
+                          {card.name}
+                        </h3>
                       </div>
                     </div>
                   </motion.div>
@@ -316,11 +338,11 @@ export default function EgyptianTarotPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: drawnCards.length * 0.2 + 0.3 }}
-                className="max-w-4xl mx-auto bg-gradient-to-br from-purple-900/60 via-indigo-900/60 to-purple-900/60 backdrop-blur-md rounded-3xl p-8 md:p-12 border border-purple-500/30 shadow-2xl"
+                className="glass glass-gold mx-auto max-w-4xl rounded-3xl p-8 shadow-glass md:p-12"
               >
-                <div className="flex items-center gap-3 mb-6">
-                  <Sparkles className="w-6 h-6 text-yellow-400" />
-                  <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                <div className="mb-6 flex items-center gap-3">
+                  <Sparkles className="h-6 w-6 text-gold-300" />
+                  <h2 className="font-display text-3xl font-semibold text-gold">
                     Interpretação Mística
                   </h2>
                 </div>
@@ -334,32 +356,71 @@ export default function EgyptianTarotPage() {
                         repeat: Infinity,
                         ease: "linear",
                       }}
-                      className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full mb-4"
+                      className="mb-4 h-16 w-16 rounded-full border-4 border-gold-400/40 border-t-gold-400"
                     />
-                    <p className="text-gray-400">
+                    <p className="text-ink-400">
                       Consultando as energias cósmicas...
                     </p>
                   </div>
+                ) : noReadingsLeft ? (
+                  <div className="py-6 text-center">
+                    <span className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
+                      <Moon className="h-8 w-8 text-gold-300" />
+                    </span>
+                    <h3 className="mb-2 font-display text-2xl font-semibold text-ink-50">
+                      Suas leituras acabaram
+                    </h3>
+                    <p className="mx-auto mb-8 max-w-md text-ink-400">
+                      Você usou todas as suas leituras disponíveis. Escolha uma
+                      opção para continuar consultando o Tarot Egípcio:
+                    </p>
+                    <div className="mx-auto flex max-w-md flex-col gap-4">
+                      <Link
+                        href="/cart?plan=pack5"
+                        className="btn-gold w-full rounded-full py-4 text-center font-semibold"
+                      >
+                        Pacote 5 Leituras — US$ 9,99
+                      </Link>
+                      <Link
+                        href="/cart?plan=premium"
+                        className="btn-ghost w-full rounded-full py-4 text-center font-semibold"
+                      >
+                        Premium Ilimitado — US$ 29,90/mês
+                      </Link>
+                    </div>
+                  </div>
+                ) : aiError ? (
+                  <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-5 text-center text-red-200">
+                    {aiError}
+                  </div>
                 ) : (
                   <div className="prose prose-invert max-w-none">
-                    <p className="text-lg leading-relaxed text-gray-200 whitespace-pre-line">
+                    <p className="whitespace-pre-line text-lg leading-relaxed text-ink-200">
                       {aiInterpretation}
                     </p>
+                    {readingsLeft !== null && (
+                      <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-gold-400/25 bg-gold-400/10 px-4 py-2 text-sm font-semibold text-gold-300">
+                        <Sparkles className="h-4 w-4" />
+                        {readingsLeft === "ilimitado"
+                          ? "Leituras: ilimitadas"
+                          : `Leituras restantes: ${readingsLeft}`}
+                      </p>
+                    )}
                   </div>
                 )}
               </motion.div>
 
               {/* New reading button */}
-              <div className="text-center mt-8">
+              <div className="mt-8 text-center">
                 <button
                   onClick={() => {
                     setShowCards(false);
                     setDrawnCards([]);
                     setAiInterpretation("");
                   }}
-                  className="px-8 py-3 bg-purple-800/50 hover:bg-purple-700/50 border border-purple-600/50 rounded-full font-semibold transition-all hover:scale-105"
+                  className="btn-ghost rounded-full px-8 py-3 font-semibold"
                 >
-                  Nova Tiragem
+                  New Reading
                 </button>
               </div>
             </motion.div>

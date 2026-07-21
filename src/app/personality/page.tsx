@@ -1,8 +1,25 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, MapPin, Calendar, Clock, Sparkles, Star } from "lucide-react";
+import {
+  User,
+  MapPin,
+  Calendar,
+  Clock,
+  Sparkles,
+  Star,
+  Sun,
+  Moon,
+  Sunrise,
+  Check,
+  Target,
+  Sprout,
+} from "lucide-react";
+
+import PremiumGate from "@/components/PremiumGate";
 
 interface BirthData {
   name: string;
@@ -45,35 +62,36 @@ interface PersonalityResult {
 }
 
 const MONTHS = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const ELEMENT_COLORS: { [key: string]: string } = {
-  Fire: "#FF4500",
-  Earth: "#8B4513",
-  Air: "#87CEEB",
-  Water: "#4682B4",
+  Fire: "#D4AF37",
+  Earth: "#A9822F",
+  Air: "#B7A6F0",
+  Water: "#7C5CFF",
 };
 
 const ELEMENT_NAMES: { [key: string]: string } = {
-  Fire: "Fogo",
-  Earth: "Terra",
-  Air: "Ar",
-  Water: "Água",
+  Fire: "Fire",
+  Earth: "Earth",
+  Air: "Air",
+  Water: "Water",
 };
 
 export default function PersonalityReportPage() {
+  const router = useRouter();
   const [step, setStep] = useState<"form" | "loading" | "results">("form");
   const [birthData, setBirthData] = useState<BirthData>({
     name: "",
@@ -91,6 +109,7 @@ export default function PersonalityReportPage() {
   const [result, setResult] = useState<PersonalityResult | null>(null);
   const [interpretation, setInterpretation] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [premiumRequired, setPremiumRequired] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -113,7 +132,7 @@ export default function PersonalityReportPage() {
         };
       }
     } catch (error) {
-      console.error("Erro ao buscar coordenadas:", error);
+      console.error("Failed to fetch coordinates:", error);
     }
     return { latitude: -23.5505, longitude: -46.6333 }; // São Paulo default
   };
@@ -121,10 +140,11 @@ export default function PersonalityReportPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
+    setPremiumRequired(false);
     setStep("loading");
 
     try {
-      // Busca coordenadas
+      // Fetch coordinates
       const coords = await getCoordinates(birthData.city, birthData.nation);
 
       const requestData = {
@@ -149,17 +169,30 @@ export default function PersonalityReportPage() {
         body: JSON.stringify(requestData),
       });
 
-      if (!response.ok) {
-        throw new Error("Erro ao processar dados");
+      if (response.status === 401) {
+        router.push("/auth/login");
+        return;
       }
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (data?.code === "PREMIUM_REQUIRED") {
+          setPremiumRequired(true);
+          setError("Este recurso é exclusivo do plano Premium Ilimitado.");
+          setStep("form");
+          return;
+        }
+        throw new Error(data?.error || "Falha ao gerar o perfil");
+      }
+
       setResult(data.profile);
       setInterpretation(data.interpretation);
       setStep("results");
     } catch (err) {
+      console.error(err);
       setError(
-        "Funcionalidade em desenvolvimento. Use o dashboard para ver seu signo solar."
+        "Não foi possível gerar seu perfil agora. Tente novamente em instantes."
       );
       setStep("form");
     }
@@ -213,15 +246,15 @@ export default function PersonalityReportPage() {
               />
             );
           })}
-          {/* Centro branco */}
-          <circle cx="100" cy="100" r="40" fill="white" />
+          {/* Center circle */}
+          <circle cx="100" cy="100" r="40" fill="#0B0713" />
         </svg>
 
-        {/* Legenda */}
+        {/* Legend */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <Sparkles className="w-8 h-8 mx-auto text-purple-600 mb-1" />
-            <p className="text-sm font-medium text-gray-700">Elementos</p>
+            <Sparkles className="w-8 h-8 mx-auto text-gold-300 mb-1" />
+            <p className="text-sm font-medium text-ink-200">Elements</p>
           </div>
         </div>
       </div>
@@ -229,12 +262,13 @@ export default function PersonalityReportPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-purple-950 relative overflow-hidden">
-      {/* Estrelas de fundo */}
+    <PremiumGate feature="birth_chart">
+    <div className="min-h-screen relative overflow-hidden text-ink-200">
+      {/* Background stars */}
       {Array.from({ length: 20 }).map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 bg-white rounded-full"
+          className="absolute w-1 h-1 bg-gold-300/50 rounded-full"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
@@ -263,32 +297,32 @@ export default function PersonalityReportPage() {
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
               className="inline-block mb-4"
             >
-              <Star className="w-16 h-16 text-yellow-400" />
+              <Star className="w-16 h-16 text-gold-400" fill="currentColor" />
             </motion.div>
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Relatório de Personalidade
+            <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink-50 mb-4">
+              Personality <span className="text-gold">Report</span>
             </h1>
-            <p className="text-xl text-purple-200">
-              Descubra sua essência através do seu Mapa Astral
+            <p className="text-xl text-ink-400">
+              Discover your essence through your birth chart.
             </p>
           </div>
 
           <AnimatePresence mode="wait">
-            {/* Formulário */}
+            {/* Form */}
             {step === "form" && (
               <motion.div
                 key="form"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20"
+                className="glass glass-gold rounded-3xl p-8"
               >
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Nome */}
+                  {/* Name */}
                   <div>
-                    <label className="flex items-center gap-2 text-white mb-2">
-                      <User className="w-5 h-5" />
-                      Nome
+                    <label className="flex items-center gap-2 text-ink-200 mb-2">
+                      <User className="w-5 h-5 text-gold-300" />
+                      Full Name
                     </label>
                     <input
                       type="text"
@@ -296,16 +330,16 @@ export default function PersonalityReportPage() {
                       value={birthData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Seu nome"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                      placeholder="Your name"
                     />
                   </div>
 
-                  {/* Data de Nascimento */}
+                  {/* Date of Birth */}
                   <div>
-                    <label className="flex items-center gap-2 text-white mb-2">
-                      <Calendar className="w-5 h-5" />
-                      Data de Nascimento
+                    <label className="flex items-center gap-2 text-ink-200 mb-2">
+                      <Calendar className="w-5 h-5 text-gold-300" />
+                      Date of Birth
                     </label>
                     <div className="grid grid-cols-3 gap-4">
                       <input
@@ -316,22 +350,24 @@ export default function PersonalityReportPage() {
                         required
                         min="1"
                         max="31"
-                        placeholder="Dia"
-                        className="px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Day"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                       <select
                         name="month"
                         value={birthData.month}
                         onChange={handleInputChange}
                         required
-                        className="px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 focus:border-gold-400/50 focus:outline-none"
                       >
-                        <option value="">Mês</option>
+                        <option value="" className="bg-night-800">
+                          Month
+                        </option>
                         {MONTHS.map((month, index) => (
                           <option
                             key={month}
                             value={index + 1}
-                            className="bg-purple-900"
+                            className="bg-night-800"
                           >
                             {month}
                           </option>
@@ -344,18 +380,18 @@ export default function PersonalityReportPage() {
                         onChange={handleInputChange}
                         required
                         min="1900"
-                        max="2024"
-                        placeholder="Ano"
-                        className="px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        max="2026"
+                        placeholder="Year"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Hora de Nascimento */}
+                  {/* Time of Birth */}
                   <div>
-                    <label className="flex items-center gap-2 text-white mb-2">
-                      <Clock className="w-5 h-5" />
-                      Hora de Nascimento
+                    <label className="flex items-center gap-2 text-ink-200 mb-2">
+                      <Clock className="w-5 h-5 text-gold-300" />
+                      Time of Birth
                     </label>
                     <div className="grid grid-cols-2 gap-4">
                       <input
@@ -366,8 +402,8 @@ export default function PersonalityReportPage() {
                         required
                         min="0"
                         max="23"
-                        placeholder="Hora"
-                        className="px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Hour"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                       <input
                         type="number"
@@ -377,17 +413,17 @@ export default function PersonalityReportPage() {
                         required
                         min="0"
                         max="59"
-                        placeholder="Minuto"
-                        className="px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Minute"
+                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Cidade */}
+                  {/* City */}
                   <div>
-                    <label className="flex items-center gap-2 text-white mb-2">
-                      <MapPin className="w-5 h-5" />
-                      Cidade de Nascimento
+                    <label className="flex items-center gap-2 text-ink-200 mb-2">
+                      <MapPin className="w-5 h-5 text-gold-300" />
+                      City of Birth
                     </label>
                     <input
                       type="text"
@@ -395,22 +431,30 @@ export default function PersonalityReportPage() {
                       value={birthData.city}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                      placeholder="Ex: São Paulo"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                      placeholder="e.g. São Paulo"
                     />
                   </div>
 
                   {error && (
-                    <div className="p-4 bg-red-500/20 border border-red-500/50 rounded-2xl text-red-200">
-                      {error}
+                    <div className="p-4 rounded-2xl border border-red-400/30 bg-red-400/10 text-red-200">
+                      <p>{error}</p>
+                      {premiumRequired && (
+                        <Link
+                          href="/cart?plan=premium"
+                          className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
+                        >
+                          Assinar Premium Ilimitado — US$ 29,90/mês
+                        </Link>
+                      )}
                     </div>
                   )}
 
                   <button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-full font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="btn-gold w-full rounded-full py-4 font-semibold text-lg"
                   >
-                    Gerar Relatório de Personalidade
+                    Generate Personality Report
                   </button>
                 </form>
               </motion.div>
@@ -430,18 +474,18 @@ export default function PersonalityReportPage() {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="inline-block mb-6"
                 >
-                  <Sparkles className="w-20 h-20 text-yellow-400" />
+                  <Sparkles className="w-20 h-20 text-gold-400" />
                 </motion.div>
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  Analisando seu Mapa Astral...
+                <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4">
+                  Reading your birth chart...
                 </h2>
-                <p className="text-purple-200">
-                  Conectando com as estrelas e revelando sua essência
+                <p className="text-ink-400">
+                  Aligning the stars to reveal your essence.
                 </p>
               </motion.div>
             )}
 
-            {/* Resultados */}
+            {/* Results */}
             {step === "results" && result && (
               <motion.div
                 key="results"
@@ -450,65 +494,65 @@ export default function PersonalityReportPage() {
                 className="space-y-8"
               >
                 {/* Big Three */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
-                  <h2 className="text-3xl font-bold text-white mb-6 text-center">
-                    Seu Grande Trio
+                <div className="glass rounded-3xl p-8 border-white/5">
+                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                    Your Big Three
                   </h2>
                   <div className="grid md:grid-cols-3 gap-6">
-                    {/* Sol */}
-                    <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl p-6 border border-yellow-500/30">
+                    {/* Sun */}
+                    <div className="glass rounded-2xl p-6 border border-gold-400/20">
                       <div className="text-center">
-                        <div className="text-4xl mb-2">☀️</div>
-                        <h3 className="text-xl font-bold text-white mb-2">
-                          Sol
+                        <Sun className="w-9 h-9 mx-auto mb-2 text-gold-300" />
+                        <h3 className="text-xl font-semibold text-ink-50 mb-2">
+                          Sun
                         </h3>
-                        <p className="text-2xl font-bold text-yellow-300 mb-1">
+                        <p className="text-2xl font-bold text-gold-300 mb-1">
                           {result.bigThree.sun.sign}
                         </p>
-                        <p className="text-sm text-white/70">
-                          Sua identidade essencial
+                        <p className="text-sm text-ink-400">
+                          Your core identity
                         </p>
                       </div>
                     </div>
 
-                    {/* Lua */}
-                    <div className="bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-2xl p-6 border border-blue-500/30">
+                    {/* Moon */}
+                    <div className="glass rounded-2xl p-6 border border-white/5">
                       <div className="text-center">
-                        <div className="text-4xl mb-2">🌙</div>
-                        <h3 className="text-xl font-bold text-white mb-2">
-                          Lua
+                        <Moon className="w-9 h-9 mx-auto mb-2 text-amethyst-300" />
+                        <h3 className="text-xl font-semibold text-ink-50 mb-2">
+                          Moon
                         </h3>
-                        <p className="text-2xl font-bold text-blue-300 mb-1">
+                        <p className="text-2xl font-bold text-amethyst-300 mb-1">
                           {result.bigThree.moon.sign}
                         </p>
-                        <p className="text-sm text-white/70">
-                          Seu mundo emocional
+                        <p className="text-sm text-ink-400">
+                          Your emotional world
                         </p>
                       </div>
                     </div>
 
-                    {/* Ascendente */}
-                    <div className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 rounded-2xl p-6 border border-pink-500/30">
+                    {/* Ascendant */}
+                    <div className="glass rounded-2xl p-6 border border-gold-400/20">
                       <div className="text-center">
-                        <div className="text-4xl mb-2">⬆️</div>
-                        <h3 className="text-xl font-bold text-white mb-2">
-                          Ascendente
+                        <Sunrise className="w-9 h-9 mx-auto mb-2 text-gold-300" />
+                        <h3 className="text-xl font-semibold text-ink-50 mb-2">
+                          Ascendant
                         </h3>
-                        <p className="text-2xl font-bold text-pink-300 mb-1">
+                        <p className="text-2xl font-bold text-gold-300 mb-1">
                           {result.bigThree.ascendant.sign}
                         </p>
-                        <p className="text-sm text-white/70">
-                          Sua máscara social
+                        <p className="text-sm text-ink-400">
+                          Your outward self
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Gráfico de Elementos */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
-                  <h2 className="text-3xl font-bold text-white mb-6 text-center">
-                    Distribuição dos Elementos
+                {/* Element Distribution */}
+                <div className="glass rounded-3xl p-8 border-white/5">
+                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                    Elemental Balance
                   </h2>
                   <div className="flex flex-col md:flex-row items-center gap-8">
                     <div className="flex-shrink-0">
@@ -529,10 +573,10 @@ export default function PersonalityReportPage() {
                             />
                             <div className="flex-1">
                               <div className="flex justify-between mb-1">
-                                <span className="text-white font-medium">
+                                <span className="text-ink-200 font-medium">
                                   {ELEMENT_NAMES[element]}
                                 </span>
-                                <span className="text-white/70">{count}</span>
+                                <span className="text-ink-400">{count}</span>
                               </div>
                               <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                                 <motion.div
@@ -551,9 +595,9 @@ export default function PersonalityReportPage() {
                           </div>
                         )
                       )}
-                      <div className="mt-6 p-4 bg-white/10 rounded-2xl">
-                        <p className="text-white font-semibold text-center">
-                          Elemento Dominante:{" "}
+                      <div className="mt-6 p-4 glass rounded-2xl border border-white/5">
+                        <p className="text-ink-200 font-semibold text-center">
+                          Dominant Element:{" "}
                           <span
                             className="text-xl"
                             style={{
@@ -568,10 +612,11 @@ export default function PersonalityReportPage() {
                   </div>
                 </div>
 
-                {/* Pontos Fortes */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
-                  <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-2">
-                    <span>✨</span> Seus Dons Naturais
+                {/* Strengths */}
+                <div className="glass rounded-3xl p-8 border-white/5">
+                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
+                    <Sparkles className="w-7 h-7 text-gold-300" /> Your Natural
+                    Gifts
                   </h2>
                   <ul className="space-y-3">
                     {result.strengths.map((strength, index) => (
@@ -582,19 +627,18 @@ export default function PersonalityReportPage() {
                         transition={{ delay: index * 0.1 }}
                         className="flex items-start gap-3"
                       >
-                        <span className="text-green-400 text-xl flex-shrink-0">
-                          ✓
-                        </span>
-                        <span className="text-white text-lg">{strength}</span>
+                        <Check className="w-6 h-6 flex-shrink-0 text-gold-400" />
+                        <span className="text-ink-200 text-lg">{strength}</span>
                       </motion.li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Desafios */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
-                  <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-2">
-                    <span>🌱</span> Áreas de Crescimento
+                {/* Challenges */}
+                <div className="glass rounded-3xl p-8 border-white/5">
+                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
+                    <Sprout className="w-7 h-7 text-amethyst-300" /> Areas for
+                    Growth
                   </h2>
                   <ul className="space-y-3">
                     {result.challenges.map((challenge, index) => (
@@ -605,40 +649,39 @@ export default function PersonalityReportPage() {
                         transition={{ delay: index * 0.1 }}
                         className="flex items-start gap-3"
                       >
-                        <span className="text-yellow-400 text-xl flex-shrink-0">
-                          →
-                        </span>
-                        <span className="text-white text-lg">{challenge}</span>
+                        <span className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amethyst-400" />
+                        <span className="text-ink-200 text-lg">{challenge}</span>
                       </motion.li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Propósito de Vida */}
-                <div className="bg-gradient-to-br from-purple-600/30 to-pink-600/30 backdrop-blur-xl rounded-3xl p-8 border border-purple-500/50">
-                  <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-2">
-                    <span>🎯</span> Seu Propósito de Vida
+                {/* Life Purpose */}
+                <div className="glass glass-gold rounded-3xl p-8">
+                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-4 flex items-center gap-2">
+                    <Target className="w-7 h-7 text-gold-300" /> Your Life
+                    Purpose
                   </h2>
-                  <p className="text-xl text-white leading-relaxed">
+                  <p className="text-xl text-ink-200 leading-relaxed">
                     {result.lifePurpose}
                   </p>
                 </div>
 
-                {/* Interpretação da IA */}
+                {/* AI Interpretation */}
                 {interpretation && (
-                  <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
-                    <h2 className="text-3xl font-bold text-white mb-6">
-                      Análise Astrológica Completa
+                  <div className="glass rounded-3xl p-8 border-white/5">
+                    <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6">
+                      Complete Astrological Reading
                     </h2>
                     <div className="prose prose-invert prose-lg max-w-none">
-                      <div className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                      <div className="text-ink-200 leading-relaxed whitespace-pre-wrap">
                         {interpretation}
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Botão Nova Análise */}
+                {/* New Analysis Button */}
                 <div className="text-center">
                   <button
                     onClick={() => {
@@ -646,9 +689,9 @@ export default function PersonalityReportPage() {
                       setResult(null);
                       setInterpretation("");
                     }}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-4 rounded-full font-semibold text-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="btn-gold rounded-full px-8 py-4 font-semibold text-lg"
                   >
-                    Fazer Nova Análise
+                    Start a New Reading
                   </button>
                 </div>
               </motion.div>
@@ -657,5 +700,6 @@ export default function PersonalityReportPage() {
         </motion.div>
       </div>
     </div>
+    </PremiumGate>
   );
 }

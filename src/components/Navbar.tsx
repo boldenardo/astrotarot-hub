@@ -1,88 +1,220 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Star, ShoppingCart, User, LogIn } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Moon,
+  ShoppingBag,
+  LogIn,
+  LogOut,
+  LayoutDashboard,
+  Menu,
+  X,
+} from "lucide-react";
 import { useState, useEffect } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
+import { signOut } from "@/lib/auth-client";
+
+const LINKS = [
+  { href: "/challenge", label: "Leitura Grátis" },
+  { href: "/tarot", label: "Tarot" },
+  { href: "/compatibility", label: "Amor" },
+  { href: "/guia", label: "Guia" },
+  { href: "/predictions", label: "Previsões" },
+  { href: "/numerology", label: "Numerologia" },
+  { href: "/abundance", label: "Prosperidade" },
+  { href: "/cart", label: "Planos" },
+];
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Sessão do Supabase (estado de login)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Fecha o menu mobile ao trocar de rota
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Erro ao sair:", error);
+    }
+    router.push("/");
+  }
 
   return (
-    <motion.nav
-      initial={{ y: -100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-[9999] w-full"
-    >
-      <div className="relative bg-gradient-to-r from-purple-900/10 via-pink-900/10 to-purple-900/10 backdrop-blur-2xl border-b border-purple-500/20 shadow-2xl shadow-purple-500/10">
-        {/* Liquid glass effect overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-white/5 pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between relative z-10">
+    <div className="fixed inset-x-0 top-4 z-[9999] px-4">
+      <motion.nav
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="mx-auto max-w-6xl"
+      >
+        <div
+          className={`flex items-center justify-between gap-4 rounded-full border px-4 py-2.5 transition-all duration-300 ${
+            scrolled
+              ? "glass glass-gold shadow-glass"
+              : "border-white/10 bg-night-900/40 backdrop-blur-xl"
+          }`}
+        >
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative">
-              <Star className="w-8 h-8 text-purple-400" fill="currentColor" />
-              <div className="absolute inset-0 blur-md bg-purple-400/50 rounded-full" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-              AstroTarot
+          <Link href="/" className="group flex items-center gap-2.5 pl-1">
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
+              <Moon className="h-5 w-5 text-night-900" strokeWidth={2.2} />
+            </span>
+            <span className="font-display text-xl font-semibold tracking-tight text-ink-50">
+              Astro<span className="text-gold">Tarot</span>
             </span>
           </Link>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-2">
-            <NavLink href="/challenge" active={pathname === "/challenge"}>
-              Jogo Grátis
-            </NavLink>
-            <NavLink href="/tarot" active={pathname === "/tarot"}>
-              Tarot
-            </NavLink>
-            <NavLink
-              href="/compatibility"
-              active={pathname === "/compatibility"}
-            >
-              Amor
-            </NavLink>
-            <NavLink href="/guia" active={pathname === "/guia"}>
-              Guia
-            </NavLink>
-            <NavLink href="/predictions" active={pathname === "/predictions"}>
-              Previsões
-            </NavLink>
-            <NavLink href="/abundance" active={pathname === "/abundance"}>
-              Abundância
-            </NavLink>
+          {/* Desktop links */}
+          <div className="hidden items-center gap-1 lg:flex">
+            {LINKS.map((l) => (
+              <NavLink
+                key={l.href}
+                href={l.href}
+                active={pathname === l.href}
+              >
+                {l.label}
+              </NavLink>
+            ))}
           </div>
 
-          {/* Login and Cart */}
-          <div className="flex items-center gap-3">
-            {/* Cart Button */}
+          {/* Actions */}
+          <div className="flex items-center gap-2">
             <Link
               href="/cart"
-              className="relative p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-purple-500/30 transition-all hover:scale-105 group"
-              title="Carrinho"
+              title="Planos"
+              aria-label="Planos"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-200 transition-all hover:border-gold-400/50 hover:text-gold-300"
             >
-              <ShoppingCart className="w-5 h-5 text-purple-300 group-hover:text-purple-200" />
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-pink-600 to-purple-600 rounded-full text-xs font-bold flex items-center justify-center text-white border-2 border-black">
-                0
-              </span>
+              <ShoppingBag className="h-[18px] w-[18px]" />
             </Link>
 
-            {/* Login/Profile Button */}
-            <Link
-              href="/auth/login"
-              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full text-sm font-semibold transition-all hover:scale-105 shadow-lg shadow-purple-500/50"
+            {session ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="btn-gold hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="btn-ghost hidden items-center gap-2 rounded-full px-4 py-2.5 text-sm sm:flex"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </button>
+              </>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="btn-gold hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+              >
+                <LogIn className="h-4 w-4" />
+                Entrar
+              </Link>
+            )}
+
+            {/* Mobile toggle */}
+            <button
+              type="button"
+              aria-label="Abrir menu"
+              onClick={() => setOpen((v) => !v)}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-100 transition-all hover:border-gold-400/50 lg:hidden"
             >
-              <LogIn className="w-4 h-4" />
-              <span className="hidden md:inline">Entrar</span>
-            </Link>
+              {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
-      </div>
-    </motion.nav>
+
+        {/* Mobile panel */}
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="glass glass-gold mt-2 overflow-hidden rounded-3xl p-2 lg:hidden"
+            >
+              {LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={`block rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
+                    pathname === l.href
+                      ? "bg-gold-400/10 text-gold-300"
+                      : "text-ink-200 hover:bg-white/5 hover:text-ink-50"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              ))}
+              {session ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="btn-ghost mt-1 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Entrar
+                </Link>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
+    </div>
   );
 }
 
@@ -98,10 +230,10 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all rounded-lg backdrop-blur-sm ${
+      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
         active
-          ? "text-white bg-purple-600/30 border border-purple-500/50"
-          : "text-gray-300 hover:text-white hover:bg-white/10"
+          ? "bg-gold-400/10 text-gold-300"
+          : "text-ink-200 hover:text-ink-50"
       }`}
     >
       {children}

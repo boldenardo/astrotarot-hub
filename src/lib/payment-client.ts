@@ -1,24 +1,36 @@
 import { supabase } from "./supabase";
 
 /**
- * Cria um novo pagamento usando Edge Function
+ * Inicia o checkout do Stripe para o plano escolhido.
+ * Redireciona o navegador para a página de pagamento do Stripe.
  */
-export async function createPayment(data: {
-  type: "SINGLE_READING" | "SUBSCRIPTION";
-  customerName?: string;
-}) {
-  const { data: result, error } = await supabase.functions.invoke(
-    "create-payment",
-    {
-      body: data,
-    }
-  );
+export async function startCheckout(plan: "PACK5" | "PREMIUM"): Promise<void> {
+  const res = await fetch("/api/checkout", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan }),
+  });
 
-  if (error) {
-    throw new Error(error.message);
+  if (res.status === 401) {
+    window.location.href = "/auth/login?redirect=/cart";
+    return;
   }
 
-  return result;
+  let data: { url?: string; error?: string } = {};
+  try {
+    data = await res.json();
+  } catch {
+    // resposta sem corpo JSON — tratada abaixo
+  }
+
+  if (res.ok && data.url) {
+    window.location.href = data.url;
+    return;
+  }
+
+  throw new Error(
+    data.error || "Não foi possível iniciar o pagamento. Tente novamente."
+  );
 }
 
 /**
@@ -29,40 +41,6 @@ export async function getUserPayments() {
     .from("payments")
     .select("*")
     .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-/**
- * Busca um pagamento específico
- */
-export async function getPaymentById(id: string) {
-  const { data, error } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
-}
-
-/**
- * Verifica status de um pagamento
- */
-export async function checkPaymentStatus(pixupPaymentId: string) {
-  const { data, error } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("pixup_payment_id", pixupPaymentId)
-    .single();
 
   if (error) {
     throw new Error(error.message);

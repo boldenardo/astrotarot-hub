@@ -10,9 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "validate:env": "node scripts/validate-env.js",
-    "check:pixup": "node scripts/check-pixup-config.js",
-    "test:pixup": "node scripts/check-pixup-config.js --test-connection"
+    "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -35,8 +33,10 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-ga4": "^2.1.0",
+    "stripe": "^22.3.2",
     "tailwind-merge": "^2.5.5",
     "three": "^0.181.2",
+    "tz-lookup": "^6.1.25",
     "zod": "^3.24.1"
   },
   "devDependencies": {

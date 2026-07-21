@@ -5,16 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
   Users,
-  MapPin,
-  Calendar,
-  Clock,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   Loader2,
   Star,
+  MessageCircle,
+  Gem,
+  Infinity as InfinityIcon,
+  Check,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import PremiumGate from "@/components/PremiumGate";
 
 interface PersonData {
   name: string;
@@ -48,116 +52,117 @@ interface CompatibilityResult {
 
 const zodiacSigns = [
   {
-    name: "Áries",
+    name: "Aries",
     emoji: "♈",
-    element: "Fogo",
-    dates: "21/03 - 19/04",
-    perfectMatches: ["Leão", "Sagitário", "Gêmeos"],
-    traits: ["Corajoso", "Energético", "Líder"],
-    color: "from-red-500 to-orange-500",
+    element: "Fire",
+    dates: "Mar 21 – Apr 19",
+    perfectMatches: ["Leo", "Sagittarius", "Gemini"],
+    traits: ["Bold", "Energetic", "Leader"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Touro",
+    name: "Taurus",
     emoji: "♉",
-    element: "Terra",
-    dates: "20/04 - 20/05",
-    perfectMatches: ["Virgem", "Capricórnio", "Câncer"],
-    traits: ["Leal", "Sensual", "Estável"],
-    color: "from-green-600 to-emerald-500",
+    element: "Earth",
+    dates: "Apr 20 – May 20",
+    perfectMatches: ["Virgo", "Capricorn", "Cancer"],
+    traits: ["Loyal", "Sensual", "Grounded"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Gêmeos",
+    name: "Gemini",
     emoji: "♊",
-    element: "Ar",
-    dates: "21/05 - 20/06",
-    perfectMatches: ["Libra", "Aquário", "Áries"],
-    traits: ["Comunicativo", "Versátil", "Inteligente"],
-    color: "from-yellow-500 to-amber-500",
+    element: "Air",
+    dates: "May 21 – Jun 20",
+    perfectMatches: ["Libra", "Aquarius", "Aries"],
+    traits: ["Expressive", "Versatile", "Clever"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Câncer",
+    name: "Cancer",
     emoji: "♋",
-    element: "Água",
-    dates: "21/06 - 22/07",
-    perfectMatches: ["Escorpião", "Peixes", "Touro"],
-    traits: ["Emotivo", "Protetor", "Intuitivo"],
-    color: "from-blue-400 to-cyan-400",
+    element: "Water",
+    dates: "Jun 21 – Jul 22",
+    perfectMatches: ["Scorpio", "Pisces", "Taurus"],
+    traits: ["Nurturing", "Protective", "Intuitive"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Leão",
+    name: "Leo",
     emoji: "♌",
-    element: "Fogo",
-    dates: "23/07 - 22/08",
-    perfectMatches: ["Áries", "Sagitário", "Libra"],
-    traits: ["Generoso", "Criativo", "Confiante"],
-    color: "from-orange-500 to-yellow-500",
+    element: "Fire",
+    dates: "Jul 23 – Aug 22",
+    perfectMatches: ["Aries", "Sagittarius", "Libra"],
+    traits: ["Generous", "Creative", "Confident"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Virgem",
+    name: "Virgo",
     emoji: "♍",
-    element: "Terra",
-    dates: "23/08 - 22/09",
-    perfectMatches: ["Touro", "Capricórnio", "Escorpião"],
-    traits: ["Analítico", "Dedicado", "Perfeccionista"],
-    color: "from-green-500 to-teal-500",
+    element: "Earth",
+    dates: "Aug 23 – Sep 22",
+    perfectMatches: ["Taurus", "Capricorn", "Scorpio"],
+    traits: ["Analytical", "Devoted", "Meticulous"],
+    color: "from-gold-300 to-gold-500",
   },
   {
     name: "Libra",
     emoji: "♎",
-    element: "Ar",
-    dates: "23/09 - 22/10",
-    perfectMatches: ["Gêmeos", "Aquário", "Leão"],
-    traits: ["Diplomático", "Harmonioso", "Charmoso"],
-    color: "from-pink-500 to-rose-500",
+    element: "Air",
+    dates: "Sep 23 – Oct 22",
+    perfectMatches: ["Gemini", "Aquarius", "Leo"],
+    traits: ["Diplomatic", "Harmonious", "Charming"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Escorpião",
+    name: "Scorpio",
     emoji: "♏",
-    element: "Água",
-    dates: "23/10 - 21/11",
-    perfectMatches: ["Câncer", "Peixes", "Virgem"],
-    traits: ["Intenso", "Apaixonado", "Magnético"],
-    color: "from-red-700 to-rose-700",
+    element: "Water",
+    dates: "Oct 23 – Nov 21",
+    perfectMatches: ["Cancer", "Pisces", "Virgo"],
+    traits: ["Intense", "Passionate", "Magnetic"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Sagitário",
+    name: "Sagittarius",
     emoji: "♐",
-    element: "Fogo",
-    dates: "22/11 - 21/12",
-    perfectMatches: ["Áries", "Leão", "Aquário"],
-    traits: ["Aventureiro", "Otimista", "Filosófico"],
-    color: "from-purple-500 to-indigo-500",
+    element: "Fire",
+    dates: "Nov 22 – Dec 21",
+    perfectMatches: ["Aries", "Leo", "Aquarius"],
+    traits: ["Adventurous", "Optimistic", "Philosophical"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Capricórnio",
+    name: "Capricorn",
     emoji: "♑",
-    element: "Terra",
-    dates: "22/12 - 19/01",
-    perfectMatches: ["Touro", "Virgem", "Peixes"],
-    traits: ["Ambicioso", "Responsável", "Disciplinado"],
-    color: "from-gray-600 to-slate-600",
+    element: "Earth",
+    dates: "Dec 22 – Jan 19",
+    perfectMatches: ["Taurus", "Virgo", "Pisces"],
+    traits: ["Ambitious", "Responsible", "Disciplined"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Aquário",
+    name: "Aquarius",
     emoji: "♒",
-    element: "Ar",
-    dates: "20/01 - 18/02",
-    perfectMatches: ["Gêmeos", "Libra", "Sagitário"],
-    traits: ["Inovador", "Independente", "Humanitário"],
-    color: "from-cyan-500 to-blue-500",
+    element: "Air",
+    dates: "Jan 20 – Feb 18",
+    perfectMatches: ["Gemini", "Libra", "Sagittarius"],
+    traits: ["Innovative", "Independent", "Humanitarian"],
+    color: "from-gold-300 to-gold-500",
   },
   {
-    name: "Peixes",
+    name: "Pisces",
     emoji: "♓",
-    element: "Água",
-    dates: "19/02 - 20/03",
-    perfectMatches: ["Câncer", "Escorpião", "Capricórnio"],
-    traits: ["Empático", "Artístico", "Sonhador"],
-    color: "from-indigo-500 to-purple-500",
+    element: "Water",
+    dates: "Feb 19 – Mar 20",
+    perfectMatches: ["Cancer", "Scorpio", "Capricorn"],
+    traits: ["Empathetic", "Artistic", "Dreamy"],
+    color: "from-gold-300 to-gold-500",
   },
 ];
 
 export default function CompatibilityPage() {
+  const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [person1, setPerson1] = useState<Partial<PersonData>>({
     name: "",
@@ -171,38 +176,45 @@ export default function CompatibilityPage() {
   });
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompatibilityResult | null>(null);
+  const [error, setError] = useState<string>("");
+  const [premiumRequired, setPremiumRequired] = useState(false);
 
   const handleCalculate = async () => {
     setLoading(true);
+    setError("");
+    setPremiumRequired(false);
     try {
-      // Adiciona coordenadas padrão de São Paulo se não fornecidas
-      const data1 = {
-        ...person1,
-        latitude: person1.latitude || -23.5505,
-        longitude: person1.longitude || -46.6333,
-      };
-      const data2 = {
-        ...person2,
-        latitude: person2.latitude || -23.5505,
-        longitude: person2.longitude || -46.6333,
-      };
+      // Enviamos apenas a cidade; o servidor geocodifica as coordenadas
+      const response = await fetch("/api/compatibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personA: person1, personB: person2 }),
+      });
 
-      const { data, error } = await supabase.functions.invoke(
-        "generate-compatibility",
-        {
-          body: { personA: data1, personB: data2 },
+      if (response.status === 401) {
+        router.push("/auth/login");
+        return;
+      }
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (data?.code === "PREMIUM_REQUIRED") {
+          setPremiumRequired(true);
+          setError("Este recurso é exclusivo do plano Premium Ilimitado.");
+          return;
         }
-      );
+        throw new Error(data?.error || "Falha ao calcular a compatibilidade");
+      }
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (data?.error) throw new Error(data.error);
 
       setResult(data.analysis);
       setStep(3);
-    } catch (error: any) {
-      console.error("Erro ao calcular:", error);
-      alert(
-        error.message || "Erro ao calcular compatibilidade. Tente novamente."
+    } catch (err) {
+      console.error("Failed to calculate:", err);
+      setError(
+        "Não foi possível calcular a compatibilidade agora. Verifique os dados informados e tente novamente."
       );
     } finally {
       setLoading(false);
@@ -210,14 +222,15 @@ export default function CompatibilityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+    <PremiumGate feature="compatibility">
+    <div className="min-h-screen text-ink-200 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-pink-900/20 via-black to-purple-900/20" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,92,255,0.08),transparent_60%)]" />
         {[...Array(50)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-pink-400/30 rounded-full"
+            className="absolute w-1 h-1 bg-gold-300/40 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -239,9 +252,10 @@ export default function CompatibilityPage() {
       <div className="fixed top-6 left-6 z-50">
         <Link
           href="/"
-          className="flex items-center gap-2 px-4 py-2 bg-purple-900/50 hover:bg-purple-800/50 border border-purple-600/50 rounded-full transition-colors backdrop-blur-sm"
+          className="glass flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-ink-200 transition-colors hover:border-gold-400/50 hover:text-gold-300"
         >
-          ← Voltar
+          <ArrowLeft className="h-4 w-4" />
+          Back
         </Link>
       </div>
 
@@ -258,17 +272,17 @@ export default function CompatibilityPage() {
             className="inline-block mb-4"
           >
             <Heart
-              className="w-20 h-20 text-pink-400 mx-auto"
+              className="w-20 h-20 text-gold-400 mx-auto"
               fill="currentColor"
             />
           </motion.div>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-pink-300 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-            Compatibilidade Amorosa
+          <h1 className="font-display text-5xl md:text-7xl font-semibold mb-4 text-ink-50">
+            Love <span className="text-gold">Compatibility</span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Descubra o nível de conexão entre vocês através da astrologia
-            ancestral
+          <p className="text-xl text-ink-400 max-w-2xl mx-auto">
+            Discover the depth of your connection through the ancient wisdom of
+            the stars.
           </p>
         </motion.div>
 
@@ -280,8 +294,8 @@ export default function CompatibilityPage() {
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                     step >= s
-                      ? "bg-gradient-to-r from-pink-600 to-purple-600"
-                      : "bg-gray-800 text-gray-600"
+                      ? "bg-gradient-to-r from-gold-300 to-gold-500 text-night-900"
+                      : "bg-white/5 text-ink-600 border border-white/10"
                   }`}
                 >
                   {s}
@@ -290,22 +304,22 @@ export default function CompatibilityPage() {
                   <div
                     className={`w-20 h-1 ${
                       step > s
-                        ? "bg-gradient-to-r from-pink-600 to-purple-600"
-                        : "bg-gray-800"
+                        ? "bg-gradient-to-r from-gold-300 to-gold-500"
+                        : "bg-white/10"
                     }`}
                   />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-sm text-gray-500">
-            <span>Pessoa 1</span>
-            <span>Pessoa 2</span>
-            <span>Resultado</span>
+          <div className="flex justify-between mt-2 text-sm text-ink-600">
+            <span>Person 1</span>
+            <span>Person 2</span>
+            <span>Result</span>
           </div>
         </div>
 
-        {/* Zodiac Signs Section - IMPROVED */}
+        {/* Zodiac Signs Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -318,7 +332,7 @@ export default function CompatibilityPage() {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 180, repeat: Infinity, ease: "linear" }}
-                className="w-[600px] h-[600px] opacity-5"
+                className="w-[600px] h-[600px] opacity-[0.08]"
               >
                 <svg viewBox="0 0 200 200" className="w-full h-full">
                   <circle
@@ -328,7 +342,7 @@ export default function CompatibilityPage() {
                     stroke="currentColor"
                     strokeWidth="0.5"
                     fill="none"
-                    className="text-purple-400"
+                    className="text-gold-400"
                   />
                   <circle
                     cx="100"
@@ -337,7 +351,7 @@ export default function CompatibilityPage() {
                     stroke="currentColor"
                     strokeWidth="0.5"
                     fill="none"
-                    className="text-pink-400"
+                    className="text-gold-400"
                   />
                   <circle
                     cx="100"
@@ -346,7 +360,7 @@ export default function CompatibilityPage() {
                     stroke="currentColor"
                     strokeWidth="0.5"
                     fill="none"
-                    className="text-purple-400"
+                    className="text-gold-400"
                   />
                   {[...Array(12)].map((_, i) => {
                     const angle = (i * 30 * Math.PI) / 180;
@@ -363,7 +377,7 @@ export default function CompatibilityPage() {
                         y2={y2}
                         stroke="currentColor"
                         strokeWidth="0.5"
-                        className="text-purple-400"
+                        className="text-gold-400"
                       />
                     );
                   })}
@@ -378,16 +392,16 @@ export default function CompatibilityPage() {
                 className="inline-block mb-4"
               >
                 <Star
-                  className="w-16 h-16 text-pink-400 mx-auto"
+                  className="w-16 h-16 text-gold-400 mx-auto"
                   fill="currentColor"
                 />
               </motion.div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-                Os 12 Signos do Zodíaco
+              <h2 className="font-display text-4xl md:text-5xl font-semibold mb-4 text-ink-50">
+                The 12 Zodiac <span className="text-gold">Signs</span>
               </h2>
-              <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-                Descubra as características únicas de cada signo e seus pares
-                perfeitos para relacionamentos harmoniosos
+              <p className="text-lg text-ink-400 max-w-2xl mx-auto">
+                Explore the unique traits of each sign and their most harmonious
+                matches for lasting love.
               </p>
             </div>
 
@@ -404,37 +418,35 @@ export default function CompatibilityPage() {
                     className={`absolute inset-0 bg-gradient-to-br ${sign.color} opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-500 rounded-2xl`}
                   />
 
-                  <div className="relative bg-gradient-to-br from-gray-900/80 via-purple-950/50 to-gray-900/80 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:border-pink-500/60 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20 cursor-pointer h-full flex flex-col">
-                    {/* Sign Emoji */}
+                  <div className="relative glass rounded-2xl p-6 border border-white/5 hover:border-gold-400/40 transition-all duration-300 hover:scale-105 hover:shadow-gold cursor-pointer h-full flex flex-col">
+                    {/* Sign glyph */}
                     <div className="text-center mb-4">
                       <motion.div
                         whileHover={{ scale: 1.2, rotate: 360 }}
                         transition={{ duration: 0.6 }}
-                        className={`text-6xl mb-2 inline-block bg-gradient-to-br ${sign.color} bg-clip-text`}
+                        className="text-6xl mb-2 inline-block text-gold"
                       >
                         {sign.emoji}
                       </motion.div>
-                      <h3 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                      <h3 className="text-2xl font-semibold text-ink-50">
                         {sign.name}
                       </h3>
-                      <p className="text-sm text-gray-400 mt-1">{sign.dates}</p>
-                      <div
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mt-2 bg-gradient-to-r ${sign.color} text-white`}
-                      >
+                      <p className="text-sm text-ink-600 mt-1">{sign.dates}</p>
+                      <div className="inline-block px-3 py-1 rounded-full text-xs font-semibold mt-2 border border-gold-400/30 bg-gold-400/10 text-gold-300">
                         {sign.element}
                       </div>
                     </div>
 
                     {/* Traits */}
                     <div className="mb-4 flex-grow">
-                      <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">
-                        Características
+                      <p className="text-xs text-ink-600 mb-2 font-semibold uppercase tracking-wide">
+                        Traits
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {sign.traits.map((trait, i) => (
                           <span
                             key={i}
-                            className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded-lg border border-purple-500/30"
+                            className="text-xs px-2 py-1 bg-white/5 text-ink-200 rounded-lg border border-white/10"
                           >
                             {trait}
                           </span>
@@ -442,19 +454,19 @@ export default function CompatibilityPage() {
                       </div>
                     </div>
 
-                    {/* Perfect Matches - Revealed on Hover */}
+                    {/* Perfect Matches */}
                     <div className="mt-auto">
-                      <div className="border-t border-purple-500/20 pt-3">
-                        <p className="text-xs text-gray-500 mb-2 font-semibold uppercase tracking-wide">
-                          💕 Pares Perfeitos
+                      <div className="border-t border-white/5 pt-3">
+                        <p className="text-xs text-ink-600 mb-2 font-semibold uppercase tracking-wide">
+                          Perfect Matches
                         </p>
                         <div className="space-y-1 opacity-70 group-hover:opacity-100 transition-opacity">
                           {sign.perfectMatches.map((match, i) => (
                             <div
                               key={i}
-                              className="text-sm text-pink-300 flex items-center gap-1"
+                              className="text-sm text-gold-300 flex items-center gap-1"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-pink-400" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-gold-400" />
                               {match}
                             </div>
                           ))}
@@ -468,6 +480,25 @@ export default function CompatibilityPage() {
           </div>
         </motion.div>
 
+        {/* Error message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-auto mb-8 max-w-2xl rounded-2xl border border-red-500/30 bg-red-500/10 px-6 py-4 text-center text-red-200"
+          >
+            <p>{error}</p>
+            {premiumRequired && (
+              <Link
+                href="/cart?plan=premium"
+                className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
+              >
+                Assinar Premium Ilimitado — US$ 29,90/mês
+              </Link>
+            )}
+          </motion.div>
+        )}
+
         {/* Forms */}
         <AnimatePresence mode="wait">
           {step === 1 && (
@@ -475,10 +506,10 @@ export default function CompatibilityPage() {
               key="person1"
               person={person1}
               setPerson={setPerson1}
-              title="Primeira Pessoa"
-              subtitle="Seus dados de nascimento"
+              title="First Person"
+              subtitle="Your birth details"
               onNext={() => setStep(2)}
-              icon="💕"
+              icon={Heart}
             />
           )}
 
@@ -487,12 +518,12 @@ export default function CompatibilityPage() {
               key="person2"
               person={person2}
               setPerson={setPerson2}
-              title="Segunda Pessoa"
-              subtitle="Dados de nascimento do seu amor"
+              title="Second Person"
+              subtitle="Your partner's birth details"
               onNext={handleCalculate}
               onBack={() => setStep(1)}
               loading={loading}
-              icon="💖"
+              icon={Users}
             />
           )}
 
@@ -500,8 +531,8 @@ export default function CompatibilityPage() {
             <ResultScreen
               key="result"
               result={result}
-              person1Name={person1.name || "Pessoa 1"}
-              person2Name={person2.name || "Pessoa 2"}
+              person1Name={person1.name || "Person 1"}
+              person2Name={person2.name || "Person 2"}
               onReset={() => {
                 setStep(1);
                 setPerson1({
@@ -521,6 +552,7 @@ export default function CompatibilityPage() {
         </AnimatePresence>
       </div>
     </div>
+    </PremiumGate>
   );
 }
 
@@ -532,7 +564,7 @@ function PersonForm({
   onNext,
   onBack,
   loading,
-  icon,
+  icon: Icon,
 }: {
   person: Partial<PersonData>;
   setPerson: (p: Partial<PersonData>) => void;
@@ -541,7 +573,7 @@ function PersonForm({
   onNext: () => void;
   onBack?: () => void;
   loading?: boolean;
-  icon: string;
+  icon: LucideIcon;
 }) {
   const isValid =
     person.name &&
@@ -559,31 +591,35 @@ function PersonForm({
       exit={{ opacity: 0, x: -50 }}
       className="max-w-2xl mx-auto"
     >
-      <div className="bg-gradient-to-br from-purple-950/50 via-purple-900/30 to-pink-950/50 backdrop-blur-xl border border-purple-500/30 rounded-3xl p-8 md:p-12">
+      <div className="glass glass-gold rounded-3xl p-8 md:p-12">
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">{icon}</div>
-          <h2 className="text-3xl font-bold mb-2">{title}</h2>
-          <p className="text-gray-400">{subtitle}</p>
+          <span className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
+            <Icon className="h-8 w-8 text-gold-300" />
+          </span>
+          <h2 className="font-display text-3xl font-semibold mb-2 text-ink-50">
+            {title}
+          </h2>
+          <p className="text-ink-400">{subtitle}</p>
         </div>
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Nome
+            <label className="block text-sm font-medium mb-2 text-ink-200">
+              Full Name
             </label>
             <input
               type="text"
               value={person.name}
               onChange={(e) => setPerson({ ...person, name: e.target.value })}
-              className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all"
-              placeholder="Digite o nome"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+              placeholder="Enter name"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Dia
+              <label className="block text-sm font-medium mb-2 text-ink-200">
+                Day
               </label>
               <input
                 type="number"
@@ -593,13 +629,13 @@ function PersonForm({
                 onChange={(e) =>
                   setPerson({ ...person, day: parseInt(e.target.value) })
                 }
-                className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                 placeholder="15"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Mês
+              <label className="block text-sm font-medium mb-2 text-ink-200">
+                Month
               </label>
               <input
                 type="number"
@@ -609,13 +645,13 @@ function PersonForm({
                 onChange={(e) =>
                   setPerson({ ...person, month: parseInt(e.target.value) })
                 }
-                className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                 placeholder="05"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Ano
+              <label className="block text-sm font-medium mb-2 text-ink-200">
+                Year
               </label>
               <input
                 type="number"
@@ -625,7 +661,7 @@ function PersonForm({
                 onChange={(e) =>
                   setPerson({ ...person, year: parseInt(e.target.value) })
                 }
-                className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                 placeholder="1990"
               />
             </div>
@@ -633,8 +669,8 @@ function PersonForm({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Hora
+              <label className="block text-sm font-medium mb-2 text-ink-200">
+                Hour
               </label>
               <input
                 type="number"
@@ -644,13 +680,13 @@ function PersonForm({
                 onChange={(e) =>
                   setPerson({ ...person, hour: parseInt(e.target.value) })
                 }
-                className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                 placeholder="14"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                Minuto
+              <label className="block text-sm font-medium mb-2 text-ink-200">
+                Minute
               </label>
               <input
                 type="number"
@@ -660,21 +696,21 @@ function PersonForm({
                 onChange={(e) =>
                   setPerson({ ...person, minute: parseInt(e.target.value) })
                 }
-                className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                 placeholder="30"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Cidade de Nascimento
+            <label className="block text-sm font-medium mb-2 text-ink-200">
+              City of Birth
             </label>
             <input
               type="text"
               value={person.city}
               onChange={(e) => setPerson({ ...person, city: e.target.value })}
-              className="w-full px-4 py-3 bg-black/50 border border-purple-600/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
               placeholder="São Paulo"
             />
           </div>
@@ -684,24 +720,24 @@ function PersonForm({
           {onBack && (
             <button
               onClick={onBack}
-              className="flex-1 py-4 bg-gray-800 hover:bg-gray-700 rounded-full font-semibold transition-all"
+              className="btn-ghost flex-1 rounded-full py-4 font-semibold"
             >
-              Voltar
+              Back
             </button>
           )}
           <button
             onClick={onNext}
             disabled={!isValid || loading}
-            className="flex-1 py-4 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 rounded-full font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl flex items-center justify-center gap-2"
+            className="btn-gold flex-1 rounded-full py-4 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Calculando...
+                Calculating...
               </>
             ) : (
               <>
-                {onBack ? "Calcular Compatibilidade" : "Próximo"}
+                {onBack ? "Calculate Compatibility" : "Continue"}
                 <ArrowRight className="w-5 h-5" />
               </>
             )}
@@ -723,6 +759,13 @@ function ResultScreen({
   person2Name: string;
   onReset: () => void;
 }) {
+  const scoreBreakdown: { label: string; value: number; Icon: LucideIcon }[] = [
+    { label: "Love", value: result.love, Icon: Heart },
+    { label: "Communication", value: result.communication, Icon: MessageCircle },
+    { label: "Values", value: result.values, Icon: Gem },
+    { label: "Long-Term", value: result.longTerm, Icon: InfinityIcon },
+  ];
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -730,47 +773,36 @@ function ResultScreen({
       className="max-w-4xl mx-auto space-y-8"
     >
       {/* Score Card */}
-      <div className="bg-gradient-to-br from-pink-950/50 via-purple-900/40 to-pink-950/50 backdrop-blur-xl border border-pink-500/30 rounded-3xl p-8 md:p-12 text-center">
+      <div className="glass glass-gold rounded-3xl p-8 md:p-12 text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: "spring" }}
           className="mb-8"
         >
-          <div className="text-8xl font-bold bg-gradient-to-r from-pink-300 via-purple-300 to-pink-400 bg-clip-text text-transparent mb-4">
+          <div className="text-8xl font-display font-semibold text-gold mb-4">
             {result.overall}%
           </div>
-          <div className="flex items-center justify-center gap-3 text-2xl">
+          <div className="flex items-center justify-center gap-3 text-2xl text-ink-200">
             <span>{person1Name}</span>
-            <Heart className="w-8 h-8 text-pink-400" fill="currentColor" />
+            <Heart className="w-8 h-8 text-gold-400" fill="currentColor" />
             <span>{person2Name}</span>
           </div>
         </motion.div>
 
         {/* Score Breakdown */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: "Amor", value: result.love, icon: "💕" },
-            {
-              label: "Comunicação",
-              value: result.communication,
-              icon: "💬",
-            },
-            { label: "Valores", value: result.values, icon: "💎" },
-            { label: "Longo Prazo", value: result.longTerm, icon: "♾️" },
-          ].map((item, i) => (
+          {scoreBreakdown.map((item, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 + i * 0.1 }}
-              className="bg-black/30 rounded-2xl p-4"
+              className="glass rounded-2xl p-5 border border-white/5"
             >
-              <div className="text-3xl mb-2">{item.icon}</div>
-              <div className="text-2xl font-bold text-pink-300">
-                {item.value}%
-              </div>
-              <div className="text-sm text-gray-400">{item.label}</div>
+              <item.Icon className="mx-auto mb-2 h-6 w-6 text-gold-300" />
+              <div className="text-2xl font-bold text-gold">{item.value}%</div>
+              <div className="text-sm text-ink-400">{item.label}</div>
             </motion.div>
           ))}
         </div>
@@ -781,34 +813,38 @@ function ResultScreen({
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-gradient-to-br from-purple-950/50 via-purple-900/30 to-pink-950/50 backdrop-blur-xl border border-purple-500/30 rounded-3xl p-8 md:p-12 space-y-8"
+        className="glass rounded-3xl p-8 md:p-12 border-white/5 space-y-8"
       >
         <div className="flex items-center gap-3 mb-6">
-          <Sparkles className="w-6 h-6 text-yellow-400" />
-          <h2 className="text-2xl font-bold">Análise Completa</h2>
+          <Sparkles className="w-6 h-6 text-gold-300" />
+          <h2 className="font-display text-2xl font-semibold text-ink-50">
+            Full Analysis
+          </h2>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
           <div>
-            <h3 className="text-xl font-semibold text-pink-300 mb-3">
-              Pontos Fortes
+            <h3 className="text-xl font-semibold text-gold-300 mb-3">
+              Strengths
             </h3>
             <ul className="space-y-2">
               {result.synastry_analysis.strengths.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-gray-300">
-                  <span className="text-green-400">✓</span> {item}
+                <li key={i} className="flex items-start gap-2 text-ink-200">
+                  <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold-400" />
+                  {item}
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-purple-300 mb-3">
-              Desafios
+            <h3 className="text-xl font-semibold text-amethyst-300 mb-3">
+              Challenges
             </h3>
             <ul className="space-y-2">
               {result.synastry_analysis.challenges.map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-gray-300">
-                  <span className="text-red-400">!</span> {item}
+                <li key={i} className="flex items-start gap-2 text-ink-200">
+                  <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amethyst-400" />
+                  {item}
                 </li>
               ))}
             </ul>
@@ -817,32 +853,34 @@ function ResultScreen({
 
         <div className="space-y-6">
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Conexão Emocional
+            <h3 className="text-lg font-semibold text-ink-50 mb-2">
+              Emotional Connection
             </h3>
-            <p className="text-gray-300">
+            <p className="text-ink-400">
               {result.synastry_analysis.emotional_connection}
             </p>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">Química</h3>
-            <p className="text-gray-300">
+            <h3 className="text-lg font-semibold text-ink-50 mb-2">Chemistry</h3>
+            <p className="text-ink-400">
               {result.synastry_analysis.sexual_chemistry}
             </p>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Comunicação
+            <h3 className="text-lg font-semibold text-ink-50 mb-2">
+              Communication
             </h3>
-            <p className="text-gray-300">
+            <p className="text-ink-400">
               {result.synastry_analysis.communication_style}
             </p>
           </div>
         </div>
 
-        <div className="bg-black/30 p-6 rounded-xl border border-purple-500/20">
-          <h3 className="text-xl font-bold text-white mb-3">Veredito Final</h3>
-          <p className="text-gray-300 italic">{result.final_verdict}</p>
+        <div className="glass glass-gold rounded-2xl p-6">
+          <h3 className="text-xl font-semibold text-ink-50 mb-3">
+            Final Verdict
+          </h3>
+          <p className="text-ink-200 italic">{result.final_verdict}</p>
         </div>
       </motion.div>
 
@@ -850,15 +888,15 @@ function ResultScreen({
       <div className="flex flex-col sm:flex-row gap-4">
         <button
           onClick={onReset}
-          className="flex-1 py-4 bg-purple-900/50 hover:bg-purple-800/50 border border-purple-600/50 rounded-full font-semibold transition-all hover:scale-105"
+          className="btn-ghost flex-1 rounded-full py-4 font-semibold"
         >
-          Nova Análise
+          New Analysis
         </button>
         <Link
           href="/auth/register"
-          className="flex-1 py-4 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 rounded-full font-semibold text-center transition-all hover:scale-105 shadow-xl"
+          className="btn-gold flex-1 rounded-full py-4 font-semibold text-center"
         >
-          Salvar Resultado (Criar Conta)
+          Save Result (Create Account)
         </Link>
       </div>
     </motion.div>

@@ -6,15 +6,15 @@ import { ArrowLeft } from "lucide-react";
 
 export default function ChallengePage() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen">
       {/* Back button */}
       <div className="fixed top-6 left-6 z-50">
         <Link
           href="/"
-          className="flex items-center gap-2 px-4 py-2 bg-purple-900/50 hover:bg-purple-800/50 border border-purple-600/50 rounded-full transition-colors backdrop-blur-sm"
+          className="glass glass-gold flex items-center gap-2 rounded-full px-4 py-2 text-ink-200 transition-colors hover:text-gold-300"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Voltar</span>
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm">Back</span>
         </Link>
       </div>
 

@@ -33,7 +33,7 @@ interface AnalyticsEventParams {
 export function initializeAnalytics(measurementId: string) {
   if (typeof window !== "undefined" && measurementId) {
     ReactGA.initialize(measurementId);
-    console.log("✅ Google Analytics inicializado:", measurementId);
+    console.log("Google Analytics initialized:", measurementId);
   }
 }
 

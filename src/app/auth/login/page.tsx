@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Sparkles, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Sparkles, Loader2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "@/lib/auth-client";
@@ -23,7 +23,7 @@ function LoginForm() {
   useEffect(() => {
     trackPageView("/auth/login", "Login");
 
-    // Verificar mensagens na URL
+    // Check for messages in the URL
     const message = searchParams.get("message");
     const email = searchParams.get("email");
 
@@ -42,28 +42,28 @@ function LoginForm() {
     setError("");
 
     try {
-      // Usar Supabase Auth
+      // Use Supabase Auth
       const { session } = await signIn(formData);
 
       if (!session) {
-        throw new Error("Erro ao criar sessão");
+        throw new Error("Failed to create session");
       }
 
       // Track login
       trackLogin("email");
 
-      // Redirecionar para dashboard
+      // Redirect to dashboard
       router.push("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
       if (err.message.includes("Email not confirmed")) {
         setError(
-          "Email não confirmado. Verifique sua caixa de entrada (e spam)."
+          "Email not confirmed. Please check your inbox (and spam folder)."
         );
       } else if (err.message.includes("Invalid login credentials")) {
-        setError("Email ou senha incorretos.");
+        setError("Incorrect email or password.");
       } else {
-        setError(err.message || "Erro ao fazer login");
+        setError(err.message || "Unable to sign in");
       }
     } finally {
       setLoading(false);
@@ -71,14 +71,15 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden">
-      {/* Background */}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden text-ink-100">
+      {/* Ambient background */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-purple-900/30 via-black to-black" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(124,92,255,0.12),transparent_60%)]" />
+        <div className="absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(circle_at_50%_35%,rgba(212,175,55,0.06),transparent_45%)]" />
         {[...Array(30)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-purple-400/30 rounded-full"
+            className="absolute h-1 w-1 rounded-full bg-white/40"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -103,30 +104,41 @@ function LoginForm() {
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-md px-6"
       >
-        <div className="bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl rounded-3xl p-8 md:p-10 border border-purple-500/30 shadow-2xl shadow-purple-500/20">
+        <div className="glass glass-gold rounded-3xl p-8 shadow-glass md:p-10">
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="mb-8 text-center">
             <motion.div
               animate={{ rotate: [0, 360] }}
               transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-              className="inline-block mb-4"
+              className="mb-4 inline-block"
             >
-              <Sparkles className="w-12 h-12 text-purple-400" />
+              <Sparkles className="h-12 w-12 text-gold-400" />
             </motion.div>
-            <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-              Bem-vindo de Volta
+            <h1 className="mb-2 font-display text-3xl font-semibold text-ink-50">
+              Welcome <span className="text-gold">back</span>
             </h1>
-            <p className="text-gray-400 text-sm">
-              Entre para acessar suas leituras e previsões
+            <p className="text-sm text-ink-400">
+              Sign in to access your readings and forecasts
             </p>
           </div>
+
+          {/* Success Message */}
+          {successMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 rounded-2xl border border-gold-400/30 bg-gold-400/10 p-4 text-sm text-gold-200"
+            >
+              {successMessage}
+            </motion.div>
+          )}
 
           {/* Error Message */}
           {error && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm"
+              className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300"
             >
               {error}
             </motion.div>
@@ -136,11 +148,11 @@ function LoginForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-ink-300">
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                 <input
                   type="email"
                   required
@@ -148,19 +160,19 @@ function LoginForm() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
-                  placeholder="seu@email.com"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-4 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
+                  placeholder="you@email.com"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Senha
+              <label className="mb-2 block text-sm font-medium text-ink-300">
+                Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-ink-400" />
                 <input
                   type={showPassword ? "text" : "password"}
                   required
@@ -168,18 +180,18 @@ function LoginForm() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className="w-full pl-12 pr-12 py-3 bg-black/50 border border-gray-700 rounded-xl focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all outline-none"
+                  className="w-full rounded-2xl border border-white/10 bg-white/5 py-3 pl-12 pr-12 text-ink-100 outline-none transition-all placeholder:text-ink-600 focus:border-gold-400/50"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-ink-400 transition-colors hover:text-gold-300"
                 >
                   {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="w-5 h-5" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
@@ -191,12 +203,12 @@ function LoginForm() {
                 type="button"
                 onClick={() =>
                   alert(
-                    "Funcionalidade em desenvolvimento. Entre em contato com o suporte."
+                    "This feature is coming soon. Please contact support."
                   )
                 }
-                className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                className="text-sm text-gold-300 transition-colors hover:text-gold-200"
               >
-                Esqueceu a senha?
+                Forgot your password?
               </button>
             </div>
 
@@ -204,48 +216,48 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg shadow-purple-500/50"
+              className="btn-gold w-full rounded-full py-4 font-semibold disabled:opacity-50"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Entrando...
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Signing in...
                 </span>
               ) : (
-                "Entrar"
+                "Sign In"
               )}
             </button>
           </form>
 
           {/* Register Link */}
           <div className="mt-8 text-center">
-            <p className="text-gray-400 text-sm">
-              Não tem uma conta?{" "}
+            <p className="text-sm text-ink-400">
+              Don&apos;t have an account?{" "}
               <Link
                 href="/auth/register"
-                className="text-purple-400 hover:text-purple-300 font-semibold transition-colors"
+                className="font-semibold text-gold-300 transition-colors hover:text-gold-200"
               >
-                Criar conta grátis
+                Create a free account
               </Link>
             </p>
           </div>
 
-          {/* Social Login (Opcional) */}
+          {/* Social Login (Optional) */}
           <div className="mt-8">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-700"></div>
+                <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-gray-900 text-gray-400">
-                  ou continue com
+                <span className="bg-night-900 px-4 text-ink-400">
+                  or continue with
                 </span>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl transition-all">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <button className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-200 transition-all hover:border-gold-400/50 hover:bg-white/10">
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -266,9 +278,9 @@ function LoginForm() {
                 <span className="text-sm font-medium">Google</span>
               </button>
 
-              <button className="flex items-center justify-center gap-2 px-4 py-3 bg-white/5 hover:bg-white/10 border border-gray-700 rounded-xl transition-all">
+              <button className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-200 transition-all hover:border-gold-400/50 hover:bg-white/10">
                 <svg
-                  className="w-5 h-5"
+                  className="h-5 w-5"
                   fill="currentColor"
                   viewBox="0 0 24 24"
                 >
@@ -281,12 +293,13 @@ function LoginForm() {
         </div>
 
         {/* Back to Home */}
-        <div className="text-center mt-6">
+        <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-ink-400 transition-colors hover:text-ink-100"
           >
-            ← Voltar para home
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
           </Link>
         </div>
       </motion.div>
@@ -298,8 +311,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-gold-400" />
         </div>
       }
     >

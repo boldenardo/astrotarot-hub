@@ -18,62 +18,44 @@ interface TarotCard {
 const cards: TarotCard[] = [
   {
     id: 1,
-    name: "O Eremita",
-    meaning: "Introspecção ✷ Sabedoria ✷ Solidão",
+    name: "The Hermit",
+    meaning: "Introspection • Wisdom • Solitude",
     description:
-      "O Eremita representa a busca interior, o período de reflexão profunda e isolamento necessário para encontrar respostas. Carregando sua lanterna de sabedoria, ele nos lembra que às vezes precisamos nos afastar do mundo exterior para iluminar nosso mundo interior. Esta carta convida você a um momento de pausa, meditação e autoconhecimento.",
-    keywords: [
-      "introspecção",
-      "sabedoria",
-      "solidão",
-      "reflexão",
-      "guia interior",
-    ],
+      "The Hermit represents the inner quest, a period of deep reflection and solitude needed to find answers. Carrying his lantern of wisdom, he reminds us that sometimes we must step away from the outer world to illuminate our inner one. This card invites you into a moment of pause, meditation, and self-knowledge.",
+    keywords: ["introspection", "wisdom", "solitude", "reflection", "inner guide"],
     image:
       "https://cdn.pixabay.com/photo/2021/02/15/07/52/hermit-6016941_960_720.jpg",
     rotation: -3,
   },
   {
     id: 2,
-    name: "A Temperança",
-    meaning: "Equilíbrio ✷ Moderação ✷ Harmonia",
+    name: "Temperance",
+    meaning: "Balance • Moderation • Harmony",
     description:
-      "A Temperança simboliza o equilíbrio perfeito entre opostos. O anjo derrama água entre duas taças, misturando elementos com graça e paciência. Esta carta nos ensina sobre moderação, paciência e a arte de encontrar o meio-termo. Ela aparece quando você precisa integrar aspectos diferentes da sua vida ou encontrar harmonia em situações conflitantes.",
-    keywords: [
-      "equilíbrio",
-      "moderação",
-      "harmonia",
-      "paciência",
-      "integração",
-    ],
+      "Temperance symbolizes the perfect balance between opposites. The angel pours water between two cups, blending elements with grace and patience. This card teaches us about moderation, patience, and the art of finding the middle ground. It appears when you need to integrate different aspects of your life or find harmony amid conflicting situations.",
+    keywords: ["balance", "moderation", "harmony", "patience", "integration"],
     image:
       "https://cdn.pixabay.com/photo/2021/02/15/07/42/temperance-6016917_960_720.jpg",
     rotation: 4,
   },
   {
     id: 3,
-    name: "O Enforcado",
-    meaning: "Suspensão ✷ Perspectiva ✷ Sacrifício",
+    name: "The Hanged Man",
+    meaning: "Suspension • Perspective • Sacrifice",
     description:
-      "O Enforcado nos mostra que às vezes precisamos mudar completamente nossa perspectiva. Suspenso de cabeça para baixo, ele vê o mundo de forma diferente. Esta carta sugere um período de espera proposital, onde você libera o controle e permite que as coisas se desenrolem. É sobre sacrifício voluntário que leva a insights profundos e transformação espiritual.",
-    keywords: ["perspectiva", "suspensão", "sacrifício", "rendição", "visão"],
+      "The Hanged Man shows us that sometimes we must completely shift our perspective. Suspended upside down, he sees the world differently. This card suggests a period of purposeful waiting, where you release control and allow things to unfold. It is about voluntary sacrifice that leads to profound insight and spiritual transformation.",
+    keywords: ["perspective", "suspension", "sacrifice", "surrender", "vision"],
     image:
       "https://cdn.pixabay.com/photo/2021/02/15/07/52/hanged-man-6016939_960_720.jpg",
     rotation: 10,
   },
   {
     id: 4,
-    name: "O Hierofante",
-    meaning: "Tradição ✷ Conhecimento ✷ Orientação",
+    name: "The Hierophant",
+    meaning: "Tradition • Knowledge • Guidance",
     description:
-      "O Hierofante representa a sabedoria das tradições, o conhecimento transmitido através de gerações e a orientação espiritual. Como guardião dos mistérios sagrados, ele nos conecta com estruturas maiores de significado. Esta carta aparece quando você busca educação formal, conselhos de mentores ou quando precisa seguir o caminho estabelecido antes de criar o seu próprio.",
-    keywords: [
-      "tradição",
-      "conhecimento",
-      "orientação",
-      "espiritualidade",
-      "mentor",
-    ],
+      "The Hierophant represents the wisdom of traditions, knowledge passed down through generations, and spiritual guidance. As guardian of the sacred mysteries, he connects us with larger structures of meaning. This card appears when you seek formal education, counsel from mentors, or when you need to follow the established path before forging your own.",
+    keywords: ["tradition", "knowledge", "guidance", "spirituality", "mentor"],
     image:
       "https://cdn.pixabay.com/photo/2021/02/15/07/53/hierophant-6016942_960_720.jpg",
     rotation: 4,
@@ -88,21 +70,21 @@ export default function TarotChallenge() {
   const [selectedCard, setSelectedCard] = useState<TarotCard | null>(null);
   const [shuffleCount, setShuffleCount] = useState(0);
 
-  // Randomiza a ordem das cartas quando o componente é montado
+  // Randomize the card order when the component mounts
   useEffect(() => {
     const shuffled = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
     setCardStack(shuffled);
   }, []);
 
   const handleCardClick = (index: number) => {
-    // Pega a carta do topo
+    // Grab the card on top
     const topCardIndex = cardStack[cardStack.length - 1];
     const clickedCardIndex = cardStack.indexOf(index);
 
-    // Se não é a carta do topo, não faz nada
+    // If it is not the top card, do nothing
     if (clickedCardIndex !== cardStack.length - 1) return;
 
-    // Embaralha a pilha: move a carta do topo para o fundo
+    // Shuffle the stack: move the top card to the bottom
     const newStack = [...cardStack];
     const movedCard = newStack.pop();
     if (movedCard !== undefined) {
@@ -117,15 +99,15 @@ export default function TarotChallenge() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-black text-white overflow-hidden py-16 px-4">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-radial from-purple-900/20 via-black to-black" />
+    <div className="relative min-h-screen w-full overflow-hidden px-4 py-16 text-ink-200">
+      {/* Ambient background */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(212,175,55,0.06),transparent_60%)]" />
 
       {/* Floating particles */}
       {[...Array(20)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute w-1 h-1 bg-purple-400/50 rounded-full"
+          className="absolute h-1 w-1 rounded-full bg-gold-300/40"
           style={{
             left: `${Math.random() * 100}%`,
             top: `${Math.random() * 100}%`,
@@ -148,22 +130,22 @@ export default function TarotChallenge() {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="relative z-10 text-center mb-12"
+        className="relative z-10 mb-12 text-center"
       >
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-300 via-pink-300 to-purple-400 bg-clip-text text-transparent">
-          Desafio das Quatro Cartas
+        <h2 className="mb-4 font-display text-4xl font-semibold text-ink-50 md:text-5xl">
+          The Four-Card <span className="text-gold">Challenge</span>
         </h2>
-        <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-          Clique nas cartas para embaralhar e depois revele seus significados
-          profundos
+        <p className="mx-auto max-w-2xl text-lg text-ink-400 md:text-xl">
+          Click the cards to shuffle, then reveal their profound meanings.
         </p>
         {shuffleCount > 0 && (
           <motion.p
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-purple-400 mt-4 text-sm"
+            className="mt-4 inline-flex items-center gap-2 text-sm text-gold-300"
           >
-            ✨ Embaralhadas: {shuffleCount} vezes
+            <Shuffle className="h-4 w-4" />
+            Shuffled {shuffleCount} times
           </motion.p>
         )}
       </motion.div>
@@ -182,7 +164,7 @@ export default function TarotChallenge() {
             return (
               <motion.div
                 key={`${card.id}-${stackPosition}`}
-                className={`absolute left-0 right-0 top-0 bottom-0 m-auto ${
+                className={`absolute bottom-0 left-0 right-0 top-0 m-auto ${
                   isTopCard ? "cursor-pointer" : "cursor-not-allowed"
                 }`}
                 style={{
@@ -200,7 +182,7 @@ export default function TarotChallenge() {
                   isTopCard
                     ? {
                         scale: 1.05,
-                        boxShadow: "0px 10px 60px rgba(168, 85, 247, 0.6)",
+                        boxShadow: "0px 10px 60px rgba(212, 175, 55, 0.45)",
                       }
                     : {}
                 }
@@ -208,10 +190,10 @@ export default function TarotChallenge() {
               >
                 {/* Card shuffle animation */}
                 <motion.div
-                  className="relative w-full h-full rounded-xl border-4 border-white shadow-2xl overflow-hidden bg-white"
+                  className="relative h-full w-full overflow-hidden rounded-2xl border border-gold-400/30 bg-night-900 shadow-2xl"
                   style={{
                     boxShadow: isTopCard
-                      ? "0px 5px 40px rgba(168, 85, 247, 0.5)"
+                      ? "0px 5px 40px rgba(212, 175, 55, 0.35)"
                       : "0px 2px 30px #000",
                   }}
                   animate={
@@ -240,14 +222,15 @@ export default function TarotChallenge() {
                   {/* Overlay for reveal button */}
                   {isTopCard && (
                     <motion.div
-                      className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                      className="absolute inset-0 flex items-center justify-center bg-night-950/70 opacity-0 transition-opacity hover:opacity-100"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCardReveal(card);
                       }}
                     >
-                      <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-lg hover:scale-110 transition-transform">
-                        🔮 Revelar Significado
+                      <button className="btn-gold flex items-center gap-2 rounded-full px-6 py-3 text-lg font-semibold">
+                        <Sparkles className="h-5 w-5" />
+                        Reveal Meaning
                       </button>
                     </motion.div>
                   )}
@@ -263,11 +246,11 @@ export default function TarotChallenge() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="relative z-10 text-center mt-12 text-gray-400"
+        className="relative z-10 mt-12 text-center text-ink-400"
       >
         <p className="text-sm md:text-base">
-          💡 Clique na carta do topo para embaralhar • Passe o mouse e clique em
-          &ldquo;Revelar&rdquo; para ver o significado
+          Click the top card to shuffle &bull; Hover and click Reveal to see its
+          meaning
         </p>
       </motion.div>
 
@@ -280,7 +263,7 @@ export default function TarotChallenge() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40"
+              className="fixed inset-0 z-40 bg-night-950/80 backdrop-blur-sm"
               onClick={() => setSelectedCard(null)}
             />
 
@@ -290,39 +273,41 @@ export default function TarotChallenge() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 50 }}
               transition={{ type: "spring", damping: 25 }}
-              className="fixed left-0 right-0 top-1/2 -translate-y-1/2 mx-auto max-w-2xl bg-gradient-to-br from-purple-900/95 via-indigo-900/95 to-purple-900/95 backdrop-blur-xl rounded-3xl border border-purple-500/50 shadow-2xl z-50 max-h-[90vh] overflow-y-auto"
+              className="glass glass-gold fixed left-0 right-0 top-1/2 z-50 mx-auto max-h-[90vh] max-w-2xl -translate-y-1/2 overflow-y-auto rounded-3xl shadow-glass"
               style={{ width: "calc(100% - 2rem)" }}
             >
               <div className="relative p-8 md:p-12">
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedCard(null)}
-                  className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-colors"
+                  className="absolute right-4 top-4 rounded-full p-2 text-ink-200 transition-colors hover:bg-white/10 hover:text-gold-300"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="h-6 w-6" />
                 </button>
 
                 {/* Card icon */}
-                <div className="text-center mb-6">
-                  <div className="text-7xl mb-4">🎴</div>
-                  <h3 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-200 to-pink-200 bg-clip-text text-transparent">
+                <div className="mb-6 text-center">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
+                    <Sparkles className="h-8 w-8 text-gold-300" />
+                  </div>
+                  <h3 className="mb-2 font-display text-3xl font-semibold text-gold md:text-4xl">
                     {selectedCard.name}
                   </h3>
-                  <p className="text-xl text-purple-300 mb-6">
+                  <p className="mb-6 text-xl text-gold-300">
                     {selectedCard.meaning}
                   </p>
                 </div>
 
                 {/* Description */}
                 <div className="space-y-6">
-                  <p className="text-lg text-gray-200 leading-relaxed">
+                  <p className="text-lg leading-relaxed text-ink-200">
                     {selectedCard.description}
                   </p>
 
                   {/* Keywords */}
                   <div>
-                    <h4 className="text-sm uppercase tracking-wider text-purple-400 mb-3 font-semibold">
-                      Palavras-chave
+                    <h4 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gold-300">
+                      Keywords
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedCard.keywords.map((keyword, i) => (
@@ -331,7 +316,7 @@ export default function TarotChallenge() {
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: i * 0.1 }}
-                          className="px-4 py-2 bg-purple-800/50 border border-purple-600/50 rounded-full text-sm"
+                          className="rounded-full border border-gold-400/25 bg-gold-400/10 px-4 py-2 text-sm text-gold-300"
                         >
                           {keyword}
                         </motion.span>
@@ -343,9 +328,9 @@ export default function TarotChallenge() {
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedCard(null)}
-                  className="mt-8 w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold hover:scale-105 transition-transform"
+                  className="btn-gold mt-8 w-full rounded-full py-3 font-semibold"
                 >
-                  Entendido ✨
+                  Got it
                 </button>
               </div>
             </motion.div>
@@ -353,17 +338,16 @@ export default function TarotChallenge() {
         )}
       </AnimatePresence>
 
-      {/* Made with love footer */}
+      {/* Footer */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2 }}
-        className="relative z-10 text-center mt-16 text-gray-500 text-sm"
+        className="relative z-10 mt-16 text-center text-sm text-ink-600"
       >
         <p>
-          Feito com <span className="text-pink-500">💖</span> e{" "}
-          <span className="text-yellow-600">☕</span> por{" "}
-          <span className="text-purple-400 font-semibold">AstroTarot Hub</span>
+          Crafted with care by{" "}
+          <span className="font-semibold text-gold-300">AstroTarot Hub</span>
         </p>
       </motion.div>
     </div>

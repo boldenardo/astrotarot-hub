@@ -1,18 +1,14 @@
 # 🌟 AstroTarot Hub - Plataforma Místico-Digital SaaS
 
-> **Status:** ✅ Pronto para Produção | **Versão:** 2.0.0 | **Backend:** Supabase
+> **Status:** ✅ Pronto para Produção | **Versão:** 3.0.0 | **Backend:** Rotas API do Next.js + Supabase
 
-Plataforma completa de astrologia e tarot com IA, pagamentos PIX e backend serverless.
+Plataforma completa de astrologia e tarot com IA, pagamentos via Stripe e banco de dados Supabase.
 
 ---
 
 ## 🚀 Quick Start
 
-### Para Lançar Hoje (Produção):
-
-**Siga:** `DEPLOY_FINAL.md` (guia completo de 5 minutos)
-
-### Para Desenvolvimento Local:
+### Desenvolvimento local:
 
 ```bash
 npm install
@@ -23,17 +19,29 @@ npm run dev
 
 ## 🏗️ Arquitetura
 
-### Backend (Supabase - 100% Serverless)
+### Backend (Rotas API do Next.js)
+
+Toda a lógica de servidor vive em rotas `/api/*` do Next.js (as Edge Functions do Supabase foram removidas):
+
+- `POST /api/checkout` — cria a sessão de checkout do Stripe (Pacote 5 Leituras ou Premium)
+- `POST /api/stripe/webhook` — recebe os eventos do Stripe e atualiza plano/saldo
+- `POST /api/tarot/reading` — leitura de tarot com IA (consome saldo de leituras)
+- `POST /api/birth-chart` — mapa astral completo (AstrologyAPI + IA)
+- `POST /api/predictions` — previsões diárias personalizadas
+- `POST /api/compatibility` — compatibilidade amorosa
+- `POST /api/abundance` — guia de prosperidade
+- `POST /api/personality` — perfil de personalidade
+- `POST /api/numerology` — numerologia completa
+- `POST /api/spiritual-guide` — chat com a guia espiritual (Luna)
+
+### Dados e Auth (Supabase)
 
 - **Auth:** Supabase Auth (JWT nativo)
-- **Database:** PostgreSQL com RLS
-- **Edge Functions:**
-  - `create-tarot-reading` - Leitura de Tarot com GROQ AI
-  - `create-payment` - Pagamento PIX com PixUp
+- **Database:** PostgreSQL com RLS (o cliente anônimo não consegue alterar plano/saldo; escritas sensíveis passam pelo service role nas rotas de API)
 
 ### Frontend (Next.js 15)
 
-- **Framework:** Next.js 15.5.6 + React 18
+- **Framework:** Next.js 15 (App Router) + React 18
 - **Styling:** TailwindCSS + Framer Motion
 - **Auth:** Supabase Client Library
 
@@ -44,20 +52,20 @@ npm run dev
 ```
 src/
 ├── app/
+│   ├── api/           # Rotas de servidor (checkout, webhook, leituras, etc.)
 │   ├── auth/          # Login e Registro
-│   ├── dashboard/     # Dashboard principal
+│   ├── dashboard/     # Dashboard principal + mapa astral completo
 │   ├── tarot/         # Leituras de Tarot
-│   └── cart/          # Pagamentos
+│   └── cart/          # Planos e checkout
 ├── lib/
-│   ├── auth-client.ts     # Funções de autenticação
-│   ├── tarot-client.ts    # Funções de tarot
-│   ├── payment-client.ts  # Funções de pagamento
-│   └── supabase.ts        # Cliente Supabase
+│   ├── plans.ts           # Fonte única de planos, preços e features
+│   ├── auth-client.ts     # Funções de autenticação (client)
+│   ├── supabase.ts        # Cliente Supabase (browser) + tipos
+│   ├── astrology/         # Cliente da AstrologyAPI
+│   └── server/            # Helpers de servidor (plan-gate, groq, supabase-admin)
 supabase/
-├── schema.sql         # Schema do banco
-└── functions/         # Edge Functions
-    ├── create-tarot-reading/
-    └── create-payment/
+├── schema-stripe.sql                          # Schema completo (banco novo)
+└── migrations/20260721_stripe_new_plans.sql   # Migração (banco existente)
 ```
 
 ---
@@ -67,103 +75,112 @@ supabase/
 Crie `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://workzjugpmwbbbkxdgtu.supabase.co
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://SEU_PROJETO.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
-GROQ_API_KEY=gsk_r3eR...
-RAPIDAPI_KEY=e8c7dd...
-PIXUP_CLIENT_ID=666ba...
-PIXUP_CLIENT_SECRET=...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+
+# Stripe
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_READINGS_PACK=price_...      # US$ 9,99 (pagamento único)
+STRIPE_PRICE_PREMIUM_MONTHLY=price_...    # US$ 29,90/mês (recorrente)
+
+# IA e Astrologia
+GROQ_API_KEY=gsk_...
+ASTROLOGY_API_KEY=ak-...          # autentica via header x-astrologyapi-key
+
+# App
+NEXT_PUBLIC_APP_URL=https://seudominio.com
 ```
 
 ---
 
-## 🎯 Funcionalidades
+## 💰 Planos e Preços
 
-### ✨ Gratuitas (4 leituras)
+### ✨ Gratuito
 
-- Tarot das 4 Cartas
-- Interpretação com IA (GROQ)
+- 4 leituras de tarot grátis
+- Interpretação com IA (Groq)
 - Histórico de leituras
 
-### 💎 Premium (R$ 29,90/mês)
+### 🃏 Pacote 5 Leituras — US$ 9,99 (avulso)
 
-- Leituras ilimitadas
-- Tarot Egípcio completo
-- Mapa Astral
-- Compatibilidade Amorosa
-- Previsões personalizadas
+- +5 leituras de Tarot Egípcio
+- Pagamento único, sem assinatura
 
-### 💰 Leitura Avulsa (R$ 9,90)
+### 💎 Premium Ilimitado — US$ 29,90/mês
 
-- 1 leitura completa
-- Sem compromisso
+- Leituras de tarot ilimitadas
+- Horóscopo diário personalizado
+- Numerologia completa
+- Mapa astral completo
+- Guia de prosperidade
+- Compatibilidade amorosa
+
+---
+
+## 🗄️ Banco de Dados
+
+- **Banco existente:** execute `supabase/migrations/20260721_stripe_new_plans.sql` no SQL Editor do Supabase.
+- **Banco novo:** execute `supabase/schema-stripe.sql`.
+
+---
+
+## 💳 Webhook do Stripe
+
+No dashboard do Stripe, crie um webhook apontando para:
+
+```
+https://seudominio.com/api/stripe/webhook
+```
+
+Com os eventos:
+
+- `checkout.session.completed`
+- `invoice.paid`
+- `invoice.payment_failed`
+- `customer.subscription.updated`
+- `customer.subscription.deleted`
+
+Copie o signing secret gerado para `STRIPE_WEBHOOK_SECRET`.
 
 ---
 
 ## 🛠️ Tecnologias
 
-- **Frontend:** Next.js 15, React 18, TypeScript, TailwindCSS
-- **Backend:** Supabase (PostgreSQL + Edge Functions)
+- **Frontend:** Next.js 15, React 18, TypeScript, TailwindCSS, Framer Motion
+- **Backend:** Rotas API do Next.js + Supabase (PostgreSQL)
 - **Auth:** Supabase Auth (JWT)
-- **IA:** GROQ (Llama 3.3 70B)
-- **Astrologia:** RapidAPI AstroSeek
-- **Pagamento:** PixUp (PIX)
+- **IA:** Groq (Llama 3.3 70B)
+- **Astrologia:** AstrologyAPI (Vedic Rishi)
+- **Pagamento:** Stripe (checkout + assinaturas)
 - **Deploy:** Vercel
-
----
-
-## 📖 Documentação
-
-- **Deploy:** `DEPLOY_FINAL.md` - Guia completo de deploy
-- **Schema:** `EXECUTE_SCHEMA_PASSO_A_PASSO.md` - Executar banco de dados
-- **Supabase:** `SUPABASE_QUICK_START.md` - Comandos rápidos
 
 ---
 
 ## 🚀 Deploy
 
-### 1. Deploy Edge Functions:
-
-```bash
-supabase login
-supabase link --project-ref workzjugpmwbbbkxdgtu
-supabase functions deploy create-tarot-reading
-supabase functions deploy create-payment
-```
-
-### 2. Configurar Secrets:
-
-```bash
-supabase secrets set GROQ_API_KEY=...
-supabase secrets set PIXUP_CLIENT_ID=...
-```
-
-### 3. Deploy Vercel:
+1. Configure as variáveis de ambiente na Vercel (as mesmas do `.env.local`).
+2. Rode o SQL do banco (migração ou schema completo — ver seção Banco de Dados).
+3. Configure o webhook do Stripe (ver seção acima).
+4. Deploy:
 
 ```bash
 git push origin main  # Autodeploy habilitado
 ```
 
-**Documentação completa:** `DEPLOY_FINAL.md`
-
 ---
 
 ## 📊 Status do Projeto
 
-- ✅ Backend 100% Supabase (serverless)
+- ✅ Backend em rotas `/api` do Next.js
 - ✅ Autenticação Supabase Auth
-- ✅ Edge Functions criadas
-- ✅ Frontend Next.js 15
-- ✅ Pagamento PIX (PixUp)
-- ✅ IA para interpretações (GROQ)
-- ✅ RLS habilitado (segurança)
-- ✅ Código limpo e otimizado
-
----
-
-## 🎉 Lançamento
-
-**Siga:** `DEPLOY_FINAL.md` para lançar em 5 minutos!
+- ✅ Pagamentos Stripe (pacote avulso + assinatura mensal)
+- ✅ Webhook Stripe com atualização atômica de plano/saldo
+- ✅ IA para interpretações (Groq)
+- ✅ Mapa astral real via AstrologyAPI
+- ✅ RLS habilitado (plano/saldo protegidos contra escrita do cliente)
 
 ---
 

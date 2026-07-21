@@ -35,19 +35,19 @@ export async function signUp(data: SignUpData) {
   });
 
   if (error) {
-    console.error("❌ Erro detalhado no SignUp:", {
+    console.error("SignUp error:", {
       message: error.message,
       status: error.status,
       name: error.name,
-      code: error.code, // Se disponível
+      code: error.code, // if available
     });
     throw new Error(error.message);
   }
 
-  // Se o usuário foi criado mas não tem sessão, é porque precisa confirmar email
-  // OU se o Supabase retornou user mas sem session (comum quando email confirm is on)
+  // If the user was created without a session, email confirmation is required
+  // (common when "Confirm email" is enabled in Supabase Auth)
   if (authData.user && !authData.session) {
-    console.log("✅ Usuário criado, aguardando confirmação de email.");
+    console.log("User created; awaiting email confirmation.");
     return {
       user: authData.user,
       session: null,
@@ -133,7 +133,7 @@ export async function getUserProfile() {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error("Usuário não autenticado");
+    throw new Error("User not authenticated");
   }
 
   const { data, error } = await supabase
@@ -161,7 +161,7 @@ export async function updateUserProfile(updates: {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error("Usuário não autenticado");
+    throw new Error("User not authenticated");
   }
 
   const { data, error } = await supabase
