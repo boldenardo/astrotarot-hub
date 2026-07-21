@@ -1,20 +1,68 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Shield, Zap, Star, ChevronDown } from "lucide-react";
+import { Sparkles, Shield, Zap, Star, ChevronDown, Moon } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+
+// Light fallback shown while the 3D Canvas has not mounted yet.
+function Hero3DFallback() {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <div className="h-16 w-16 animate-spin rounded-full border-4 border-gold-400/30 border-t-gold-400" />
+    </div>
+  );
+}
+
+// Light, static visual (no three.js) for mobile.
+function StaticMysticVisual() {
+  return (
+    <div className="relative flex h-full w-full items-center justify-center">
+      <div className="absolute h-64 w-64 rounded-full bg-gold-400/15 blur-3xl" />
+      <div className="absolute h-80 w-80 rounded-full bg-amethyst-500/10 blur-3xl" />
+      <motion.div
+        animate={{ y: [0, -12, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="glass glass-gold relative flex h-44 w-44 items-center justify-center rounded-full shadow-gold"
+      >
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-400/10 to-transparent" />
+        <Moon className="h-16 w-16 text-gold-300" strokeWidth={1.25} />
+        <motion.span
+          className="absolute -right-1 -top-1"
+          animate={{ opacity: [0.4, 1, 0.4], scale: [0.9, 1.1, 0.9] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Sparkles className="h-7 w-7 text-gold-200" />
+        </motion.span>
+      </motion.div>
+    </div>
+  );
+}
 
 const FortuneTeller3D = dynamic(() => import("./FortuneTeller3D"), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-[400px] w-full items-center justify-center">
-      <div className="h-16 w-16 animate-spin rounded-full border-4 border-gold-400/40 border-t-gold-400" />
-    </div>
-  ),
+  loading: () => <Hero3DFallback />,
 });
 
 export default function HeroSection() {
+  // We only mount the 3D Canvas on desktop and after first paint, so the
+  // landing loads instantly and never blocks on small screens.
+  const [mounted, setMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    // Mobile = width < 768px → light static visual instead of the Canvas.
+    const query = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(query.matches);
+    update();
+    query.addEventListener("change", update);
+    setMounted(true);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  const show3D = mounted && isDesktop;
+
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Ambient background */}
@@ -101,7 +149,7 @@ export default function HeroSection() {
             >
               <Sparkles className="h-4 w-4 text-gold-300" />
               <span className="text-sm font-medium text-ink-200">
-                Descubra seu caminho através dos astros
+                Discover your path through the stars
               </span>
             </motion.div>
 
@@ -111,9 +159,9 @@ export default function HeroSection() {
               transition={{ duration: 0.7, delay: 0.15 }}
               className="font-display text-5xl font-semibold leading-[1.05] text-ink-50 md:text-7xl lg:text-[5.25rem]"
             >
-              Descubra seu <span className="text-gold">poder interior</span>
+              Unlock your <span className="text-gold">inner power</span>
               <br />
-              com Tarot e Astrologia
+              with Tarot &amp; Astrology
             </motion.h1>
 
             <motion.p
@@ -122,9 +170,9 @@ export default function HeroSection() {
               transition={{ duration: 0.7, delay: 0.3 }}
               className="mx-auto mt-6 max-w-xl text-lg text-ink-400 lg:mx-0 lg:text-xl"
             >
-              Conecte-se com o universo através de leituras de tarot
-              personalizadas, mapas astrais detalhados e orientação celestial
-              para iluminar seu caminho.
+              Connect with the universe through personalized tarot readings,
+              detailed birth charts, and celestial guidance to light up your
+              path.
             </motion.p>
 
             <motion.div
@@ -138,14 +186,14 @@ export default function HeroSection() {
                 className="btn-gold flex items-center gap-2 rounded-full px-8 py-4 text-base"
               >
                 <Sparkles className="h-5 w-5" />
-                Começar Grátis
+                Start Free
               </Link>
               <Link
                 href="/cart?plan=premium"
                 className="btn-ghost flex items-center gap-2 rounded-full px-8 py-4 text-base font-medium"
               >
                 <Star className="h-5 w-5 text-gold-300" />
-                Desbloquear Premium
+                Unlock Premium
               </Link>
             </motion.div>
 
@@ -157,28 +205,28 @@ export default function HeroSection() {
             >
               <span className="flex items-center gap-2">
                 <Shield className="h-4 w-4 text-gold-400" />
-                Privado e seguro
+                Private &amp; secure
               </span>
               <span className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-gold-400" />
-                Resultados instantâneos
+                Instant results
               </span>
               <span className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-gold-400" fill="currentColor" />
-                4,9/5 de satisfação
+                4.9/5 satisfaction
               </span>
             </motion.div>
           </div>
 
-          {/* 3D model */}
+          {/* Visual — 3D on desktop, light static visual on mobile */}
           <motion.div
             initial={{ opacity: 0, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="relative hidden h-[600px] w-full lg:block"
+            className="relative h-[380px] w-full sm:h-[460px] lg:h-[600px]"
           >
             <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amethyst-500/10 to-transparent blur-3xl" />
-            <FortuneTeller3D />
+            {show3D ? <FortuneTeller3D /> : <StaticMysticVisual />}
           </motion.div>
         </div>
       </div>
@@ -195,7 +243,7 @@ export default function HeroSection() {
           transition={{ duration: 2, repeat: Infinity }}
           className="flex flex-col items-center gap-2 text-ink-400"
         >
-          <span className="text-xs uppercase tracking-[0.2em]">Explorar</span>
+          <span className="text-xs uppercase tracking-[0.2em]">Explore</span>
           <ChevronDown className="h-5 w-5 text-gold-400" />
         </motion.div>
       </motion.div>

@@ -4,8 +4,8 @@
 // → { sun: { sign, house, interpretation }, moon: { sign, house, interpretation },
 //     ascendant: { sign, interpretation }, interpretation, raw_data? }
 //
-// Cache: se o usuário já tem um mapa em birth_charts, retorna o chart_data
-// salvo (com transits como raw_data) sem gastar créditos das APIs.
+// Cache: if the user already has a chart in birth_charts, return the saved
+// chart_data (with transits as raw_data) without spending API credits.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePremium } from "@/lib/server/plan-gate";
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
 
   const admin = getSupabaseAdmin();
 
-  // 1) Cache: mapa já calculado para este usuário.
+  // 1) Cache: chart already calculated for this user.
   const { data: cached } = await admin
     .from("birth_charts")
     .select("chart_data, transits")
@@ -78,12 +78,12 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
 
-  // 2) Sem cache: calcula com dados reais.
+  // 2) No cache: calculate with real data.
   const body = (await req.json().catch(() => null)) as Record<
     string,
     unknown
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Envie 'birthDate' (YYYY-MM-DD), 'birthTime' (HH:MM) e 'birthLocation'.",
+          "Send 'birthDate' (YYYY-MM-DD), 'birthTime' (HH:MM) and 'birthLocation'.",
       },
       { status: 400 }
     );
@@ -153,15 +153,15 @@ export async function POST(req: NextRequest) {
 
   let chartRaw: Record<string, unknown>;
   try {
-    chartRaw = (await westernHoroscope(birth, "pt")) as Record<string, unknown>;
+    chartRaw = (await westernHoroscope(birth, "en")) as Record<string, unknown>;
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
 
-  // Posições extraídas deterministicamente do retorno real.
+  // Positions extracted deterministically from the real response.
   const planets = (
     Array.isArray(chartRaw?.planets) ? chartRaw.planets : []
   ) as RawPlanet[];
@@ -186,12 +186,12 @@ export async function POST(req: NextRequest) {
 
   if (!sunSign || !moonSign || !ascSign) {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
 
-  // 3) Interpretações via Groq (os signos/casas reais já estão fixados).
+  // 3) Interpretations via Groq (the real signs/houses are already fixed).
   let texts: {
     sun: string;
     moon: string;
@@ -201,21 +201,21 @@ export async function POST(req: NextRequest) {
   try {
     texts = await groqChatJson({
       system:
-        "Você é um astrólogo brasileiro experiente. Responda SOMENTE com JSON válido, sem nenhum texto fora do JSON. Todos os textos devem estar em português do Brasil.",
+        "You are an experienced astrologer. Respond ONLY with valid JSON, with no text outside the JSON. All texts must be in English (US).",
       user: [
-        name ? `Consulente: ${name}.` : "",
-        "Posições REAIS do mapa natal (astrologyapi.com):",
-        `- Sol em ${sunSign}, casa ${sunHouse}`,
-        `- Lua em ${moonSign}, casa ${moonHouse}`,
-        `- Ascendente em ${ascSign}`,
+        name ? `Querent: ${name}.` : "",
+        "REAL natal chart positions (astrologyapi.com):",
+        `- Sun in ${sunSign}, house ${sunHouse}`,
+        `- Moon in ${moonSign}, house ${moonHouse}`,
+        `- Ascendant in ${ascSign}`,
         "",
-        "Gere as interpretações com base EXCLUSIVAMENTE nessas posições reais.",
-        "Responda SOMENTE com um JSON exatamente neste schema:",
+        "Generate the interpretations based EXCLUSIVELY on these real positions.",
+        "Respond ONLY with a JSON exactly in this schema:",
         `{
-  "sun": "string (2-3 frases sobre o Sol nesse signo e casa)",
-  "moon": "string (2-3 frases sobre a Lua nesse signo e casa)",
-  "ascendant": "string (2-3 frases sobre o Ascendente nesse signo)",
-  "overall": "string (síntese geral do mapa em 4-6 frases)"
+  "sun": "string (2-3 sentences about the Sun in that sign and house)",
+  "moon": "string (2-3 sentences about the Moon in that sign and house)",
+  "ascendant": "string (2-3 sentences about the Ascendant in that sign)",
+  "overall": "string (general synthesis of the chart in 4-6 sentences)"
 }`,
       ]
         .filter(Boolean)
@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }
@@ -249,7 +249,7 @@ export async function POST(req: NextRequest) {
     interpretation: typeof texts.overall === "string" ? texts.overall : "",
   };
 
-  // 4) Persiste para servir de cache nas próximas consultas.
+  // 4) Persist to serve as cache for future queries.
   await admin.from("birth_charts").insert({
     user_id: profile.id,
     birth_date: birthDate,

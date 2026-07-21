@@ -1,9 +1,9 @@
 // POST /api/predictions
 // { name, day, month, year, hour, minute, city, latitude?, longitude?, timezone }
-// → DailyPrediction (objeto direto, shape exato de src/app/predictions/page.tsx)
+// → DailyPrediction (direct object, exact shape of src/app/predictions/page.tsx)
 //
-// Usa trânsitos diários REAIS da astrologyapi.com; o Groq apenas redige a
-// previsão em pt-BR a partir deles.
+// Uses REAL daily transits from astrologyapi.com; Groq only writes the
+// prediction in English from them.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePremium } from "@/lib/server/plan-gate";
@@ -18,7 +18,7 @@ import { geocodeCity } from "@/lib/server/geocode";
 
 export const runtime = "nodejs";
 
-// Shape EXATO esperado pela página de previsões.
+// EXACT shape expected by the predictions page.
 interface DailyPrediction {
   date: string;
   moonPhase: {
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
@@ -107,14 +107,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Dados de nascimento incompletos. Envie day, month, year, hour, minute e city.",
+          "Incomplete birth data. Send day, month, year, hour, minute and city.",
       },
       { status: 400 }
     );
   }
 
-  // Coordenadas: usa as recebidas; geocodifica quando ausentes ou quando
-  // vieram com o fallback de São Paulo mas a cidade é outra.
+  // Coordinates: use the received ones; geocode when absent or when they came
+  // with the São Paulo fallback but the city is different.
   let lat = num(body?.latitude);
   let lon = num(body?.longitude);
   const looksDefault =
@@ -150,15 +150,15 @@ export async function POST(req: NextRequest) {
 
   let transitsRaw: unknown;
   try {
-    transitsRaw = await dailyTransits(birth, "pt");
+    transitsRaw = await dailyTransits(birth, "en");
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
 
-  const today = new Date().toLocaleDateString("pt-BR", {
+  const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -169,31 +169,31 @@ export async function POST(req: NextRequest) {
   const transitsText = JSON.stringify(transitsRaw).slice(0, 4000);
 
   const schema = `{
-  "date": "string (a data de hoje por extenso em português, ex.: '${today}')",
-  "moonPhase": { "name": "string (nome da fase da lua em pt-BR)", "emoji": "string (emoji da fase)", "meaning": "string (1-2 frases sobre a energia da fase)", "percentage": "número inteiro 0-100 (iluminação lunar)" },
-  "majorTransits": [ { "transit": "string (planeta em trânsito)", "natal": "string (planeta ou ponto natal)", "aspect": "string (aspecto, ex.: conjunção, trígono)", "energy": "string (resumo curto da energia)", "description": "string (1-2 frases)", "areas": ["2 a 4 áreas da vida em pt-BR"] } ],
-  "energyRatings": { "love": "inteiro 0-100", "career": "inteiro 0-100", "health": "inteiro 0-100", "finances": "inteiro 0-100", "spirituality": "inteiro 0-100" },
-  "bestTimeOfDay": { "morning": "string (dica para a manhã)", "afternoon": "string (dica para a tarde)", "evening": "string (dica para a noite)" },
-  "luckyColor": "string (cor da sorte em pt-BR)",
-  "luckyNumber": "número inteiro 1-99",
-  "recommendation": "string (2-3 frases de recomendação para hoje)",
-  "warning": "string (1-2 frases de cautela para hoje)"
+  "date": "string (today's date written out in English, e.g.: '${today}')",
+  "moonPhase": { "name": "string (name of the moon phase in English)", "emoji": "string (emoji of the phase)", "meaning": "string (1-2 sentences about the energy of the phase)", "percentage": "integer 0-100 (lunar illumination)" },
+  "majorTransits": [ { "transit": "string (transiting planet)", "natal": "string (natal planet or point)", "aspect": "string (aspect, e.g.: conjunction, trine)", "energy": "string (short summary of the energy)", "description": "string (1-2 sentences)", "areas": ["2 to 4 areas of life in English"] } ],
+  "energyRatings": { "love": "integer 0-100", "career": "integer 0-100", "health": "integer 0-100", "finances": "integer 0-100", "spirituality": "integer 0-100" },
+  "bestTimeOfDay": { "morning": "string (tip for the morning)", "afternoon": "string (tip for the afternoon)", "evening": "string (tip for the evening)" },
+  "luckyColor": "string (lucky color in English)",
+  "luckyNumber": "integer 1-99",
+  "recommendation": "string (2-3 sentences of recommendation for today)",
+  "warning": "string (1-2 sentences of caution for today)"
 }`;
 
   try {
     const prediction = await groqChatJson<DailyPrediction>({
       system:
-        "Você é um astrólogo brasileiro experiente. Responda SOMENTE com JSON válido, sem nenhum texto fora do JSON. Todos os textos devem estar em português do Brasil.",
+        "You are an experienced astrologer. Respond ONLY with valid JSON, with no text outside the JSON. All texts must be in English (US).",
       user: [
-        `Hoje é ${today}.`,
-        name ? `Consulente: ${name}.` : "",
-        `Trânsitos planetários REAIS de hoje em relação ao mapa natal do consulente (dados da astrologyapi.com):`,
+        `Today is ${today}.`,
+        name ? `Querent: ${name}.` : "",
+        `REAL planetary transits of today in relation to the querent's natal chart (data from astrologyapi.com):`,
         transitsText,
         "",
-        "Com base EXCLUSIVAMENTE nesses trânsitos reais, gere a previsão do dia.",
-        "Inclua de 3 a 5 itens em majorTransits, escolhendo os trânsitos mais relevantes dos dados acima.",
-        "A fase da lua (moonPhase) deve ser coerente com a data de hoje.",
-        "Responda SOMENTE com um JSON exatamente neste schema:",
+        "Based EXCLUSIVELY on these real transits, generate the prediction for the day.",
+        "Include 3 to 5 items in majorTransits, choosing the most relevant transits from the data above.",
+        "The moon phase (moonPhase) must be consistent with today's date.",
+        "Respond ONLY with a JSON exactly in this schema:",
         schema,
       ]
         .filter(Boolean)
@@ -203,14 +203,14 @@ export async function POST(req: NextRequest) {
     });
 
     if (!prediction || typeof prediction !== "object") {
-      throw new Error("JSON inválido");
+      throw new Error("Invalid JSON");
     }
     if (!Array.isArray(prediction.majorTransits)) {
       prediction.majorTransits = [];
     }
 
-    // Normaliza os shapes aninhados que a página desreferencia sem optional
-    // chaining, garantindo que nunca faltem chaves nem venham tipos errados.
+    // Normalize the nested shapes that the page dereferences without optional
+    // chaining, ensuring keys are never missing nor come with wrong types.
     const str = (v: unknown, fallback = ""): string =>
       typeof v === "string" ? v : fallback;
     const clamp = (v: unknown): number => {
@@ -223,7 +223,7 @@ export async function POST(req: NextRequest) {
         ? (prediction.moonPhase as Record<string, unknown>)
         : {};
     prediction.moonPhase = {
-      name: str(mp.name, "Fase lunar"),
+      name: str(mp.name, "Lunar phase"),
       emoji: str(mp.emoji, "🌙"),
       meaning: str(mp.meaning, ""),
       percentage: clamp(mp.percentage),
@@ -259,7 +259,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(prediction);
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }

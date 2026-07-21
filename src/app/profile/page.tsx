@@ -13,8 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth-client";
-import { supabase } from "@/lib/supabase";
+import { getMyProfile, updateMyProfile } from "@/lib/client/me";
 import { trackPageView } from "@/lib/analytics";
 
 export default function ProfilePage() {
@@ -37,28 +36,18 @@ export default function ProfilePage() {
 
     async function loadUserData() {
       try {
-        const authUser = await getCurrentUser();
-        if (!authUser) {
+        const profile = await getMyProfile();
+        if (!profile) {
           router.push("/auth/login");
           return;
         }
 
-        const { data: profile, error } = await supabase
-          .from("users")
-          .select("*")
-          .eq("auth_id", authUser.id)
-          .single();
-
-        if (error) throw error;
-
-        if (profile) {
-          setFormData({
-            name: profile.name || "",
-            birthDate: profile.birth_date || "",
-            birthTime: profile.birth_time || "",
-            birthLocation: profile.birth_location || "",
-          });
-        }
+        setFormData({
+          name: profile.name || "",
+          birthDate: profile.birth_date || "",
+          birthTime: profile.birth_time || "",
+          birthLocation: profile.birth_location || "",
+        });
       } catch (error) {
         console.error("Failed to load profile:", error);
         setMessage({ type: "error", text: "Failed to load your data." });
@@ -76,35 +65,14 @@ export default function ProfilePage() {
     setMessage(null);
 
     try {
-      const authUser = await getCurrentUser();
-      if (!authUser) throw new Error("User not authenticated");
-
-      const { error } = await supabase
-        .from("users")
-        .update({
-          name: formData.name,
-          birth_date: formData.birthDate,
-          birth_time: formData.birthTime,
-          birth_location: formData.birthLocation,
-        })
-        .eq("auth_id", authUser.id);
-
-      if (error) throw error;
-
-      // Clear any old cached birth chart so a new one is generated with the updated data.
-      // First we get the user's internal ID
-      const { data: userProfile } = await supabase
-        .from("users")
-        .select("id")
-        .eq("auth_id", authUser.id)
-        .single();
-
-      if (userProfile) {
-        await supabase
-          .from("birth_charts")
-          .delete()
-          .eq("user_id", userProfile.id);
-      }
+      // updateMyProfile invalidates the birth-chart cache server-side,
+      // so a fresh chart is generated with the updated data.
+      await updateMyProfile({
+        name: formData.name,
+        birth_date: formData.birthDate,
+        birth_time: formData.birthTime,
+        birth_location: formData.birthLocation,
+      });
 
       setMessage({ type: "success", text: "Profile updated successfully!" });
 

@@ -18,7 +18,7 @@ export default function GuiaEspiritualPage() {
     {
       role: "assistant",
       content:
-        "Olá, querida alma. Eu sou a Luna, sua guia espiritual. Este é um espaço seguro para compartilhar seus sentimentos, desafios e sonhos. Como posso te acolher hoje?",
+        "Hello, dear soul. I'm Luna, your spiritual guide. This is a safe space to share your feelings, challenges, and dreams. How can I hold space for you today?",
       timestamp: new Date(),
     },
   ]);
@@ -43,7 +43,7 @@ export default function GuiaEspiritualPage() {
       timestamp: new Date(),
     };
 
-    // Últimas 10 mensagens como contexto para a Luna
+    // Last 10 messages as context for Luna
     const history = messages.slice(-10).map((m) => ({
       role: m.role,
       content: m.content,
@@ -68,7 +68,7 @@ export default function GuiaEspiritualPage() {
       const data = await response.json().catch(() => null);
 
       if (!response.ok || !data?.message) {
-        throw new Error(data?.error || "Falha ao enviar a mensagem");
+        throw new Error(data?.error || "Failed to send the message");
       }
 
       const assistantMessage: Message = {
@@ -83,7 +83,7 @@ export default function GuiaEspiritualPage() {
       const errorMessage: Message = {
         role: "assistant",
         content:
-          "Desculpe, não consegui processar sua mensagem agora. Tente novamente em instantes.",
+          "I'm sorry, I couldn't process your message right now. Please try again in a moment.",
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -139,12 +139,12 @@ export default function GuiaEspiritualPage() {
             <div className="flex items-center justify-center gap-3 mb-4">
               <Heart className="w-8 h-8 text-gold-300" fill="currentColor" />
               <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50">
-                Guia <span className="text-gold">Espiritual</span>
+                Spiritual <span className="text-gold">Guide</span>
               </h1>
               <Moon className="w-8 h-8 text-gold-400" />
             </div>
             <p className="text-ink-400 text-sm">
-              Um espaço seguro de acolhimento e orientação emocional
+              A safe space for comfort and emotional guidance
             </p>
           </motion.div>
 
@@ -185,7 +185,7 @@ export default function GuiaEspiritualPage() {
                       {message.content}
                     </p>
                     <span className="text-xs text-ink-600 mt-2 block">
-                      {message.timestamp.toLocaleTimeString("pt-BR", {
+                      {message.timestamp.toLocaleTimeString("en-US", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
@@ -214,7 +214,7 @@ export default function GuiaEspiritualPage() {
                         />
                       </div>
                       <span className="text-xs text-ink-400">
-                        Refletindo...
+                        Reflecting...
                       </span>
                     </div>
                   </div>
@@ -231,7 +231,7 @@ export default function GuiaEspiritualPage() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Compartilhe seus pensamentos..."
+                  placeholder="Share your thoughts..."
                   className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none resize-none"
                   rows={2}
                   disabled={isLoading}
@@ -245,8 +245,7 @@ export default function GuiaEspiritualPage() {
                 </button>
               </div>
               <p className="text-xs text-ink-600 mt-2 text-center">
-                Pressione Enter para enviar &bull; Shift + Enter para nova
-                linha
+                Press Enter to send &bull; Shift + Enter for a new line
               </p>
             </div>
           </motion.div>
@@ -256,18 +255,18 @@ export default function GuiaEspiritualPage() {
             {[
               {
                 icon: <Heart className="w-5 h-5" />,
-                title: "Acolhimento",
-                text: "Um espaço seguro e sem julgamentos",
+                title: "Comfort",
+                text: "A safe, judgment-free space",
               },
               {
                 icon: <Sparkles className="w-5 h-5" />,
-                title: "Orientação",
-                text: "Insights para o seu crescimento",
+                title: "Guidance",
+                text: "Insights for your growth",
               },
               {
                 icon: <Moon className="w-5 h-5" />,
-                title: "Confidencial",
-                text: "Suas conversas permanecem privadas",
+                title: "Confidential",
+                text: "Your conversations stay private",
               },
             ].map((card, i) => (
               <motion.div

@@ -2,8 +2,8 @@
 // { selectedCards: [{ name, number, meaning?, description? }], question? }
 // → { success: true, reading: { id, cards, interpretation, createdAt }, readingsLeft }
 //
-// Fluxo: requireUser → interpretação via Groq → SÓ então consome 1 leitura
-// (para não cobrar o usuário se a IA falhar) → grava em tarot_readings.
+// Flow: requireUser → interpretation via Groq → ONLY then consume 1 reading
+// (so the user is not charged if the AI fails) → save into tarot_readings.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, consumeReading } from "@/lib/server/plan-gate";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Envie 'selectedCards' com ao menos 1 carta ({ name, number }).",
+          "Send 'selectedCards' with at least 1 card ({ name, number }).",
       },
       { status: 400 }
     );
@@ -64,26 +64,26 @@ export async function POST(req: NextRequest) {
   const question =
     typeof body?.question === "string" && body.question.trim()
       ? body.question.trim().slice(0, 500)
-      : "Interpretação geral da tiragem";
+      : "General reading of the spread";
 
   const cardsText = cards
     .map((card, index) => {
       const extras = [card.meaning, card.description]
         .filter(Boolean)
         .join(" — ");
-      return `Posição ${index + 1}: ${card.name} (arcano nº ${card.number})${
+      return `Position ${index + 1}: ${card.name} (arcanum no. ${card.number})${
         extras ? ` — ${extras}` : ""
       }`;
     })
     .join("\n");
 
-  // Checa o saldo ANTES de gastar o Groq: sem leituras disponíveis, corta cedo
-  // (o consumeReading abaixo continua sendo o guardião atômico definitivo).
+  // Check the balance BEFORE spending Groq: with no readings available, cut early
+  // (the consumeReading below remains the definitive atomic guardian).
   if (!hasReadingsLeft(profile)) {
     return NextResponse.json(
       {
         error:
-          "Você não tem leituras disponíveis. Compre o Pacote 5 Leituras (US$ 9,99) ou assine o Premium Ilimitado (US$ 29,90/mês).",
+          "You have no readings available. Buy the 5 Readings Pack ($9.99) or subscribe to Unlimited Premium ($29.90/month).",
         code: "NO_READINGS_LEFT",
         needsPayment: true,
       },
@@ -95,23 +95,23 @@ export async function POST(req: NextRequest) {
   try {
     interpretation = await groqChat({
       system: [
-        "Você é um tarólogo brasileiro experiente, especialista no Tarot Egípcio.",
-        "Fale sempre em português do Brasil, com tom místico, acolhedor e encorajador.",
-        "Escreva uma interpretação de 300 a 400 palavras, em texto corrido dividido em parágrafos, sem títulos e sem markdown.",
-        "Interprete cada carta considerando a posição em que saiu, conecte as cartas entre si em uma narrativa única e finalize com um conselho prático para o consulente.",
+        "You are an experienced tarot reader, a specialist in the Egyptian Tarot.",
+        "Always respond in English (US), with a mystical, warm, and encouraging tone.",
+        "Write an interpretation of 300 to 400 words, in flowing prose divided into paragraphs, without headings and without markdown.",
+        "Interpret each card considering the position it appeared in, connect the cards to one another into a single narrative, and end with practical advice for the querent.",
       ].join(" "),
-      user: `Pergunta do consulente: ${question}\n\nCartas da tiragem (na ordem em que saíram):\n${cardsText}\n\nFaça a interpretação completa da tiragem.`,
+      user: `Querent's question: ${question}\n\nCards of the spread (in the order they appeared):\n${cardsText}\n\nProvide the complete interpretation of the spread.`,
       maxTokens: 900,
       temperature: 0.8,
     });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }
 
-  // Interpretação pronta — agora sim consome o saldo (atômico no banco).
+  // Interpretation ready — now consume the balance (atomic in the database).
   const consumed = await consumeReading(profile);
   if (!consumed.ok) return consumed.response;
 
@@ -130,8 +130,8 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (insertError || !inserted) {
-    // A leitura já foi gerada (e o saldo consumido): entrega mesmo assim,
-    // sem histórico persistido.
+    // The reading was already generated (and the balance consumed): deliver it
+    // anyway, without persisted history.
     return NextResponse.json({
       success: true,
       reading: {

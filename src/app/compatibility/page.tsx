@@ -66,7 +66,7 @@ const zodiacSigns = [
     element: "Earth",
     dates: "Apr 20 – May 20",
     perfectMatches: ["Virgo", "Capricorn", "Cancer"],
-    traits: ["Loyal", "Sensual", "Grounded"],
+    traits: ["Loyal", "Sensual", "Steadfast"],
     color: "from-gold-300 to-gold-500",
   },
   {
@@ -75,7 +75,7 @@ const zodiacSigns = [
     element: "Air",
     dates: "May 21 – Jun 20",
     perfectMatches: ["Libra", "Aquarius", "Aries"],
-    traits: ["Expressive", "Versatile", "Clever"],
+    traits: ["Expressive", "Versatile", "Perceptive"],
     color: "from-gold-300 to-gold-500",
   },
   {
@@ -184,7 +184,7 @@ export default function CompatibilityPage() {
     setError("");
     setPremiumRequired(false);
     try {
-      // Enviamos apenas a cidade; o servidor geocodifica as coordenadas
+      // We send only the city; the server geocodes the coordinates
       const response = await fetch("/api/compatibility", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,10 +201,10 @@ export default function CompatibilityPage() {
       if (!response.ok) {
         if (data?.code === "PREMIUM_REQUIRED") {
           setPremiumRequired(true);
-          setError("Este recurso é exclusivo do plano Premium Ilimitado.");
+          setError("This feature is exclusive to the Premium Unlimited plan.");
           return;
         }
-        throw new Error(data?.error || "Falha ao calcular a compatibilidade");
+        throw new Error(data?.error || "Failed to calculate compatibility");
       }
 
       if (data?.error) throw new Error(data.error);
@@ -214,7 +214,7 @@ export default function CompatibilityPage() {
     } catch (err) {
       console.error("Failed to calculate:", err);
       setError(
-        "Não foi possível calcular a compatibilidade agora. Verifique os dados informados e tente novamente."
+        "We couldn't calculate compatibility right now. Please check the details you entered and try again."
       );
     } finally {
       setLoading(false);
@@ -493,7 +493,7 @@ export default function CompatibilityPage() {
                 href="/cart?plan=premium"
                 className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
               >
-                Assinar Premium Ilimitado — US$ 29,90/mês
+                Subscribe to Premium Unlimited — $29.90/mo
               </Link>
             )}
           </motion.div>
@@ -711,7 +711,7 @@ function PersonForm({
               value={person.city}
               onChange={(e) => setPerson({ ...person, city: e.target.value })}
               className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
-              placeholder="São Paulo"
+              placeholder="New York"
             />
           </div>
         </div>

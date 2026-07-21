@@ -12,7 +12,7 @@ function SuccessContent() {
 
   return (
     <div className="relative min-h-screen text-ink-200 pt-24 pb-12 flex items-center justify-center">
-      {/* Fundo ambiente */}
+      {/* Ambient background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,92,255,0.12),transparent_60%)]" />
 
       <div className="relative z-10 max-w-lg mx-auto px-4 w-full">
@@ -31,12 +31,12 @@ function SuccessContent() {
           </motion.div>
 
           <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50 mb-4">
-            Pagamento <span className="text-gold">confirmado!</span>
+            Payment <span className="text-gold">confirmed!</span>
           </h1>
 
           <p className="text-ink-300 mb-8">
-            Seu acesso será liberado em instantes. Obrigado por confiar na sua
-            jornada espiritual conosco.
+            Your access will be unlocked in moments. Thank you for trusting us
+            with your spiritual journey.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -45,20 +45,20 @@ function SuccessContent() {
               className="btn-gold rounded-full px-8 py-4 font-semibold transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
             >
               <LayoutDashboard className="w-5 h-5" />
-              Ir para o painel
+              Go to dashboard
             </Link>
             <Link
               href="/tarot"
               className="rounded-full px-8 py-4 font-semibold border border-gold-400/40 bg-white/5 text-gold-300 hover:border-gold-400/70 hover:bg-white/10 transition-all inline-flex items-center justify-center gap-2"
             >
               <Sparkles className="w-5 h-5" />
-              Fazer uma leitura
+              Get a reading
             </Link>
           </div>
 
           {sessionId && (
             <p className="mt-8 text-xs text-ink-600 break-all">
-              Referência do pagamento: {sessionId}
+              Payment reference: {sessionId}
             </p>
           )}
         </motion.div>

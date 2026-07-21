@@ -38,7 +38,7 @@ export default function NumerologyPage() {
       }
 
       if (!res.ok) {
-        // Falha silenciosa: mantém apenas os números calculados localmente
+        // Silent failure: keep only the locally computed numbers
         return;
       }
 
@@ -47,7 +47,7 @@ export default function NumerologyPage() {
         setAiInterpretation(data.interpretation);
       }
     } catch {
-      // Falha silenciosa: mantém apenas os números calculados localmente
+      // Silent failure: keep only the locally computed numbers
     } finally {
       setAiLoading(false);
     }
@@ -58,7 +58,7 @@ export default function NumerologyPage() {
     setError("");
     const parts = parseBirthDate(birth);
     if (!name.trim() || !parts) {
-      setError("Informe seu nome completo e uma data de nascimento válida.");
+      setError("Please enter your full name and a valid birth date.");
       setResult(null);
       return;
     }
@@ -163,7 +163,7 @@ export default function NumerologyPage() {
               />
             </div>
 
-            {/* Interpretação personalizada por IA */}
+            {/* Personalized AI interpretation */}
             {(aiLoading || aiInterpretation) && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -173,7 +173,7 @@ export default function NumerologyPage() {
                 <div className="mb-4 flex items-center gap-3">
                   <Sparkles className="h-6 w-6 text-gold-300" />
                   <h3 className="font-display text-2xl font-semibold text-ink-50">
-                    Interpretação personalizada por IA
+                    Personalized AI Interpretation
                   </h3>
                 </div>
                 {aiLoading ? (
@@ -187,7 +187,7 @@ export default function NumerologyPage() {
                       }}
                       className="h-6 w-6 flex-shrink-0 rounded-full border-2 border-gold-400/40 border-t-gold-400"
                     />
-                    Gerando sua interpretação personalizada...
+                    Generating your personalized interpretation...
                   </div>
                 ) : (
                   <p className="whitespace-pre-line leading-relaxed text-ink-200">

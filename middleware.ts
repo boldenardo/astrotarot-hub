@@ -1,118 +1,39 @@
-import { createServerClient } from "@supabase/ssr";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export async function middleware(req: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: req.headers,
-    },
-  });
+// Rotas que exigem login (mesmo conjunto de antes).
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard(.*)",
+  "/tarot(.*)",
+  "/cart(.*)",
+  "/personality(.*)",
+  "/compatibility(.*)",
+  "/predictions(.*)",
+  "/abundance(.*)",
+  "/guia(.*)",
+  "/numerology(.*)",
+  "/profile(.*)",
+]);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: any) {
-          req.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: any) {
-          req.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: req.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
-        },
-      },
-    }
-  );
+export default clerkMiddleware(async (auth, req) => {
+  const { userId, redirectToSignIn } = await auth();
 
-  // Verificar sessão
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  // Atualizar sessão se existir (importante para manter o cookie vivo)
-  if (session) {
-    await supabase.auth.getUser();
-  }
-
-  // Rotas protegidas
-  const protectedRoutes = [
-    "/dashboard",
-    "/tarot",
-    "/cart",
-    "/personality",
-    "/compatibility",
-    "/predictions",
-    "/abundance",
-    "/guia",
-    "/numerology",
-  ];
-
-  // Verificar se a rota atual é protegida
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    req.nextUrl.pathname.startsWith(route)
-  );
-
-  // Se é rota protegida e não tem sessão, redirecionar para login
-  if (isProtectedRoute && !session) {
-    const redirectUrl = new URL("/auth/login", req.url);
-    redirectUrl.searchParams.set("redirect", req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Se está logado e tenta acessar login/register, redirecionar para dashboard
-  if (
-    session &&
-    (req.nextUrl.pathname === "/auth/login" ||
-      req.nextUrl.pathname === "/auth/register")
-  ) {
+  // Já logado tentando acessar login/cadastro → manda pro dashboard.
+  const path = req.nextUrl.pathname;
+  if (userId && (path === "/auth/login" || path === "/auth/register")) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  return response;
-}
+  // Rota protegida sem sessão → tela de login do Clerk.
+  if (isProtectedRoute(req) && !userId) {
+    return redirectToSignIn({ returnBackUrl: req.url });
+  }
+});
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/tarot/:path*",
-    "/cart/:path*",
-    "/personality/:path*",
-    "/compatibility/:path*",
-    "/predictions/:path*",
-    "/abundance/:path*",
-    "/guia/:path*",
-    "/numerology/:path*",
-    "/auth/:path*",
+    // Ignora arquivos estáticos e _next; roda nas demais rotas e nas de API.
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpg|jpeg|gif|png|svg|ico|webp|glb|woff2?|ttf)).*)",
+    "/(api|trpc)(.*)",
   ],
 };

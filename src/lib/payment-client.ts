@@ -1,8 +1,6 @@
-import { supabase } from "./supabase";
-
 /**
- * Inicia o checkout do Stripe para o plano escolhido.
- * Redireciona o navegador para a página de pagamento do Stripe.
+ * Starts the Stripe checkout for the chosen plan.
+ * Redirects the browser to the Stripe payment page.
  */
 export async function startCheckout(plan: "PACK5" | "PREMIUM"): Promise<void> {
   const res = await fetch("/api/checkout", {
@@ -20,7 +18,7 @@ export async function startCheckout(plan: "PACK5" | "PREMIUM"): Promise<void> {
   try {
     data = await res.json();
   } catch {
-    // resposta sem corpo JSON — tratada abaixo
+    // response without a JSON body — handled below
   }
 
   if (res.ok && data.url) {
@@ -29,22 +27,6 @@ export async function startCheckout(plan: "PACK5" | "PREMIUM"): Promise<void> {
   }
 
   throw new Error(
-    data.error || "Não foi possível iniciar o pagamento. Tente novamente."
+    data.error || "Could not start the payment. Please try again."
   );
-}
-
-/**
- * Busca histórico de pagamentos do usuário
- */
-export async function getUserPayments() {
-  const { data, error } = await supabase
-    .from("payments")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
 }

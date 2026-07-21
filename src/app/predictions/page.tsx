@@ -73,18 +73,18 @@ interface DailyPrediction {
 }
 
 const MONTHS = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 const ENERGY_ICONS = {
@@ -196,12 +196,12 @@ export default function PredictionsPage() {
         if (data?.code === "PREMIUM_REQUIRED") {
           setPremiumRequired(true);
           setError(
-            "Este recurso é exclusivo do plano Premium Ilimitado."
+            "This feature is exclusive to the Premium Unlimited plan."
           );
           setStep("form");
           return;
         }
-        throw new Error(data?.error || "Falha ao gerar a previsão");
+        throw new Error(data?.error || "Failed to generate the forecast");
       }
 
       setPrediction(data);
@@ -209,7 +209,7 @@ export default function PredictionsPage() {
     } catch (err) {
       console.error(err);
       setError(
-        "Não foi possível gerar sua previsão agora. Tente novamente em instantes."
+        "We couldn't generate your forecast right now. Please try again in a moment."
       );
       setStep("form");
     }
@@ -291,7 +291,7 @@ export default function PredictionsPage() {
             <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink-50 mb-4">
               Your Daily <span className="text-gold">Forecast</span>
             </h1>
-            <p className="text-xl text-ink-400">
+            <p className="text-xl text-ink-400 capitalize">
               {currentDate.toLocaleDateString("en-US", {
                 weekday: "long",
                 day: "numeric",
@@ -313,11 +313,11 @@ export default function PredictionsPage() {
               >
                 <div className="text-center mb-6">
                   <h2 className="font-display text-2xl font-semibold text-ink-50 mb-2">
-                    Informe seus dados de nascimento
+                    Enter your birth details
                   </h2>
                   <p className="text-ink-400">
-                    Para gerar previsões personalizadas com base no seu mapa
-                    natal
+                    To generate personalized forecasts based on your natal
+                    chart
                   </p>
                 </div>
 
@@ -325,7 +325,7 @@ export default function PredictionsPage() {
                   <div>
                     <label className="flex items-center gap-2 text-ink-200 mb-2">
                       <User className="w-5 h-5 text-gold-300" />
-                      Nome
+                      Name
                     </label>
                     <input
                       type="text"
@@ -334,14 +334,14 @@ export default function PredictionsPage() {
                       onChange={handleInputChange}
                       required
                       className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
-                      placeholder="Seu nome"
+                      placeholder="Your name"
                     />
                   </div>
 
                   <div>
                     <label className="flex items-center gap-2 text-ink-200 mb-2">
                       <Calendar className="w-5 h-5 text-gold-300" />
-                      Data de nascimento
+                      Date of birth
                     </label>
                     <div className="grid grid-cols-3 gap-4">
                       <input
@@ -352,7 +352,7 @@ export default function PredictionsPage() {
                         required
                         min="1"
                         max="31"
-                        placeholder="Dia"
+                        placeholder="Day"
                         className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                       <select
@@ -362,7 +362,7 @@ export default function PredictionsPage() {
                         required
                         className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 focus:border-gold-400/50 focus:outline-none"
                       >
-                        <option value="">Mês</option>
+                        <option value="">Month</option>
                         {MONTHS.map((month, index) => (
                           <option
                             key={month}
@@ -381,7 +381,7 @@ export default function PredictionsPage() {
                         required
                         min="1900"
                         max="2026"
-                        placeholder="Ano"
+                        placeholder="Year"
                         className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                     </div>
@@ -390,7 +390,7 @@ export default function PredictionsPage() {
                   <div>
                     <label className="flex items-center gap-2 text-ink-200 mb-2">
                       <Clock className="w-5 h-5 text-gold-300" />
-                      Hora de nascimento
+                      Time of birth
                     </label>
                     <div className="grid grid-cols-2 gap-4">
                       <input
@@ -401,7 +401,7 @@ export default function PredictionsPage() {
                         required
                         min="0"
                         max="23"
-                        placeholder="Hora"
+                        placeholder="Hour"
                         className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                       <input
@@ -412,7 +412,7 @@ export default function PredictionsPage() {
                         required
                         min="0"
                         max="59"
-                        placeholder="Minuto"
+                        placeholder="Minute"
                         className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                     </div>
@@ -421,7 +421,7 @@ export default function PredictionsPage() {
                   <div>
                     <label className="flex items-center gap-2 text-ink-200 mb-2">
                       <MapPin className="w-5 h-5 text-gold-300" />
-                      Cidade de nascimento
+                      City of birth
                     </label>
                     <input
                       type="text"
@@ -430,7 +430,7 @@ export default function PredictionsPage() {
                       onChange={handleInputChange}
                       required
                       className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
-                      placeholder="ex.: São Paulo"
+                      placeholder="e.g. New York"
                     />
                   </div>
 
@@ -442,7 +442,7 @@ export default function PredictionsPage() {
                           href="/cart?plan=premium"
                           className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
                         >
-                          Assinar Premium Ilimitado — US$ 29,90/mês
+                          Subscribe to Premium Unlimited — $29.90/mo
                         </Link>
                       )}
                     </div>
@@ -452,7 +452,7 @@ export default function PredictionsPage() {
                     type="submit"
                     className="btn-gold w-full rounded-full py-4 font-semibold text-lg"
                   >
-                    Revelar a previsão de hoje
+                    Reveal today&apos;s forecast
                   </button>
                 </form>
               </motion.div>
@@ -480,10 +480,10 @@ export default function PredictionsPage() {
                   <Sun className="w-20 h-20 text-gold-400" />
                 </motion.div>
                 <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4">
-                  Lendo os trânsitos planetários...
+                  Reading the planetary transits...
                 </h2>
                 <p className="text-ink-400">
-                  Calculando as energias astrológicas do seu dia
+                  Calculating the astrological energies of your day
                 </p>
               </motion.div>
             )}
@@ -516,7 +516,7 @@ export default function PredictionsPage() {
                       <TrendingUp className="w-6 h-6 text-gold-300 flex-shrink-0 mt-1" />
                       <div>
                         <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
-                          Today&apos;s Recommendation
+                          Today&apos;s recommendation
                         </h3>
                         <p className="text-ink-400 leading-relaxed">
                           {prediction.recommendation}
@@ -530,7 +530,7 @@ export default function PredictionsPage() {
                       <AlertCircle className="w-6 h-6 text-gold-400 flex-shrink-0 mt-1" />
                       <div>
                         <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
-                          Today&apos;s Caution
+                          Today&apos;s caution
                         </h3>
                         <p className="text-ink-400 leading-relaxed">
                           {prediction.warning}
@@ -543,7 +543,7 @@ export default function PredictionsPage() {
                 {/* Today's energies */}
                 <div className="glass rounded-3xl p-8 border-white/5">
                   <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
-                    Today&apos;s Energies
+                    Today&apos;s energies
                   </h2>
                   <div className="space-y-6">
                     {Object.entries(prediction.energyRatings).map(
@@ -559,7 +559,7 @@ export default function PredictionsPage() {
                 {/* Best times */}
                 <div className="glass rounded-3xl p-8 border-white/5">
                   <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
-                    Best Times of Day
+                    Best times of day
                   </h2>
                   <div className="grid md:grid-cols-3 gap-6">
                     <div className="text-center">
@@ -597,7 +597,7 @@ export default function PredictionsPage() {
                   <div className="glass rounded-3xl p-6 border-white/5 text-center">
                     <Star className="w-12 h-12 text-gold-400 mx-auto mb-3" />
                     <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
-                      Lucky Color
+                      Lucky color
                     </h3>
                     <p className="text-3xl font-bold text-gold-300 capitalize">
                       {prediction.luckyColor}
@@ -607,7 +607,7 @@ export default function PredictionsPage() {
                   <div className="glass rounded-3xl p-6 border-white/5 text-center">
                     <Sparkles className="w-12 h-12 text-gold-400 mx-auto mb-3" />
                     <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
-                      Lucky Number
+                      Lucky number
                     </h3>
                     <p className="text-5xl font-bold text-gold-300">
                       {prediction.luckyNumber}
@@ -619,7 +619,7 @@ export default function PredictionsPage() {
                 {prediction.majorTransits.length > 0 && (
                   <div className="glass rounded-3xl p-8 border-white/5">
                     <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
-                      Key Astrological Transits
+                      Key astrological transits
                     </h2>
                     <div className="space-y-4">
                       {prediction.majorTransits.map((transit, index) => (
@@ -672,7 +672,7 @@ export default function PredictionsPage() {
                     }}
                     className="btn-gold rounded-full px-8 py-4 font-semibold text-lg"
                   >
-                    Check Another Day&apos;s Forecast
+                    View another day&apos;s forecast
                   </button>
                 </div>
               </motion.div>

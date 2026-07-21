@@ -179,11 +179,11 @@ export default function PersonalityReportPage() {
       if (!response.ok) {
         if (data?.code === "PREMIUM_REQUIRED") {
           setPremiumRequired(true);
-          setError("Este recurso é exclusivo do plano Premium Ilimitado.");
+          setError("This feature is exclusive to the Premium Unlimited plan.");
           setStep("form");
           return;
         }
-        throw new Error(data?.error || "Falha ao gerar o perfil");
+        throw new Error(data?.error || "Failed to generate the report");
       }
 
       setResult(data.profile);
@@ -192,7 +192,7 @@ export default function PersonalityReportPage() {
     } catch (err) {
       console.error(err);
       setError(
-        "Não foi possível gerar seu perfil agora. Tente novamente em instantes."
+        "We couldn't generate your report right now. Please try again in a moment."
       );
       setStep("form");
     }
@@ -432,7 +432,7 @@ export default function PersonalityReportPage() {
                       onChange={handleInputChange}
                       required
                       className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
-                      placeholder="e.g. São Paulo"
+                      placeholder="e.g. New York"
                     />
                   </div>
 
@@ -444,7 +444,7 @@ export default function PersonalityReportPage() {
                           href="/cart?plan=premium"
                           className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
                         >
-                          Assinar Premium Ilimitado — US$ 29,90/mês
+                          Subscribe to Premium Unlimited — $29.90/mo
                         </Link>
                       )}
                     </div>

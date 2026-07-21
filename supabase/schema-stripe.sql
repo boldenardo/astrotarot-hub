@@ -8,6 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   auth_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  clerk_user_id TEXT,
   email TEXT UNIQUE NOT NULL,
   name TEXT,
   birth_date TEXT,
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS birth_charts (
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_auth_id ON users(auth_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_users_clerk_user_id ON users(clerk_user_id) WHERE clerk_user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users(stripe_customer_id);
 CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);

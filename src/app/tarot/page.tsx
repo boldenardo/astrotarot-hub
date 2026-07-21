@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shuffle, ArrowLeft, Moon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { EGYPTIAN_DECK } from "@/lib/tarot-data";
 import { createTarotReading, TarotApiError } from "@/lib/tarot-client";
 import Image from "next/image";
@@ -26,38 +25,14 @@ export default function EgyptianTarotPage() {
   const [aiInterpretation, setAiInterpretation] = useState<string>("");
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [showCards, setShowCards] = useState(false);
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [aiError, setAiError] = useState<string>("");
   const [noReadingsLeft, setNoReadingsLeft] = useState(false);
   const [readingsLeft, setReadingsLeft] = useState<
-    number | "ilimitado" | null
+    number | "unlimited" | null
   >(null);
 
-  // Check whether the user is signed in
-  useEffect(() => {
-    const checkAuth = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/auth/login");
-      } else {
-        setIsCheckingAuth(false);
-      }
-    };
-    checkAuth();
-  }, [router]);
-
-  // Show a loader while authentication is being verified
-  if (isCheckingAuth) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="glass glass-gold rounded-2xl px-6 py-4 text-lg text-ink-200">
-          Verifying access...
-        </div>
-      </div>
-    );
-  }
+  // Access to /tarot is protected by Clerk middleware, so no client-side
+  // session check is needed here.
 
   const spreadTypes: { [key: number]: string[] } = {
     1: ["Present"],
@@ -82,7 +57,7 @@ export default function EgyptianTarotPage() {
 
   const drawCards = async () => {
     if (numCards > 22 || numCards < 1) {
-      alert("Escolha entre 1 e 22 cartas.");
+      alert("Choose between 1 and 22 cards.");
       return;
     }
 
@@ -129,7 +104,7 @@ export default function EgyptianTarotPage() {
           name: c.name,
           number: c.id,
         })),
-        question: "Interpretação geral da tiragem",
+        question: "General interpretation of the spread",
       });
 
       setAiInterpretation(result.reading?.interpretation || "");
@@ -149,7 +124,7 @@ export default function EgyptianTarotPage() {
       }
 
       setAiError(
-        "Não foi possível gerar a interpretação das suas cartas agora. Tente novamente em instantes."
+        "We couldn't generate the interpretation of your cards right now. Please try again in a moment."
       );
     } finally {
       setIsLoadingAI(false);
@@ -343,7 +318,7 @@ export default function EgyptianTarotPage() {
                 <div className="mb-6 flex items-center gap-3">
                   <Sparkles className="h-6 w-6 text-gold-300" />
                   <h2 className="font-display text-3xl font-semibold text-gold">
-                    Interpretação Mística
+                    Mystic Interpretation
                   </h2>
                 </div>
 
@@ -359,7 +334,7 @@ export default function EgyptianTarotPage() {
                       className="mb-4 h-16 w-16 rounded-full border-4 border-gold-400/40 border-t-gold-400"
                     />
                     <p className="text-ink-400">
-                      Consultando as energias cósmicas...
+                      Consulting the cosmic energies...
                     </p>
                   </div>
                 ) : noReadingsLeft ? (
@@ -368,24 +343,24 @@ export default function EgyptianTarotPage() {
                       <Moon className="h-8 w-8 text-gold-300" />
                     </span>
                     <h3 className="mb-2 font-display text-2xl font-semibold text-ink-50">
-                      Suas leituras acabaram
+                      You have no readings left
                     </h3>
                     <p className="mx-auto mb-8 max-w-md text-ink-400">
-                      Você usou todas as suas leituras disponíveis. Escolha uma
-                      opção para continuar consultando o Tarot Egípcio:
+                      You&apos;ve used all of your available readings. Choose an
+                      option to keep consulting the Egyptian Tarot:
                     </p>
                     <div className="mx-auto flex max-w-md flex-col gap-4">
                       <Link
                         href="/cart?plan=pack5"
                         className="btn-gold w-full rounded-full py-4 text-center font-semibold"
                       >
-                        Pacote 5 Leituras — US$ 9,99
+                        5-Reading Pack — $9.99
                       </Link>
                       <Link
                         href="/cart?plan=premium"
                         className="btn-ghost w-full rounded-full py-4 text-center font-semibold"
                       >
-                        Premium Ilimitado — US$ 29,90/mês
+                        Unlimited Premium — $29.90/month
                       </Link>
                     </div>
                   </div>
@@ -401,9 +376,9 @@ export default function EgyptianTarotPage() {
                     {readingsLeft !== null && (
                       <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-gold-400/25 bg-gold-400/10 px-4 py-2 text-sm font-semibold text-gold-300">
                         <Sparkles className="h-4 w-4" />
-                        {readingsLeft === "ilimitado"
-                          ? "Leituras: ilimitadas"
-                          : `Leituras restantes: ${readingsLeft}`}
+                        {readingsLeft === "unlimited"
+                          ? "Readings: unlimited"
+                          : `Readings left: ${readingsLeft}`}
                       </p>
                     )}
                   </div>

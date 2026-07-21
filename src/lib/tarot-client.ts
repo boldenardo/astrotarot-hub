@@ -21,11 +21,11 @@ export interface TarotReadingResponse {
     interpretation: string;
     createdAt: string;
   };
-  readingsLeft: number | "ilimitado";
+  readingsLeft: number | "unlimited";
 }
 
 /**
- * Cria uma nova leitura de Tarot via rota de API do Next.js
+ * Creates a new Tarot reading via the Next.js API route.
  */
 export async function createTarotReading(data: {
   selectedCards: Array<{

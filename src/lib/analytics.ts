@@ -1,6 +1,6 @@
 import ReactGA from "react-ga4";
 
-// Tipos de eventos customizados
+// Custom event types
 export type AnalyticsEvent =
   | "page_view"
   | "sign_up"
@@ -27,8 +27,8 @@ interface AnalyticsEventParams {
 }
 
 /**
- * Inicializa o Google Analytics
- * Deve ser chamado uma vez no início da aplicação
+ * Initializes Google Analytics
+ * Should be called once at application startup
  */
 export function initializeAnalytics(measurementId: string) {
   if (typeof window !== "undefined" && measurementId) {
@@ -38,7 +38,7 @@ export function initializeAnalytics(measurementId: string) {
 }
 
 /**
- * Registra uma visualização de página
+ * Tracks a page view
  */
 export function trackPageView(path: string, title?: string) {
   if (typeof window !== "undefined") {
@@ -56,7 +56,7 @@ export function trackPageView(path: string, title?: string) {
 }
 
 /**
- * Registra um evento customizado
+ * Tracks a custom event
  */
 export function trackEvent(
   eventName: AnalyticsEvent,
@@ -85,13 +85,13 @@ export function trackEvent(
         case "payment_initiated":
           fbq("track", "InitiateCheckout", {
             value: params?.value || 0,
-            currency: "BRL",
+            currency: "USD",
           });
           break;
         case "payment_completed":
           fbq("track", "Purchase", {
             value: params?.value || 0,
-            currency: "BRL",
+            currency: "USD",
           });
           break;
         case "tarot_reading_completed":
@@ -108,7 +108,7 @@ export function trackEvent(
 }
 
 /**
- * Define o ID do usuário para tracking
+ * Sets the user ID for tracking
  */
 export function setUserId(userId: string) {
   if (typeof window !== "undefined") {
@@ -117,7 +117,7 @@ export function setUserId(userId: string) {
 }
 
 /**
- * Registra uma conversão de cadastro
+ * Tracks a sign-up conversion
  */
 export function trackSignUp(method: string = "email") {
   trackEvent("sign_up", {
@@ -127,7 +127,7 @@ export function trackSignUp(method: string = "email") {
 }
 
 /**
- * Registra login
+ * Tracks login
  */
 export function trackLogin(method: string = "email") {
   trackEvent("login", {
@@ -137,7 +137,7 @@ export function trackLogin(method: string = "email") {
 }
 
 /**
- * Registra logout
+ * Tracks logout
  */
 export function trackLogout() {
   trackEvent("logout", {
@@ -146,7 +146,7 @@ export function trackLogout() {
 }
 
 /**
- * Registra início de leitura de tarot
+ * Tracks the start of a tarot reading
  */
 export function trackTarotReadingStarted(cardsCount: number) {
   trackEvent("tarot_reading_started", {
@@ -157,7 +157,7 @@ export function trackTarotReadingStarted(cardsCount: number) {
 }
 
 /**
- * Registra conclusão de leitura de tarot
+ * Tracks the completion of a tarot reading
  */
 export function trackTarotReadingCompleted(
   cardsCount: number,
@@ -171,7 +171,7 @@ export function trackTarotReadingCompleted(
 }
 
 /**
- * Registra início de pagamento
+ * Tracks the start of a payment
  */
 export function trackPaymentInitiated(type: string, amount: number) {
   trackEvent("payment_initiated", {
@@ -182,7 +182,7 @@ export function trackPaymentInitiated(type: string, amount: number) {
 }
 
 /**
- * Registra pagamento concluído
+ * Tracks a completed payment
  */
 export function trackPaymentCompleted(type: string, amount: number) {
   trackEvent("payment_completed", {
@@ -193,7 +193,7 @@ export function trackPaymentCompleted(type: string, amount: number) {
 }
 
 /**
- * Registra pagamento falhou
+ * Tracks a failed payment
  */
 export function trackPaymentFailed(type: string, reason: string) {
   trackEvent("payment_failed", {
@@ -203,7 +203,7 @@ export function trackPaymentFailed(type: string, reason: string) {
 }
 
 /**
- * Registra mensagem enviada no guia espiritual
+ * Tracks a message sent in the spiritual guide
  */
 export function trackSpiritualGuideMessage(messageLength: number) {
   trackEvent("spiritual_guide_message", {
@@ -213,7 +213,7 @@ export function trackSpiritualGuideMessage(messageLength: number) {
 }
 
 /**
- * Registra análise de compatibilidade
+ * Tracks a compatibility check
  */
 export function trackCompatibilityCheck(sign1: string, sign2: string) {
   trackEvent("compatibility_check", {
@@ -223,7 +223,7 @@ export function trackCompatibilityCheck(sign1: string, sign2: string) {
 }
 
 /**
- * Registra análise de personalidade
+ * Tracks a personality analysis
  */
 export function trackPersonalityAnalysis(sign: string) {
   trackEvent("personality_analysis", {
@@ -233,7 +233,7 @@ export function trackPersonalityAnalysis(sign: string) {
 }
 
 /**
- * Registra visualização de previsões
+ * Tracks a predictions view
  */
 export function trackPredictionsViewed(period: string) {
   trackEvent("predictions_viewed", {
@@ -243,7 +243,7 @@ export function trackPredictionsViewed(period: string) {
 }
 
 /**
- * Registra clique em upgrade de assinatura
+ * Tracks a subscription upgrade click
  */
 export function trackSubscriptionUpgradeClicked(plan: string) {
   trackEvent("subscription_upgrade_clicked", {
@@ -253,14 +253,14 @@ export function trackSubscriptionUpgradeClicked(plan: string) {
 }
 
 /**
- * Verifica se o Meta Pixel está carregado
+ * Checks whether the Meta Pixel is loaded
  */
 export function isMetaPixelLoaded(): boolean {
   return typeof window !== "undefined" && !!(window as any).fbq;
 }
 
 /**
- * Verifica se o Google Analytics está carregado
+ * Checks whether Google Analytics is loaded
  */
 export function isGALoaded(): boolean {
   return typeof window !== "undefined" && !!ReactGA;

@@ -14,12 +14,12 @@ interface HistoryMessage {
 }
 
 const LUNA_SYSTEM = [
-  "Você é Luna, uma guia espiritual brasileira, acolhedora, empática e sábia.",
-  "Você conversa sobre espiritualidade, tarot, astrologia, energia, autoconhecimento, intuição e bem-estar emocional.",
-  "Fale sempre em português do Brasil, em tom caloroso, gentil e próximo, como uma amiga que escuta de verdade.",
-  "Responda em 80 a 150 palavras, em texto corrido, sem listas e sem markdown.",
-  "Valide os sentimentos da pessoa antes de aconselhar e, quando fizer sentido, termine com uma pergunta suave que convide à reflexão.",
-  "Nunca faça diagnósticos nem dê conselhos médicos, jurídicos ou financeiros; nesses casos, acolha e recomende com carinho buscar um profissional da área.",
+  "You are Luna, a warm, empathetic, and wise spiritual guide.",
+  "You talk about spirituality, tarot, astrology, energy, self-knowledge, intuition, and emotional wellbeing.",
+  "Always respond in English (US), in a warm, gentle, and close tone, like a friend who truly listens.",
+  "Respond in 80 to 150 words, in flowing prose, without lists and without markdown.",
+  "Validate the person's feelings before advising and, when it makes sense, end with a soft question that invites reflection.",
+  "Never make diagnoses or give medical, legal, or financial advice; in those cases, be supportive and gently recommend seeking a professional in that field.",
 ].join(" ");
 
 function parseHistory(value: unknown): HistoryMessage[] {
@@ -36,7 +36,7 @@ function parseHistory(value: unknown): HistoryMessage[] {
       history.push({ role: m.role, content: m.content.trim().slice(0, 1000) });
     }
   }
-  // Só as últimas 10 mensagens entram no contexto.
+  // Only the last 10 messages enter the context.
   return history.slice(-10);
 }
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     typeof body?.message === "string" ? body.message.trim().slice(0, 2000) : "";
   if (!message) {
     return NextResponse.json(
-      { error: "Envie sua mensagem em 'message'." },
+      { error: "Send your message in 'message'." },
       { status: 400 }
     );
   }
@@ -62,12 +62,12 @@ export async function POST(req: NextRequest) {
 
   const transcript =
     history.length > 0
-      ? `Histórico recente da conversa:\n${history
+      ? `Recent conversation history:\n${history
           .map(
-            (m) => `${m.role === "user" ? "Consulente" : "Luna"}: ${m.content}`
+            (m) => `${m.role === "user" ? "Querent" : "Luna"}: ${m.content}`
           )
-          .join("\n")}\n\nNova mensagem do consulente: ${message}`
-      : `Mensagem do consulente: ${message}`;
+          .join("\n")}\n\nNew message from the querent: ${message}`
+      : `Message from the querent: ${message}`;
 
   try {
     const reply = await groqChat({
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, message: reply.trim() });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }

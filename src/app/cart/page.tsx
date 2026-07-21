@@ -32,7 +32,7 @@ function PlansContent() {
     planParam === "premium" ? "PREMIUM" : planParam === "pack5" ? "PACK5" : null;
 
   useEffect(() => {
-    trackPageView("/cart", "Planos");
+    trackPageView("/cart", "Plans");
   }, []);
 
   const handleCheckout = async (plan: CheckoutPlanKey) => {
@@ -43,13 +43,13 @@ function PlansContent() {
 
     try {
       await startCheckout(plan);
-      // Em caso de sucesso o navegador é redirecionado para o Stripe;
-      // mantemos o loading até a navegação acontecer.
+      // On success the browser is redirected to Stripe; we keep the
+      // loading state until the navigation happens.
     } catch (e) {
       setError(
         e instanceof Error
           ? e.message
-          : "Não foi possível iniciar o pagamento. Tente novamente."
+          : "We couldn't start the payment. Please try again."
       );
       setLoadingPlan(null);
     }
@@ -60,11 +60,11 @@ function PlansContent() {
 
   return (
     <div className="relative min-h-screen text-ink-200 pt-24 pb-12">
-      {/* Fundo ambiente */}
+      {/* Ambient background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(124,92,255,0.12),transparent_60%)]" />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4">
-        {/* Cabeçalho */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -73,16 +73,16 @@ function PlansContent() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Sparkles className="w-10 h-10 text-gold-400" />
             <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink-50">
-              Escolha seu <span className="text-gold">plano</span>
+              Choose your <span className="text-gold">plan</span>
             </h1>
           </div>
           <p className="text-ink-400 max-w-2xl mx-auto">
-            Desbloqueie leituras de tarot e todo o poder da astrologia
-            personalizada. Cancele quando quiser.
+            Unlock tarot readings and the full power of personalized astrology.
+            Cancel anytime.
           </p>
         </motion.div>
 
-        {/* Erro */}
+        {/* Error */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -93,9 +93,9 @@ function PlansContent() {
           </motion.div>
         )}
 
-        {/* Cards de planos */}
+        {/* Plan cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-          {/* Pacote 5 Leituras */}
+          {/* 5-Reading Pack */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -139,15 +139,15 @@ function PlansContent() {
               {loadingPlan === "PACK5" ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Redirecionando...
+                  Redirecting...
                 </>
               ) : (
-                "Comprar pacote"
+                "Buy pack"
               )}
             </button>
           </motion.div>
 
-          {/* Premium Ilimitado */}
+          {/* Unlimited Premium */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -158,11 +158,11 @@ function PlansContent() {
                 : "hover:border-gold-400/50"
             }`}
           >
-            {/* Selo Mais popular */}
+            {/* Most popular badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
               <span className="btn-gold rounded-full px-5 py-1.5 text-sm font-semibold inline-flex items-center gap-1.5">
                 <Crown className="w-4 h-4" />
-                Mais popular
+                Most popular
               </span>
             </div>
 
@@ -201,16 +201,16 @@ function PlansContent() {
               {loadingPlan === "PREMIUM" ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Redirecionando...
+                  Redirecting...
                 </>
               ) : (
-                "Assinar Premium"
+                "Subscribe to Premium"
               )}
             </button>
           </motion.div>
         </div>
 
-        {/* Segurança */}
+        {/* Security */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -222,21 +222,21 @@ function PlansContent() {
               <ShieldCheck className="w-8 h-8 text-gold-400 flex-shrink-0" />
               <div>
                 <p className="font-semibold text-ink-50">
-                  Pagamento seguro via Stripe
+                  Secure payment via Stripe
                 </p>
                 <p className="text-sm text-ink-400">
-                  Seus dados de cartão são processados diretamente pelo Stripe.
+                  Your card details are processed directly by Stripe.
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-sm text-ink-400">
               <Lock className="w-4 h-4 text-gold-300" />
-              Criptografia de ponta a ponta
+              End-to-end encryption
             </div>
           </div>
         </motion.div>
 
-        {/* Voltar */}
+        {/* Back */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -248,7 +248,7 @@ function PlansContent() {
             className="text-gold-300 hover:text-gold-200 transition-colors inline-flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Continuar explorando
+            Keep exploring
           </Link>
         </motion.div>
       </div>

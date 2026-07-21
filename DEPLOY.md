@@ -11,17 +11,25 @@ Já preenchidos por mim:
 - `STRIPE_PRICE_READINGS_PACK=price_1Tvg2V07YF1LaBzhBH3h9Tqm` (Pacote 5 Leituras US$ 9,99 — one-time)
 - `STRIPE_PRICE_PREMIUM_MONTHLY=price_1Tvg2m07YF1LaBzhNgaskmBn` (Premium Ilimitado US$ 29,90/mês)
 
+Clerk (autenticação) — chaves de **teste** já preenchidas:
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_…`
+- `CLERK_SECRET_KEY=sk_test_…`
+- URLs de login/cadastro já configuradas (`/auth/login`, `/auth/register`).
+
 **Você precisa colar:**
 - `STRIPE_SECRET_KEY` = sua `sk_live_…` (os produtos já foram criados em modo **live**).
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` = sua `pk_live_…`.
 - `STRIPE_WEBHOOK_SECRET` = `whsec_…` (gerado no passo 3).
-- `SUPABASE_SERVICE_ROLE_KEY` = Supabase → Settings → API → **service_role** (obrigatória: sem ela o webhook e o controle de leituras não funcionam).
+- `SUPABASE_SERVICE_ROLE_KEY` = Supabase → Settings → API → **service_role** (obrigatória: sem ela o webhook, o login e o controle de leituras não funcionam).
+
+> **Clerk em produção:** as chaves `pk_test_/sk_test_` funcionam em qualquer domínio para testes. Quando for pro ar de verdade, crie uma **instância de produção** no Clerk (Dashboard → produção), gere as chaves `pk_live_/sk_live_`, adicione seu domínio, e troque na Vercel. Para login com Google/Apple, ative os provedores em Clerk → User & Authentication → Social Connections.
 
 ## 2. Rodar o SQL no Supabase (SQL Editor → RUN, nesta ordem)
 
 - Banco **já existente** (é o seu caso): rode
   1. `supabase/migrations/20260721_stripe_new_plans.sql`
   2. `supabase/migrations/20260722_webhook_idempotency.sql`
+  3. `supabase/migrations/20260722_clerk_auth.sql`  ← **novo** (coluna `clerk_user_id`, auth via Clerk)
 - Banco **novo/do zero**: rode apenas `supabase/schema-stripe.sql` (já inclui tudo).
 
 Isso troca colunas PixUp→Stripe, restringe os planos a `FREE`/`PREMIUM_MONTHLY`, cria as funções atômicas `consume_reading`/`grant_readings`, revoga UPDATE de plano/saldo do cliente e cria a tabela `stripe_events` + índices únicos de idempotência.
@@ -38,6 +46,9 @@ Stripe Dashboard → Developers → Webhooks → **Add endpoint**
 `npm run build` já passa localmente. Suba na Vercel com todas as variáveis do passo 1 configuradas no projeto.
 
 ---
+
+### Variáveis de ambiente na Vercel (lista completa)
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL`, `NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL`, `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_READINGS_PACK`, `STRIPE_PRICE_PREMIUM_MONTHLY`, `ASTROLOGY_API_KEY`, `ASTROLOGY_API_BASE_URL`, `GROQ_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_APP_URL`. (Copie os valores do seu `.env` local.)
 
 ### Como os planos funcionam
 - **Grátis:** 4 leituras de tarot + guia espiritual + desafio.

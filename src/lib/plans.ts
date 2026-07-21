@@ -8,35 +8,35 @@ export const PLANS = {
 
 export type SubscriptionPlan = (typeof PLANS)[keyof typeof PLANS];
 
-/** Produtos compráveis no checkout (Stripe). */
+/** Purchasable products at checkout (Stripe). */
 export const CHECKOUT_PLANS = {
-  /** Pacote avulso: +5 leituras de tarot. Pagamento único. */
+  /** One-off pack: +5 tarot readings. Single payment. */
   PACK5: {
     key: "PACK5",
-    name: "Pacote 5 Leituras",
-    priceLabel: "US$ 9,99",
-    period: "pagamento único",
+    name: "5-Reading Pack",
+    priceLabel: "$9.99",
+    period: "one-time payment",
     readings: 5,
     features: [
-      "5 leituras de Tarot Egípcio",
-      "Interpretação personalizada por IA",
-      "Histórico de leituras",
+      "5 Egyptian Tarot readings",
+      "Personalized AI interpretation",
+      "Reading history",
     ],
   },
-  /** Assinatura mensal: ilimitado + todas as features premium. */
+  /** Monthly subscription: unlimited + all premium features. */
   PREMIUM: {
     key: "PREMIUM",
-    name: "Premium Ilimitado",
-    priceLabel: "US$ 29,90",
-    period: "por mês",
+    name: "Unlimited Premium",
+    priceLabel: "$29.90",
+    period: "per month",
     readings: Infinity,
     features: [
-      "Leituras de tarot ilimitadas",
-      "Horóscopo diário personalizado",
-      "Numerologia completa",
-      "Mapa astral completo",
-      "Guia de prosperidade",
-      "Compatibilidade amorosa",
+      "Unlimited tarot readings",
+      "Personalized daily horoscope",
+      "Full numerology",
+      "Complete birth chart",
+      "Prosperity guide",
+      "Love compatibility",
     ],
   },
 } as const;
@@ -55,11 +55,11 @@ export const PREMIUM_FEATURES = [
 export type PremiumFeature = (typeof PREMIUM_FEATURES)[number];
 
 export const FEATURE_LABELS: Record<PremiumFeature, string> = {
-  horoscope: "Horóscopo diário",
-  numerology: "Numerologia",
-  birth_chart: "Mapa astral",
-  prosperity: "Guia de prosperidade",
-  compatibility: "Compatibilidade amorosa",
+  horoscope: "Daily horoscope",
+  numerology: "Numerology",
+  birth_chart: "Birth chart",
+  prosperity: "Prosperity guide",
+  compatibility: "Love compatibility",
 };
 
 export interface PlanProfile {

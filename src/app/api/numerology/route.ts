@@ -1,6 +1,6 @@
 // POST /api/numerology
 // { fullName, birthDate: 'YYYY-MM-DD' }
-// → { result: NumerologyResult (cálculo local), interpretation: string }
+// → { result: NumerologyResult (local calculation), interpretation: string }
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePremium } from "@/lib/server/plan-gate";
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
 
   if (!fullName || fullName.length < 2) {
     return NextResponse.json(
-      { error: "Envie 'fullName' com o nome completo." },
+      { error: "Send 'fullName' with the full name." },
       { status: 400 }
     );
   }
@@ -33,31 +33,31 @@ export async function POST(req: NextRequest) {
   const birth = parseBirthDate(birthDateRaw);
   if (!birth) {
     return NextResponse.json(
-      { error: "Envie 'birthDate' no formato YYYY-MM-DD." },
+      { error: "Send 'birthDate' in the format YYYY-MM-DD." },
       { status: 400 }
     );
   }
 
-  // Cálculo 100% local (sistema pitagórico) — nenhum dado sai do servidor.
+  // 100% local calculation (Pythagorean system) — no data leaves the server.
   const result = computeNumerology(fullName, birth);
 
   const numbersText = [
-    `Caminho de Vida: ${result.lifePath.number}${result.lifePath.isMaster ? " (número mestre)" : ""}`,
-    `Expressão (Destino): ${result.expression.number}${result.expression.isMaster ? " (número mestre)" : ""}`,
-    `Impulso da Alma: ${result.soulUrge.number}${result.soulUrge.isMaster ? " (número mestre)" : ""}`,
-    `Personalidade: ${result.personality.number}${result.personality.isMaster ? " (número mestre)" : ""}`,
-    `Dia de Nascimento: ${result.birthday.number}${result.birthday.isMaster ? " (número mestre)" : ""}`,
+    `Life Path: ${result.lifePath.number}${result.lifePath.isMaster ? " (master number)" : ""}`,
+    `Expression (Destiny): ${result.expression.number}${result.expression.isMaster ? " (master number)" : ""}`,
+    `Soul Urge: ${result.soulUrge.number}${result.soulUrge.isMaster ? " (master number)" : ""}`,
+    `Personality: ${result.personality.number}${result.personality.isMaster ? " (master number)" : ""}`,
+    `Birthday: ${result.birthday.number}${result.birthday.isMaster ? " (master number)" : ""}`,
   ].join("\n");
 
   try {
     const interpretation = await groqChat({
       system: [
-        "Você é um numerólogo brasileiro experiente, especialista no sistema pitagórico.",
-        "Fale sempre em português do Brasil, com tom acolhedor, inspirador e pessoal.",
-        "Escreva uma interpretação de 200 a 300 palavras, em texto corrido dividido em parágrafos, sem títulos e sem markdown.",
-        "Cite explicitamente cada um dos números fornecidos e o que ele revela, conectando-os em uma leitura única da pessoa.",
+        "You are an experienced numerologist, a specialist in the Pythagorean system.",
+        "Always respond in English (US), with a warm, inspiring, and personal tone.",
+        "Write an interpretation of 200 to 300 words, in flowing prose divided into paragraphs, without headings and without markdown.",
+        "Explicitly cite each of the numbers provided and what it reveals, connecting them into a single reading of the person.",
       ].join(" "),
-      user: `Nome completo: ${fullName}\nData de nascimento: ${birthDateRaw}\n\nNúmeros calculados (sistema pitagórico):\n${numbersText}\n\nEscreva a interpretação numerológica personalizada.`,
+      user: `Full name: ${fullName}\nDate of birth: ${birthDateRaw}\n\nCalculated numbers (Pythagorean system):\n${numbersText}\n\nWrite the personalized numerology interpretation.`,
       maxTokens: 700,
       temperature: 0.7,
     });
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ result, interpretation });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }

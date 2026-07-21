@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth-client";
-import { supabase } from "@/lib/supabase";
+import { getMyProfile, type MeProfile } from "@/lib/client/me";
 import { trackPageView } from "@/lib/analytics";
 import PremiumGate from "@/components/PremiumGate";
 
@@ -47,7 +46,7 @@ interface FullChartData {
   };
 }
 
-// Normaliza nomes (remove acentos, minúsculas) para casar chaves pt/en
+// Normalizes names (strip accents, lowercase) to match pt/en keys
 function stripAccents(value: string): string {
   return value
     .normalize("NFD")
@@ -84,29 +83,29 @@ const planetSymbols: Record<string, string> = {
 };
 
 const planetNames: Record<string, string> = {
-  sun: "Sol",
-  sol: "Sol",
-  moon: "Lua",
-  lua: "Lua",
-  mercury: "Mercúrio",
-  mercurio: "Mercúrio",
-  venus: "Vênus",
-  mars: "Marte",
-  marte: "Marte",
-  jupiter: "Júpiter",
-  saturn: "Saturno",
-  saturno: "Saturno",
-  uranus: "Urano",
-  urano: "Urano",
-  neptune: "Netuno",
-  netuno: "Netuno",
-  pluto: "Plutão",
-  plutao: "Plutão",
-  node: "Nodo Norte",
-  nodo: "Nodo Norte",
-  chiron: "Quíron",
-  quiron: "Quíron",
-  fortuna: "Fortuna",
+  sun: "Sun",
+  sol: "Sun",
+  moon: "Moon",
+  lua: "Moon",
+  mercury: "Mercury",
+  mercurio: "Mercury",
+  venus: "Venus",
+  mars: "Mars",
+  marte: "Mars",
+  jupiter: "Jupiter",
+  saturn: "Saturn",
+  saturno: "Saturn",
+  uranus: "Uranus",
+  urano: "Uranus",
+  neptune: "Neptune",
+  netuno: "Neptune",
+  pluto: "Pluto",
+  plutao: "Pluto",
+  node: "North Node",
+  nodo: "North Node",
+  chiron: "Chiron",
+  quiron: "Chiron",
+  fortuna: "Fortune",
   lilith: "Lilith",
 };
 
@@ -114,50 +113,59 @@ export default function BirthChartPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [chartData, setChartData] = useState<FullChartData | null>(null);
-  const [userData, setUserData] = useState<any>(null);
+  const [userData, setUserData] = useState<MeProfile | null>(null);
   const [activeTab, setActiveTab] = useState<"planets" | "houses">("planets");
 
   useEffect(() => {
-    trackPageView("/dashboard/birth-chart", "Mapa Astral Completo");
+    trackPageView("/dashboard/birth-chart", "Full Birth Chart");
 
     async function loadChartData() {
       try {
-        const authUser = await getCurrentUser();
-        if (!authUser) {
+        const profile = await getMyProfile();
+        if (!profile) {
           router.push("/auth/login");
           return;
         }
 
-        // Busca o perfil do usuário
-        const { data: profile, error: profileError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("auth_id", authUser.id)
-          .single();
+        // Missing complete birth data: go back to the dashboard to fill it in
+        if (
+          !profile.birth_date ||
+          !profile.birth_time ||
+          !profile.birth_location
+        ) {
+          router.push("/dashboard");
+          return;
+        }
 
-        if (profileError) throw profileError;
         setUserData(profile);
 
-        // Busca o mapa astral salvo
-        const { data: chart } = await supabase
-          .from("birth_charts")
-          .select("chart_data, transits")
-          .eq("user_id", profile.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // The client doesn't read birth_charts directly (RLS). We generate the
+        // chart via the authenticated route, which returns interpreted data.
+        const chartResponse = await fetch("/api/birth-chart", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            birthDate: profile.birth_date,
+            birthTime: profile.birth_time,
+            birthLocation: profile.birth_location,
+            name: profile.name,
+          }),
+        });
 
-        if (chart) {
-          setChartData({
-            ...chart.chart_data,
-            raw_data: chart.transits,
-          });
+        if (chartResponse.status === 401) {
+          router.push("/auth/login");
+          return;
+        }
+
+        if (chartResponse.ok) {
+          const chart = (await chartResponse.json()) as FullChartData;
+          setChartData(chart);
         } else {
-          // Sem mapa salvo: volta ao dashboard para gerar um
+          // No access or failure: go back to the dashboard
           router.push("/dashboard");
         }
       } catch (error) {
-        console.error("Falha ao carregar o mapa:", error);
+        console.error("Failed to load the chart:", error);
       } finally {
         setLoading(false);
       }
@@ -171,7 +179,7 @@ export default function BirthChartPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-gold-400 animate-spin mx-auto mb-4" />
-          <p className="text-ink-400">Carregando seu mapa completo...</p>
+          <p className="text-ink-400">Loading your full chart...</p>
         </div>
       </div>
     );
@@ -192,10 +200,10 @@ export default function BirthChartPage() {
             href="/dashboard"
             className="inline-flex items-center gap-2 text-ink-400 hover:text-ink-50 mb-8 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" /> Voltar ao Dashboard
+            <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Link>
 
-          {/* Cabeçalho */}
+          {/* Header */}
           <div className="text-center mb-12">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -204,7 +212,7 @@ export default function BirthChartPage() {
             >
               <Star className="w-12 h-12 text-gold-300 mx-auto mb-4" />
               <h1 className="font-display text-3xl md:text-5xl font-semibold text-ink-50 mb-4">
-                Seu <span className="text-gold">Mapa Astral</span> Completo
+                Your Full <span className="text-gold">Birth Chart</span>
               </h1>
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-ink-400">
                 <span className="flex items-center gap-1">
@@ -212,7 +220,9 @@ export default function BirthChartPage() {
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4 text-gold-300" />{" "}
-                  {new Date(userData?.birth_date).toLocaleDateString("pt-BR")}
+                  {userData?.birth_date
+                    ? new Date(userData.birth_date).toLocaleDateString("en-US")
+                    : "—"}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4 text-gold-300" />{" "}
@@ -226,7 +236,7 @@ export default function BirthChartPage() {
             </motion.div>
           </div>
 
-          {/* Interpretação principal */}
+          {/* Main interpretation */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -235,14 +245,14 @@ export default function BirthChartPage() {
           >
             <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4 flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-gold-300" />
-              Essência Cósmica
+              Cosmic Essence
             </h2>
             <p className="text-ink-300 leading-relaxed text-lg">
               {chartData.interpretation}
             </p>
           </motion.div>
 
-          {/* Os Três Grandes */}
+          {/* The Big Three */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -254,7 +264,7 @@ export default function BirthChartPage() {
                 <Sun className="w-8 h-8" />
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
-                    Sol
+                    Sun
                   </p>
                   <p className="text-xl font-semibold text-ink-50">
                     {chartData.sun.sign}
@@ -276,7 +286,7 @@ export default function BirthChartPage() {
                 <Moon className="w-8 h-8" />
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
-                    Lua
+                    Moon
                   </p>
                   <p className="text-xl font-semibold text-ink-50">
                     {chartData.moon.sign}
@@ -298,7 +308,7 @@ export default function BirthChartPage() {
                 <span className="text-3xl font-serif">↑</span>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
-                    Ascendente
+                    Ascendant
                   </p>
                   <p className="text-xl font-semibold text-ink-50">
                     {chartData.ascendant.sign}
@@ -311,7 +321,7 @@ export default function BirthChartPage() {
             </motion.div>
           </div>
 
-          {/* Abas com dados detalhados */}
+          {/* Tabs with detailed data */}
           {chartData.raw_data && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -327,7 +337,7 @@ export default function BirthChartPage() {
                       : "text-ink-600 hover:text-ink-300"
                   }`}
                 >
-                  Planetas
+                  Planets
                 </button>
                 <button
                   onClick={() => setActiveTab("houses")}
@@ -337,7 +347,7 @@ export default function BirthChartPage() {
                       : "text-ink-600 hover:text-ink-300"
                   }`}
                 >
-                  Casas
+                  Houses
                 </button>
               </div>
 
@@ -367,7 +377,7 @@ export default function BirthChartPage() {
                                 {planetNames[k] || planet.name || "—"}
                               </p>
                               <p className="text-xs text-ink-600">
-                                Casa {planet.house}
+                                House {planet.house}
                               </p>
                             </div>
                           </div>
@@ -405,7 +415,7 @@ export default function BirthChartPage() {
                             </div>
                             <div>
                               <p className="font-semibold text-ink-50">
-                                Casa {num}
+                                House {num}
                               </p>
                             </div>
                           </div>

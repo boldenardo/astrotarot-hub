@@ -2,38 +2,35 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Moon,
   ShoppingBag,
   LogIn,
-  LogOut,
+  UserPlus,
   LayoutDashboard,
   Menu,
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
-import { signOut } from "@/lib/auth-client";
+import { UserButton, useUser } from "@clerk/nextjs";
 
 const LINKS = [
-  { href: "/challenge", label: "Leitura Grátis" },
+  { href: "/challenge", label: "Free Reading" },
   { href: "/tarot", label: "Tarot" },
-  { href: "/compatibility", label: "Amor" },
-  { href: "/guia", label: "Guia" },
-  { href: "/predictions", label: "Previsões" },
-  { href: "/numerology", label: "Numerologia" },
-  { href: "/abundance", label: "Prosperidade" },
-  { href: "/cart", label: "Planos" },
+  { href: "/compatibility", label: "Love" },
+  { href: "/guia", label: "Guide" },
+  { href: "/predictions", label: "Forecasts" },
+  { href: "/numerology", label: "Numerology" },
+  { href: "/abundance", label: "Prosperity" },
+  { href: "/cart", label: "Plans" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { isSignedIn } = useUser();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -42,34 +39,10 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Sessão do Supabase (estado de login)
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Fecha o menu mobile ao trocar de rota
+  // Close the mobile menu when the route changes
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
-
-  async function handleSignOut() {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Erro ao sair:", error);
-    }
-    router.push("/");
-  }
 
   return (
     <div className="fixed inset-x-0 top-4 z-[9999] px-4">
@@ -113,14 +86,14 @@ export default function Navbar() {
           <div className="flex items-center gap-2">
             <Link
               href="/cart"
-              title="Planos"
-              aria-label="Planos"
+              title="Plans"
+              aria-label="Plans"
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-200 transition-all hover:border-gold-400/50 hover:text-gold-300"
             >
               <ShoppingBag className="h-[18px] w-[18px]" />
             </Link>
 
-            {session ? (
+            {isSignedIn ? (
               <>
                 <Link
                   href="/dashboard"
@@ -129,29 +102,33 @@ export default function Navbar() {
                   <LayoutDashboard className="h-4 w-4" />
                   Dashboard
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="btn-ghost hidden items-center gap-2 rounded-full px-4 py-2.5 text-sm sm:flex"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sair
-                </button>
+                <div className="hidden sm:flex">
+                  <UserButton />
+                </div>
               </>
             ) : (
-              <Link
-                href="/auth/login"
-                className="btn-gold hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
-              >
-                <LogIn className="h-4 w-4" />
-                Entrar
-              </Link>
+              <>
+                <Link
+                  href="/auth/login"
+                  className="btn-ghost hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign in
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="btn-gold hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Sign up
+                </Link>
+              </>
             )}
 
             {/* Mobile toggle */}
             <button
               type="button"
-              aria-label="Abrir menu"
+              aria-label="Open menu"
               onClick={() => setOpen((v) => !v)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-100 transition-all hover:border-gold-400/50 lg:hidden"
             >
@@ -183,7 +160,8 @@ export default function Navbar() {
                   {l.label}
                 </Link>
               ))}
-              {session ? (
+
+              {isSignedIn ? (
                 <>
                   <Link
                     href="/dashboard"
@@ -192,23 +170,28 @@ export default function Navbar() {
                     <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </Link>
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="btn-ghost mt-1 flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sair
-                  </button>
+                  <div className="mt-2 flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                    <UserButton />
+                    <span className="text-sm text-ink-300">My account</span>
+                  </div>
                 </>
               ) : (
-                <Link
-                  href="/auth/login"
-                  className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
-                >
-                  <LogIn className="h-4 w-4" />
-                  Entrar
-                </Link>
+                <>
+                  <Link
+                    href="/auth/login"
+                    className="btn-ghost mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    Sign in
+                  </Link>
+                  <Link
+                    href="/auth/register"
+                    className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Sign up
+                  </Link>
+                </>
               )}
             </motion.div>
           )}

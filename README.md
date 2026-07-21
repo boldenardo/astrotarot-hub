@@ -1,14 +1,14 @@
-# 🌟 AstroTarot Hub - Plataforma Místico-Digital SaaS
+# 🌟 AstroTarot Hub — Mystic Digital SaaS Platform
 
-> **Status:** ✅ Pronto para Produção | **Versão:** 3.0.0 | **Backend:** Rotas API do Next.js + Supabase
+> **Status:** ✅ Production-ready | **Version:** 3.0.0 | **Backend:** Next.js API routes + Supabase
 
-Plataforma completa de astrologia e tarot com IA, pagamentos via Stripe e banco de dados Supabase.
+A complete AI-powered astrology and tarot platform, with Stripe payments, Clerk authentication, and a Supabase database.
 
 ---
 
 ## 🚀 Quick Start
 
-### Desenvolvimento local:
+### Local development:
 
 ```bash
 npm install
@@ -17,125 +17,128 @@ npm run dev
 
 ---
 
-## 🏗️ Arquitetura
+## 🏗️ Architecture
 
-### Backend (Rotas API do Next.js)
+### Backend (Next.js API routes)
 
-Toda a lógica de servidor vive em rotas `/api/*` do Next.js (as Edge Functions do Supabase foram removidas):
+All server logic lives in Next.js `/api/*` routes (the Supabase Edge Functions were removed):
 
-- `POST /api/checkout` — cria a sessão de checkout do Stripe (Pacote 5 Leituras ou Premium)
-- `POST /api/stripe/webhook` — recebe os eventos do Stripe e atualiza plano/saldo
-- `POST /api/tarot/reading` — leitura de tarot com IA (consome saldo de leituras)
-- `POST /api/birth-chart` — mapa astral completo (AstrologyAPI + IA)
-- `POST /api/predictions` — previsões diárias personalizadas
-- `POST /api/compatibility` — compatibilidade amorosa
-- `POST /api/abundance` — guia de prosperidade
-- `POST /api/personality` — perfil de personalidade
-- `POST /api/numerology` — numerologia completa
-- `POST /api/spiritual-guide` — chat com a guia espiritual (Luna)
+- `POST /api/checkout` — creates the Stripe checkout session (5-Reading Pack or Premium)
+- `POST /api/stripe/webhook` — receives Stripe events and updates plan/balance
+- `POST /api/tarot/reading` — AI tarot reading (consumes the reading balance)
+- `POST /api/birth-chart` — full birth chart (AstrologyAPI + AI)
+- `POST /api/predictions` — personalized daily forecasts
+- `POST /api/compatibility` — love compatibility
+- `POST /api/abundance` — prosperity guide
+- `POST /api/personality` — personality profile
+- `POST /api/numerology` — full numerology
+- `POST /api/spiritual-guide` — chat with the spiritual guide (Luna)
+- `GET  /api/me`, `/api/me/readings`, `POST /api/me/profile` — current user's data (Clerk-authenticated)
 
-### Dados e Auth (Supabase)
+### Data & Auth
 
-- **Auth:** Supabase Auth (JWT nativo)
-- **Database:** PostgreSQL com RLS (o cliente anônimo não consegue alterar plano/saldo; escritas sensíveis passam pelo service role nas rotas de API)
+- **Auth:** Clerk (sign-in/sign-up, sessions, social login). Users are provisioned into the `users` table on first request, keyed by `clerk_user_id`.
+- **Database:** Supabase PostgreSQL with RLS. The client never queries the DB directly — all reads/writes go through the API routes (service role). Plan/balance can only be changed server-side.
 
 ### Frontend (Next.js 15)
 
 - **Framework:** Next.js 15 (App Router) + React 18
-- **Styling:** TailwindCSS + Framer Motion
-- **Auth:** Supabase Client Library
+- **Styling:** TailwindCSS + Framer Motion (dark mystic premium theme)
+- **Auth UI:** Clerk components (`<SignIn>`, `<SignUp>`, `<UserButton>`, `useUser`)
 
 ---
 
-## 📂 Estrutura Essencial
+## 📂 Key Structure
 
 ```
 src/
 ├── app/
-│   ├── api/           # Rotas de servidor (checkout, webhook, leituras, etc.)
-│   ├── auth/          # Login e Registro
-│   ├── dashboard/     # Dashboard principal + mapa astral completo
-│   ├── tarot/         # Leituras de Tarot
-│   └── cart/          # Planos e checkout
+│   ├── api/           # Server routes (checkout, webhook, readings, me, etc.)
+│   ├── auth/          # Clerk sign-in and sign-up
+│   ├── dashboard/     # Main dashboard + full birth chart
+│   ├── tarot/         # Tarot readings
+│   └── cart/          # Plans and checkout
 ├── lib/
-│   ├── plans.ts           # Fonte única de planos, preços e features
-│   ├── auth-client.ts     # Funções de autenticação (client)
-│   ├── supabase.ts        # Cliente Supabase (browser) + tipos
-│   ├── astrology/         # Cliente da AstrologyAPI
-│   └── server/            # Helpers de servidor (plan-gate, groq, supabase-admin)
+│   ├── plans.ts           # Single source of plans, prices and features
+│   ├── client/me.ts       # Client helpers for the current user (/api/me)
+│   ├── payment-client.ts  # Stripe checkout starter (client)
+│   ├── astrology/         # AstrologyAPI client
+│   └── server/            # Server helpers (plan-gate, groq, supabase-admin, timezone)
 supabase/
-├── schema-stripe.sql                          # Schema completo (banco novo)
-└── migrations/20260721_stripe_new_plans.sql   # Migração (banco existente)
+├── schema-stripe.sql                          # Full schema (new database)
+└── migrations/                                # Migrations (existing database)
 ```
 
 ---
 
-## 🔑 Variáveis de Ambiente
+## 🔑 Environment Variables
 
-Crie `.env.local`:
+Create `.env.local` (see `.env.example`):
 
 ```env
+# Clerk (authentication)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
+
 # Supabase
-NEXT_PUBLIC_SUPABASE_URL=https://SEU_PROJETO.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
 
 # Stripe
 STRIPE_SECRET_KEY=sk_live_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_READINGS_PACK=price_...      # US$ 9,99 (pagamento único)
-STRIPE_PRICE_PREMIUM_MONTHLY=price_...    # US$ 29,90/mês (recorrente)
+STRIPE_PRICE_READINGS_PACK=price_...      # $9.99 (one-time)
+STRIPE_PRICE_PREMIUM_MONTHLY=price_...    # $29.90/month (recurring)
 
-# IA e Astrologia
+# AI & Astrology
 GROQ_API_KEY=gsk_...
-ASTROLOGY_API_KEY=ak-...          # autentica via header x-astrologyapi-key
+ASTROLOGY_API_KEY=ak-...                  # authenticates via the x-astrologyapi-key header
 
 # App
-NEXT_PUBLIC_APP_URL=https://seudominio.com
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
 ```
 
 ---
 
-## 💰 Planos e Preços
+## 💰 Plans & Pricing
 
-### ✨ Gratuito
+### ✨ Free
+- 4 free tarot readings
+- AI interpretation (Groq)
+- Reading history
 
-- 4 leituras de tarot grátis
-- Interpretação com IA (Groq)
-- Histórico de leituras
+### 🃏 5-Reading Pack — $9.99 (one-time)
+- +5 Egyptian Tarot readings
+- One-time payment, no subscription
 
-### 🃏 Pacote 5 Leituras — US$ 9,99 (avulso)
-
-- +5 leituras de Tarot Egípcio
-- Pagamento único, sem assinatura
-
-### 💎 Premium Ilimitado — US$ 29,90/mês
-
-- Leituras de tarot ilimitadas
-- Horóscopo diário personalizado
-- Numerologia completa
-- Mapa astral completo
-- Guia de prosperidade
-- Compatibilidade amorosa
+### 💎 Unlimited Premium — $29.90/month
+- Unlimited tarot readings
+- Personalized daily horoscope
+- Full numerology
+- Complete birth chart
+- Prosperity guide
+- Love compatibility
 
 ---
 
-## 🗄️ Banco de Dados
+## 🗄️ Database
 
-- **Banco existente:** execute `supabase/migrations/20260721_stripe_new_plans.sql` no SQL Editor do Supabase.
-- **Banco novo:** execute `supabase/schema-stripe.sql`.
+- **Existing database:** run the files in `supabase/migrations/` in the Supabase SQL Editor, in order.
+- **New database:** run `supabase/schema-stripe.sql`.
 
 ---
 
-## 💳 Webhook do Stripe
+## 💳 Stripe Webhook
 
-No dashboard do Stripe, crie um webhook apontando para:
+In the Stripe dashboard, create a webhook pointing to:
 
 ```
-https://seudominio.com/api/stripe/webhook
+https://yourdomain.com/api/stripe/webhook
 ```
 
-Com os eventos:
+With the events:
 
 - `checkout.session.completed`
 - `invoice.paid`
@@ -143,51 +146,53 @@ Com os eventos:
 - `customer.subscription.updated`
 - `customer.subscription.deleted`
 
-Copie o signing secret gerado para `STRIPE_WEBHOOK_SECRET`.
+Copy the generated signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 ---
 
-## 🛠️ Tecnologias
+## 🛠️ Tech Stack
 
 - **Frontend:** Next.js 15, React 18, TypeScript, TailwindCSS, Framer Motion
-- **Backend:** Rotas API do Next.js + Supabase (PostgreSQL)
-- **Auth:** Supabase Auth (JWT)
-- **IA:** Groq (Llama 3.3 70B)
-- **Astrologia:** AstrologyAPI (Vedic Rishi)
-- **Pagamento:** Stripe (checkout + assinaturas)
+- **Backend:** Next.js API routes + Supabase (PostgreSQL)
+- **Auth:** Clerk
+- **AI:** Groq (Llama 3.3 70B)
+- **Astrology:** AstrologyAPI
+- **Payments:** Stripe (checkout + subscriptions)
 - **Deploy:** Vercel
 
 ---
 
 ## 🚀 Deploy
 
-1. Configure as variáveis de ambiente na Vercel (as mesmas do `.env.local`).
-2. Rode o SQL do banco (migração ou schema completo — ver seção Banco de Dados).
-3. Configure o webhook do Stripe (ver seção acima).
+1. Set the environment variables in Vercel (same as `.env.local`).
+2. Run the database SQL (migration or full schema — see Database).
+3. Configure the Stripe webhook (see above).
 4. Deploy:
 
 ```bash
-git push origin main  # Autodeploy habilitado
+git push origin main  # Auto-deploy enabled
 ```
 
----
-
-## 📊 Status do Projeto
-
-- ✅ Backend em rotas `/api` do Next.js
-- ✅ Autenticação Supabase Auth
-- ✅ Pagamentos Stripe (pacote avulso + assinatura mensal)
-- ✅ Webhook Stripe com atualização atômica de plano/saldo
-- ✅ IA para interpretações (Groq)
-- ✅ Mapa astral real via AstrologyAPI
-- ✅ RLS habilitado (plano/saldo protegidos contra escrita do cliente)
+See `DEPLOY.md` for the full step-by-step checklist.
 
 ---
 
-## 📝 Licença
+## 📊 Project Status
 
-Propriedade de **boldenardo**
+- ✅ Backend on Next.js `/api` routes
+- ✅ Clerk authentication (with lazy user provisioning)
+- ✅ Stripe payments (one-off pack + monthly subscription)
+- ✅ Stripe webhook with atomic, idempotent plan/balance updates
+- ✅ AI interpretations (Groq)
+- ✅ Real birth charts via AstrologyAPI
+- ✅ RLS enabled (plan/balance protected from client writes)
 
 ---
 
-**🔮 Conecte o místico ao digital. Lance seu portal espiritual hoje!**
+## 📝 License
+
+Property of **boldenardo**
+
+---
+
+**🔮 Where the mystic meets the digital. Launch your spiritual portal today!**

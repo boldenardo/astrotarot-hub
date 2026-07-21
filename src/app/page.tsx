@@ -9,23 +9,23 @@ import { Check, Star, Sparkles, Heart, Crown } from "lucide-react";
 import { CHECKOUT_PLANS } from "@/lib/plans";
 
 const freePerks = [
-  "4 leituras de tarot grátis",
-  "Insights do Tarot Egípcio",
-  "Guia Espiritual com IA",
+  "4 free tarot readings",
+  "Egyptian Tarot insights",
+  "AI Spiritual Guide",
 ];
 
 const testimonials = [
   {
     name: "Sarah M.",
-    text: "Finalmente encontrei clareza sobre meu caminho no amor. A precisão me surpreendeu de verdade.",
+    text: "I finally found clarity about my path in love. The accuracy genuinely surprised me.",
     rating: 5,
-    location: "São Paulo, SP",
+    location: "Austin, TX",
   },
   {
     name: "Emily R.",
-    text: "Descobri meu propósito e tudo começou a fazer sentido. Uma ferramenta incrível.",
+    text: "I discovered my purpose and everything started to make sense. An incredible tool.",
     rating: 5,
-    location: "Rio de Janeiro, RJ",
+    location: "Portland, OR",
   },
 ];
 
@@ -36,7 +36,7 @@ export default function Home() {
       <HeroSection />
       <FeaturesSection />
 
-      {/* Planos e preços */}
+      {/* Plans & pricing */}
       <section className="relative px-6 py-24">
         <div className="mx-auto max-w-6xl">
           <motion.div
@@ -46,15 +46,15 @@ export default function Home() {
             className="mb-14 text-center"
           >
             <h2 className="font-display text-4xl font-semibold text-ink-50 md:text-5xl">
-              Comece grátis, evolua quando quiser
+              Start free, upgrade whenever you want
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-ink-400">
-              Experimente a magia sem compromisso.
+              Experience the magic with no commitment.
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* Grátis */}
+            {/* Free */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -68,9 +68,9 @@ export default function Home() {
                 </span>
                 <div>
                   <h3 className="font-display text-2xl font-semibold text-ink-50">
-                    Grátis
+                    Free
                   </h3>
-                  <p className="text-sm text-ink-600">Sem cartão de crédito</p>
+                  <p className="text-sm text-ink-600">No credit card required</p>
                 </div>
               </div>
               <ul className="mb-8 space-y-4">
@@ -85,11 +85,11 @@ export default function Home() {
                 href="/challenge"
                 className="btn-ghost block rounded-full py-4 text-center font-semibold"
               >
-                Começar Grátis
+                Start Free
               </Link>
             </motion.div>
 
-            {/* Pacote 5 Leituras */}
+            {/* 5-Reading Pack */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -125,11 +125,11 @@ export default function Home() {
                 href="/cart?plan=pack5"
                 className="btn-ghost block rounded-full py-4 text-center font-semibold"
               >
-                Comprar Pacote
+                Buy Pack
               </Link>
             </motion.div>
 
-            {/* Premium Ilimitado */}
+            {/* Unlimited Premium */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -139,7 +139,7 @@ export default function Home() {
             >
               <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gold-400/10 blur-3xl" />
               <div className="absolute right-6 top-6 rounded-full bg-gold-400/15 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold-300">
-                Mais Popular
+                Most Popular
               </div>
 
               <div className="mb-6 flex items-center gap-3">
@@ -170,14 +170,14 @@ export default function Home() {
                 href="/cart?plan=premium"
                 className="btn-gold block rounded-full py-4 text-center"
               >
-                Assinar Premium
+                Subscribe to Premium
               </Link>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Depoimentos */}
+      {/* Testimonials */}
       <section className="relative overflow-hidden py-24">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-night-900/50 to-transparent" />
         <div className="relative z-10 mx-auto max-w-5xl px-6">
@@ -187,7 +187,7 @@ export default function Home() {
             viewport={{ once: true }}
             className="mb-12 text-center font-display text-4xl font-semibold text-ink-50"
           >
-            Histórias reais
+            Real stories
           </motion.h2>
 
           <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
@@ -227,7 +227,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Leitura grátis das 4 cartas */}
+      {/* Free 4-card reading */}
       <section className="relative px-6 py-24">
         <div className="mx-auto max-w-6xl">
           <motion.div
@@ -237,14 +237,14 @@ export default function Home() {
             className="mb-12 text-center"
           >
             <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-gold-400/10 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-gold-300">
-              100% Grátis
+              100% Free
             </span>
             <h2 className="font-display text-4xl font-semibold text-ink-50 md:text-5xl">
-              A Leitura das 4 Cartas
+              The 4-Card Reading
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-lg text-ink-400">
-              Descubra insights sobre o seu momento presente com nossa leitura
-              interativa gratuita.
+              Uncover insights about your present moment with our free
+              interactive reading.
             </p>
           </motion.div>
 
@@ -257,13 +257,13 @@ export default function Home() {
             <div className="relative z-10 grid grid-cols-1 items-center gap-8 md:grid-cols-2">
               <div>
                 <h3 className="mb-6 font-display text-2xl font-semibold text-gold-300">
-                  Como funciona
+                  How it works
                 </h3>
                 <div className="space-y-5">
                   {[
-                    "Escolha 4 cartas do baralho egípcio embaralhado",
-                    "Revele o significado místico de cada carta",
-                    "Receba insights sobre amor, crescimento e decisões",
+                    "Pick 4 cards from the shuffled Egyptian deck",
+                    "Reveal the mystical meaning of each card",
+                    "Receive insights on love, growth, and decisions",
                   ].map((step, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 font-semibold text-night-900">
@@ -279,10 +279,10 @@ export default function Home() {
                   className="btn-gold mt-8 inline-flex items-center gap-2 rounded-full px-8 py-4"
                 >
                   <Sparkles className="h-5 w-5" />
-                  Jogar Agora, Grátis
+                  Play Now, Free
                 </Link>
                 <p className="mt-4 text-sm text-ink-600">
-                  Sem cadastro &bull; Totalmente grátis &bull; Ilimitado
+                  No sign-up &bull; Completely free &bull; Unlimited
                 </p>
               </div>
 
@@ -317,7 +317,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Guia Espiritual */}
+      {/* Spiritual Guide */}
       <section className="relative px-6 py-24">
         <div className="mx-auto max-w-5xl">
           <motion.div
@@ -332,13 +332,13 @@ export default function Home() {
                 <Heart className="h-8 w-8 text-gold-300" />
               </span>
               <h2 className="font-display text-4xl font-semibold leading-tight text-ink-50 md:text-5xl">
-                Seu guia espiritual pessoal
+                Your personal spiritual guide
               </h2>
               <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-ink-400">
-                Converse com nossa IA especializada em bem-estar emocional e
-                espiritual.
+                Chat with our AI specialized in emotional and spiritual
+                well-being.
                 <span className="mt-2 block font-medium text-gold-300">
-                  Acolhimento &bull; Orientação &bull; Reflexão
+                  Comfort &bull; Guidance &bull; Reflection
                 </span>
               </p>
               <Link
@@ -346,22 +346,22 @@ export default function Home() {
                 className="btn-gold mt-8 inline-flex items-center gap-2 rounded-full px-10 py-5 text-lg"
               >
                 <Sparkles className="h-5 w-5" />
-                Falar com o Guia
+                Talk to the Guide
               </Link>
               <p className="mt-6 text-sm text-ink-600">
-                Disponível 24/7 &bull; Confidencial &bull; Psicologia positiva
+                Available 24/7 &bull; Confidential &bull; Positive psychology
               </p>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Rodapé */}
+      {/* Footer */}
       <footer className="relative border-t border-white/5 py-12">
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-ink-600">
-          <p>© 2026 AstroTarot Hub &bull; Todos os direitos reservados</p>
+          <p>© 2026 AstroTarot Hub &bull; All rights reserved</p>
           <p className="mt-2">
-            Criado para ajudar você a encontrar clareza e direção.
+            Built to help you find clarity and direction.
           </p>
         </div>
       </footer>

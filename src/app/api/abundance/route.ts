@@ -1,10 +1,10 @@
 // POST /api/abundance
 // { birthData: { year, month, day, hour, minute, city, nation?, latitude?,
 //   longitude?, timezone? } }
-// → { success: true, analysis } (shape exato de src/app/abundance/page.tsx)
+// → { success: true, analysis } (exact shape of src/app/abundance/page.tsx)
 //
-// Mapa natal REAL (western_horoscope); extrai Júpiter/Vênus e as casas
-// 2/8/10/11 e passa ao Groq para redigir o guia de prosperidade em pt-BR.
+// REAL natal chart (western_horoscope); extracts Jupiter/Venus and houses
+// 2/8/10/11 and passes them to Groq to write the prosperity guide in English.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePremium } from "@/lib/server/plan-gate";
@@ -19,7 +19,7 @@ import { geocodeCity } from "@/lib/server/geocode";
 
 export const runtime = "nodejs";
 
-// Shape EXATO esperado pela página de abundância.
+// EXACT shape expected by the abundance page.
 interface AbundanceAnalysis {
   currentCycle: string;
   scores: {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Envie 'birthData' com year, month, day, hour, minute e city.",
+          "Send 'birthData' with year, month, day, hour, minute and city.",
       },
       { status: 400 }
     );
@@ -155,15 +155,15 @@ export async function POST(req: NextRequest) {
 
   let chartRaw: Record<string, unknown>;
   try {
-    chartRaw = (await westernHoroscope(birth, "pt")) as Record<string, unknown>;
+    chartRaw = (await westernHoroscope(birth, "en")) as Record<string, unknown>;
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
 
-  // Extração determinística das posições ligadas à prosperidade.
+  // Deterministic extraction of the positions tied to prosperity.
   const planets = (
     Array.isArray(chartRaw?.planets) ? chartRaw.planets : []
   ) as RawPlanet[];
@@ -174,51 +174,51 @@ export async function POST(req: NextRequest) {
   const jupiter = planets.find((p) => normalizeName(p.name) === "jupiter");
   const venus = planets.find((p) => normalizeName(p.name) === "venus");
   const houseSign = (n: number) =>
-    houses.find((h) => Number(h.house) === n)?.sign ?? "desconhecido";
+    houses.find((h) => Number(h.house) === n)?.sign ?? "unknown";
 
   const positionsText = [
     jupiter
-      ? `Júpiter (expansão e fortuna): signo ${jupiter.sign}, casa ${jupiter.house}`
-      : "Júpiter: posição não disponível",
+      ? `Jupiter (expansion and fortune): sign ${jupiter.sign}, house ${jupiter.house}`
+      : "Jupiter: position not available",
     venus
-      ? `Vênus (valores e recursos): signo ${venus.sign}, casa ${venus.house}`
-      : "Vênus: posição não disponível",
-    `Casa 2 (recursos e dinheiro): cúspide em ${houseSign(2)}`,
-    `Casa 8 (transformação e recursos compartilhados): cúspide em ${houseSign(8)}`,
-    `Casa 10 (carreira e realização): cúspide em ${houseSign(10)}`,
-    `Casa 11 (ganhos e redes): cúspide em ${houseSign(11)}`,
+      ? `Venus (values and resources): sign ${venus.sign}, house ${venus.house}`
+      : "Venus: position not available",
+    `House 2 (resources and money): cusp in ${houseSign(2)}`,
+    `House 8 (transformation and shared resources): cusp in ${houseSign(8)}`,
+    `House 10 (career and achievement): cusp in ${houseSign(10)}`,
+    `House 11 (gains and networks): cusp in ${houseSign(11)}`,
   ].join("\n");
 
   const chartText = JSON.stringify(chartRaw).slice(0, 4000);
 
   const schema = `{
-  "currentCycle": "string (2-3 frases sobre o ciclo de prosperidade atual da pessoa)",
-  "scores": { "financial": "inteiro 0-100", "career": "inteiro 0-100", "investments": "inteiro 0-100", "opportunities": "inteiro 0-100" },
-  "favorablePeriods": ["3 a 5 períodos favoráveis com justificativa astrológica, frases curtas"],
+  "currentCycle": "string (2-3 sentences about the person's current prosperity cycle)",
+  "scores": { "financial": "integer 0-100", "career": "integer 0-100", "investments": "integer 0-100", "opportunities": "integer 0-100" },
+  "favorablePeriods": ["3 to 5 favorable periods with astrological justification, short sentences"],
   "houses": {
-    "house2": "string (1-2 frases sobre a casa 2 no mapa desta pessoa)",
-    "house8": "string (1-2 frases sobre a casa 8)",
-    "house10": "string (1-2 frases sobre a casa 10)",
-    "house11": "string (1-2 frases sobre a casa 11)"
+    "house2": "string (1-2 sentences about house 2 in this person's chart)",
+    "house8": "string (1-2 sentences about house 8)",
+    "house10": "string (1-2 sentences about house 10)",
+    "house11": "string (1-2 sentences about house 11)"
   },
-  "jupiterPosition": "string (1-2 frases sobre Júpiter no mapa desta pessoa)",
-  "recommendations": ["4 a 6 recomendações estratégicas e práticas, frases curtas"]
+  "jupiterPosition": "string (1-2 sentences about Jupiter in this person's chart)",
+  "recommendations": ["4 to 6 strategic and practical recommendations, short sentences"]
 }`;
 
   try {
     const analysis = await groqChatJson<AbundanceAnalysis>({
       system:
-        "Você é um astrólogo brasileiro especialista em astrologia da prosperidade e das finanças. Responda SOMENTE com JSON válido, sem nenhum texto fora do JSON. Todos os textos devem estar em português do Brasil.",
+        "You are an astrologer specialized in the astrology of prosperity and finances. Respond ONLY with valid JSON, with no text outside the JSON. All texts must be in English (US).",
       user: [
-        "Posições REAIS do mapa natal ligadas à abundância (dados da astrologyapi.com):",
+        "REAL natal chart positions tied to abundance (data from astrologyapi.com):",
         positionsText,
         "",
-        "Trecho do mapa natal completo (dados brutos, para contexto):",
+        "Excerpt of the full natal chart (raw data, for context):",
         chartText,
         "",
-        "Com base EXCLUSIVAMENTE nessas posições reais, gere o guia de abundância.",
-        "Os scores devem ser coerentes com as posições (Júpiter/Vênus bem colocados elevam); evite extremos como 0 ou 100.",
-        "Responda SOMENTE com um JSON exatamente neste schema:",
+        "Based EXCLUSIVELY on these real positions, generate the abundance guide.",
+        "The scores must be consistent with the positions (well-placed Jupiter/Venus raise them); avoid extremes like 0 or 100.",
+        "Respond ONLY with a JSON exactly in this schema:",
         schema,
       ].join("\n"),
       maxTokens: 1600,
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!analysis || typeof analysis !== "object") {
-      throw new Error("JSON inválido");
+      throw new Error("Invalid JSON");
     }
     if (!Array.isArray(analysis.favorablePeriods)) {
       analysis.favorablePeriods = [];
@@ -238,7 +238,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, analysis });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }

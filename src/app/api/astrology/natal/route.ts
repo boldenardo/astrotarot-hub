@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Dados de nascimento ausentes ou inválidos. Envie os números: day, month, year, hour, min, lat, lon, tzone.",
+          "Missing or invalid birth data. Send the numbers: day, month, year, hour, min, lat, lon, tzone.",
       },
       { status: 400 }
     );
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const language =
     typeof (body as Record<string, unknown>).language === "string"
       ? ((body as Record<string, unknown>).language as string)
-      : "pt";
+      : "en";
   const withWheel = (body as Record<string, unknown>).wheel === true;
 
   try {
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ chart, wheel });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }

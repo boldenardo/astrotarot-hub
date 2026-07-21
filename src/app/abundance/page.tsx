@@ -104,21 +104,21 @@ export default function AbundancePage() {
       if (!response.ok) {
         if (data?.code === "PREMIUM_REQUIRED") {
           setPremiumRequired(true);
-          setError("Este recurso é exclusivo do plano Premium Ilimitado.");
+          setError("This feature is exclusive to the Premium Unlimited plan.");
           return;
         }
-        throw new Error(data?.error || "Falha ao gerar a análise");
+        throw new Error(data?.error || "Failed to generate the analysis");
       }
 
       if (data?.success && data.analysis) {
         setResult(data.analysis);
       } else {
-        throw new Error(data?.error || "Falha ao gerar a análise");
+        throw new Error(data?.error || "Failed to generate the analysis");
       }
     } catch (err) {
       console.error("Failed to fetch analysis:", err);
       setError(
-        "Não foi possível gerar sua análise de abundância agora. Tente novamente em instantes."
+        "We couldn't generate your abundance analysis right now. Please try again in a moment."
       );
     } finally {
       setLoading(false);
@@ -295,7 +295,7 @@ export default function AbundancePage() {
                       href="/cart?plan=premium"
                       className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
                     >
-                      Assinar Premium Ilimitado — US$ 29,90/mês
+                      Subscribe to Premium Unlimited — $29.90/mo
                     </Link>
                   )}
                 </div>
@@ -479,7 +479,7 @@ export default function AbundancePage() {
                   href="/cart?plan=premium"
                   className="btn-gold inline-block rounded-full px-8 py-3 font-semibold"
                 >
-                  Assinar Premium Ilimitado — US$ 29,90/mês
+                  Subscribe to Premium Unlimited — $29.90/mo
                 </Link>
               </div>
             </motion.div>

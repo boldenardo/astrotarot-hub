@@ -54,10 +54,10 @@ export default function MiniBirthChart() {
               fill="currentColor"
             />
             <h2 className="font-display text-3xl md:text-5xl font-semibold text-ink-50 mb-4">
-              Discover Your <span className="text-gold">Birth Chart</span>
+              Discover your <span className="text-gold">birth chart</span>
             </h2>
             <p className="text-xl text-ink-400">
-              Reveal the secrets the stars held at the moment of your birth
+              Reveal the secrets the stars held at the moment you were born
             </p>
           </motion.div>
         </div>
@@ -72,7 +72,7 @@ export default function MiniBirthChart() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-ink-300 flex items-center gap-2">
-                  <Star className="w-4 h-4 text-gold-300" /> Full Name
+                  <Star className="w-4 h-4 text-gold-300" /> Full name
                 </label>
                 <input
                   type="text"
@@ -81,14 +81,14 @@ export default function MiniBirthChart() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600"
                   placeholder="Your name"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-ink-300 flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gold-300" /> City of Birth
+                  <MapPin className="w-4 h-4 text-gold-300" /> Birth city
                 </label>
                 <input
                   type="text"
@@ -97,14 +97,14 @@ export default function MiniBirthChart() {
                   onChange={(e) =>
                     setFormData({ ...formData, city: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600"
-                  placeholder="e.g. São Paulo, Brazil"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600"
+                  placeholder="e.g. New York, USA"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-ink-300 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-gold-300" /> Date of Birth
+                  <Calendar className="w-4 h-4 text-gold-300" /> Date of birth
                 </label>
                 <input
                   type="date"
@@ -113,13 +113,13 @@ export default function MiniBirthChart() {
                   onChange={(e) =>
                     setFormData({ ...formData, date: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600 [color-scheme:dark]"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600 [color-scheme:dark]"
                 />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-ink-300 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-gold-300" /> Time (Optional)
+                  <Clock className="w-4 h-4 text-gold-300" /> Time (optional)
                 </label>
                 <input
                   type="time"
@@ -127,7 +127,7 @@ export default function MiniBirthChart() {
                   onChange={(e) =>
                     setFormData({ ...formData, time: e.target.value })
                   }
-                  className="w-full px-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600 [color-scheme:dark]"
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400 text-ink-100 placeholder-ink-600 [color-scheme:dark]"
                 />
               </div>
             </div>
@@ -141,18 +141,18 @@ export default function MiniBirthChart() {
                 {loading ? (
                   <>
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    Calculating Chart...
+                    Calculating chart...
                   </>
                 ) : (
                   <>
-                    Generate Free Birth Chart
+                    Generate my free birth chart
                     <ArrowRight className="w-6 h-6" />
                   </>
                 )}
               </button>
               <p className="text-center text-ink-600 text-sm mt-4">
-                *By clicking, you&apos;ll be redirected to create your free
-                account and view your results.
+                *When you click, you&apos;ll be redirected to create your free
+                account and see your result.
               </p>
             </div>
           </form>

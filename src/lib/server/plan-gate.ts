@@ -2,15 +2,15 @@
 // Toda rota de feature deve passar por aqui antes de gastar créditos
 // de APIs externas (astrologyapi.com, Groq).
 
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { createServerClient } from "@supabase/ssr";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { getSupabaseAdmin } from "./supabase-admin";
 import { isPremium, type PremiumFeature, FEATURE_LABELS } from "../plans";
 
 export interface UserProfile {
   id: string;
-  auth_id: string;
+  clerk_user_id: string | null;
+  auth_id: string | null;
   email: string;
   name: string | null;
   birth_date: string | null;
@@ -27,65 +27,86 @@ type GateResult =
   | { ok: true; profile: UserProfile }
   | { ok: false; response: NextResponse };
 
-async function getServerSupabase() {
-  const cookieStore = await cookies();
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
-          } catch {
-            // Route handlers nem sempre podem gravar cookies; o middleware
-            // já mantém a sessão renovada.
-          }
-        },
-      },
-    }
-  );
-}
+const unauthorized = (): GateResult => ({
+  ok: false,
+  response: NextResponse.json(
+    { error: "Please sign in to continue.", code: "AUTH_REQUIRED" },
+    { status: 401 }
+  ),
+});
 
-/** Exige usuário logado; retorna o perfil da tabela `users`. */
-export async function requireUser(): Promise<GateResult> {
-  const supabase = await getServerSupabase();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+/**
+ * Garante uma linha em `users` para o usuário do Clerk (cria na primeira vez —
+ * "provisionamento lazy"). Isto substitui o trigger handle_new_user do
+ * Supabase Auth e faz o fluxo "comprar e já entrar" funcionar.
+ */
+async function provisionProfile(clerkUserId: string): Promise<UserProfile | null> {
+  const admin = getSupabaseAdmin();
 
-  if (!user) {
-    return {
-      ok: false,
-      response: NextResponse.json(
-        { error: "Faça login para continuar.", code: "AUTH_REQUIRED" },
-        { status: 401 }
-      ),
-    };
-  }
-
-  const { data: profile, error } = await supabase
+  const existing = await admin
     .from("users")
     .select("*")
-    .eq("auth_id", user.id)
+    .eq("clerk_user_id", clerkUserId)
+    .maybeSingle();
+  if (existing.data) return existing.data as UserProfile;
+
+  // Primeira vez: puxa e-mail/nome do Clerk e cria (ou vincula por e-mail).
+  const cu = await currentUser();
+  const email =
+    cu?.primaryEmailAddress?.emailAddress ??
+    cu?.emailAddresses?.[0]?.emailAddress ??
+    `${clerkUserId}@clerk.local`;
+  const name =
+    [cu?.firstName, cu?.lastName].filter(Boolean).join(" ").trim() ||
+    cu?.username ||
+    null;
+
+  const inserted = await admin
+    .from("users")
+    .insert({
+      clerk_user_id: clerkUserId,
+      email,
+      name,
+      subscription_plan: "FREE",
+      subscription_status: "active",
+      readings_left: 4,
+    })
+    .select("*")
     .single();
 
-  if (error || !profile) {
+  if (!inserted.error && inserted.data) return inserted.data as UserProfile;
+
+  // E-mail já existe (usuário legado do Supabase Auth): vincula o clerk_user_id.
+  if ((inserted.error as { code?: string })?.code === "23505") {
+    const linked = await admin
+      .from("users")
+      .update({ clerk_user_id: clerkUserId })
+      .eq("email", email)
+      .select("*")
+      .maybeSingle();
+    if (linked.data) return linked.data as UserProfile;
+  }
+
+  return null;
+}
+
+/** Exige usuário logado (Clerk); retorna/provisiona o perfil da tabela `users`. */
+export async function requireUser(): Promise<GateResult> {
+  const { userId } = await auth();
+  if (!userId) return unauthorized();
+
+  const profile = await provisionProfile(userId);
+  if (!profile) {
     return {
       ok: false,
       response: NextResponse.json(
-        { error: "Perfil de usuário não encontrado.", code: "PROFILE_NOT_FOUND" },
-        { status: 404 }
+        { error: "We couldn't load your profile.", code: "PROFILE_ERROR" },
+        { status: 500 }
       ),
     };
   }
 
-  return { ok: true, profile: profile as UserProfile };
+  return { ok: true, profile };
 }
 
 /** Exige plano Premium Ilimitado ativo para a feature indicada. */
@@ -100,7 +121,7 @@ export async function requirePremium(
       ok: false,
       response: NextResponse.json(
         {
-          error: `${FEATURE_LABELS[feature]} é exclusivo do plano Premium Ilimitado (US$ 29,90/mês).`,
+          error: `${FEATURE_LABELS[feature]} is exclusive to the Unlimited Premium plan ($29.90/month).`,
           code: "PREMIUM_REQUIRED",
           feature,
         },
@@ -113,18 +134,18 @@ export async function requirePremium(
 }
 
 type ConsumeResult =
-  | { ok: true; readingsLeft: number | "ilimitado" }
+  | { ok: true; readingsLeft: number | "unlimited" }
   | { ok: false; response: NextResponse };
 
 /**
- * Consome 1 leitura do saldo (atômico, via função SQL consume_reading).
- * Premium ativo não consome saldo.
+ * Consumes 1 reading from the balance (atomic, via the consume_reading SQL
+ * function). Active premium users don't consume the balance.
  */
 export async function consumeReading(
   profile: UserProfile
 ): Promise<ConsumeResult> {
   if (isPremium(profile)) {
-    return { ok: true, readingsLeft: "ilimitado" };
+    return { ok: true, readingsLeft: "unlimited" };
   }
 
   const admin = getSupabaseAdmin();
@@ -136,7 +157,7 @@ export async function consumeReading(
     return {
       ok: false,
       response: NextResponse.json(
-        { error: "Erro ao registrar a leitura. Tente novamente.", code: "CONSUME_FAILED" },
+        { error: "Failed to record the reading. Please try again.", code: "CONSUME_FAILED" },
         { status: 500 }
       ),
     };
@@ -148,7 +169,7 @@ export async function consumeReading(
       response: NextResponse.json(
         {
           error:
-            "Você não tem leituras disponíveis. Compre o Pacote 5 Leituras (US$ 9,99) ou assine o Premium Ilimitado (US$ 29,90/mês).",
+            "You have no readings left. Buy the 5-Reading Pack ($9.99) or subscribe to Unlimited Premium ($29.90/month).",
           code: "NO_READINGS_LEFT",
           needsPayment: true,
         },

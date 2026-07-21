@@ -13,6 +13,9 @@
     "validate:env": "node scripts/validate-env.js"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.13.6",
+    "@clerk/nextjs": "^7.5.21",
+    "@clerk/themes": "^2.4.57",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",

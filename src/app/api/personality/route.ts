@@ -3,8 +3,8 @@
 //   latitude?, longitude?, timezone? } }
 // → { profile: PersonalityResult, interpretation: string }
 //
-// O perfil (big three, elementos, modalidades) é derivado DETERMINISTICAMENTE
-// do mapa natal real (western_horoscope); o Groq gera apenas os textos.
+// The profile (big three, elements, modalities) is derived DETERMINISTICALLY
+// from the real natal chart (western_horoscope); Groq only generates the texts.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePremium } from "@/lib/server/plan-gate";
@@ -22,7 +22,7 @@ export const runtime = "nodejs";
 type Element = "Fire" | "Earth" | "Air" | "Water";
 type Modality = "Cardinal" | "Fixed" | "Mutable";
 
-// Shape EXATO esperado pela página de relatório de personalidade.
+// EXACT shape expected by the personality report page.
 interface PersonalityResult {
   bigThree: {
     sun: { sign: string; element: string; modality: string };
@@ -56,7 +56,7 @@ function num(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
-// Mapa de signos (nomes em pt e en, sem acentos) → elemento e modalidade.
+// Sign map (names in English and Portuguese, without accents) → element and modality.
 const SIGN_INFO: Record<string, { element: Element; modality: Modality }> = {
   aries: { element: "Fire", modality: "Cardinal" },
   taurus: { element: "Earth", modality: "Fixed" },
@@ -81,7 +81,7 @@ const SIGN_INFO: Record<string, { element: Element; modality: Modality }> = {
   peixes: { element: "Water", modality: "Mutable" },
 };
 
-// Os 10 planetas clássicos considerados nas contagens (pt e en, sem acentos).
+// The 10 classic planets considered in the counts (English and Portuguese, without accents).
 const COUNTED_PLANETS = new Set([
   "sun",
   "sol",
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
   ) {
     return NextResponse.json(
       {
-        error: "Envie 'birthData' com year, month, day, hour, minute e city.",
+        error: "Send 'birthData' with year, month, day, hour, minute and city.",
       },
       { status: 400 }
     );
@@ -203,15 +203,15 @@ export async function POST(req: NextRequest) {
 
   let chartRaw: Record<string, unknown>;
   try {
-    chartRaw = (await westernHoroscope(birth, "pt")) as Record<string, unknown>;
+    chartRaw = (await westernHoroscope(birth, "en")) as Record<string, unknown>;
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
 
-  // ---- Derivação determinística do perfil ----
+  // ---- Deterministic derivation of the profile ----
   const planets = (
     Array.isArray(chartRaw?.planets) ? chartRaw.planets : []
   ) as RawPlanet[];
@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
   const sunPlanet = findPlanet("sun", "sol");
   const moonPlanet = findPlanet("moon", "lua");
 
-  // Ascendente = signo da casa 1 (ou entrada "Ascendant" quando existir).
+  // Ascendant = sign of house 1 (or the "Ascendant" entry when it exists).
   const ascFromPlanets = findPlanet("ascendant", "ascendente");
   const ascSign =
     ascFromPlanets?.sign ??
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
 
   if (!sunSign || !moonSign || !ascSign) {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
@@ -271,19 +271,19 @@ export async function POST(req: NextRequest) {
   const moonInfo = signInfo(moonSign);
   const ascInfo = signInfo(ascSign);
 
-  const ELEMENT_PT: Record<Element, string> = {
-    Fire: "Fogo",
-    Earth: "Terra",
-    Air: "Ar",
-    Water: "Água",
+  const ELEMENT_EN: Record<Element, string> = {
+    Fire: "Fire",
+    Earth: "Earth",
+    Air: "Air",
+    Water: "Water",
   };
-  const MODALITY_PT: Record<Modality, string> = {
+  const MODALITY_EN: Record<Modality, string> = {
     Cardinal: "Cardinal",
-    Fixed: "Fixo",
-    Mutable: "Mutável",
+    Fixed: "Fixed",
+    Mutable: "Mutable",
   };
 
-  // ---- Textos via Groq ----
+  // ---- Texts via Groq ----
   let texts: {
     strengths: string[];
     challenges: string[];
@@ -293,23 +293,23 @@ export async function POST(req: NextRequest) {
   try {
     texts = await groqChatJson({
       system:
-        "Você é um astrólogo brasileiro experiente. Responda SOMENTE com JSON válido, sem nenhum texto fora do JSON. Todos os textos devem estar em português do Brasil.",
+        "You are an experienced astrologer. Respond ONLY with valid JSON, with no text outside the JSON. All texts must be in English (US).",
       user: [
-        name ? `Consulente: ${name}.` : "",
-        "Perfil astrológico REAL derivado do mapa natal (astrologyapi.com):",
-        `- Sol em ${sunSign} (elemento ${ELEMENT_PT[sunInfo.element]}, modalidade ${MODALITY_PT[sunInfo.modality]})`,
-        `- Lua em ${moonSign} (elemento ${ELEMENT_PT[moonInfo.element]}, modalidade ${MODALITY_PT[moonInfo.modality]})`,
-        `- Ascendente em ${ascSign} (elemento ${ELEMENT_PT[ascInfo.element]}, modalidade ${MODALITY_PT[ascInfo.modality]})`,
-        `- Distribuição de elementos entre os planetas: Fogo ${elements.Fire}, Terra ${elements.Earth}, Ar ${elements.Air}, Água ${elements.Water} (dominante: ${ELEMENT_PT[dominantElement]})`,
-        `- Distribuição de modalidades: Cardinal ${modalities.Cardinal}, Fixo ${modalities.Fixed}, Mutável ${modalities.Mutable} (dominante: ${MODALITY_PT[dominantModality]})`,
+        name ? `Querent: ${name}.` : "",
+        "REAL astrological profile derived from the natal chart (astrologyapi.com):",
+        `- Sun in ${sunSign} (element ${ELEMENT_EN[sunInfo.element]}, modality ${MODALITY_EN[sunInfo.modality]})`,
+        `- Moon in ${moonSign} (element ${ELEMENT_EN[moonInfo.element]}, modality ${MODALITY_EN[moonInfo.modality]})`,
+        `- Ascendant in ${ascSign} (element ${ELEMENT_EN[ascInfo.element]}, modality ${MODALITY_EN[ascInfo.modality]})`,
+        `- Distribution of elements across the planets: Fire ${elements.Fire}, Earth ${elements.Earth}, Air ${elements.Air}, Water ${elements.Water} (dominant: ${ELEMENT_EN[dominantElement]})`,
+        `- Distribution of modalities: Cardinal ${modalities.Cardinal}, Fixed ${modalities.Fixed}, Mutable ${modalities.Mutable} (dominant: ${MODALITY_EN[dominantModality]})`,
         "",
-        "Com base EXCLUSIVAMENTE nesse perfil real, gere os textos.",
-        "Responda SOMENTE com um JSON exatamente neste schema:",
+        "Based EXCLUSIVELY on this real profile, generate the texts.",
+        "Respond ONLY with a JSON exactly in this schema:",
         `{
-  "strengths": ["4 a 6 dons naturais desta pessoa, frases curtas em pt-BR"],
-  "challenges": ["3 a 5 áreas de crescimento, frases curtas e acolhedoras em pt-BR"],
-  "lifePurpose": "string (2-3 frases sobre o propósito de vida)",
-  "interpretation": "string (leitura astrológica completa em 3-4 parágrafos, separados por linha em branco, citando Sol, Lua, Ascendente e o equilíbrio de elementos)"
+  "strengths": ["4 to 6 natural gifts of this person, short sentences in English"],
+  "challenges": ["3 to 5 growth areas, short and supportive sentences in English"],
+  "lifePurpose": "string (2-3 sentences about the life purpose)",
+  "interpretation": "string (complete astrological reading in 3-4 paragraphs, separated by a blank line, citing the Sun, Moon, Ascendant and the balance of elements)"
 }`,
       ]
         .filter(Boolean)
@@ -319,7 +319,7 @@ export async function POST(req: NextRequest) {
     });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }

@@ -7,42 +7,42 @@ import { Heart, TrendingUp, Sparkles, Shield, Star, Zap } from "lucide-react";
 const features = [
   {
     icon: Heart,
-    title: "Atraia o Amor Verdadeiro",
+    title: "Attract True Love",
     description:
-      "Descubra quando e como o amor vai entrar na sua vida. Entenda sua compatibilidade astrológica e desbloqueie relações profundas e duradouras.",
+      "Discover when and how love will enter your life. Understand your astrological compatibility and unlock deep, lasting relationships.",
     link: "/compatibility",
   },
   {
     icon: TrendingUp,
-    title: "Prosperidade Financeira",
+    title: "Financial Prosperity",
     description:
-      "Identifique os ciclos de abundância no seu mapa astral. Saiba os melhores momentos para investir, lançar projetos e crescer materialmente.",
+      "Identify the cycles of abundance in your birth chart. Know the best moments to invest, launch projects, and grow your wealth.",
     link: "/abundance",
   },
   {
     icon: Sparkles,
-    title: "Limpeza Energética",
+    title: "Energy Cleansing",
     description:
-      "Liberte-se dos bloqueios espirituais que travam seu crescimento. Técnicas personalizadas com base no seu mapa para limpar o caminho e atrair positividade.",
+      "Free yourself from the spiritual blocks holding back your growth. Personalized techniques based on your chart to clear the path and draw in positivity.",
   },
   {
     icon: Shield,
-    title: "Proteção Espiritual",
+    title: "Spiritual Protection",
     description:
-      "Fortaleça sua aura e proteja-se de energias negativas. Rituais alinhados às fases da lua e ao seu mapa natal.",
+      "Strengthen your aura and shield yourself from negative energy. Rituals aligned with the moon phases and your natal chart.",
   },
   {
     icon: Star,
-    title: "Propósito de Vida",
+    title: "Life Purpose",
     description:
-      "Compreenda sua missão nesta vida através do Nodo Norte. Descubra seus dons únicos e como usá-los para impactar o mundo.",
+      "Understand your mission in this life through the North Node. Discover your unique gifts and how to use them to impact the world.",
     link: "/personality",
   },
   {
     icon: Zap,
-    title: "A Hora Certa de Agir",
+    title: "The Right Time to Act",
     description:
-      "Nunca mais perca uma oportunidade. Conheça os dias e horários mais favoráveis para decisões importantes, viagens e novos projetos.",
+      "Never miss an opportunity again. Learn the most favorable days and hours for important decisions, travel, and new projects.",
     link: "/predictions",
   },
 ];
@@ -66,13 +66,13 @@ export default function FeaturesSection() {
             <Sparkles className="h-7 w-7 text-night-900" />
           </span>
           <h2 className="font-display text-4xl font-semibold text-ink-50 md:text-6xl">
-            Transforme sua vida com
+            Transform your life with
             <br />
-            <span className="text-gold">sabedoria ancestral</span>
+            <span className="text-gold">ancient wisdom</span>
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-ink-400">
-            Milhares de pessoas já descobriram seu poder interior. Agora é a
-            sua vez de brilhar.
+            Thousands of people have already discovered their inner power. Now
+            it&apos;s your turn to shine.
           </p>
         </motion.div>
 
@@ -102,10 +102,10 @@ export default function FeaturesSection() {
             className="btn-gold inline-flex items-center gap-2 rounded-full px-10 py-5 text-lg"
           >
             <Sparkles className="h-5 w-5" />
-            Comece sua transformação
+            Begin your transformation
           </Link>
           <p className="mt-4 text-sm text-ink-600">
-            Comece grátis &bull; Cancele quando quiser
+            Start free &bull; Cancel anytime
           </p>
         </motion.div>
       </div>
@@ -127,7 +127,7 @@ function FeatureCard({ feature }: { feature: (typeof features)[0] }) {
       <p className="leading-relaxed text-ink-400">{feature.description}</p>
       {feature.link && (
         <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-gold-300 opacity-0 transition-opacity group-hover:opacity-100">
-          Explorar &rarr;
+          Explore &rarr;
         </span>
       )}
     </div>

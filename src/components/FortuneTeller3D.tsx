@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import {
   useGLTF,
@@ -11,14 +11,14 @@ import {
 } from "@react-three/drei";
 import * as THREE from "three";
 
+const MODEL_URL = "/models/fantasy+fortune+teller+3d+model.glb";
+
 function Model(props: any) {
-  // Certifique-se de que o arquivo .glb esteja em public/models/fantasy+fortune+teller+3d+model.glb
-  const { scene, animations } = useGLTF(
-    "/models/fantasy+fortune+teller+3d+model.glb"
-  );
+  // The .glb file lives in public/models/fantasy+fortune+teller+3d+model.glb
+  const { scene } = useGLTF(MODEL_URL);
   const modelRef = useRef<THREE.Group>(null);
 
-  // Adiciona uma animação suave de flutuação/respiração se não houver animações no modelo
+  // Gentle "breathing"/soft rotation animation.
   useFrame((state) => {
     if (modelRef.current) {
       modelRef.current.rotation.y =
@@ -35,11 +35,13 @@ function Model(props: any) {
 
 export default function FortuneTeller3D() {
   return (
-    <div className="w-full h-[400px] md:h-[600px] relative">
+    <div className="relative h-full w-full">
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
-        gl={{ antialias: true, alpha: true }}
-        className="w-full h-full"
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        // Cap the device pixel ratio so retina screens are not overloaded.
+        dpr={[1, 1.75]}
+        className="h-full w-full"
       >
         <ambientLight intensity={0.5} />
         <spotLight
@@ -47,20 +49,15 @@ export default function FortuneTeller3D() {
           angle={0.15}
           penumbra={1}
           intensity={1}
-          castShadow
         />
-        <pointLight
-          position={[-10, -10, -10]}
-          intensity={0.5}
-          color="#a855f7"
-        />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} color="#a855f7" />
 
         <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
           <Model />
         </Float>
 
         <Sparkles
-          count={50}
+          count={30}
           scale={6}
           size={4}
           speed={0.4}
@@ -77,13 +74,15 @@ export default function FortuneTeller3D() {
         />
       </Canvas>
 
-      {/* Loading fallback/overlay could go here */}
-      <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
-        <p className="text-purple-300/50 text-sm">Arraste para girar</p>
+      {/* Interaction hint — only shown while the 3D is active (desktop). */}
+      <div className="pointer-events-none absolute bottom-4 left-0 right-0 text-center">
+        <p className="text-sm tracking-wide text-gold-300/50">
+          Drag to rotate
+        </p>
       </div>
     </div>
   );
 }
 
-// Pre-load the model
-useGLTF.preload("/models/fantasy+fortune+teller+3d+model.glb");
+// Preload the model only when this chunk is imported (desktop).
+useGLTF.preload(MODEL_URL);

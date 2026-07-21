@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
@@ -47,20 +47,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Envie 'person1' e 'person2', cada um com day, month, year, hour, min, lat, lon, tzone.",
+          "Send 'person1' and 'person2', each with day, month, year, hour, min, lat, lon, tzone.",
       },
       { status: 400 }
     );
   }
 
-  const language = typeof body?.language === "string" ? body.language : "pt";
+  const language = typeof body?.language === "string" ? body.language : "en";
 
   try {
     const data = await synastry(p1, p2, language);
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }

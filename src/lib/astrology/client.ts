@@ -7,8 +7,8 @@ const BASE_URL =
 const USER_ID = process.env.ASTROLOGY_API_USER_ID ?? "";
 const API_KEY = process.env.ASTROLOGY_API_KEY ?? "";
 
-/** Idioma padrão das respostas da API (signos, aspectos etc. em pt-BR). */
-export const DEFAULT_LANGUAGE = "pt";
+/** Default response language for the API (signs, aspects, etc.). */
+export const DEFAULT_LANGUAGE = "en";
 
 export interface BirthInput {
   day: number;

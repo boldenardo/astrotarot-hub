@@ -3,7 +3,7 @@
 //   city, nation?, latitude?, longitude?, timezone? }
 // → { success: true, analysis: CompatibilityResult }
 //
-// Usa a sinastria REAL da astrologyapi.com; o Groq redige a análise em pt-BR.
+// Uses the REAL synastry from astrologyapi.com; Groq writes the analysis in English.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requirePremium } from "@/lib/server/plan-gate";
@@ -18,7 +18,7 @@ import { geocodeCity } from "@/lib/server/geocode";
 
 export const runtime = "nodejs";
 
-// Shape EXATO esperado pela página de compatibilidade.
+// EXACT shape expected by the compatibility page.
 interface CompatibilityResult {
   overall: number;
   love: number;
@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
 
   if (!isConfigured()) {
     return NextResponse.json(
-      { error: "Serviço de astrologia não configurado." },
+      { error: "Astrology service is not configured." },
       { status: 503 }
     );
   }
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "Envie 'personA' e 'personB', cada um com year, month, day, hour, minute e city.",
+          "Send 'personA' and 'personB', each with year, month, day, hour, minute and city.",
       },
       { status: 400 }
     );
@@ -150,46 +150,46 @@ export async function POST(req: NextRequest) {
 
   let synastryRaw: unknown;
   try {
-    synastryRaw = await synastry(personA.birth, personB.birth, "pt");
+    synastryRaw = await synastry(personA.birth, personB.birth, "en");
   } catch {
     return NextResponse.json(
-      { error: "Falha ao consultar o serviço de astrologia." },
+      { error: "Failed to reach the astrology service." },
       { status: 502 }
     );
   }
 
-  const nameA = personA.name || "Pessoa 1";
-  const nameB = personB.name || "Pessoa 2";
+  const nameA = personA.name || "Person 1";
+  const nameB = personB.name || "Person 2";
   const synastryText = JSON.stringify(synastryRaw).slice(0, 4000);
 
   const schema = `{
-  "overall": "inteiro 0-100 (compatibilidade geral, coerente com os demais índices)",
-  "love": "inteiro 0-100",
-  "communication": "inteiro 0-100",
-  "values": "inteiro 0-100",
-  "longTerm": "inteiro 0-100",
+  "overall": "integer 0-100 (overall compatibility, consistent with the other indices)",
+  "love": "integer 0-100",
+  "communication": "integer 0-100",
+  "values": "integer 0-100",
+  "longTerm": "integer 0-100",
   "synastry_analysis": {
-    "strengths": ["3 a 5 pontos fortes da relação, frases curtas em pt-BR"],
-    "challenges": ["3 a 5 desafios da relação, frases curtas em pt-BR"],
-    "emotional_connection": "string (2-3 frases sobre a conexão emocional)",
-    "sexual_chemistry": "string (2-3 frases sobre a química do casal)",
-    "communication_style": "string (2-3 frases sobre a comunicação entre os dois)"
+    "strengths": ["3 to 5 strengths of the relationship, short sentences in English"],
+    "challenges": ["3 to 5 challenges of the relationship, short sentences in English"],
+    "emotional_connection": "string (2-3 sentences about the emotional connection)",
+    "sexual_chemistry": "string (2-3 sentences about the couple's chemistry)",
+    "communication_style": "string (2-3 sentences about the communication between the two)"
   },
-  "final_verdict": "string (veredito final acolhedor, 2-4 frases)"
+  "final_verdict": "string (warm final verdict, 2-4 sentences)"
 }`;
 
   try {
     const analysis = await groqChatJson<CompatibilityResult>({
       system:
-        "Você é um astrólogo brasileiro especialista em sinastria (compatibilidade amorosa). Responda SOMENTE com JSON válido, sem nenhum texto fora do JSON. Todos os textos devem estar em português do Brasil.",
+        "You are an astrologer specialized in synastry (romantic compatibility). Respond ONLY with valid JSON, with no text outside the JSON. All texts must be in English (US).",
       user: [
-        `Casal analisado: ${nameA} e ${nameB}.`,
-        "Sinastria REAL entre os dois mapas natais (dados da astrologyapi.com):",
+        `Couple analyzed: ${nameA} and ${nameB}.`,
+        "REAL synastry between the two natal charts (data from astrologyapi.com):",
         synastryText,
         "",
-        "Com base EXCLUSIVAMENTE nesses aspectos reais, gere a análise de compatibilidade.",
-        "Os percentuais devem ser coerentes entre si e com os aspectos (harmônicos elevam, tensos reduzem); evite extremos como 0 ou 100.",
-        "Responda SOMENTE com um JSON exatamente neste schema:",
+        "Based EXCLUSIVELY on these real aspects, generate the compatibility analysis.",
+        "The percentages must be consistent with each other and with the aspects (harmonious ones raise, tense ones lower); avoid extremes like 0 or 100.",
+        "Respond ONLY with a JSON exactly in this schema:",
         schema,
       ].join("\n"),
       maxTokens: 1500,
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!analysis || typeof analysis !== "object") {
-      throw new Error("JSON inválido");
+      throw new Error("Invalid JSON");
     }
 
     const sa =
@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, analysis });
   } catch {
     return NextResponse.json(
-      { error: "Falha ao gerar a interpretação." },
+      { error: "Failed to generate the interpretation." },
       { status: 502 }
     );
   }

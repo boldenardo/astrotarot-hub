@@ -3,6 +3,8 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
+import { ClerkProvider } from "@clerk/nextjs";
+import { dark } from "@clerk/themes";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -20,8 +22,25 @@ const sans = Inter({
 export const metadata: Metadata = {
   title: "AstroTarot Hub — Tarot & Astrology",
   description:
-    "Personalized tarot readings integrated with detailed astrological insights to illuminate your path.",
+    "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
 };
+
+// Clerk appearance aligned with the dark mystic theme (purple/gold).
+const clerkAppearance = {
+  baseTheme: dark,
+  variables: {
+    colorPrimary: "#d4af37",
+    colorBackground: "#0b0713",
+    colorInputBackground: "rgba(20,14,32,0.6)",
+    colorText: "#e8e4f5",
+    borderRadius: "0.75rem",
+  },
+  elements: {
+    card: "glass glass-gold",
+    formButtonPrimary: "btn-gold",
+    headerTitle: "text-gold",
+  },
+} as const;
 
 export default function RootLayout({
   children,
@@ -32,6 +51,12 @@ export default function RootLayout({
   const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
   return (
+    <ClerkProvider
+      appearance={clerkAppearance}
+      signInUrl="/auth/login"
+      signUpUrl="/auth/register"
+      afterSignOutUrl="/"
+    >
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <head>
         {/* Google Analytics */}
@@ -85,5 +110,6 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
+    </ClerkProvider>
   );
 }

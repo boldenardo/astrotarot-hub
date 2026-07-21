@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Lock, Check, Sparkles, LogIn } from "lucide-react";
-import { getUserProfile } from "@/lib/auth-client";
+import { getMyProfile } from "@/lib/client/me";
 import {
   CHECKOUT_PLANS,
   FEATURE_LABELS,
   canUseFeature,
   type PremiumFeature,
-  type PlanProfile,
 } from "@/lib/plans";
 
 interface PremiumGateProps {
@@ -21,11 +20,11 @@ interface PremiumGateProps {
 type GateStatus = "loading" | "anonymous" | "blocked" | "allowed";
 
 /**
- * Envolve conteúdo exclusivo do plano Premium Ilimitado.
- * - Carregando: spinner místico
- * - Sem login: CTA para /auth/login
- * - Logado sem premium: tela de bloqueio com oferta do plano
- * - Premium ativo: renderiza o conteúdo normalmente
+ * Wraps content exclusive to the Unlimited Premium plan.
+ * - Loading: mystic spinner
+ * - Signed out: CTA to /auth/login
+ * - Signed in without premium: lock screen with the plan offer
+ * - Premium active: renders the content normally
  */
 export default function PremiumGate({ feature, children }: PremiumGateProps) {
   const [status, setStatus] = useState<GateStatus>("loading");
@@ -35,11 +34,14 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
 
     (async () => {
       try {
-        const profile = (await getUserProfile()) as PlanProfile;
+        const profile = await getMyProfile();
         if (!active) return;
+        if (!profile) {
+          setStatus("anonymous");
+          return;
+        }
         setStatus(canUseFeature(profile, feature) ? "allowed" : "blocked");
       } catch {
-        // getUserProfile lança erro quando não há sessão ativa
         if (!active) return;
         setStatus("anonymous");
       }
@@ -62,7 +64,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           className="mb-6 h-16 w-16 rounded-full border-4 border-gold-400/40 border-t-gold-400"
         />
-        <p className="text-ink-400">Consultando os astros...</p>
+        <p className="text-ink-400">Consulting the stars...</p>
       </div>
     );
   }
@@ -79,24 +81,24 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
             <LogIn className="h-8 w-8 text-gold-300" />
           </span>
           <h2 className="mb-2 font-display text-2xl font-semibold text-ink-50">
-            Entre para continuar
+            Sign in to continue
           </h2>
           <p className="mb-6 text-ink-400">
-            Faça login para acessar {FEATURE_LABELS[feature].toLowerCase()} e
-            todos os recursos do seu portal místico.
+            Sign in to access {FEATURE_LABELS[feature].toLowerCase()} and every
+            feature of your mystic portal.
           </p>
           <Link
             href="/auth/login"
             className="btn-gold block w-full rounded-full py-4 text-center font-semibold"
           >
-            Fazer login
+            Sign in
           </Link>
         </motion.div>
       </div>
     );
   }
 
-  // blocked: logado, mas sem plano premium ativo
+  // blocked: signed in, but without an active premium plan
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-16">
       <motion.div
@@ -114,15 +116,15 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
         </motion.span>
 
         <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
-          Recurso Premium
+          Premium Feature
         </p>
         <h2 className="mb-3 font-display text-3xl font-semibold text-ink-50">
           {FEATURE_LABELS[feature]}
         </h2>
         <p className="mb-8 text-ink-400">
-          Este recurso é exclusivo do plano{" "}
-          <span className="text-gold-300">{CHECKOUT_PLANS.PREMIUM.name}</span>.
-          Desbloqueie agora e acesse tudo o que os astros têm a revelar:
+          This feature is exclusive to the{" "}
+          <span className="text-gold-300">{CHECKOUT_PLANS.PREMIUM.name}</span>{" "}
+          plan. Unlock it now and access everything the stars have to reveal:
         </p>
 
         <ul className="mb-8 space-y-3 text-left">
@@ -138,7 +140,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
           <span className="font-display text-4xl font-semibold text-gold">
             {CHECKOUT_PLANS.PREMIUM.priceLabel}
           </span>
-          <span className="text-ink-400">/mês</span>
+          <span className="text-ink-400">/month</span>
         </div>
 
         <Link
@@ -146,13 +148,13 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
           className="btn-gold mb-4 flex w-full items-center justify-center gap-2 rounded-full py-4 font-semibold"
         >
           <Sparkles className="h-5 w-5" />
-          Desbloquear com Premium Ilimitado
+          Unlock with Unlimited Premium
         </Link>
         <Link
           href="/cart"
           className="text-sm text-ink-400 underline-offset-4 transition-colors hover:text-gold-300 hover:underline"
         >
-          Ver todos os planos
+          See all plans
         </Link>
       </motion.div>
     </div>
