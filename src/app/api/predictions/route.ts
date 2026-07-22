@@ -10,6 +10,7 @@ import { requirePremium } from "@/lib/server/plan-gate";
 import { groqChatJson } from "@/lib/server/groq";
 import {
   dailyTransits,
+  westernHoroscope,
   isConfigured,
   type BirthInput,
 } from "@/lib/astrology/client";
@@ -148,9 +149,15 @@ export async function POST(req: NextRequest) {
     ),
   };
 
+  // Fetch BOTH the natal chart (who the person is) and today's transits
+  // (what's happening in the sky now) so the AI can cross-reference them.
+  let natalRaw: Record<string, unknown>;
   let transitsRaw: unknown;
   try {
-    transitsRaw = await dailyTransits(birth, "en");
+    [natalRaw, transitsRaw] = await Promise.all([
+      westernHoroscope(birth, "en") as Promise<Record<string, unknown>>,
+      dailyTransits(birth, "en"),
+    ]);
   } catch {
     return NextResponse.json(
       { error: "Failed to reach the astrology service." },
@@ -166,7 +173,31 @@ export async function POST(req: NextRequest) {
     timeZone: timezone,
   });
 
-  const transitsText = JSON.stringify(transitsRaw).slice(0, 4000);
+  // Compact natal summary: every planet with sign + house, plus the ascendant.
+  const natalPlanets = (
+    Array.isArray(natalRaw?.planets) ? natalRaw.planets : []
+  ) as Array<{
+    name?: unknown;
+    sign?: unknown;
+    house?: unknown;
+    is_retro?: unknown;
+  }>;
+  const natalHouses = (
+    Array.isArray(natalRaw?.houses) ? natalRaw.houses : []
+  ) as Array<{ house?: unknown; sign?: unknown }>;
+  const ascSign = String(
+    natalHouses.find((h) => Number(h?.house) === 1)?.sign ?? ""
+  );
+  const natalSummary = natalPlanets
+    .map(
+      (p) =>
+        `${String(p?.name)} in ${String(p?.sign)}` +
+        (p?.house ? ` (house ${String(p.house)})` : "") +
+        (p?.is_retro === "true" ? " [retrograde]" : "")
+    )
+    .join("; ");
+  const natalAspects = JSON.stringify(natalRaw?.aspects ?? []).slice(0, 1500);
+  const transitsText = JSON.stringify(transitsRaw).slice(0, 3500);
 
   const schema = `{
   "date": "string (today's date written out in English, e.g.: '${today}')",
@@ -187,12 +218,18 @@ export async function POST(req: NextRequest) {
       user: [
         `Today is ${today}.`,
         name ? `Querent: ${name}.` : "",
-        `REAL planetary transits of today in relation to the querent's natal chart (data from astrologyapi.com):`,
+        "The querent's NATAL chart — who they are (real data from astrologyapi.com):",
+        `- Ascendant: ${ascSign}`,
+        `- Natal planets: ${natalSummary}`,
+        `- Natal aspects: ${natalAspects}`,
+        "",
+        "TODAY'S real planetary transits relative to that natal chart — what is happening now:",
         transitsText,
         "",
-        "Based EXCLUSIVELY on these real transits, generate the prediction for the day.",
-        "Include 3 to 5 items in majorTransits, choosing the most relevant transits from the data above.",
-        "The moon phase (moonPhase) must be consistent with today's date.",
+        "Produce a CONCRETE, personalized forecast for today by CROSS-REFERENCING the natal chart with today's transits: for each active transit, explain what a transiting planet aspecting a specific natal planet means for THIS person, taking into account that natal planet's sign and house. Ground every statement in the real data above — never invent placements.",
+        "majorTransits: 3 to 5 items, each a real transit-to-natal aspect from the data (transit = transiting planet, natal = the natal planet/point it hits).",
+        "moonPhase must be consistent with today's date and the transit data.",
+        "energyRatings must reflect the actual balance of today's aspects (harmonious aspects raise scores, tense aspects lower them) across the querent's relevant houses.",
         "Respond ONLY with a JSON exactly in this schema:",
         schema,
       ]
