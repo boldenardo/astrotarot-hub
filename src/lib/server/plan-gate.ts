@@ -85,8 +85,10 @@ async function provisionProfile(clerkUserId: string): Promise<UserProfile | null
       .select("*")
       .maybeSingle();
     if (linked.data) return linked.data as UserProfile;
+    console.error("[plan-gate] email-link update failed:", linked.error);
   }
 
+  console.error("[plan-gate] provision insert failed:", inserted.error);
   return null;
 }
 
@@ -95,7 +97,26 @@ export async function requireUser(): Promise<GateResult> {
   const { userId } = await auth();
   if (!userId) return unauthorized();
 
-  const profile = await provisionProfile(userId);
+  let profile: UserProfile | null = null;
+  try {
+    profile = await provisionProfile(userId);
+  } catch (e) {
+    // Nunca deixar virar 500 sem corpo: loga o motivo real (visível nos logs
+    // da Vercel) e devolve um código que aponta para configuração do servidor.
+    console.error("[plan-gate] provisionProfile threw:", e);
+    return {
+      ok: false,
+      response: NextResponse.json(
+        {
+          error: "Server configuration error.",
+          code: "SERVER_MISCONFIGURED",
+          detail: e instanceof Error ? e.message : "unknown",
+        },
+        { status: 500 }
+      ),
+    };
+  }
+
   if (!profile) {
     return {
       ok: false,
