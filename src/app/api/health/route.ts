@@ -7,6 +7,15 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Remove qualquer coisa parecida com token/JWT de mensagens de erro antes de
+// expor — mensagens de bibliotecas podem ecoar valores de headers.
+function redactSecrets(message: string): string {
+  return message
+    .replace(/eyJ[A-Za-z0-9_-]{5,}(?:\.[A-Za-z0-9_-]{5,}){0,2}/g, "[redacted]")
+    .replace(/(sk|pk|whsec|gsk|ak)[_-][A-Za-z0-9_-]{8,}/g, "[redacted]")
+    .slice(0, 300);
+}
+
 function present(
   value: string | undefined | null,
   placeholderPrefixes: string[] = []
@@ -57,10 +66,13 @@ export async function GET() {
         .select("id", { head: true, count: "exact" })
         .limit(1);
       db = error
-        ? { ok: false, code: error.code, message: error.message }
+        ? { ok: false, code: error.code, message: redactSecrets(error.message) }
         : { ok: true };
     } catch (e) {
-      db = { ok: false, message: e instanceof Error ? e.message : "unknown" };
+      db = {
+        ok: false,
+        message: redactSecrets(e instanceof Error ? e.message : "unknown"),
+      };
     }
   } else {
     db = { ok: false, message: "Supabase env vars missing in this deployment" };

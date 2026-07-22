@@ -9,8 +9,13 @@ let cached: SupabaseClient | null = null;
 export function getSupabaseAdmin(): SupabaseClient {
   if (cached) return cached;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  // Tolera valores colados com espaços/quebras de linha (ex.: chave duplicada
+  // no painel da Vercel): usa apenas o primeiro token — um JWT nunca tem
+  // espaço em branco.
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim().split(
+    /\s+/
+  )[0];
 
   if (!url || !serviceKey || serviceKey.startsWith("COLE_")) {
     throw new Error(

@@ -103,15 +103,13 @@ export async function requireUser(): Promise<GateResult> {
   } catch (e) {
     // Nunca deixar virar 500 sem corpo: loga o motivo real (visível nos logs
     // da Vercel) e devolve um código que aponta para configuração do servidor.
+    // Motivo real só nos logs privados da Vercel — nunca no corpo da resposta
+    // (mensagens de erro podem ecoar valores de headers/segredos).
     console.error("[plan-gate] provisionProfile threw:", e);
     return {
       ok: false,
       response: NextResponse.json(
-        {
-          error: "Server configuration error.",
-          code: "SERVER_MISCONFIGURED",
-          detail: e instanceof Error ? e.message : "unknown",
-        },
+        { error: "Server configuration error.", code: "SERVER_MISCONFIGURED" },
         { status: 500 }
       ),
     };
