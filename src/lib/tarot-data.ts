@@ -221,7 +221,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Manipulation", "Illusion", "Lack of action"],
     keywords: ["power", "manifestation", "action"],
     imageUrl:
-      "https://2.bp.blogspot.com/-iaBqerZTpps/WSzL2rWHOeI/AAAAAAAAE18/peVFholDD9kz0mJdxUC632-NNGP_LLWPgCLcB/s1600/1.jpg",
+      "/cards/egyptian/1.jpg",
   },
   {
     id: 2,
@@ -235,7 +235,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     ],
     keywords: ["intuition", "mystery", "hidden knowledge"],
     imageUrl:
-      "https://3.bp.blogspot.com/-XlDgx5ZEEDw/WTB2BrDZQsI/AAAAAAAABC4/IiNc812ZZ-kwbfXI13OL0VIkuB6ekN5TwCLcB/s1600/2.jpg",
+      "/cards/egyptian/2.jpg",
   },
   {
     id: 3,
@@ -245,7 +245,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Dependence", "Creative block", "Lack of progress"],
     keywords: ["abundance", "motherhood", "creation"],
     imageUrl:
-      "https://1.bp.blogspot.com/-H-m3ld9xOOM/WTHanN-T1wI/AAAAAAAAE4c/4WaHtdyIYgcFd0_9Zt22KkxzLGVDjWSaACLcB/s1600/3.jpg",
+      "/cards/egyptian/3.jpg",
   },
   {
     id: 4,
@@ -255,7 +255,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Tyranny", "Rigidity", "Excessive domination"],
     keywords: ["authority", "leadership", "structure"],
     imageUrl:
-      "https://3.bp.blogspot.com/-5BQ9ruertEc/WTMzlK4ndpI/AAAAAAAAE5c/45qszfk5de0CwlWll0zct2S3WxY_HgyXwCLcB/s1600/4.jpg",
+      "/cards/egyptian/4.jpg",
   },
   {
     id: 5,
@@ -270,7 +270,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Rebellion", "Dogma", "Spiritual rigidity"],
     keywords: ["tradition", "wisdom", "guidance"],
     imageUrl:
-      "https://1.bp.blogspot.com/-CY1u8sm7dQE/WTNzziZeTyI/AAAAAAAABDM/tcxhPA_R74wODzQlptuY6g8s7Qi4vNwFgCLcB/s1600/5.jpg",
+      "/cards/egyptian/5.jpg",
   },
   {
     id: 6,
@@ -280,7 +280,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Imbalance", "Disharmony", "Poor choice"],
     keywords: ["love", "union", "decision"],
     imageUrl:
-      "https://2.bp.blogspot.com/-XCuJQx8gyUg/WTRs-tdYM4I/AAAAAAAABEU/EED3PD-UN84F0KcxkG7nHd1w5CuJcwxDwCLcB/s1600/6.jpg",
+      "/cards/egyptian/6.jpg",
   },
   {
     id: 7,
@@ -290,7 +290,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Lack of direction", "Aggression", "Defeat"],
     keywords: ["victory", "determination", "progress"],
     imageUrl:
-      "https://4.bp.blogspot.com/-pWWrB4xMihs/WTR9HXa_1XI/AAAAAAAABFw/BOMKLflHtN8QQOYW_DswN_1fyUkNt9oAgCLcB/s1600/7.jpg",
+      "/cards/egyptian/7.jpg",
   },
   {
     id: 8,
@@ -300,7 +300,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Injustice", "Dishonesty", "Lack of accountability"],
     keywords: ["justice", "truth", "balance"],
     imageUrl:
-      "https://4.bp.blogspot.com/-DBMu2ZA6J6I/WTW5C_4Ep9I/AAAAAAAABHc/0E342GIFouMO9Moej7CwoHiIwxAFAcOdACLcB/s1600/8.jpg",
+      "/cards/egyptian/8.jpg",
   },
   {
     id: 9,
@@ -310,7 +310,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Isolation", "Paranoia", "Excessive seclusion"],
     keywords: ["wisdom", "solitude", "introspection"],
     imageUrl:
-      "https://2.bp.blogspot.com/-gNme-Bd_2b4/WTXnbPJ1OiI/AAAAAAAABJA/xyd9OwT0rVIdQgEIbnTs0RNjnYzvELZ2QCLcB/s1600/9.jpg",
+      "/cards/egyptian/9.jpg",
   },
   {
     id: 10,
@@ -320,7 +320,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Bad luck", "Resistance to change", "Negative cycle"],
     keywords: ["destiny", "change", "cycles"],
     imageUrl:
-      "https://1.bp.blogspot.com/-PF2eY_pjPY8/WTYIo77qDHI/AAAAAAAABKY/nWXH2r1M1X4tUCk0sKmke4SZiFHHHkqZACLcB/s1600/10.jpg",
+      "/cards/egyptian/10.jpg",
   },
   {
     id: 11,
@@ -330,7 +330,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Weakness", "Self-doubt", "Lack of discipline"],
     keywords: ["courage", "inner strength", "compassion"],
     imageUrl:
-      "https://3.bp.blogspot.com/-vI163D-siik/WTcTgstZgZI/AAAAAAAABL4/TXGcb9WfiVcW5Cfm94OJ8ocDp7VJpTVpwCLcB/s1600/11.jpg",
+      "/cards/egyptian/11.jpg",
   },
   {
     id: 12,
@@ -340,7 +340,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Stagnation", "Resistance", "Indecision"],
     keywords: ["sacrifice", "perspective", "pause"],
     imageUrl:
-      "https://1.bp.blogspot.com/-_ootOZLdl6I/WTckXo7k1qI/AAAAAAAABNQ/J2lEkZdabto5_ZPhDdR4q2I7DOCMetbHQCLcB/s1600/12.jpg",
+      "/cards/egyptian/12.jpg",
   },
   {
     id: 13,
@@ -350,7 +350,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Resistance to change", "Stagnation", "Fear"],
     keywords: ["transformation", "ending", "rebirth"],
     imageUrl:
-      "https://2.bp.blogspot.com/-F92LRfD55fI/WTc0Da-fASI/AAAAAAAABOk/p0DhX3x1LocQUOWd58EEiTlUvqreA3KIACLcB/s1600/13.jpg",
+      "/cards/egyptian/13.jpg",
   },
   {
     id: 14,
@@ -360,7 +360,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Imbalance", "Excess", "Impatience"],
     keywords: ["balance", "moderation", "harmony"],
     imageUrl:
-      "https://3.bp.blogspot.com/-WBHIIoA_DWU/WTdYHk9sGXI/AAAAAAAABQA/3jffw6NhyEkQ7gzW5GrxwW63-yvcg9OkACLcB/s1600/14.jpg",
+      "/cards/egyptian/14.jpg",
   },
   {
     id: 15,
@@ -370,7 +370,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Liberation", "Detachment", "Overcoming"],
     keywords: ["addiction", "materialism", "bondage"],
     imageUrl:
-      "https://4.bp.blogspot.com/-zbHDOphnLxY/WTduYyAbibI/AAAAAAAABRk/MbyP_09E3XkYgiFjdwhS1NBqm3kRWg-BwCLcB/s1600/15.jpg",
+      "/cards/egyptian/15.jpg",
   },
   {
     id: 16,
@@ -380,7 +380,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Avoiding disaster", "Fear of change", "Postponement"],
     keywords: ["upheaval", "revelation", "change"],
     imageUrl:
-      "https://4.bp.blogspot.com/-3noIkCkmswg/WTh2Xlpm21I/AAAAAAAABTE/ZE7TndotpRUAdneTDPArchLmGq8xhLOxgCLcB/s1600/16.jpg",
+      "/cards/egyptian/16.jpg",
   },
   {
     id: 17,
@@ -390,7 +390,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Hopelessness", "Lack of faith", "Discouragement"],
     keywords: ["hope", "inspiration", "serenity"],
     imageUrl:
-      "https://2.bp.blogspot.com/--zr0lAM0_jA/WTitW45K3RI/AAAAAAAABTo/3F26O8ew3vEXFzT57ZQhg1NtE3V0AWgOQCEw/s1600/17.jpg",
+      "/cards/egyptian/17.jpg",
   },
   {
     id: 18,
@@ -400,7 +400,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Clarity", "Overcoming fears", "Revealed truth"],
     keywords: ["illusion", "intuition", "mystery"],
     imageUrl:
-      "https://2.bp.blogspot.com/-Q9YnGHulIbY/WTnBCkjeHdI/AAAAAAAABV0/akWV1ppX_DANW1HDQToBOMSPyMrdvoCuACEw/s1600/18.jpg",
+      "/cards/egyptian/18.jpg",
   },
   {
     id: 19,
@@ -410,7 +410,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Excessive optimism", "Depression", "Lack of enthusiasm"],
     keywords: ["success", "joy", "vitality"],
     imageUrl:
-      "https://1.bp.blogspot.com/-tQQV04ZINs4/WTnQUZ6dHRI/AAAAAAAABXc/cTrXSsa7Vm0UbPoCEj71vh5UyW4N6mrKgCLcB/s1600/19.jpg",
+      "/cards/egyptian/19.jpg",
   },
   {
     id: 20,
@@ -420,7 +420,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Self-judgement", "Doubt", "Lack of forgiveness"],
     keywords: ["judgement", "renewal", "calling"],
     imageUrl:
-      "https://2.bp.blogspot.com/-vbBUgjCSKjo/WTnvuWRKQFI/AAAAAAAABXw/_fDRf0F7bdo4TfBDrijqlCOUyvvTl3B5wCLcB/s1600/20.jpg",
+      "/cards/egyptian/20.jpg",
   },
   {
     id: 21,
@@ -430,7 +430,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Incompleteness", "Lack of closure", "Delays"],
     keywords: ["completion", "achievement", "wholeness"],
     imageUrl:
-      "https://4.bp.blogspot.com/-F8_mRBZ57Qk/WToM4yunK8I/AAAAAAAABZQ/fbJ3zu2_tHI3e5jeasZ67lLT1Gho-UCxwCLcB/s1600/21.jpg",
+      "/cards/egyptian/21.jpg",
   },
   {
     id: 22,
@@ -440,7 +440,7 @@ export const EGYPTIAN_DECK: TarotCard[] = [
     reversed: ["Recklessness", "Foolishness", "Unnecessary risk"],
     keywords: ["beginnings", "freedom", "spontaneity"],
     imageUrl:
-      "https://4.bp.blogspot.com/-cNXKdHVFdGU/WTs80n3mNLI/AAAAAAAABag/qjjt7YMluF8OekvzrtTgvET-5_-Twev7QCLcB/s1600/22.jpg",
+      "/cards/egyptian/22.jpg",
   },
 ];
 

@@ -291,7 +291,7 @@ export default function EgyptianTarotPage() {
                         src={card.image}
                         alt={card.name}
                         fill
-                        className="object-cover transition-all group-hover:brightness-110"
+                        className="object-cover grayscale-[35%] transition-all duration-500 group-hover:grayscale-0 group-hover:brightness-110"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-night-950 via-transparent to-transparent opacity-80" />
