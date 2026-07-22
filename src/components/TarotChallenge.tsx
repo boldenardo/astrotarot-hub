@@ -132,10 +132,10 @@ export default function TarotChallenge() {
         transition={{ duration: 0.3 }}
         className="relative z-10 mb-12 text-center"
       >
-        <h2 className="mb-4 font-display text-4xl font-semibold text-ink-50 md:text-5xl">
+        <h2 className="mb-4 font-display text-3xl font-semibold text-ink-50 sm:text-4xl md:text-5xl">
           The Four-Card <span className="text-gold">Challenge</span>
         </h2>
-        <p className="mx-auto max-w-2xl text-lg text-ink-400 md:text-xl">
+        <p className="mx-auto max-w-2xl text-base text-ink-400 sm:text-lg md:text-xl">
           Click the cards to shuffle, then reveal their profound meanings.
         </p>
         {shuffleCount > 0 && (
@@ -151,11 +151,8 @@ export default function TarotChallenge() {
       </motion.div>
 
       {/* Cards Container */}
-      <div
-        className="relative z-10 flex items-center justify-center"
-        style={{ minHeight: "600px" }}
-      >
-        <div className="relative" style={{ width: "340px", height: "550px" }}>
+      <div className="relative z-10 flex min-h-[500px] items-center justify-center sm:min-h-[600px]">
+        <div className="relative h-[460px] w-[280px] sm:h-[550px] sm:w-[340px]">
           {cardStack.map((cardIndex, stackPosition) => {
             const card = cards[cardIndex];
             const zIndex = stackPosition * 10;
@@ -164,12 +161,10 @@ export default function TarotChallenge() {
             return (
               <motion.div
                 key={`${card.id}-${stackPosition}`}
-                className={`absolute bottom-0 left-0 right-0 top-0 m-auto ${
+                className={`absolute bottom-0 left-0 right-0 top-0 m-auto h-[420px] w-[250px] sm:h-[500px] sm:w-[300px] ${
                   isTopCard ? "cursor-pointer" : "cursor-not-allowed"
                 }`}
                 style={{
-                  width: "300px",
-                  height: "500px",
                   zIndex: zIndex,
                 }}
                 initial={false}
@@ -228,7 +223,7 @@ export default function TarotChallenge() {
                         handleCardReveal(card);
                       }}
                     >
-                      <button className="btn-gold flex items-center gap-2 rounded-full px-6 py-3 text-lg font-semibold">
+                      <button className="btn-gold flex items-center gap-2 rounded-full px-5 py-3 text-base font-semibold sm:px-6 sm:text-lg">
                         <Sparkles className="h-5 w-5" />
                         Reveal Meaning
                       </button>
@@ -273,14 +268,15 @@ export default function TarotChallenge() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 50 }}
               transition={{ type: "spring", damping: 25 }}
-              className="glass glass-gold fixed left-0 right-0 top-1/2 z-50 mx-auto max-h-[90vh] max-w-2xl -translate-y-1/2 overflow-y-auto rounded-3xl shadow-glass"
+              className="glass glass-gold fixed left-0 right-0 top-1/2 z-50 mx-auto max-h-[85vh] max-w-2xl -translate-y-1/2 overflow-y-auto overscroll-contain rounded-3xl shadow-glass"
               style={{ width: "calc(100% - 2rem)" }}
             >
-              <div className="relative p-8 md:p-12">
+              <div className="relative p-5 pt-14 sm:p-8 sm:pt-14 md:p-12 md:pt-14">
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedCard(null)}
-                  className="absolute right-4 top-4 rounded-full p-2 text-ink-200 transition-colors hover:bg-white/10 hover:text-gold-300"
+                  aria-label="Close"
+                  className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full text-ink-200 transition-colors hover:bg-white/10 hover:text-gold-300"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -290,17 +286,17 @@ export default function TarotChallenge() {
                   <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
                     <Sparkles className="h-8 w-8 text-gold-300" />
                   </div>
-                  <h3 className="mb-2 font-display text-3xl font-semibold text-gold md:text-4xl">
+                  <h3 className="mb-2 break-words font-display text-2xl font-semibold text-gold sm:text-3xl md:text-4xl">
                     {selectedCard.name}
                   </h3>
-                  <p className="mb-6 text-xl text-gold-300">
+                  <p className="mb-6 text-lg text-gold-300 sm:text-xl">
                     {selectedCard.meaning}
                   </p>
                 </div>
 
                 {/* Description */}
                 <div className="space-y-6">
-                  <p className="text-lg leading-relaxed text-ink-200">
+                  <p className="break-words text-base leading-relaxed text-ink-200 sm:text-lg">
                     {selectedCard.description}
                   </p>
 

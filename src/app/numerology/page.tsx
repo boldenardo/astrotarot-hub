@@ -71,7 +71,7 @@ export default function NumerologyPage() {
       <Navbar />
 
       <PremiumGate feature="numerology">
-      <section className="mx-auto max-w-5xl px-6 pb-24 pt-36">
+      <section className="mx-auto max-w-5xl px-4 pb-16 pt-28 sm:px-6 sm:pb-24 sm:pt-36">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -80,10 +80,10 @@ export default function NumerologyPage() {
           <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
             <Hash className="h-7 w-7 text-night-900" />
           </span>
-          <h1 className="font-display text-5xl font-semibold text-ink-50 md:text-6xl">
+          <h1 className="font-display text-3xl font-semibold text-ink-50 sm:text-5xl md:text-6xl">
             Your <span className="text-gold">Numerology</span> Profile
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-ink-400">
+          <p className="mx-auto mt-4 max-w-2xl text-base text-ink-400 sm:text-lg">
             Your name and birth date carry a numeric blueprint. Discover the
             core numbers that shape your path.
           </p>
@@ -91,7 +91,7 @@ export default function NumerologyPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="glass glass-gold mx-auto mb-12 max-w-xl rounded-4xl p-8"
+          className="glass glass-gold mx-auto mb-12 max-w-xl rounded-4xl p-5 sm:p-8"
         >
           <label className="mb-2 block text-sm font-medium text-ink-200">
             Full name (as given at birth)
@@ -101,7 +101,7 @@ export default function NumerologyPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Sarah Jane Miller"
-            className="mb-5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+            className="mb-5 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
           />
 
           <label className="mb-2 block text-sm font-medium text-ink-200">
@@ -111,7 +111,7 @@ export default function NumerologyPage() {
             type="date"
             value={birth}
             onChange={(e) => setBirth(e.target.value)}
-            className="mb-6 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 focus:border-gold-400/50 focus:outline-none"
+            className="mb-6 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 focus:border-gold-400/50 focus:outline-none [color-scheme:dark]"
           />
 
           {error && (
@@ -168,11 +168,11 @@ export default function NumerologyPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="glass glass-gold rounded-4xl p-8"
+                className="glass glass-gold rounded-4xl p-5 sm:p-8"
               >
                 <div className="mb-4 flex items-center gap-3">
-                  <Sparkles className="h-6 w-6 text-gold-300" />
-                  <h3 className="font-display text-2xl font-semibold text-ink-50">
+                  <Sparkles className="h-6 w-6 flex-shrink-0 text-gold-300" />
+                  <h3 className="font-display text-xl font-semibold text-ink-50 sm:text-2xl">
                     Personalized AI Interpretation
                   </h3>
                 </div>
@@ -190,7 +190,7 @@ export default function NumerologyPage() {
                     Generating your personalized interpretation...
                   </div>
                 ) : (
-                  <p className="whitespace-pre-line leading-relaxed text-ink-200">
+                  <p className="whitespace-pre-line break-words leading-relaxed text-ink-200">
                     {aiInterpretation}
                   </p>
                 )}
@@ -214,9 +214,9 @@ function FeaturedNumber({
   value: NumerologyNumber;
 }) {
   return (
-    <div className="glass glass-gold flex flex-col items-center gap-6 rounded-4xl p-8 text-center md:flex-row md:text-left">
-      <div className="flex h-28 w-28 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
-        <span className="font-display text-5xl font-semibold text-night-900">
+    <div className="glass glass-gold flex flex-col items-center gap-6 rounded-4xl p-6 text-center sm:p-8 md:flex-row md:text-left">
+      <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold sm:h-28 sm:w-28">
+        <span className="font-display text-4xl font-semibold leading-none text-night-900 sm:text-5xl">
           {value.number}
         </span>
       </div>
@@ -231,7 +231,7 @@ function FeaturedNumber({
             </span>
           )}
         </div>
-        <h3 className="font-display text-3xl font-semibold text-ink-50">
+        <h3 className="break-words font-display text-2xl font-semibold text-ink-50 sm:text-3xl">
           {value.title}
         </h3>
         <p className="mt-2 text-ink-400">{value.meaning}</p>
@@ -251,10 +251,10 @@ function NumberCard({
   value: NumerologyNumber;
 }) {
   return (
-    <div className="glass rounded-3xl border-white/5 p-6 transition-colors hover:border-gold-400/30">
+    <div className="glass rounded-3xl border-white/5 p-5 transition-colors hover:border-gold-400/30 sm:p-6">
       <div className="mb-4 flex items-center gap-4">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gold-400/20 bg-gold-400/10">
-          <span className="font-display text-2xl font-semibold text-gold">
+        <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-gold-400/20 bg-gold-400/10">
+          <span className="font-display text-2xl font-semibold leading-none text-gold">
             {value.number}
           </span>
         </span>

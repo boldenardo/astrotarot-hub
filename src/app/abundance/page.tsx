@@ -150,20 +150,20 @@ export default function AbundancePage() {
               </span>
             </div>
 
-            <h1 className="font-display text-5xl md:text-7xl font-semibold text-ink-50 mb-6">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-semibold text-ink-50 mb-6">
               Unlock Your
               <br />
               <span className="text-gold">Prosperity</span>
             </h1>
 
-            <p className="text-xl text-ink-400 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-xl text-ink-400 max-w-3xl mx-auto leading-relaxed">
               Discover the abundance cycles within your natal chart and learn
               exactly when to act to multiply your material wealth
             </p>
           </motion.div>
 
           {/* Abundance Areas Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-20">
             {abundanceAreas.map((area, index) => (
               <motion.div
                 key={index}
@@ -196,10 +196,10 @@ export default function AbundancePage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="glass glass-gold rounded-3xl p-8 md:p-12"
+            className="glass glass-gold rounded-3xl p-5 sm:p-8 md:p-12"
           >
             <div className="text-center mb-10">
-              <h2 className="font-display text-3xl font-semibold text-ink-50 mb-4">
+              <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-4">
                 Personalized <span className="text-gold">Abundance</span> Analysis
               </h2>
               <p className="text-ink-400">
@@ -218,7 +218,7 @@ export default function AbundancePage() {
                   <input
                     type="date"
                     required
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none [color-scheme:dark]"
                     onChange={(e) => {
                       const date = new Date(e.target.value);
                       setFormData({
@@ -239,7 +239,7 @@ export default function AbundancePage() {
                   <input
                     type="time"
                     required
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none [color-scheme:dark]"
                     onChange={(e) => {
                       const [hour, minute] = e.target.value.split(":");
                       setFormData({
@@ -260,7 +260,7 @@ export default function AbundancePage() {
                     type="text"
                     required
                     placeholder="New York"
-                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none [color-scheme:dark]"
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
                     }
@@ -272,7 +272,7 @@ export default function AbundancePage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-gold w-full rounded-full py-4 font-semibold text-lg disabled:opacity-50"
+                className="btn-gold w-full rounded-full py-4 font-semibold text-base sm:text-lg disabled:opacity-50"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -293,7 +293,7 @@ export default function AbundancePage() {
                   {premiumRequired && (
                     <Link
                       href="/cart?plan=premium"
-                      className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
+                      className="btn-gold mt-3 block w-full rounded-full px-6 py-2.5 text-center text-sm font-semibold sm:inline-block sm:w-auto"
                     >
                       Subscribe to Premium Unlimited — $29.90/mo
                     </Link>
@@ -312,7 +312,7 @@ export default function AbundancePage() {
               className="mt-12 space-y-6"
             >
               {/* Current Cycle */}
-              <div className="glass glass-gold rounded-3xl p-8">
+              <div className="glass glass-gold rounded-3xl p-5 sm:p-8">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold flex items-center justify-center">
                     <Star className="w-6 h-6 text-night-900" />
@@ -331,8 +331,8 @@ export default function AbundancePage() {
 
               {/* Abundance Scores */}
               {result.scores && (
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6">
+                <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                  <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6">
                     Abundance Potential
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -369,8 +369,8 @@ export default function AbundancePage() {
               )}
 
               {/* Favorable Periods */}
-              <div className="glass rounded-3xl p-8 border-white/5">
-                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
+              <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
                   <Target className="w-6 h-6 text-gold-400" />
                   Favorable Periods
                 </h3>
@@ -390,8 +390,8 @@ export default function AbundancePage() {
               </div>
 
               {/* Houses Analysis */}
-              <div className="glass rounded-3xl p-8 border-white/5">
-                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6">
+              <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6">
                   Houses of Abundance
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -449,8 +449,8 @@ export default function AbundancePage() {
               </div>
 
               {/* Recommendations */}
-              <div className="glass rounded-3xl p-8 border-white/5">
-                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-6">
+              <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6">
                   Strategic Recommendations
                 </h3>
                 <div className="space-y-3">
@@ -467,8 +467,8 @@ export default function AbundancePage() {
               </div>
 
               {/* Upgrade CTA */}
-              <div className="glass glass-gold rounded-3xl p-8 text-center">
-                <h3 className="font-display text-2xl font-semibold text-ink-50 mb-4">
+              <div className="glass glass-gold rounded-3xl p-5 sm:p-8 text-center">
+                <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-4">
                   Unlock the Full Analysis
                 </h3>
                 <p className="text-ink-400 mb-6">
@@ -477,7 +477,7 @@ export default function AbundancePage() {
                 </p>
                 <Link
                   href="/cart?plan=premium"
-                  className="btn-gold inline-block rounded-full px-8 py-3 font-semibold"
+                  className="btn-gold block w-full rounded-full px-8 py-3 text-center font-semibold sm:inline-block sm:w-auto"
                 >
                   Subscribe to Premium Unlimited — $29.90/mo
                 </Link>

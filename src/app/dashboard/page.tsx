@@ -44,7 +44,7 @@ interface ZodiacSign {
 const zodiacSigns: Record<string, ZodiacSign> = {
   aries: {
     name: "Aries",
-    symbol: "♈",
+    symbol: "♈︎",
     element: "Fire",
     quality: "Cardinal",
     ruler: "Mars",
@@ -53,7 +53,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   taurus: {
     name: "Taurus",
-    symbol: "♉",
+    symbol: "♉︎",
     element: "Earth",
     quality: "Fixed",
     ruler: "Venus",
@@ -62,7 +62,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   gemini: {
     name: "Gemini",
-    symbol: "♊",
+    symbol: "♊︎",
     element: "Air",
     quality: "Mutable",
     ruler: "Mercury",
@@ -71,7 +71,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   cancer: {
     name: "Cancer",
-    symbol: "♋",
+    symbol: "♋︎",
     element: "Water",
     quality: "Cardinal",
     ruler: "Moon",
@@ -80,7 +80,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   leo: {
     name: "Leo",
-    symbol: "♌",
+    symbol: "♌︎",
     element: "Fire",
     quality: "Fixed",
     ruler: "Sun",
@@ -89,7 +89,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   virgo: {
     name: "Virgo",
-    symbol: "♍",
+    symbol: "♍︎",
     element: "Earth",
     quality: "Mutable",
     ruler: "Mercury",
@@ -98,7 +98,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   libra: {
     name: "Libra",
-    symbol: "♎",
+    symbol: "♎︎",
     element: "Air",
     quality: "Cardinal",
     ruler: "Venus",
@@ -107,7 +107,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   scorpio: {
     name: "Scorpio",
-    symbol: "♏",
+    symbol: "♏︎",
     element: "Water",
     quality: "Fixed",
     ruler: "Pluto",
@@ -116,7 +116,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   sagittarius: {
     name: "Sagittarius",
-    symbol: "♐",
+    symbol: "♐︎",
     element: "Fire",
     quality: "Mutable",
     ruler: "Jupiter",
@@ -125,7 +125,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   capricorn: {
     name: "Capricorn",
-    symbol: "♑",
+    symbol: "♑︎",
     element: "Earth",
     quality: "Cardinal",
     ruler: "Saturn",
@@ -134,7 +134,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   aquarius: {
     name: "Aquarius",
-    symbol: "♒",
+    symbol: "♒︎",
     element: "Air",
     quality: "Fixed",
     ruler: "Uranus",
@@ -143,7 +143,7 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   pisces: {
     name: "Pisces",
-    symbol: "♓",
+    symbol: "♓︎",
     element: "Water",
     quality: "Mutable",
     ruler: "Neptune",
@@ -182,8 +182,10 @@ function spreadLabel(spread: string | null): string {
     "3": "3-Card Spread",
     "5": "5-Card Spread",
     "7": "7-Card Spread",
+    FOUR_CARDS: "4-Card Spread",
+    FULL_SPREAD: "Full Spread",
   };
-  return map[spread] ?? `Spread: ${spread}`;
+  return map[spread] ?? "Tarot Spread";
 }
 
 export default function DashboardPage() {
@@ -401,7 +403,7 @@ export default function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="font-display text-4xl font-semibold text-ink-50 mb-2">
+          <h1 className="font-display text-3xl sm:text-4xl font-semibold text-ink-50 mb-2 break-words">
             Welcome back,{" "}
             <span className="text-gold">{user?.name || "Seeker"}</span>
           </h1>
@@ -465,18 +467,23 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="glass glass-gold rounded-3xl p-8 mb-8 relative overflow-hidden"
+            className="glass glass-gold rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 text-[200px] leading-none text-gold-400/10">
+            <div className="absolute top-0 right-0 hidden sm:block text-[200px] leading-none text-gold-400/10 pointer-events-none select-none">
               {zodiacSign.sign.symbol}
             </div>
             <div className="relative z-10">
               <p className="text-gold-300 text-sm font-semibold uppercase tracking-wider mb-2">
                 Your Sun Sign
               </p>
-              <h3 className="font-display text-5xl font-semibold text-ink-50 mb-2">
-                {zodiacSign.sign.symbol} {zodiacSign.sign.name}
-              </h3>
+              <div className="flex items-center gap-4 mb-2">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400/20 to-purple-500/20 border border-gold-400/30 text-3xl leading-none text-gold-300">
+                  {zodiacSign.sign.symbol}
+                </span>
+                <h3 className="font-display text-3xl sm:text-5xl font-semibold text-ink-50 break-words">
+                  {zodiacSign.sign.name}
+                </h3>
+              </div>
               <p className="text-ink-400 mb-4">{zodiacSign.sign.dates}</p>
               <div className="flex flex-wrap gap-2">
                 {zodiacSign.sign.traits.map((trait: string) => (
@@ -522,7 +529,9 @@ export default function DashboardPage() {
               {/* Sun */}
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2 text-gold-300">
-                  <span className="text-xl">☉</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-lg leading-none text-gold-300">
+                    {"☉︎"}
+                  </span>
                   <span className="font-semibold">
                     Sun in {birthChart.sun.sign}
                   </span>
@@ -538,7 +547,9 @@ export default function DashboardPage() {
               {/* Moon */}
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2 text-amethyst-300">
-                  <span className="text-xl">☽</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-lg leading-none text-gold-300">
+                    {"☽︎"}
+                  </span>
                   <span className="font-semibold">
                     Moon in {birthChart.moon.sign}
                   </span>
@@ -554,7 +565,9 @@ export default function DashboardPage() {
               {/* Ascendant */}
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2 text-ink-300">
-                  <span className="text-xl">↑</span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-lg leading-none text-gold-300">
+                    {"↑︎"}
+                  </span>
                   <span className="font-semibold">
                     Ascendant in {birthChart.ascendant.sign}
                   </span>
@@ -591,8 +604,8 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="glass glass-gold rounded-3xl p-8 mb-8 text-center relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 text-[160px] leading-none text-gold-400/10 pointer-events-none">
-              ★
+            <div className="absolute top-0 right-0 hidden sm:block text-[160px] leading-none text-gold-400/10 pointer-events-none select-none">
+              {"★︎"}
             </div>
             <div className="relative z-10">
               <Lock className="w-12 h-12 text-gold-300 mx-auto mb-4" />
@@ -609,10 +622,12 @@ export default function DashboardPage() {
                 onClick={() =>
                   trackSubscriptionUpgradeClicked("premium_monthly")
                 }
-                className="btn-gold inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
+                className="btn-gold inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full px-6 sm:px-8 py-4 text-base sm:text-lg"
               >
-                <Crown className="w-6 h-6" />
-                Unlock with Unlimited Premium — $29.90/month
+                <Crown className="w-6 h-6 shrink-0" />
+                <span className="break-words">
+                  Unlock with Unlimited Premium — $29.90/month
+                </span>
               </Link>
             </div>
           </motion.div>
@@ -650,7 +665,7 @@ export default function DashboardPage() {
           <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4">
             Quick Actions
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
               const showPremiumBadge = action.premiumOnly && isFree;
@@ -738,7 +753,7 @@ export default function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <p className="text-ink-300 line-clamp-2">
+                  <p className="text-ink-300 line-clamp-2 break-words">
                     {reading.interpretation || "Reading saved."}
                   </p>
                 </div>
@@ -757,7 +772,7 @@ export default function DashboardPage() {
           >
             <div className="text-center">
               <Crown className="w-20 h-20 text-gold-300 mx-auto mb-4" />
-              <h3 className="font-display text-3xl font-semibold text-ink-50 mb-3">
+              <h3 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-3">
                 Unlock All the Mystic Power
               </h3>
               <p className="text-xl text-ink-300 mb-6">
@@ -770,14 +785,14 @@ export default function DashboardPage() {
                   onClick={() =>
                     trackSubscriptionUpgradeClicked("premium_monthly")
                   }
-                  className="btn-gold inline-flex items-center gap-2 rounded-full px-8 py-4 text-lg"
+                  className="btn-gold inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full px-8 py-4 text-lg"
                 >
                   <Crown className="w-6 h-6" />
                   Subscribe Now
                 </Link>
                 <Link
                   href="/cart?plan=pack5"
-                  className="btn-ghost inline-flex items-center gap-2 rounded-full px-8 py-4"
+                  className="btn-ghost inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full px-8 py-4"
                 >
                   <Sparkles className="w-5 h-5 text-gold-300" />
                   Or buy 5 readings for $9.99

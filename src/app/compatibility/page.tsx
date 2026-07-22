@@ -53,7 +53,7 @@ interface CompatibilityResult {
 const zodiacSigns = [
   {
     name: "Aries",
-    emoji: "♈",
+    emoji: "♈︎",
     element: "Fire",
     dates: "Mar 21 – Apr 19",
     perfectMatches: ["Leo", "Sagittarius", "Gemini"],
@@ -62,7 +62,7 @@ const zodiacSigns = [
   },
   {
     name: "Taurus",
-    emoji: "♉",
+    emoji: "♉︎",
     element: "Earth",
     dates: "Apr 20 – May 20",
     perfectMatches: ["Virgo", "Capricorn", "Cancer"],
@@ -71,7 +71,7 @@ const zodiacSigns = [
   },
   {
     name: "Gemini",
-    emoji: "♊",
+    emoji: "♊︎",
     element: "Air",
     dates: "May 21 – Jun 20",
     perfectMatches: ["Libra", "Aquarius", "Aries"],
@@ -80,7 +80,7 @@ const zodiacSigns = [
   },
   {
     name: "Cancer",
-    emoji: "♋",
+    emoji: "♋︎",
     element: "Water",
     dates: "Jun 21 – Jul 22",
     perfectMatches: ["Scorpio", "Pisces", "Taurus"],
@@ -89,7 +89,7 @@ const zodiacSigns = [
   },
   {
     name: "Leo",
-    emoji: "♌",
+    emoji: "♌︎",
     element: "Fire",
     dates: "Jul 23 – Aug 22",
     perfectMatches: ["Aries", "Sagittarius", "Libra"],
@@ -98,7 +98,7 @@ const zodiacSigns = [
   },
   {
     name: "Virgo",
-    emoji: "♍",
+    emoji: "♍︎",
     element: "Earth",
     dates: "Aug 23 – Sep 22",
     perfectMatches: ["Taurus", "Capricorn", "Scorpio"],
@@ -107,7 +107,7 @@ const zodiacSigns = [
   },
   {
     name: "Libra",
-    emoji: "♎",
+    emoji: "♎︎",
     element: "Air",
     dates: "Sep 23 – Oct 22",
     perfectMatches: ["Gemini", "Aquarius", "Leo"],
@@ -116,7 +116,7 @@ const zodiacSigns = [
   },
   {
     name: "Scorpio",
-    emoji: "♏",
+    emoji: "♏︎",
     element: "Water",
     dates: "Oct 23 – Nov 21",
     perfectMatches: ["Cancer", "Pisces", "Virgo"],
@@ -125,7 +125,7 @@ const zodiacSigns = [
   },
   {
     name: "Sagittarius",
-    emoji: "♐",
+    emoji: "♐︎",
     element: "Fire",
     dates: "Nov 22 – Dec 21",
     perfectMatches: ["Aries", "Leo", "Aquarius"],
@@ -134,7 +134,7 @@ const zodiacSigns = [
   },
   {
     name: "Capricorn",
-    emoji: "♑",
+    emoji: "♑︎",
     element: "Earth",
     dates: "Dec 22 – Jan 19",
     perfectMatches: ["Taurus", "Virgo", "Pisces"],
@@ -143,7 +143,7 @@ const zodiacSigns = [
   },
   {
     name: "Aquarius",
-    emoji: "♒",
+    emoji: "♒︎",
     element: "Air",
     dates: "Jan 20 – Feb 18",
     perfectMatches: ["Gemini", "Libra", "Sagittarius"],
@@ -152,7 +152,7 @@ const zodiacSigns = [
   },
   {
     name: "Pisces",
-    emoji: "♓",
+    emoji: "♓︎",
     element: "Water",
     dates: "Feb 19 – Mar 20",
     perfectMatches: ["Cancer", "Scorpio", "Capricorn"],
@@ -277,10 +277,10 @@ export default function CompatibilityPage() {
             />
           </motion.div>
 
-          <h1 className="font-display text-5xl md:text-7xl font-semibold mb-4 text-ink-50">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-semibold mb-4 text-ink-50 break-words">
             Love <span className="text-gold">Compatibility</span>
           </h1>
-          <p className="text-xl text-ink-400 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-ink-400 max-w-2xl mx-auto">
             Discover the depth of your connection through the ancient wisdom of
             the stars.
           </p>
@@ -302,7 +302,7 @@ export default function CompatibilityPage() {
                 </div>
                 {s < 3 && (
                   <div
-                    className={`w-20 h-1 ${
+                    className={`w-10 sm:w-20 h-1 ${
                       step > s
                         ? "bg-gradient-to-r from-gold-300 to-gold-500"
                         : "bg-white/10"
@@ -396,7 +396,7 @@ export default function CompatibilityPage() {
                   fill="currentColor"
                 />
               </motion.div>
-              <h2 className="font-display text-4xl md:text-5xl font-semibold mb-4 text-ink-50">
+              <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 text-ink-50">
                 The 12 Zodiac <span className="text-gold">Signs</span>
               </h2>
               <p className="text-lg text-ink-400 max-w-2xl mx-auto">
@@ -405,7 +405,7 @@ export default function CompatibilityPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 relative z-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 relative z-10">
               {zodiacSigns.map((sign, index) => (
                 <motion.div
                   key={sign.name}
@@ -424,7 +424,7 @@ export default function CompatibilityPage() {
                       <motion.div
                         whileHover={{ scale: 1.2, rotate: 360 }}
                         transition={{ duration: 0.6 }}
-                        className="text-6xl mb-2 inline-block text-gold"
+                        className="mx-auto mb-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-gold-400/30 bg-gold-400/10 text-2xl leading-none text-gold-300"
                       >
                         {sign.emoji}
                       </motion.div>
@@ -591,7 +591,7 @@ function PersonForm({
       exit={{ opacity: 0, x: -50 }}
       className="max-w-2xl mx-auto"
     >
-      <div className="glass glass-gold rounded-3xl p-8 md:p-12">
+      <div className="glass glass-gold rounded-3xl p-6 sm:p-8 md:p-12">
         <div className="text-center mb-8">
           <span className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
             <Icon className="h-8 w-8 text-gold-300" />
@@ -616,7 +616,7 @@ function PersonForm({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 text-ink-200">
                 Day
@@ -667,7 +667,7 @@ function PersonForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 text-ink-200">
                 Hour
@@ -716,7 +716,7 @@ function PersonForm({
           </div>
         </div>
 
-        <div className="flex gap-4 mt-8">
+        <div className="flex flex-col sm:flex-row gap-4 mt-8">
           {onBack && (
             <button
               onClick={onBack}
@@ -773,20 +773,23 @@ function ResultScreen({
       className="max-w-4xl mx-auto space-y-8"
     >
       {/* Score Card */}
-      <div className="glass glass-gold rounded-3xl p-8 md:p-12 text-center">
+      <div className="glass glass-gold rounded-3xl p-6 sm:p-8 md:p-12 text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: "spring" }}
           className="mb-8"
         >
-          <div className="text-8xl font-display font-semibold text-gold mb-4">
+          <div className="text-6xl sm:text-8xl font-display font-semibold text-gold mb-4">
             {result.overall}%
           </div>
-          <div className="flex items-center justify-center gap-3 text-2xl text-ink-200">
-            <span>{person1Name}</span>
-            <Heart className="w-8 h-8 text-gold-400" fill="currentColor" />
-            <span>{person2Name}</span>
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xl sm:text-2xl text-ink-200">
+            <span className="break-words">{person1Name}</span>
+            <Heart
+              className="w-8 h-8 shrink-0 text-gold-400"
+              fill="currentColor"
+            />
+            <span className="break-words">{person2Name}</span>
           </div>
         </motion.div>
 
@@ -813,7 +816,7 @@ function ResultScreen({
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="glass rounded-3xl p-8 md:p-12 border-white/5 space-y-8"
+        className="glass rounded-3xl p-6 sm:p-8 md:p-12 border-white/5 space-y-8"
       >
         <div className="flex items-center gap-3 mb-6">
           <Sparkles className="w-6 h-6 text-gold-300" />

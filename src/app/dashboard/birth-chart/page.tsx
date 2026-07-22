@@ -56,30 +56,30 @@ function stripAccents(value: string): string {
 }
 
 const planetSymbols: Record<string, string> = {
-  sun: "☉",
-  sol: "☉",
-  moon: "☽",
-  lua: "☽",
-  mercury: "☿",
-  mercurio: "☿",
-  venus: "♀",
-  mars: "♂",
-  marte: "♂",
-  jupiter: "♃",
-  saturn: "♄",
-  saturno: "♄",
-  uranus: "♅",
-  urano: "♅",
-  neptune: "♆",
-  netuno: "♆",
-  pluto: "♇",
-  plutao: "♇",
-  node: "☊",
-  nodo: "☊",
-  chiron: "⚷",
-  quiron: "⚷",
-  fortuna: "⊗",
-  lilith: "⚸",
+  sun: "☉︎",
+  sol: "☉︎",
+  moon: "☽︎",
+  lua: "☽︎",
+  mercury: "☿︎",
+  mercurio: "☿︎",
+  venus: "♀︎",
+  mars: "♂︎",
+  marte: "♂︎",
+  jupiter: "♃︎",
+  saturn: "♄︎",
+  saturno: "♄︎",
+  uranus: "♅︎",
+  urano: "♅︎",
+  neptune: "♆︎",
+  netuno: "♆︎",
+  pluto: "♇︎",
+  plutao: "♇︎",
+  node: "☊︎",
+  nodo: "☊︎",
+  chiron: "⚷︎",
+  quiron: "⚷︎",
+  fortuna: "⊗︎",
+  lilith: "⚸︎",
 };
 
 const planetNames: Record<string, string> = {
@@ -241,13 +241,13 @@ export default function BirthChartPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="glass glass-gold rounded-3xl p-8 mb-12"
+            className="glass glass-gold rounded-3xl p-6 sm:p-8 mb-12"
           >
             <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4 flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-gold-300" />
+              <Sparkles className="w-6 h-6 shrink-0 text-gold-300" />
               Cosmic Essence
             </h2>
-            <p className="text-ink-300 leading-relaxed text-lg">
+            <p className="text-ink-300 leading-relaxed text-base sm:text-lg break-words">
               {chartData.interpretation}
             </p>
           </motion.div>
@@ -305,7 +305,9 @@ export default function BirthChartPage() {
               className="glass rounded-3xl p-6 border-white/5"
             >
               <div className="flex items-center gap-3 mb-4 text-ink-300">
-                <span className="text-3xl font-serif">↑</span>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl leading-none text-gold-300">
+                  {"↑︎"}
+                </span>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
                     Ascendant
@@ -328,7 +330,7 @@ export default function BirthChartPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <div className="flex gap-4 mb-6 border-b border-white/10 pb-2">
+              <div className="flex flex-wrap gap-2 sm:gap-4 mb-6 border-b border-white/10 pb-2">
                 <button
                   onClick={() => setActiveTab("planets")}
                   className={`pb-2 px-4 font-semibold transition-colors ${
@@ -366,14 +368,14 @@ export default function BirthChartPage() {
                       return (
                         <div
                           key={i}
-                          className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                          className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition-colors"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-night-800 flex items-center justify-center text-xl text-gold-300">
+                          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                            <div className="w-10 h-10 shrink-0 rounded-full bg-night-800 flex items-center justify-center text-xl leading-none text-gold-300">
                               {planetSymbols[k] || "•"}
                             </div>
-                            <div>
-                              <p className="font-semibold text-ink-50">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-ink-50 text-sm sm:text-base break-words">
                                 {planetNames[k] || planet.name || "—"}
                               </p>
                               <p className="text-xs text-ink-600">
@@ -381,8 +383,8 @@ export default function BirthChartPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gold-300">
+                          <div className="text-right shrink-0">
+                            <p className="font-semibold text-gold-300 text-sm sm:text-base">
                               {planet.sign}
                             </p>
                             <p className="text-xs text-ink-600">
@@ -407,20 +409,20 @@ export default function BirthChartPage() {
                       return (
                         <div
                           key={i}
-                          className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors"
+                          className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition-colors"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-full bg-night-800 flex items-center justify-center font-bold text-ink-400">
+                          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                            <div className="w-10 h-10 shrink-0 rounded-full bg-night-800 flex items-center justify-center font-bold leading-none text-ink-400">
                               {num}
                             </div>
-                            <div>
-                              <p className="font-semibold text-ink-50">
+                            <div className="min-w-0">
+                              <p className="font-semibold text-ink-50 text-sm sm:text-base">
                                 House {num}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-gold-300">
+                          <div className="text-right shrink-0">
+                            <p className="font-semibold text-gold-300 text-sm sm:text-base">
                               {house.sign}
                             </p>
                             <p className="text-xs text-ink-600">

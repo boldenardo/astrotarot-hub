@@ -70,9 +70,9 @@ function PlansContent() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-12 text-center"
         >
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Sparkles className="w-10 h-10 text-gold-400" />
-            <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink-50">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0 text-gold-400" />
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-ink-50">
               Choose your <span className="text-gold">plan</span>
             </h1>
           </div>
@@ -94,29 +94,29 @@ function PlansContent() {
         )}
 
         {/* Plan cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-stretch">
           {/* 5-Reading Pack */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className={`glass rounded-3xl p-8 flex flex-col transition-all ${
+            className={`glass rounded-3xl p-6 sm:p-8 flex flex-col transition-all ${
               highlightedPlan === "PACK5"
                 ? "border-gold-400/60 ring-1 ring-gold-400/40"
                 : "border-white/5 hover:border-gold-400/30"
             }`}
           >
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <div className="w-12 h-12 flex-shrink-0 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-gold-300" />
               </div>
-              <h2 className="font-display text-2xl font-semibold text-ink-50">
+              <h2 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 break-words">
                 {pack5.name}
               </h2>
             </div>
 
             <div className="mb-6 mt-4">
-              <span className="text-4xl font-semibold text-ink-50">
+              <span className="text-3xl sm:text-4xl font-semibold text-ink-50">
                 {pack5.priceLabel}
               </span>
               <span className="text-ink-400 ml-2 text-sm">{pack5.period}</span>
@@ -152,7 +152,7 @@ function PlansContent() {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className={`relative glass glass-gold rounded-3xl p-8 flex flex-col transition-all ${
+            className={`relative glass glass-gold rounded-3xl p-6 sm:p-8 flex flex-col transition-all ${
               highlightedPlan === "PREMIUM"
                 ? "border-gold-400/70 ring-2 ring-gold-400/40"
                 : "hover:border-gold-400/50"
@@ -167,16 +167,16 @@ function PlansContent() {
             </div>
 
             <div className="flex items-center gap-3 mb-2 mt-2">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold flex items-center justify-center">
+              <div className="w-12 h-12 flex-shrink-0 rounded-2xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold flex items-center justify-center">
                 <Crown className="w-6 h-6 text-night-900" />
               </div>
-              <h2 className="font-display text-2xl font-semibold text-ink-50">
+              <h2 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 break-words">
                 {premium.name}
               </h2>
             </div>
 
             <div className="mb-6 mt-4">
-              <span className="text-4xl font-semibold text-gold">
+              <span className="text-3xl sm:text-4xl font-semibold text-gold">
                 {premium.priceLabel}
               </span>
               <span className="text-ink-400 ml-2 text-sm">
@@ -245,7 +245,7 @@ function PlansContent() {
         >
           <Link
             href="/"
-            className="text-gold-300 hover:text-gold-200 transition-colors inline-flex items-center gap-2"
+            className="text-gold-300 hover:text-gold-200 transition-colors inline-flex items-center gap-2 px-4 py-2.5"
           >
             <ArrowLeft className="w-4 h-4" />
             Keep exploring

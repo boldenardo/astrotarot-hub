@@ -19,7 +19,7 @@ function SuccessContent() {
         <motion.div
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="glass glass-gold rounded-3xl p-10 text-center"
+          className="glass glass-gold rounded-3xl p-6 text-center sm:p-10"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -30,7 +30,7 @@ function SuccessContent() {
             <CheckCircle2 className="w-10 h-10 text-night-900" />
           </motion.div>
 
-          <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50 mb-4">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-ink-50 mb-4">
             Payment <span className="text-gold">confirmed!</span>
           </h1>
 
@@ -42,14 +42,14 @@ function SuccessContent() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/dashboard"
-              className="btn-gold rounded-full px-8 py-4 font-semibold transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
+              className="btn-gold w-full sm:w-auto rounded-full px-8 py-4 font-semibold transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
             >
               <LayoutDashboard className="w-5 h-5" />
               Go to dashboard
             </Link>
             <Link
               href="/tarot"
-              className="rounded-full px-8 py-4 font-semibold border border-gold-400/40 bg-white/5 text-gold-300 hover:border-gold-400/70 hover:bg-white/10 transition-all inline-flex items-center justify-center gap-2"
+              className="w-full sm:w-auto rounded-full px-8 py-4 font-semibold border border-gold-400/40 bg-white/5 text-gold-300 hover:border-gold-400/70 hover:bg-white/10 transition-all inline-flex items-center justify-center gap-2"
             >
               <Sparkles className="w-5 h-5" />
               Get a reading

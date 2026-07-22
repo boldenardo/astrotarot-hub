@@ -138,7 +138,7 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-32">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-28 sm:px-6 sm:pt-32">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           <div className="text-center lg:text-left">
             <motion.div
@@ -157,7 +157,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.15 }}
-              className="font-display text-5xl font-semibold leading-[1.05] text-ink-50 md:text-7xl lg:text-[5.25rem]"
+              className="break-words font-display text-4xl font-semibold leading-[1.05] text-ink-50 sm:text-5xl md:text-7xl lg:text-[5.25rem]"
             >
               Unlock your <span className="text-gold">inner power</span>
               <br />
@@ -168,7 +168,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
-              className="mx-auto mt-6 max-w-xl text-lg text-ink-400 lg:mx-0 lg:text-xl"
+              className="mx-auto mt-6 max-w-xl text-base text-ink-400 sm:text-lg lg:mx-0 lg:text-xl"
             >
               Connect with the universe through personalized tarot readings,
               detailed birth charts, and celestial guidance to light up your
@@ -183,14 +183,14 @@ export default function HeroSection() {
             >
               <Link
                 href="/challenge"
-                className="btn-gold flex items-center gap-2 rounded-full px-8 py-4 text-base"
+                className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-base sm:w-auto"
               >
                 <Sparkles className="h-5 w-5" />
                 Start Free
               </Link>
               <Link
                 href="/cart?plan=premium"
-                className="btn-ghost flex items-center gap-2 rounded-full px-8 py-4 text-base font-medium"
+                className="btn-ghost flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-base font-medium sm:w-auto"
               >
                 <Star className="h-5 w-5 text-gold-300" />
                 Unlock Premium

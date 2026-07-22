@@ -288,10 +288,10 @@ export default function PredictionsPage() {
             >
               <Sun className="w-16 h-16 text-gold-400" />
             </motion.div>
-            <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink-50 mb-4">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-ink-50 mb-4 break-words">
               Your Daily <span className="text-gold">Forecast</span>
             </h1>
-            <p className="text-xl text-ink-400 capitalize">
+            <p className="text-lg sm:text-xl text-ink-400 capitalize">
               {currentDate.toLocaleDateString("en-US", {
                 weekday: "long",
                 day: "numeric",
@@ -309,7 +309,7 @@ export default function PredictionsPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="glass rounded-3xl p-8 border-white/5 max-w-2xl mx-auto"
+                className="glass rounded-3xl p-6 sm:p-8 border-white/5 max-w-2xl mx-auto"
               >
                 <div className="text-center mb-6">
                   <h2 className="font-display text-2xl font-semibold text-ink-50 mb-2">
@@ -343,7 +343,7 @@ export default function PredictionsPage() {
                       <Calendar className="w-5 h-5 text-gold-300" />
                       Date of birth
                     </label>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <input
                         type="number"
                         name="day"
@@ -497,14 +497,14 @@ export default function PredictionsPage() {
                 className="space-y-6"
               >
                 {/* Moon phase */}
-                <div className="glass glass-gold rounded-3xl p-8 text-center">
+                <div className="glass glass-gold rounded-3xl p-6 sm:p-8 text-center">
                   <span className="mx-auto mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
                     <Moon className="h-8 w-8 text-gold-300" />
                   </span>
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-2">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-2 break-words">
                     {prediction.moonPhase.name}
                   </h2>
-                  <p className="text-xl text-ink-400">
+                  <p className="text-lg sm:text-xl text-ink-400 break-words">
                     {prediction.moonPhase.meaning}
                   </p>
                 </div>
@@ -541,8 +541,8 @@ export default function PredictionsPage() {
                 </div>
 
                 {/* Today's energies */}
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                <div className="glass rounded-3xl p-6 sm:p-8 border-white/5">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 text-center">
                     Today&apos;s energies
                   </h2>
                   <div className="space-y-6">
@@ -557,8 +557,8 @@ export default function PredictionsPage() {
                 </div>
 
                 {/* Best times */}
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                <div className="glass rounded-3xl p-6 sm:p-8 border-white/5">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 text-center">
                     Best times of day
                   </h2>
                   <div className="grid md:grid-cols-3 gap-6">
@@ -599,7 +599,7 @@ export default function PredictionsPage() {
                     <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
                       Lucky color
                     </h3>
-                    <p className="text-3xl font-bold text-gold-300 capitalize">
+                    <p className="text-2xl sm:text-3xl font-bold text-gold-300 capitalize break-words">
                       {prediction.luckyColor}
                     </p>
                   </div>
@@ -609,7 +609,7 @@ export default function PredictionsPage() {
                     <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
                       Lucky number
                     </h3>
-                    <p className="text-5xl font-bold text-gold-300">
+                    <p className="text-4xl sm:text-5xl font-bold text-gold-300">
                       {prediction.luckyNumber}
                     </p>
                   </div>
@@ -617,8 +617,8 @@ export default function PredictionsPage() {
 
                 {/* Key transits */}
                 {prediction.majorTransits.length > 0 && (
-                  <div className="glass rounded-3xl p-8 border-white/5">
-                    <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                  <div className="glass rounded-3xl p-6 sm:p-8 border-white/5">
+                    <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 text-center">
                       Key astrological transits
                     </h2>
                     <div className="space-y-4">
@@ -628,14 +628,14 @@ export default function PredictionsPage() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.1 }}
-                          className="bg-white/5 rounded-2xl p-6 border border-white/5"
+                          className="bg-white/5 rounded-2xl p-4 sm:p-6 border border-white/5"
                         >
-                          <div className="flex items-start gap-4">
-                            <div className="bg-gold-400/10 rounded-full p-3">
+                          <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="bg-gold-400/10 rounded-full p-3 shrink-0">
                               <Moon className="w-6 h-6 text-gold-300" />
                             </div>
-                            <div className="flex-1">
-                              <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-display text-lg sm:text-xl font-semibold text-ink-50 mb-2 break-words">
                                 {transit.transit} in {transit.aspect} with{" "}
                                 {transit.natal}
                               </h3>

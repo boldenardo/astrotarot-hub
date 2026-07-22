@@ -158,7 +158,7 @@ export default function EgyptianTarotPage() {
       </div>
 
       {/* Back button */}
-      <div className="fixed left-6 top-6 z-50">
+      <div className="fixed left-4 top-4 z-50 sm:left-6 sm:top-6">
         <Link
           href="/"
           className="glass glass-gold flex items-center gap-2 rounded-full px-4 py-2 text-ink-200 transition-colors hover:text-gold-300"
@@ -168,19 +168,19 @@ export default function EgyptianTarotPage() {
         </Link>
       </div>
 
-      <div className="container relative z-10 mx-auto px-4 py-16">
+      <div className="container relative z-10 mx-auto px-4 pb-16 pt-20 sm:py-16">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-12 text-center"
         >
-          <div className="mb-4 flex items-center justify-center gap-3">
-            <Sparkles className="h-8 w-8 text-gold-300" />
-            <h1 className="font-display text-5xl font-semibold text-ink-50 md:text-6xl">
+          <div className="mb-4 flex items-center justify-center gap-2 sm:gap-3">
+            <Sparkles className="h-6 w-6 flex-shrink-0 text-gold-300 sm:h-8 sm:w-8" />
+            <h1 className="font-display text-3xl font-semibold text-ink-50 sm:text-5xl md:text-6xl">
               Egyptian <span className="text-gold">Tarot</span>
             </h1>
-            <Sparkles className="h-8 w-8 text-gold-300" />
+            <Sparkles className="h-6 w-6 flex-shrink-0 text-gold-300 sm:h-8 sm:w-8" />
           </div>
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
             Major Arcana
@@ -198,9 +198,9 @@ export default function EgyptianTarotPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass glass-gold mx-auto max-w-md rounded-3xl p-8 shadow-glass"
+            className="glass glass-gold mx-auto max-w-md rounded-3xl p-5 shadow-glass sm:p-8"
           >
-            <h2 className="mb-6 text-center font-display text-2xl font-semibold text-ink-50">
+            <h2 className="mb-6 text-center font-display text-xl font-semibold text-ink-50 sm:text-2xl">
               How many cards would you like to draw?
             </h2>
 
@@ -209,7 +209,7 @@ export default function EgyptianTarotPage() {
                 <button
                   key={num}
                   onClick={() => setNumCards(num)}
-                  className={`w-full rounded-2xl px-6 py-3 font-semibold transition-all ${
+                  className={`w-full rounded-2xl px-4 py-3 text-sm font-semibold transition-all sm:px-6 sm:text-base ${
                     numCards === num
                       ? "scale-[1.02] bg-gradient-to-br from-gold-200 to-gold-600 text-night-900 shadow-gold"
                       : "border border-white/10 bg-white/5 text-ink-200 hover:border-gold-400/40 hover:text-gold-300"
@@ -235,14 +235,14 @@ export default function EgyptianTarotPage() {
                     Math.min(22, Math.max(1, parseInt(e.target.value) || 1))
                   )
                 }
-                className="w-full rounded-2xl border border-white/10 bg-night-900/60 px-4 py-3 text-ink-100 focus:border-gold-400/40 focus:outline-none focus:ring-2 focus:ring-gold-400/40"
+                className="w-full rounded-2xl border border-white/10 bg-night-900/60 px-4 py-3 text-base text-ink-100 focus:border-gold-400/40 focus:outline-none focus:ring-2 focus:ring-gold-400/40"
               />
             </div>
 
             <button
               onClick={drawCards}
               disabled={isDrawing}
-              className="btn-gold flex w-full items-center justify-center gap-2 rounded-full py-4 text-lg font-bold disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-gold flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-bold disabled:cursor-not-allowed disabled:opacity-50 sm:text-lg"
             >
               {isDrawing ? (
                 <>
@@ -277,7 +277,7 @@ export default function EgyptianTarotPage() {
               exit={{ opacity: 0 }}
             >
               {/* Cards grid */}
-              <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className="mb-12 grid grid-cols-2 gap-3 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
                 {drawnCards.map((card, index) => (
                   <motion.div
                     key={card.id}
@@ -292,14 +292,14 @@ export default function EgyptianTarotPage() {
                         alt={card.name}
                         fill
                         className="object-cover grayscale-[35%] transition-all duration-500 group-hover:grayscale-0 group-hover:brightness-110"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-night-950 via-transparent to-transparent opacity-80" />
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <p className="mb-1 text-xs font-semibold text-gold-300">
+                      <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-4">
+                        <p className="mb-1 truncate text-[10px] font-semibold text-gold-300 sm:text-xs">
                           {card.position}
                         </p>
-                        <h3 className="text-lg font-bold text-ink-50">
+                        <h3 className="break-words text-sm font-bold leading-snug text-ink-50 sm:text-lg">
                           {card.name}
                         </h3>
                       </div>
@@ -313,11 +313,11 @@ export default function EgyptianTarotPage() {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: drawnCards.length * 0.2 + 0.3 }}
-                className="glass glass-gold mx-auto max-w-4xl rounded-3xl p-8 shadow-glass md:p-12"
+                className="glass glass-gold mx-auto max-w-4xl rounded-3xl p-5 shadow-glass sm:p-8 md:p-12"
               >
                 <div className="mb-6 flex items-center gap-3">
-                  <Sparkles className="h-6 w-6 text-gold-300" />
-                  <h2 className="font-display text-3xl font-semibold text-gold">
+                  <Sparkles className="h-6 w-6 flex-shrink-0 text-gold-300" />
+                  <h2 className="font-display text-2xl font-semibold text-gold sm:text-3xl">
                     Mystic Interpretation
                   </h2>
                 </div>
@@ -370,7 +370,7 @@ export default function EgyptianTarotPage() {
                   </div>
                 ) : (
                   <div className="prose prose-invert max-w-none">
-                    <p className="whitespace-pre-line text-lg leading-relaxed text-ink-200">
+                    <p className="whitespace-pre-line break-words text-base leading-relaxed text-ink-200 sm:text-lg">
                       {aiInterpretation}
                     </p>
                     {readingsLeft !== null && (

@@ -128,7 +128,8 @@ export default function Navbar() {
             {/* Mobile toggle */}
             <button
               type="button"
-              aria-label="Open menu"
+              aria-label={open ? "Close menu" : "Open menu"}
+              aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-ink-100 transition-all hover:border-gold-400/50 lg:hidden"
             >
@@ -145,12 +146,13 @@ export default function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
-              className="glass glass-gold mt-2 overflow-hidden rounded-3xl p-2 lg:hidden"
+              className="glass glass-gold mt-2 max-h-[calc(100vh-6.5rem)] overflow-y-auto overscroll-contain rounded-3xl p-2 lg:hidden"
             >
               {LINKS.map((l) => (
                 <Link
                   key={l.href}
                   href={l.href}
+                  onClick={() => setOpen(false)}
                   className={`block rounded-2xl px-4 py-3 text-sm font-medium transition-colors ${
                     pathname === l.href
                       ? "bg-gold-400/10 text-gold-300"
@@ -165,6 +167,7 @@ export default function Navbar() {
                 <>
                   <Link
                     href="/dashboard"
+                    onClick={() => setOpen(false)}
                     className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
                   >
                     <LayoutDashboard className="h-4 w-4" />
@@ -179,6 +182,7 @@ export default function Navbar() {
                 <>
                   <Link
                     href="/auth/login"
+                    onClick={() => setOpen(false)}
                     className="btn-ghost mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
                   >
                     <LogIn className="h-4 w-4" />
@@ -186,6 +190,7 @@ export default function Navbar() {
                   </Link>
                   <Link
                     href="/auth/register"
+                    onClick={() => setOpen(false)}
                     className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
                   >
                     <UserPlus className="h-4 w-4" />

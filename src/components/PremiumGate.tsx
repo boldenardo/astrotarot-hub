@@ -75,7 +75,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass glass-gold w-full max-w-md rounded-3xl p-8 text-center shadow-glass"
+          className="glass glass-gold w-full max-w-md rounded-3xl p-6 text-center shadow-glass sm:p-8"
         >
           <span className="mb-5 inline-flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
             <LogIn className="h-8 w-8 text-gold-300" />
@@ -104,7 +104,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass glass-gold w-full max-w-lg rounded-3xl p-8 text-center shadow-glass md:p-10"
+        className="glass glass-gold w-full max-w-lg rounded-3xl p-6 text-center shadow-glass sm:p-8 md:p-10"
       >
         <motion.span
           initial={{ scale: 0.8 }}
@@ -118,7 +118,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
         <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
           Premium Feature
         </p>
-        <h2 className="mb-3 font-display text-3xl font-semibold text-ink-50">
+        <h2 className="mb-3 break-words font-display text-2xl font-semibold text-ink-50 sm:text-3xl">
           {FEATURE_LABELS[feature]}
         </h2>
         <p className="mb-8 text-ink-400">
@@ -129,7 +129,10 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
 
         <ul className="mb-8 space-y-3 text-left">
           {CHECKOUT_PLANS.PREMIUM.features.map((item) => (
-            <li key={item} className="flex items-start gap-3 text-ink-200">
+            <li
+              key={item}
+              className="flex items-start gap-3 break-words text-ink-200"
+            >
               <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold-400" />
               {item}
             </li>
@@ -152,7 +155,7 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
         </Link>
         <Link
           href="/cart"
-          className="text-sm text-ink-400 underline-offset-4 transition-colors hover:text-gold-300 hover:underline"
+          className="inline-block px-4 py-2.5 text-sm text-ink-400 underline-offset-4 transition-colors hover:text-gold-300 hover:underline"
         >
           See all plans
         </Link>

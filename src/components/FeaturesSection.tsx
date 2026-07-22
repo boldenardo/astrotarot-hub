@@ -49,28 +49,28 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section id="features" className="relative overflow-hidden py-32">
+    <section id="features" className="relative overflow-hidden py-20 sm:py-32">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-night-900/40 to-transparent" />
       <div className="absolute left-10 top-20 h-72 w-72 rounded-full bg-amethyst-500/10 blur-3xl" />
       <div className="absolute bottom-20 right-10 h-96 w-96 rounded-full bg-gold-500/[0.07] blur-3xl" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mx-auto mb-20 max-w-3xl text-center"
+          className="mx-auto mb-12 max-w-3xl text-center sm:mb-20"
         >
           <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
             <Sparkles className="h-7 w-7 text-night-900" />
           </span>
-          <h2 className="font-display text-4xl font-semibold text-ink-50 md:text-6xl">
+          <h2 className="font-display text-3xl font-semibold text-ink-50 sm:text-4xl md:text-6xl">
             Transform your life with
             <br />
             <span className="text-gold">ancient wisdom</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-ink-400">
+          <p className="mx-auto mt-5 max-w-2xl text-base text-ink-400 sm:text-lg">
             Thousands of people have already discovered their inner power. Now
             it&apos;s your turn to shine.
           </p>
@@ -95,11 +95,11 @@ export default function FeaturesSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-20 text-center"
+          className="mt-12 text-center sm:mt-20"
         >
           <Link
             href="/auth/register"
-            className="btn-gold inline-flex items-center gap-2 rounded-full px-10 py-5 text-lg"
+            className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-10 py-4 text-base sm:inline-flex sm:w-auto sm:py-5 sm:text-lg"
           >
             <Sparkles className="h-5 w-5" />
             Begin your transformation
@@ -117,14 +117,16 @@ function FeatureCard({ feature }: { feature: (typeof features)[0] }) {
   const Icon = feature.icon;
 
   const CardContent = (
-    <div className="glass relative h-full rounded-3xl border-white/5 p-8 transition-all duration-300 hover:-translate-y-1 hover:border-gold-400/30">
-      <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-gold-400/20 bg-gold-400/10">
+    <div className="glass relative h-full rounded-3xl border-white/5 p-6 transition-all duration-300 hover:-translate-y-1 hover:border-gold-400/30 sm:p-8">
+      <div className="mb-6 inline-flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl border border-gold-400/20 bg-gold-400/10">
         <Icon className="h-7 w-7 text-gold-300" />
       </div>
-      <h3 className="mb-3 font-display text-2xl font-semibold text-ink-50">
+      <h3 className="mb-3 break-words font-display text-xl font-semibold text-ink-50 sm:text-2xl">
         {feature.title}
       </h3>
-      <p className="leading-relaxed text-ink-400">{feature.description}</p>
+      <p className="break-words leading-relaxed text-ink-400">
+        {feature.description}
+      </p>
       {feature.link && (
         <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-gold-300 opacity-0 transition-opacity group-hover:opacity-100">
           Explore &rarr;

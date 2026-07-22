@@ -109,7 +109,7 @@ export default function ProfilePage() {
       <div className="relative z-10 max-w-2xl mx-auto px-4 py-12">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-ink-400 hover:text-ink-50 mb-8 transition-colors"
+          className="inline-flex items-center gap-2 py-2.5 text-ink-400 hover:text-ink-50 mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </Link>
@@ -117,10 +117,10 @@ export default function ProfilePage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass glass-gold rounded-3xl p-8 shadow-glass"
+          className="glass glass-gold rounded-3xl p-5 sm:p-8 shadow-glass"
         >
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 rounded-full border border-gold-400/25 bg-gold-400/10 flex items-center justify-center">
+            <div className="w-12 h-12 flex-shrink-0 rounded-full border border-gold-400/25 bg-gold-400/10 flex items-center justify-center">
               <User className="w-6 h-6 text-gold-300" />
             </div>
             <div>
@@ -162,7 +162,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 placeholder-ink-600"
+                  className="w-full pl-12 pr-4 py-3 text-base bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 placeholder-ink-600"
                   placeholder="Your mystical name"
                 />
               </div>
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, birthDate: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 [color-scheme:dark]"
+                  className="w-full pl-12 pr-4 py-3 text-base bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 [color-scheme:dark]"
                 />
               </div>
             </div>
@@ -201,7 +201,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, birthTime: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 [color-scheme:dark]"
+                  className="w-full pl-12 pr-4 py-3 text-base bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 [color-scheme:dark]"
                 />
               </div>
               <p className="text-xs text-ink-600 mt-1 ml-1">
@@ -223,7 +223,7 @@ export default function ProfilePage() {
                   onChange={(e) =>
                     setFormData({ ...formData, birthLocation: e.target.value })
                   }
-                  className="w-full pl-12 pr-4 py-3 bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 placeholder-ink-600"
+                  className="w-full pl-12 pr-4 py-3 text-base bg-night-900/60 border border-white/10 rounded-xl focus:border-gold-400 focus:ring-2 focus:ring-gold-400/20 transition-all outline-none text-ink-100 placeholder-ink-600"
                   placeholder="e.g. São Paulo, Brazil"
                 />
               </div>
@@ -232,7 +232,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="btn-gold w-full py-4 rounded-full font-bold text-lg disabled:opacity-50 flex items-center justify-center gap-2"
+              className="btn-gold w-full py-4 rounded-full font-bold text-base sm:text-lg disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {saving ? (
                 <>

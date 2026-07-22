@@ -299,10 +299,10 @@ export default function PersonalityReportPage() {
             >
               <Star className="w-16 h-16 text-gold-400" fill="currentColor" />
             </motion.div>
-            <h1 className="font-display text-4xl md:text-5xl font-semibold text-ink-50 mb-4">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-ink-50 mb-4">
               Personality <span className="text-gold">Report</span>
             </h1>
-            <p className="text-xl text-ink-400">
+            <p className="text-base sm:text-xl text-ink-400">
               Discover your essence through your birth chart.
             </p>
           </div>
@@ -315,7 +315,7 @@ export default function PersonalityReportPage() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="glass glass-gold rounded-3xl p-8"
+                className="glass glass-gold rounded-3xl p-5 sm:p-8"
               >
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Name */}
@@ -330,7 +330,7 @@ export default function PersonalityReportPage() {
                       value={birthData.name}
                       onChange={handleInputChange}
                       required
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       placeholder="Your name"
                     />
                   </div>
@@ -341,7 +341,7 @@ export default function PersonalityReportPage() {
                       <Calendar className="w-5 h-5 text-gold-300" />
                       Date of Birth
                     </label>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-3 gap-3 sm:gap-4">
                       <input
                         type="number"
                         name="day"
@@ -351,14 +351,14 @@ export default function PersonalityReportPage() {
                         min="1"
                         max="31"
                         placeholder="Day"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                       <select
                         name="month"
                         value={birthData.month}
                         onChange={handleInputChange}
                         required
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 focus:border-gold-400/50 focus:outline-none"
+                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 text-base text-ink-100 focus:border-gold-400/50 focus:outline-none"
                       >
                         <option value="" className="bg-night-800">
                           Month
@@ -382,7 +382,7 @@ export default function PersonalityReportPage() {
                         min="1900"
                         max="2026"
                         placeholder="Year"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -403,7 +403,7 @@ export default function PersonalityReportPage() {
                         min="0"
                         max="23"
                         placeholder="Hour"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                       <input
                         type="number"
@@ -414,7 +414,7 @@ export default function PersonalityReportPage() {
                         min="0"
                         max="59"
                         placeholder="Minute"
-                        className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                        className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-3 sm:px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -431,7 +431,7 @@ export default function PersonalityReportPage() {
                       value={birthData.city}
                       onChange={handleInputChange}
                       required
-                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
+                      className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none"
                       placeholder="e.g. New York"
                     />
                   </div>
@@ -442,7 +442,7 @@ export default function PersonalityReportPage() {
                       {premiumRequired && (
                         <Link
                           href="/cart?plan=premium"
-                          className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
+                          className="btn-gold mt-3 block w-full rounded-full px-6 py-2.5 text-center text-sm font-semibold sm:inline-block sm:w-auto"
                         >
                           Subscribe to Premium Unlimited — $29.90/mo
                         </Link>
@@ -494,8 +494,8 @@ export default function PersonalityReportPage() {
                 className="space-y-8"
               >
                 {/* Big Three */}
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 text-center">
                     Your Big Three
                   </h2>
                   <div className="grid md:grid-cols-3 gap-6">
@@ -550,8 +550,8 @@ export default function PersonalityReportPage() {
                 </div>
 
                 {/* Element Distribution */}
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 text-center">
+                <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 text-center">
                     Elemental Balance
                   </h2>
                   <div className="flex flex-col md:flex-row items-center gap-8">
@@ -613,8 +613,8 @@ export default function PersonalityReportPage() {
                 </div>
 
                 {/* Strengths */}
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
+                <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
                     <Sparkles className="w-7 h-7 text-gold-300" /> Your Natural
                     Gifts
                   </h2>
@@ -635,8 +635,8 @@ export default function PersonalityReportPage() {
                 </div>
 
                 {/* Challenges */}
-                <div className="glass rounded-3xl p-8 border-white/5">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
+                <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
                     <Sprout className="w-7 h-7 text-amethyst-300" /> Areas for
                     Growth
                   </h2>
@@ -657,20 +657,20 @@ export default function PersonalityReportPage() {
                 </div>
 
                 {/* Life Purpose */}
-                <div className="glass glass-gold rounded-3xl p-8">
-                  <h2 className="font-display text-3xl font-semibold text-ink-50 mb-4 flex items-center gap-2">
+                <div className="glass glass-gold rounded-3xl p-5 sm:p-8">
+                  <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-4 flex items-center gap-2">
                     <Target className="w-7 h-7 text-gold-300" /> Your Life
                     Purpose
                   </h2>
-                  <p className="text-xl text-ink-200 leading-relaxed">
+                  <p className="text-base sm:text-xl text-ink-200 leading-relaxed break-words">
                     {result.lifePurpose}
                   </p>
                 </div>
 
                 {/* AI Interpretation */}
                 {interpretation && (
-                  <div className="glass rounded-3xl p-8 border-white/5">
-                    <h2 className="font-display text-3xl font-semibold text-ink-50 mb-6">
+                  <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
+                    <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-6">
                       Complete Astrological Reading
                     </h2>
                     <div className="prose prose-invert prose-lg max-w-none">

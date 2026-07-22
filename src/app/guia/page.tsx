@@ -136,12 +136,15 @@ export default function GuiaEspiritualPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <div className="flex items-center justify-center gap-3 mb-4">
-              <Heart className="w-8 h-8 text-gold-300" fill="currentColor" />
+            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
+              <Heart
+                className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 text-gold-300"
+                fill="currentColor"
+              />
               <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50">
                 Spiritual <span className="text-gold">Guide</span>
               </h1>
-              <Moon className="w-8 h-8 text-gold-400" />
+              <Moon className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 text-gold-400" />
             </div>
             <p className="text-ink-400 text-sm">
               A safe space for comfort and emotional guidance
@@ -155,7 +158,7 @@ export default function GuiaEspiritualPage() {
             className="glass glass-gold relative rounded-3xl overflow-hidden shadow-glass"
           >
             {/* Messages Area */}
-            <div className="h-[500px] overflow-y-auto p-6 space-y-4">
+            <div className="h-[50vh] min-h-[320px] sm:h-[500px] overflow-y-auto p-4 sm:p-6 space-y-4">
               {messages.map((message, index) => (
                 <motion.div
                   key={index}
@@ -167,7 +170,7 @@ export default function GuiaEspiritualPage() {
                   }`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl p-4 ${
+                    className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 ${
                       message.role === "user"
                         ? "bg-gold-400/10 border border-gold-400/20 text-ink-100"
                         : "glass text-ink-200"
@@ -181,7 +184,7 @@ export default function GuiaEspiritualPage() {
                         </span>
                       </div>
                     )}
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                       {message.content}
                     </p>
                     <span className="text-xs text-ink-600 mt-2 block">
@@ -225,21 +228,22 @@ export default function GuiaEspiritualPage() {
             </div>
 
             {/* Input Area */}
-            <div className="border-t border-white/5 p-4">
-              <div className="flex gap-3">
+            <div className="border-t border-white/5 p-3 sm:p-4">
+              <div className="flex gap-2 sm:gap-3">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Share your thoughts..."
-                  className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none resize-none"
+                  className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base sm:text-sm text-ink-100 placeholder:text-ink-600 focus:border-gold-400/50 focus:outline-none resize-none"
                   rows={2}
                   disabled={isLoading}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
-                  className="btn-gold flex items-center justify-center rounded-2xl px-6 py-3 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Send message"
+                  className="btn-gold flex flex-shrink-0 items-center justify-center rounded-2xl px-4 sm:px-6 py-3 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="w-5 h-5" />
                 </button>
