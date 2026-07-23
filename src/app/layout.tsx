@@ -26,19 +26,47 @@ export const metadata: Metadata = {
 };
 
 // Clerk appearance aligned with the dark mystic theme (purple/gold).
+// Every text color is set EXPLICITLY — never rely on the base theme alone,
+// or inputs/labels/footer fall back to near-black on the dark background.
 const clerkAppearance = {
   baseTheme: dark,
   variables: {
     colorPrimary: "#d4af37",
-    colorBackground: "#0b0713",
-    colorInputBackground: "rgba(20,14,32,0.6)",
+    colorTextOnPrimaryBackground: "#1a1330",
+    colorBackground: "#161027",
+    colorInputBackground: "rgba(255,255,255,0.06)",
     colorText: "#e8e4f5",
+    colorTextSecondary: "#b7abdd",
+    colorInputText: "#e8e4f5",
+    colorNeutral: "#e8e4f5",
+    colorDanger: "#f87171",
+    colorSuccess: "#4ade80",
+    colorWarning: "#facc15",
     borderRadius: "0.75rem",
   },
   elements: {
-    card: "glass glass-gold",
+    card: "glass glass-gold shadow-glass",
+    headerTitle: "text-gold font-display",
+    headerSubtitle: "text-[#b7abdd]",
+    socialButtonsBlockButton:
+      "border border-white/15 bg-white/5 text-[#e8e4f5] hover:bg-white/10",
+    socialButtonsBlockButtonText: "text-[#e8e4f5]",
+    dividerLine: "bg-white/15",
+    dividerText: "text-[#b7abdd]",
+    formFieldLabel: "text-[#e8e4f5]",
+    formFieldInput:
+      "bg-white/5 border-white/15 text-[#e8e4f5] placeholder:text-[#8d80b8]",
+    formFieldInputShowPasswordButton: "text-[#b7abdd] hover:text-[#e8e4f5]",
+    otpCodeFieldInput: "bg-white/5 border-white/15 text-[#e8e4f5]",
     formButtonPrimary: "btn-gold",
-    headerTitle: "text-gold",
+    footer: "bg-transparent",
+    footerActionText: "text-[#b7abdd]",
+    footerActionLink: "text-[#d4af37] hover:text-[#edd9a3]",
+    formResendCodeLink: "text-[#d4af37]",
+    identityPreviewText: "text-[#e8e4f5]",
+    identityPreviewEditButton: "text-[#d4af37]",
+    alertText: "text-[#e8e4f5]",
+    formFieldErrorText: "text-[#f87171]",
   },
 } as const;
 
