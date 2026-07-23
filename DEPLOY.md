@@ -60,3 +60,14 @@ Stripe Dashboard → Developers → Webhooks → **Add endpoint**
 - Créditos e cobranças são **idempotentes** (dedup por `event.id` + índices únicos), então reentregas do Stripe não duplicam.
 - Se as chaves da AstrologyAPI ou Groq faltarem, as rotas retornam erro honesto (503/502) — nunca dado inventado.
 - `RAPIDAPI_KEY` e `JWT_SECRET` não são mais usados pelo fluxo principal (pode remover do `.env`).
+
+## Quiz funnel (quiz.astrotarot.shop)
+
+O funil quiz→VSL roda no subdomínio `quiz.astrotarot.shop` (o middleware reescreve `quiz.…/` → `/quiz`, `quiz.…/vsl` → `/quiz/vsl`, etc.).
+
+1. **Vercel:** Project → Settings → Domains → **Add** → `quiz.astrotarot.shop`.
+2. **DNS:** crie um registro `CNAME` com nome `quiz` apontando para `cname.vercel-dns.com`.
+3. **Env opcional:** `NEXT_PUBLIC_QUIZ_VSL_EMBED_URL` = URL de embed do vídeo da VSL (src do iframe). Sem ela, a página mostra um painel placeholder e o funil continua funcionando de ponta a ponta.
+4. O funil também fica acessível em `astrotarot.shop/quiz` (mesmas rotas, sem subdomínio).
+
+Checkout do funil é **guest** (`POST /api/quiz/checkout`, sem login): o webhook do Stripe cria/acha o usuário pelo e-mail do checkout e credita o benefício de forma idempotente. Depois de pagar, o comprador cria a conta com o MESMO e-mail em `/auth/register` e o acesso Premium é reconhecido automaticamente.

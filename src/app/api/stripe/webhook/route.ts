@@ -74,8 +74,53 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        const userId =
-          session.metadata?.user_id || session.client_reference_id;
+        let userId: string | null =
+          session.metadata?.user_id || session.client_reference_id || null;
+
+        // Caminho GUEST (funil do quiz): sem user_id → resolve/cria o
+        // usuário pelo e-mail do checkout (metadata.quiz_email tem
+        // prioridade sobre customer_details.email).
+        const guestEmailRaw =
+          session.metadata?.quiz_email || session.customer_details?.email;
+        if (!userId && guestEmailRaw) {
+          const email = guestEmailRaw.toLowerCase().trim();
+          const { data: existing } = await admin
+            .from("users")
+            .select("id")
+            .eq("email", email)
+            .maybeSingle();
+
+          if (existing) {
+            userId = (existing as { id: string }).id;
+          } else {
+            const { data: created, error: createErr } = await admin
+              .from("users")
+              .insert({
+                email,
+                name: session.customer_details?.name ?? null,
+                subscription_plan: "FREE",
+                subscription_status: "active",
+                readings_left: 4,
+              })
+              .select("id")
+              .maybeSingle();
+
+            if (created) {
+              userId = (created as { id: string }).id;
+            } else if ((createErr as { code?: string } | null)?.code === "23505") {
+              // Corrida: outra execução criou o usuário — re-seleciona.
+              const { data: raced } = await admin
+                .from("users")
+                .select("id")
+                .eq("email", email)
+                .maybeSingle();
+              if (raced) userId = (raced as { id: string }).id;
+            } else if (createErr) {
+              throw createErr;
+            }
+          }
+        }
+
         if (!userId) {
           console.error(
             "[stripe/webhook] checkout.session.completed sem user_id:",
@@ -121,7 +166,35 @@ export async function POST(req: NextRequest) {
           .neq("status", "COMPLETED")
           .select("id");
 
-        if (flipped && flipped.length > 0) {
+        let granted = Boolean(flipped && flipped.length > 0);
+
+        // Caminho GUEST: não existe linha PENDING (o checkout do quiz não
+        // insere). Se a virada não afetou nada, insere a linha COMPLETED —
+        // o índice único de stripe_checkout_session_id garante que só UMA
+        // execução insere; 23505 = outra já processou → não concede.
+        if (!granted) {
+          const { error: guestInsErr } = await admin.from("payments").insert({
+            user_id: userId,
+            amount: (session.amount_total ?? 0) / 100,
+            currency: session.currency ?? "usd",
+            status: "COMPLETED",
+            payment_type:
+              session.mode === "subscription" ? "SUBSCRIPTION" : "READINGS_PACK",
+            stripe_checkout_session_id: session.id,
+            ...(paymentIntentId
+              ? { stripe_payment_intent_id: paymentIntentId }
+              : {}),
+            paid_at: new Date().toISOString(),
+          });
+          if (!guestInsErr) {
+            granted = true;
+          } else if ((guestInsErr as { code?: string }).code !== "23505") {
+            throw guestInsErr;
+          }
+          // 23505 → sessão já processada em outra execução: não concede.
+        }
+
+        if (granted) {
           if (session.mode === "payment") {
             // Pacote de 5 leituras — crédito atômico via função SQL.
             const { error } = await admin.rpc("grant_readings", {

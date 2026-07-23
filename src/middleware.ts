@@ -16,6 +16,23 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Subdomínio do funil: quiz.astrotarot.shop/* → reescreve para /quiz/*.
+  // Fica ANTES da lógica de proteção — o funil é 100% público.
+  const host = req.headers.get("host") ?? "";
+  if (host === "quiz.astrotarot.shop" || host.startsWith("quiz.")) {
+    const p = req.nextUrl.pathname;
+    if (
+      !p.startsWith("/quiz") &&
+      !p.startsWith("/api") &&
+      !p.startsWith("/_next") &&
+      !p.includes(".")
+    ) {
+      const url = req.nextUrl.clone();
+      url.pathname = p === "/" ? "/quiz" : "/quiz" + p;
+      return NextResponse.rewrite(url);
+    }
+  }
+
   const { userId, redirectToSignIn } = await auth();
 
   // Já logado tentando acessar login/cadastro → manda pro dashboard.
