@@ -296,7 +296,7 @@ export default function EgyptianTarotPage() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-night-950 via-transparent to-transparent opacity-80" />
                       <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-4">
-                        <p className="mb-1 truncate text-[10px] font-semibold text-gold-300 sm:text-xs">
+                        <p className="mb-1 text-[10px] font-semibold leading-tight text-gold-300 sm:text-xs">
                           {card.position}
                         </p>
                         <h3 className="break-words text-sm font-bold leading-snug text-ink-50 sm:text-lg">

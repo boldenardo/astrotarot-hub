@@ -11,7 +11,12 @@ import {
   Gift,
   Zap,
   Star,
+  Sun,
+  Moon,
+  ArrowUp,
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
   LogOut,
   User,
   Lock,
@@ -33,7 +38,6 @@ import {
 
 interface ZodiacSign {
   name: string;
-  symbol: string;
   element: string;
   quality: string;
   ruler: string;
@@ -44,7 +48,6 @@ interface ZodiacSign {
 const zodiacSigns: Record<string, ZodiacSign> = {
   aries: {
     name: "Aries",
-    symbol: "♈︎",
     element: "Fire",
     quality: "Cardinal",
     ruler: "Mars",
@@ -53,7 +56,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   taurus: {
     name: "Taurus",
-    symbol: "♉︎",
     element: "Earth",
     quality: "Fixed",
     ruler: "Venus",
@@ -62,7 +64,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   gemini: {
     name: "Gemini",
-    symbol: "♊︎",
     element: "Air",
     quality: "Mutable",
     ruler: "Mercury",
@@ -71,7 +72,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   cancer: {
     name: "Cancer",
-    symbol: "♋︎",
     element: "Water",
     quality: "Cardinal",
     ruler: "Moon",
@@ -80,7 +80,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   leo: {
     name: "Leo",
-    symbol: "♌︎",
     element: "Fire",
     quality: "Fixed",
     ruler: "Sun",
@@ -89,7 +88,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   virgo: {
     name: "Virgo",
-    symbol: "♍︎",
     element: "Earth",
     quality: "Mutable",
     ruler: "Mercury",
@@ -98,7 +96,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   libra: {
     name: "Libra",
-    symbol: "♎︎",
     element: "Air",
     quality: "Cardinal",
     ruler: "Venus",
@@ -107,7 +104,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   scorpio: {
     name: "Scorpio",
-    symbol: "♏︎",
     element: "Water",
     quality: "Fixed",
     ruler: "Pluto",
@@ -116,7 +112,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   sagittarius: {
     name: "Sagittarius",
-    symbol: "♐︎",
     element: "Fire",
     quality: "Mutable",
     ruler: "Jupiter",
@@ -125,7 +120,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   capricorn: {
     name: "Capricorn",
-    symbol: "♑︎",
     element: "Earth",
     quality: "Cardinal",
     ruler: "Saturn",
@@ -134,7 +128,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   aquarius: {
     name: "Aquarius",
-    symbol: "♒︎",
     element: "Air",
     quality: "Fixed",
     ruler: "Uranus",
@@ -143,7 +136,6 @@ const zodiacSigns: Record<string, ZodiacSign> = {
   },
   pisces: {
     name: "Pisces",
-    symbol: "♓︎",
     element: "Water",
     quality: "Mutable",
     ruler: "Neptune",
@@ -197,6 +189,13 @@ export default function DashboardPage() {
   const [birthChart, setBirthChart] = useState<any>(null);
   const [loadingChart, setLoadingChart] = useState(false);
   const [showChartTeaser, setShowChartTeaser] = useState(false);
+  const [expandedReadings, setExpandedReadings] = useState<
+    Record<string, boolean>
+  >({});
+
+  function toggleReading(id: string) {
+    setExpandedReadings((prev) => ({ ...prev, [id]: !prev[id] }));
+  }
 
   useEffect(() => {
     trackPageView("/dashboard", "Dashboard");
@@ -469,16 +468,16 @@ export default function DashboardPage() {
             transition={{ delay: 0.2 }}
             className="glass glass-gold rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 hidden sm:block text-[200px] leading-none text-gold-400/10 pointer-events-none select-none">
-              {zodiacSign.sign.symbol}
+            <div className="absolute top-0 right-8 hidden sm:block font-display text-[200px] font-semibold leading-none text-gold-400/10 pointer-events-none select-none">
+              {zodiacSign.sign.name.charAt(0)}
             </div>
             <div className="relative z-10">
               <p className="text-gold-300 text-sm font-semibold uppercase tracking-wider mb-2">
                 Your Sun Sign
               </p>
               <div className="flex items-center gap-4 mb-2">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400/20 to-purple-500/20 border border-gold-400/30 text-3xl leading-none text-gold-300">
-                  {zodiacSign.sign.symbol}
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400/20 to-purple-500/20 border border-gold-400/30 font-display text-2xl font-semibold text-gold-300">
+                  {zodiacSign.sign.name.charAt(0)}
                 </span>
                 <h3 className="font-display text-3xl sm:text-5xl font-semibold text-ink-50 break-words">
                   {zodiacSign.sign.name}
@@ -529,8 +528,8 @@ export default function DashboardPage() {
               {/* Sun */}
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2 text-gold-300">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-lg leading-none text-gold-300">
-                    {"☉︎"}
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-gold-300">
+                    <Sun className="h-4 w-4" />
                   </span>
                   <span className="font-semibold">
                     Sun in {birthChart.sun.sign}
@@ -547,8 +546,8 @@ export default function DashboardPage() {
               {/* Moon */}
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2 text-amethyst-300">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-lg leading-none text-gold-300">
-                    {"☽︎"}
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-gold-300">
+                    <Moon className="h-4 w-4" />
                   </span>
                   <span className="font-semibold">
                     Moon in {birthChart.moon.sign}
@@ -565,8 +564,8 @@ export default function DashboardPage() {
               {/* Ascendant */}
               <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                 <div className="flex items-center gap-2 mb-2 text-ink-300">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-lg leading-none text-gold-300">
-                    {"↑︎"}
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-400/30 bg-gold-400/10 text-gold-300">
+                    <ArrowUp className="h-4 w-4" />
                   </span>
                   <span className="font-semibold">
                     Ascendant in {birthChart.ascendant.sign}
@@ -604,8 +603,11 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             className="glass glass-gold rounded-3xl p-8 mb-8 text-center relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 hidden sm:block text-[160px] leading-none text-gold-400/10 pointer-events-none select-none">
-              {"★︎"}
+            <div className="absolute top-4 right-4 hidden sm:block pointer-events-none select-none">
+              <Star
+                className="h-[140px] w-[140px] text-gold-400/10"
+                fill="currentColor"
+              />
             </div>
             <div className="relative z-10">
               <Lock className="w-12 h-12 text-gold-300 mx-auto mb-4" />
@@ -722,42 +724,75 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {readings.map((reading) => (
-                <div
-                  key={reading.id}
-                  className="glass rounded-3xl p-6 border-white/5 transition-all hover:border-gold-400/30"
-                >
-                  <div className="flex items-start justify-between mb-3 gap-3">
-                    <div className="flex items-center gap-3">
-                      <Sparkles className="w-6 h-6 text-gold-300 flex-shrink-0" />
-                      <div>
-                        <p className="font-semibold text-ink-50 text-lg">
-                          {spreadLabel(reading.spread_type)}
-                        </p>
-                        <p className="text-sm text-ink-600">
-                          {new Date(reading.created_at).toLocaleDateString(
-                            "en-US",
-                            {
-                              day: "2-digit",
-                              month: "long",
-                              year: "numeric",
-                            }
-                          )}
-                        </p>
+              {readings.map((reading) => {
+                const isExpanded = !!expandedReadings[reading.id];
+                return (
+                  <div
+                    key={reading.id}
+                    onClick={() => toggleReading(reading.id)}
+                    className="glass rounded-3xl p-6 border-white/5 transition-all hover:border-gold-400/30 cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-3 gap-3">
+                      <div className="flex items-center gap-3">
+                        <Sparkles className="w-6 h-6 text-gold-300 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold text-ink-50 text-lg">
+                            {spreadLabel(reading.spread_type)}
+                          </p>
+                          <p className="text-sm text-ink-600">
+                            {new Date(reading.created_at).toLocaleDateString(
+                              "en-US",
+                              {
+                                day: "2-digit",
+                                month: "long",
+                                year: "numeric",
+                              }
+                            )}
+                          </p>
+                        </div>
                       </div>
+                      {reading.is_premium && (
+                        <span className="flex items-center gap-1 rounded-full border border-gold-400/30 bg-gold-400/10 px-3 py-1 text-xs font-semibold text-gold-300">
+                          <Crown className="w-3 h-3" />
+                          Premium
+                        </span>
+                      )}
                     </div>
-                    {reading.is_premium && (
-                      <span className="flex items-center gap-1 rounded-full border border-gold-400/30 bg-gold-400/10 px-3 py-1 text-xs font-semibold text-gold-300">
-                        <Crown className="w-3 h-3" />
-                        Premium
-                      </span>
+                    <motion.p
+                      layout
+                      className={`text-ink-300 break-words ${
+                        isExpanded
+                          ? "whitespace-pre-line"
+                          : "line-clamp-2"
+                      }`}
+                    >
+                      {reading.interpretation || "Reading saved."}
+                    </motion.p>
+                    {reading.interpretation && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleReading(reading.id);
+                        }}
+                        className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-gold-300 transition-colors hover:text-gold-200"
+                      >
+                        {isExpanded ? (
+                          <>
+                            Show less
+                            <ChevronUp className="h-4 w-4" />
+                          </>
+                        ) : (
+                          <>
+                            Read more
+                            <ChevronDown className="h-4 w-4" />
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
-                  <p className="text-ink-300 line-clamp-2 break-words">
-                    {reading.interpretation || "Reading saved."}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </motion.div>

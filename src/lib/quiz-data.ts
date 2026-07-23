@@ -28,12 +28,26 @@ export type QuizStep = { id: string } & (
       question: string;
       subtitle?: string;
       options: QuizOption[];
+      /**
+       * Luna's spoken reaction per option value. Strings may contain {name}
+       * and {sign} placeholders — resolve with resolveReactionText() at
+       * render time (missing values degrade gracefully, never rendering
+       * a raw "{sign}").
+       */
+      reactions?: Record<string, string>;
+      /** Fallback reaction when the chosen option has no entry in `reactions`. */
+      reactionDefault?: string;
     }
   | {
       kind: "interstitial";
       title: string;
       body: string;
-      testimonial?: { quote: string; author: string; stars: number };
+      testimonial?: {
+        quote: string;
+        author: string;
+        stars: number;
+        photo?: string;
+      };
     }
   | { kind: "birthdate" }
   | { kind: "email" }
@@ -45,19 +59,54 @@ export interface ZodiacSign {
   symbol: string;
 }
 
+/** The guide persona that reacts to answers throughout the quiz. */
+export const LUNA = { name: "Luna", role: "Your cosmic guide" } as const;
+
+/**
+ * Resolve {name} and {sign} placeholders in a reaction string.
+ * Missing values degrade gracefully: vocative forms like ", {name}" are
+ * dropped whole, adjective forms like "your {sign} windows" collapse to
+ * "your windows" — a raw "{name}"/"{sign}" is never rendered.
+ */
+export function resolveReactionText(
+  text: string,
+  vars: { name?: string; sign?: string }
+): string {
+  let out = text;
+  const entries: [string, string | undefined][] = [
+    ["name", vars.name],
+    ["sign", vars.sign],
+  ];
+  for (const [key, rawValue] of entries) {
+    const token = `{${key}}`;
+    const value = rawValue?.trim();
+    if (value) {
+      out = out.split(token).join(value);
+    } else {
+      // Drop a vocative ", {name}" (comma included), then any bare token.
+      out = out.replace(new RegExp(`,\\s*\\{${key}\\}`, "g"), "");
+      out = out.split(token).join("");
+    }
+  }
+  return out
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+([.,;:!?])/g, "$1")
+    .trim();
+}
+
 export const ZODIAC_SIGNS: ZodiacSign[] = [
-  { name: "Aries", symbol: "♈︎" },
-  { name: "Taurus", symbol: "♉︎" },
-  { name: "Gemini", symbol: "♊︎" },
-  { name: "Cancer", symbol: "♋︎" },
-  { name: "Leo", symbol: "♌︎" },
-  { name: "Virgo", symbol: "♍︎" },
-  { name: "Libra", symbol: "♎︎" },
-  { name: "Scorpio", symbol: "♏︎" },
-  { name: "Sagittarius", symbol: "♐︎" },
-  { name: "Capricorn", symbol: "♑︎" },
-  { name: "Aquarius", symbol: "♒︎" },
-  { name: "Pisces", symbol: "♓︎" },
+  { name: "Aries", symbol: "A" },
+  { name: "Taurus", symbol: "T" },
+  { name: "Gemini", symbol: "G" },
+  { name: "Cancer", symbol: "C" },
+  { name: "Leo", symbol: "L" },
+  { name: "Virgo", symbol: "V" },
+  { name: "Libra", symbol: "L" },
+  { name: "Scorpio", symbol: "S" },
+  { name: "Sagittarius", symbol: "S" },
+  { name: "Capricorn", symbol: "C" },
+  { name: "Aquarius", symbol: "A" },
+  { name: "Pisces", symbol: "P" },
 ];
 
 /** Tropical zodiac boundaries: [startMonth, startDay] of each sign, in year order. */
@@ -115,6 +164,15 @@ export const STEPS: QuizStep[] = [
       { value: "energy", label: "Energy & wellbeing" },
       { value: "purpose", label: "Life purpose" },
     ],
+    reactions: {
+      love: "Matters of the heart — I sensed that pull the moment you arrived. Love is where your chart carries the most unread pages.",
+      money:
+        "Abundance work. Good — the 2026 transits are unusually generous to people who ask direct questions about money.",
+      energy:
+        "Your energy is the foundation everything else stands on. Restoring it first is the wisest order — most people learn that too late.",
+      purpose:
+        "The deepest question of all. When purpose comes into focus, love and money tend to follow it home.",
+    },
   },
   {
     id: "q_sign",
@@ -126,6 +184,33 @@ export const STEPS: QuizStep[] = [
       label: sign.name,
       symbol: sign.symbol,
     })),
+    reactions: {
+      Aries:
+        "First fire of the zodiac. You were built to begin things — and 2026 finally hands you something worth finishing.",
+      Taurus:
+        "Steady earth. You build slowly and lose nothing — your reading will show you where that patience is about to pay.",
+      Gemini:
+        "A mind with two windows open at once. Your gift is seeing both sides — we'll find the moment you're meant to choose one.",
+      Cancer:
+        "You feel the tide before it turns. That protective heart of yours is due some protecting of its own.",
+      Leo: "There's a warmth in you that other people navigate by. 2026 asks you to shine for yourself first — the rest will follow.",
+      Virgo:
+        "You notice what everyone else misses. Pointed at your own path, that precision becomes a compass.",
+      Libra:
+        "You weigh everything — beauty, fairness, hearts. This year the scales tip in your favor, and you'll want to be ready.",
+      Scorpio:
+        "Depth recognizes depth. You transform or you don't bother — and a transformation is exactly what sits on your horizon.",
+      Sagittarius:
+        "The arrow is already in the bow. Your restlessness isn't a flaw — it's your chart insisting there's somewhere you're meant to be.",
+      Capricorn:
+        "You climb quietly and arrive anyway. The summit waiting in 2026 is closer than your patience assumes.",
+      Aquarius:
+        "You've never fit the mold — that was never the assignment. The current ahead favors exactly your kind of different.",
+      Pisces:
+        "Deep waters. You feel everything before it happens — that sensitivity is the exact channel your reading will use.",
+    },
+    reactionDefault:
+      "Noted. Your sign sets the tone — your exact birth date will sharpen it into something precise.",
   },
   {
     id: "i_alignment",
@@ -143,6 +228,16 @@ export const STEPS: QuizStep[] = [
       { value: "occasionally", label: "Occasionally" },
       { value: "rarely", label: "Rarely" },
     ],
+    reactions: {
+      daily:
+        "That heaviness isn't a flaw in you, {name}. It's friction between your effort and your timing — and friction can be mapped.",
+      weekly:
+        "A few times a week is your intuition tapping the glass. Something in your rhythm is slightly out of phase, and we can find where.",
+      occasionally:
+        "Occasional resistance is normal — the pattern behind when it appears is what matters. Your chart will show it clearly.",
+      rarely:
+        "You move with unusual flow. That tells me your instincts are already close to aligned — imagine what happens when we sharpen them.",
+    },
   },
   {
     id: "q_money",
@@ -154,6 +249,16 @@ export const STEPS: QuizStep[] = [
       { value: "scarcity", label: "I'm always afraid there won't be enough" },
       { value: "ready", label: "I'm doing okay — I'm ready for the next level" },
     ],
+    reactions: {
+      leaking:
+        "Money that arrives but never stays is almost never about discipline. It's about timing — and yours has been off by just a little.",
+      ceiling:
+        "That ceiling isn't made of effort — you've given plenty. It's a cycle, and cycles have end dates. We'll find yours.",
+      scarcity:
+        "That quiet fear is old energy, not prophecy. Naming where it entered your pattern is the first step to closing it out.",
+      ready:
+        "I love this answer. Readiness is rare — and 2026 rewards the prepared more than any year in the last decade.",
+    },
   },
   {
     id: "q_love",
@@ -165,6 +270,16 @@ export const STEPS: QuizStep[] = [
       { value: "letting_go", label: "Letting go of someone" },
       { value: "trust", label: "Trusting again after being hurt" },
     ],
+    reactions: {
+      attracting:
+        "You keep meeting almosts instead of answers. Your energy is broadcasting one thing while your heart asks for another — we can retune that.",
+      spark:
+        "A dimmed spark isn't a dying fire. It's usually two rhythms drifting apart — and rhythms can be brought back into step.",
+      letting_go:
+        "Release is the hardest work the heart does. Your chart can show what this bond came to teach — closure comes easier once the lesson is named.",
+      trust:
+        "The guard you built kept you safe once. Now it may be screening out the very thing you want — we'll look at when it's safe to lower it.",
+    },
   },
   {
     id: "i_proof",
@@ -176,6 +291,7 @@ export const STEPS: QuizStep[] = [
         "I almost didn't finish the quiz. Then the reading described my situation so accurately it was scary — I've changed two big decisions because of it.",
       author: "Amanda R.",
       stars: 5,
+      photo: "/testimonials/t4.jpg",
     },
   },
   {
@@ -188,6 +304,15 @@ export const STEPS: QuizStep[] = [
       { value: "letting_go", label: "I'm trying to let go" },
       { value: "no", label: "No" },
     ],
+    reactions: {
+      often:
+        "I felt that before you answered. Unfinished energy keeps a door open — your chart will show us how to close it gently.",
+      sometimes:
+        "Those returning thoughts arrive on a schedule — they usually track a transit. Once you see the pattern, it loses its grip.",
+      letting_go:
+        "Trying to let go is already letting go. You're mid-release — the reading can show you which thread is still holding.",
+      no: "A clear rearview is a quiet superpower. It means your energy is fully available for what's ahead.",
+    },
   },
   {
     id: "q_block",
@@ -199,6 +324,16 @@ export const STEPS: QuizStep[] = [
       { value: "doubts", label: "My own doubts" },
       { value: "unknown", label: "I don't know — that's why I'm here" },
     ],
+    reactions: {
+      timing:
+        "You're more right than you know. Timing is the one force astrology reads best — and your {sign} windows are closer than they feel.",
+      others:
+        "Sensitive people absorb what others leave behind, {name}. Learning where your energy ends and theirs begins changes everything.",
+      doubts:
+        "The fact that you can name your doubts means they're not in charge — they're just loud. Your chart holds the counter-evidence.",
+      unknown:
+        "An honest answer — and the most powerful one. What you can't see from inside the pattern, the stars see from above it.",
+    },
   },
   {
     id: "q_desire",
@@ -210,6 +345,15 @@ export const STEPS: QuizStep[] = [
       { value: "peace", label: "Peace — a quiet mind at last" },
       { value: "clarity", label: "Total clarity about my path" },
     ],
+    reactions: {
+      love: "Deep, secure love — not fireworks, foundations. That desire says you've outgrown the lessons that used to repeat.",
+      money:
+        "A real breakthrough, not a lucky month. Hold that intention — the reading will show you which weeks to move in.",
+      peace:
+        "A quiet mind is the rarest wish people bring me — and the most telling. You've been carrying more than your share.",
+      clarity:
+        "Total clarity is the master key. Choose that, and the other doors tend to unlock on their own.",
+    },
   },
   {
     id: "q_open",
@@ -220,6 +364,12 @@ export const STEPS: QuizStep[] = [
       { value: "curious", label: "Curious but skeptical" },
       { value: "new", label: "New to this" },
     ],
+    reactions: {
+      very: "Then you already know how this works — guidance meets you where your attention goes. Yours is wide open.",
+      curious:
+        "Skepticism is welcome here. The strongest readings happen when a sharp mind checks every line — bring that with you.",
+      new: "Everyone starts exactly where you are. Come as you are — the chart does the talking, not the jargon.",
+    },
   },
   { id: "birthdate", kind: "birthdate" },
   { id: "email", kind: "email" },
@@ -239,6 +389,19 @@ export const ANALYZING_STAGES = [
   "Locating your prosperity windows",
   "Compiling your Cosmic Plan",
 ];
+
+/**
+ * Analyzing-stage titles, personalized with the visitor's first name when
+ * available (the last stage becomes "Compiling {name}'s Cosmic Plan").
+ * Falls back to the generic ANALYZING_STAGES.
+ */
+export function getAnalyzingStages(name?: string): string[] {
+  const trimmed = name?.trim();
+  if (!trimmed) return ANALYZING_STAGES;
+  const stages = [...ANALYZING_STAGES];
+  stages[stages.length - 1] = `Compiling ${trimmed}'s Cosmic Plan`;
+  return stages;
+}
 
 /**
  * Score the quiz from "struggle" answers. Weighted so LOW (the strongest

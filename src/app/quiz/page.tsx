@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Star, Sparkles, Clock } from "lucide-react";
+import { Star, Sparkles, Clock, Moon } from "lucide-react";
 import { ZODIAC_SIGNS } from "@/lib/quiz-data";
 
 const fadeUp = {
@@ -50,8 +50,31 @@ export default function QuizLandingPage() {
         love, money and purpose.
       </motion.p>
 
+      {/* Luna introduction */}
       <motion.div
         custom={3}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="mt-4 flex items-center gap-2.5 text-sm text-[#b9b2d0]"
+      >
+        <span
+          aria-hidden="true"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+          style={{
+            background: "linear-gradient(135deg, #edd9a3, #d4af37 60%, #a9822f)",
+          }}
+        >
+          <Moon className="h-3.5 w-3.5 text-[#1a1430]" />
+        </span>
+        <span>
+          Guided by <span className="font-medium text-[#e8d9a8]">Luna</span>{" "}
+          &mdash; she reads your answers as you go.
+        </span>
+      </motion.div>
+
+      <motion.div
+        custom={4}
         initial="hidden"
         animate="visible"
         variants={fadeUp}
@@ -67,7 +90,7 @@ export default function QuizLandingPage() {
 
       {/* Trust row */}
       <motion.div
-        custom={4}
+        custom={5}
         initial="hidden"
         animate="visible"
         variants={fadeUp}
@@ -94,7 +117,7 @@ export default function QuizLandingPage() {
 
       {/* Decorative zodiac strip */}
       <motion.div
-        custom={5}
+        custom={6}
         initial="hidden"
         animate="visible"
         variants={fadeUp}

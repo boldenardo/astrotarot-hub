@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Check, Star, Sparkles, Heart, Crown } from "lucide-react";
 import { CHECKOUT_PLANS } from "@/lib/plans";
@@ -20,12 +21,14 @@ const testimonials = [
     text: "I finally found clarity about my path in love. The accuracy genuinely surprised me.",
     rating: 5,
     location: "Austin, TX",
+    photo: "/testimonials/t6.jpg",
   },
   {
     name: "Emily R.",
     text: "I discovered my purpose and everything started to make sense. An incredible tool.",
     rating: 5,
     location: "Portland, OR",
+    photo: "/testimonials/t3.jpg",
   },
 ];
 
@@ -213,9 +216,13 @@ export default function Home() {
                   &ldquo;{t.text}&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 font-display text-xl font-semibold text-night-900">
-                    {t.name[0]}
-                  </span>
+                  <Image
+                    src={t.photo}
+                    alt={t.name}
+                    width={96}
+                    height={96}
+                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-1 ring-gold-400/40"
+                  />
                   <div>
                     <p className="font-semibold text-ink-50">{t.name}</p>
                     <p className="text-sm text-ink-600">{t.location}</p>

@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CircleCheck, Loader2, Lock, Star } from "lucide-react";
+import { ArrowLeft, CircleCheck, Loader2, Lock, Moon, Star } from "lucide-react";
 import {
-  ANALYZING_STAGES,
+  LUNA,
   STEPS,
   computeScore,
+  getAnalyzingStages,
   loadQuizState,
+  resolveReactionText,
   saveQuizState,
   signFromDate,
   type QuizState,
@@ -29,7 +32,22 @@ export default function QuizFlowPage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [hydrated, setHydrated] = useState(false);
+  /** Luna's reaction currently on screen (keyed to the step it belongs to). */
+  const [reaction, setReaction] = useState<{
+    stepId: string;
+    text: string;
+  } | null>(null);
   const advancingRef = useRef(false);
+  const reactionTimerRef = useRef<number | null>(null);
+
+  // Clear any pending reaction timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (reactionTimerRef.current !== null) {
+        window.clearTimeout(reactionTimerRef.current);
+      }
+    };
+  }, []);
 
   // Restore persisted state on mount.
   useEffect(() => {
@@ -48,15 +66,26 @@ export default function QuizFlowPage() {
 
   const goNext = useCallback(() => {
     advancingRef.current = false;
+    setReaction(null);
     setDirection(1);
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
   }, []);
 
   const goBack = useCallback(() => {
+    if (reactionTimerRef.current !== null) {
+      window.clearTimeout(reactionTimerRef.current);
+      reactionTimerRef.current = null;
+    }
+    // Back during Luna's reaction cancels it and returns to the options.
+    if (reaction !== null) {
+      setReaction(null);
+      advancingRef.current = false;
+      return;
+    }
     advancingRef.current = false;
     setDirection(-1);
     setStepIndex((i) => Math.max(i - 1, 0));
-  }, []);
+  }, [reaction]);
 
   const handleAnswer = useCallback(
     (questionId: string, value: string) => {
@@ -67,10 +96,29 @@ export default function QuizFlowPage() {
         answers: { ...prev.answers, [questionId]: value },
         ...(questionId === "q_sign" ? { sign: value } : null),
       }));
-      // Brief selected flash, then auto-advance.
-      window.setTimeout(goNext, 150);
+
+      const stepConfig = STEPS.find((s) => s.id === questionId);
+      const raw =
+        stepConfig?.kind === "question"
+          ? stepConfig.reactions?.[value] ?? stepConfig.reactionDefault
+          : undefined;
+
+      if (raw) {
+        const text = resolveReactionText(raw, {
+          name: state.name,
+          sign: questionId === "q_sign" ? value : state.sign,
+        });
+        // Brief selected flash, then Luna reacts in place.
+        reactionTimerRef.current = window.setTimeout(() => {
+          reactionTimerRef.current = null;
+          setReaction({ stepId: questionId, text });
+        }, 150);
+      } else {
+        // Brief selected flash, then auto-advance.
+        window.setTimeout(goNext, 150);
+      }
     },
-    [goNext]
+    [goNext, state.name, state.sign]
   );
 
   const handleBirthdate = useCallback(
@@ -130,7 +178,7 @@ export default function QuizFlowPage() {
 
       {/* Back arrow */}
       <div className="flex h-11 items-center">
-        {stepIndex > 0 && !isAnalyzing && (
+        {(stepIndex > 0 || reaction !== null) && !isAnalyzing && (
           <button
             type="button"
             onClick={goBack}
@@ -154,12 +202,16 @@ export default function QuizFlowPage() {
             transition={{ duration: 0.28, ease: "easeOut" }}
           >
             {isAnalyzing ? (
-              <AnalyzingScreen onDone={handleAnalyzingDone} />
+              <AnalyzingScreen name={state.name} onDone={handleAnalyzingDone} />
             ) : step.kind === "question" ? (
               <QuestionStep
                 step={step}
                 selectedValue={state.answers[step.id]}
                 onSelect={handleAnswer}
+                reactionText={
+                  reaction?.stepId === step.id ? reaction.text : null
+                }
+                onReactionDone={goNext}
               />
             ) : step.kind === "interstitial" ? (
               <InterstitialStep step={step} onContinue={goNext} />
@@ -188,13 +240,19 @@ function QuestionStep({
   step,
   selectedValue,
   onSelect,
+  reactionText,
+  onReactionDone,
 }: {
   step: Extract<QuizStep, { kind: "question" }>;
   selectedValue?: string;
   onSelect: (questionId: string, value: string) => void;
+  reactionText: string | null;
+  onReactionDone: () => void;
 }) {
   const [tapped, setTapped] = useState<string | null>(null);
   const isSignGrid = step.id === "q_sign";
+  const hasReactions = Boolean(step.reactions || step.reactionDefault);
+  const reacting = reactionText !== null;
 
   return (
     <div>
@@ -208,9 +266,12 @@ function QuestionStep({
       )}
 
       <div
-        className={
+        className={`${
           isSignGrid ? "mt-6 grid grid-cols-2 gap-3" : "mt-6 flex flex-col gap-3"
-        }
+        } transition-all duration-300 ${
+          reacting ? "pointer-events-none scale-[0.985] opacity-50" : ""
+        }`}
+        aria-hidden={reacting || undefined}
       >
         {step.options.map((option) => {
           const isActive =
@@ -220,6 +281,7 @@ function QuestionStep({
             <button
               key={option.value}
               type="button"
+              disabled={reacting}
               onClick={() => {
                 setTapped(option.value);
                 onSelect(step.id, option.value);
@@ -234,7 +296,7 @@ function QuestionStep({
               {option.symbol && (
                 <span
                   aria-hidden="true"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[rgba(212,175,55,0.3)] bg-[rgba(212,175,55,0.08)] text-lg text-[#d4af37]"
+                  className="font-display flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[rgba(212,175,55,0.3)] bg-gradient-to-br from-[rgba(212,175,55,0.18)] to-[rgba(124,92,255,0.15)] text-lg font-semibold text-[#d4af37]"
                 >
                   {option.symbol}
                 </span>
@@ -244,7 +306,157 @@ function QuestionStep({
           );
         })}
       </div>
+
+      {/* Reserved area for Luna's bubble so options never shift. */}
+      {hasReactions && (
+        <div className="mt-4 min-h-[124px]">
+          <AnimatePresence>
+            {reacting && (
+              <LunaBubble
+                key={step.id}
+                text={reactionText}
+                onDone={onReactionDone}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
+  );
+}
+
+/* ----------------------------- Luna reaction ---------------------------- */
+
+const TYPING_DOTS_MS = 800; // pulsing-dots pause before Luna "speaks"
+const CHAR_MS = 18; // typewriter speed per character
+const TYPE_TOTAL_CAP_MS = 1400; // long texts speed up to fit this budget
+const ADVANCE_AFTER_MS = 1400; // auto-advance once the text is complete
+
+function LunaBubble({ text, onDone }: { text: string; onDone: () => void }) {
+  const [phase, setPhase] = useState<"dots" | "typing" | "done">("dots");
+  const [shownChars, setShownChars] = useState(0);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  // Phase 1: typing indicator.
+  useEffect(() => {
+    if (phase !== "dots") return;
+    const t = window.setTimeout(() => setPhase("typing"), TYPING_DOTS_MS);
+    return () => window.clearTimeout(t);
+  }, [phase]);
+
+  // Phase 2: typewriter reveal (long texts speed up to stay under the cap).
+  useEffect(() => {
+    if (phase !== "typing") return;
+    const perChar = Math.max(
+      6,
+      Math.min(CHAR_MS, Math.floor(TYPE_TOTAL_CAP_MS / Math.max(1, text.length)))
+    );
+    const interval = window.setInterval(() => {
+      setShownChars((c) => {
+        if (c + 1 >= text.length) {
+          window.clearInterval(interval);
+          setPhase("done");
+          return text.length;
+        }
+        return c + 1;
+      });
+    }, perChar);
+    return () => window.clearInterval(interval);
+  }, [phase, text]);
+
+  // Phase 3: auto-advance shortly after the full text is visible.
+  useEffect(() => {
+    if (phase !== "done") return;
+    const t = window.setTimeout(() => onDoneRef.current(), ADVANCE_AFTER_MS);
+    return () => window.clearTimeout(t);
+  }, [phase]);
+
+  const skip = useCallback(() => {
+    if (phase === "done") {
+      onDoneRef.current();
+    } else {
+      // Reveal everything at once; the auto-advance timer takes over.
+      setShownChars(text.length);
+      setPhase("done");
+    }
+  }, [phase, text.length]);
+
+  // Keyboard: Enter skips typing / advances, wherever focus is.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        skip();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [skip]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
+      <button
+        type="button"
+        onClick={skip}
+        aria-label={
+          phase === "done" ? "Continue" : "Skip to the full message"
+        }
+        className="glass w-full rounded-2xl border border-[rgba(212,175,55,0.4)] p-4 text-left"
+      >
+        <span className="flex items-center gap-2.5">
+          <span
+            aria-hidden="true"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+            style={{
+              background:
+                "linear-gradient(135deg, #edd9a3, #d4af37 60%, #a9822f)",
+            }}
+          >
+            <Moon className="h-[18px] w-[18px] text-[#1a1430]" />
+          </span>
+          <span className="text-sm font-medium text-[#e8d9a8]">
+            {LUNA.name} <span aria-hidden="true">&middot;</span>{" "}
+            <span className="font-normal text-[#b9b2d0]">{LUNA.role}</span>
+          </span>
+        </span>
+
+        <span className="mt-3 block min-h-[24px] text-base leading-relaxed text-[#e8e4f5]">
+          {phase === "dots" ? (
+            <span
+              className="flex h-6 items-center gap-1.5 pl-1"
+              aria-hidden="true"
+            >
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#d4af37]"
+                  style={{ animationDelay: `${i * 180}ms` }}
+                />
+              ))}
+            </span>
+          ) : (
+            <span className="relative block">
+              {/* Invisible full text keeps the bubble height stable while typing. */}
+              <span aria-hidden="true" className="invisible block">
+                {text}
+              </span>
+              <span aria-hidden="true" className="absolute inset-0">
+                {text.slice(0, shownChars)}
+              </span>
+            </span>
+          )}
+          <span className="sr-only" aria-live="polite">
+            {text}
+          </span>
+        </span>
+      </button>
+    </motion.div>
   );
 }
 
@@ -265,10 +477,24 @@ function InterstitialStep({
 
       {step.testimonial && (
         <figure className="glass glass-gold mt-6 rounded-2xl p-5 text-left">
-          <div className="flex items-center gap-0.5" aria-hidden="true">
-            {Array.from({ length: step.testimonial.stars }).map((_, i) => (
-              <Star key={i} className="h-4 w-4 fill-[#d4af37] text-[#d4af37]" />
-            ))}
+          <div className="flex items-center gap-3">
+            {step.testimonial.photo && (
+              <Image
+                src={step.testimonial.photo}
+                alt={step.testimonial.author}
+                width={96}
+                height={96}
+                className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.4)]"
+              />
+            )}
+            <div className="flex items-center gap-0.5" aria-hidden="true">
+              {Array.from({ length: step.testimonial.stars }).map((_, i) => (
+                <Star
+                  key={i}
+                  className="h-4 w-4 fill-[#d4af37] text-[#d4af37]"
+                />
+              ))}
+            </div>
           </div>
           <blockquote className="mt-3 text-base leading-relaxed text-[#e8e4f5]">
             &ldquo;{step.testimonial.quote}&rdquo;
@@ -462,32 +688,37 @@ function EmailStep({
 
 const STAGE_INTERVAL_MS = 1100; // 4 stages ≈ 4.4s + exit pause
 
-function AnalyzingScreen({ onDone }: { onDone: () => void }) {
+function AnalyzingScreen({
+  name,
+  onDone,
+}: {
+  name?: string;
+  onDone: () => void;
+}) {
   const [completed, setCompleted] = useState(0);
   const doneRef = useRef(false);
+  const stages = getAnalyzingStages(name);
+  const firstName = name?.trim();
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       setCompleted((c) => {
-        if (c >= ANALYZING_STAGES.length) return c;
+        if (c >= stages.length) return c;
         return c + 1;
       });
     }, STAGE_INTERVAL_MS);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [stages.length]);
 
   useEffect(() => {
-    if (completed >= ANALYZING_STAGES.length && !doneRef.current) {
+    if (completed >= stages.length && !doneRef.current) {
       doneRef.current = true;
       const timeout = window.setTimeout(onDone, 700);
       return () => window.clearTimeout(timeout);
     }
-  }, [completed, onDone]);
+  }, [completed, stages.length, onDone]);
 
-  const pct = Math.min(
-    100,
-    Math.round((completed / ANALYZING_STAGES.length) * 100)
-  );
+  const pct = Math.min(100, Math.round((completed / stages.length) * 100));
 
   return (
     <div className="text-center" aria-live="polite">
@@ -495,7 +726,9 @@ function AnalyzingScreen({ onDone }: { onDone: () => void }) {
         Reading your <span className="text-gold">cosmic signature</span>
       </h2>
       <p className="mt-2 text-sm text-[#b9b2d0]">
-        Hold on — this takes a few seconds.
+        {firstName
+          ? `Hold on, ${firstName} — this takes a few seconds.`
+          : "Hold on — this takes a few seconds."}
       </p>
 
       <div className="mx-auto mt-8 h-1.5 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
@@ -510,7 +743,7 @@ function AnalyzingScreen({ onDone }: { onDone: () => void }) {
       </div>
 
       <ul className="mt-6 flex flex-col gap-3 text-left">
-        {ANALYZING_STAGES.map((stage, i) => {
+        {stages.map((stage, i) => {
           const isDone = i < completed;
           const isCurrent = i === completed;
           return (

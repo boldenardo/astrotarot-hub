@@ -4,6 +4,7 @@
 // POST /api/quiz/checkout {plan, email} → Stripe → /quiz/thank-you.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   ChevronDown,
   Loader2,
@@ -53,21 +54,29 @@ const OFFER_ROWS: Array<{ item: string; value: string }> = [
   { item: "Love compatibility readings", value: "$19" },
 ];
 
-const TESTIMONIALS: Array<{ name: string; city: string; text: string }> = [
+const TESTIMONIALS: Array<{
+  name: string;
+  city: string;
+  text: string;
+  photo: string;
+}> = [
   {
     name: "Rachel M.",
     city: "Austin, TX",
     text: "The prosperity windows were scary accurate. I asked for a raise during mine and got it the same week.",
+    photo: "/testimonials/t1.jpg",
   },
   {
     name: "Danielle K.",
     city: "Phoenix, AZ",
     text: "I was skeptical, but my 2026 plan explained exactly why last year felt so blocked. Worth every penny.",
+    photo: "/testimonials/t7.jpg",
   },
   {
     name: "Marcus T.",
     city: "Charlotte, NC",
     text: "The daily horoscope actually feels written for me, not copy-pasted. The tarot readings are unreal.",
+    photo: "/testimonials/t5.jpg",
   },
 ];
 
@@ -366,8 +375,17 @@ export default function QuizVslPage() {
               <blockquote className="mt-2 text-sm text-white/85">
                 &ldquo;{t.text}&rdquo;
               </blockquote>
-              <figcaption className="mt-2 text-xs text-white/50">
-                {t.name} — {t.city}
+              <figcaption className="mt-3 flex items-center gap-2.5">
+                <Image
+                  src={t.photo}
+                  alt={t.name}
+                  width={96}
+                  height={96}
+                  className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-gold-400/40"
+                />
+                <span className="text-xs text-white/50">
+                  {t.name} — {t.city}
+                </span>
               </figcaption>
             </figure>
           ))}

@@ -53,7 +53,6 @@ interface CompatibilityResult {
 const zodiacSigns = [
   {
     name: "Aries",
-    emoji: "♈︎",
     element: "Fire",
     dates: "Mar 21 – Apr 19",
     perfectMatches: ["Leo", "Sagittarius", "Gemini"],
@@ -62,7 +61,6 @@ const zodiacSigns = [
   },
   {
     name: "Taurus",
-    emoji: "♉︎",
     element: "Earth",
     dates: "Apr 20 – May 20",
     perfectMatches: ["Virgo", "Capricorn", "Cancer"],
@@ -71,7 +69,6 @@ const zodiacSigns = [
   },
   {
     name: "Gemini",
-    emoji: "♊︎",
     element: "Air",
     dates: "May 21 – Jun 20",
     perfectMatches: ["Libra", "Aquarius", "Aries"],
@@ -80,7 +77,6 @@ const zodiacSigns = [
   },
   {
     name: "Cancer",
-    emoji: "♋︎",
     element: "Water",
     dates: "Jun 21 – Jul 22",
     perfectMatches: ["Scorpio", "Pisces", "Taurus"],
@@ -89,7 +85,6 @@ const zodiacSigns = [
   },
   {
     name: "Leo",
-    emoji: "♌︎",
     element: "Fire",
     dates: "Jul 23 – Aug 22",
     perfectMatches: ["Aries", "Sagittarius", "Libra"],
@@ -98,7 +93,6 @@ const zodiacSigns = [
   },
   {
     name: "Virgo",
-    emoji: "♍︎",
     element: "Earth",
     dates: "Aug 23 – Sep 22",
     perfectMatches: ["Taurus", "Capricorn", "Scorpio"],
@@ -107,7 +101,6 @@ const zodiacSigns = [
   },
   {
     name: "Libra",
-    emoji: "♎︎",
     element: "Air",
     dates: "Sep 23 – Oct 22",
     perfectMatches: ["Gemini", "Aquarius", "Leo"],
@@ -116,7 +109,6 @@ const zodiacSigns = [
   },
   {
     name: "Scorpio",
-    emoji: "♏︎",
     element: "Water",
     dates: "Oct 23 – Nov 21",
     perfectMatches: ["Cancer", "Pisces", "Virgo"],
@@ -125,7 +117,6 @@ const zodiacSigns = [
   },
   {
     name: "Sagittarius",
-    emoji: "♐︎",
     element: "Fire",
     dates: "Nov 22 – Dec 21",
     perfectMatches: ["Aries", "Leo", "Aquarius"],
@@ -134,7 +125,6 @@ const zodiacSigns = [
   },
   {
     name: "Capricorn",
-    emoji: "♑︎",
     element: "Earth",
     dates: "Dec 22 – Jan 19",
     perfectMatches: ["Taurus", "Virgo", "Pisces"],
@@ -143,7 +133,6 @@ const zodiacSigns = [
   },
   {
     name: "Aquarius",
-    emoji: "♒︎",
     element: "Air",
     dates: "Jan 20 – Feb 18",
     perfectMatches: ["Gemini", "Libra", "Sagittarius"],
@@ -152,7 +141,6 @@ const zodiacSigns = [
   },
   {
     name: "Pisces",
-    emoji: "♓︎",
     element: "Water",
     dates: "Feb 19 – Mar 20",
     perfectMatches: ["Cancer", "Scorpio", "Capricorn"],
@@ -419,14 +407,14 @@ export default function CompatibilityPage() {
                   />
 
                   <div className="relative glass rounded-2xl p-6 border border-white/5 hover:border-gold-400/40 transition-all duration-300 hover:scale-105 hover:shadow-gold cursor-pointer h-full flex flex-col">
-                    {/* Sign glyph */}
+                    {/* Sign monogram */}
                     <div className="text-center mb-4">
                       <motion.div
                         whileHover={{ scale: 1.2, rotate: 360 }}
                         transition={{ duration: 0.6 }}
-                        className="mx-auto mb-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-gold-400/30 bg-gold-400/10 text-2xl leading-none text-gold-300"
+                        className="mx-auto mb-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-400/20 to-purple-500/20 border border-gold-400/30 font-display text-2xl font-semibold text-gold-300"
                       >
-                        {sign.emoji}
+                        {sign.name.charAt(0)}
                       </motion.div>
                       <h3 className="text-2xl font-semibold text-ink-50">
                         {sign.name}

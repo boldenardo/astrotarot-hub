@@ -7,6 +7,7 @@ import {
   Moon,
   Sun,
   ArrowLeft,
+  ArrowUp,
   Loader2,
   MapPin,
   Calendar,
@@ -55,31 +56,33 @@ function stripAccents(value: string): string {
     .trim();
 }
 
-const planetSymbols: Record<string, string> = {
-  sun: "☉︎",
-  sol: "☉︎",
-  moon: "☽︎",
-  lua: "☽︎",
-  mercury: "☿︎",
-  mercurio: "☿︎",
-  venus: "♀︎",
-  mars: "♂︎",
-  marte: "♂︎",
-  jupiter: "♃︎",
-  saturn: "♄︎",
-  saturno: "♄︎",
-  uranus: "♅︎",
-  urano: "♅︎",
-  neptune: "♆︎",
-  netuno: "♆︎",
-  pluto: "♇︎",
-  plutao: "♇︎",
-  node: "☊︎",
-  nodo: "☊︎",
-  chiron: "⚷︎",
-  quiron: "⚷︎",
-  fortuna: "⊗︎",
-  lilith: "⚸︎",
+// Two-letter typographic abbreviations (no unicode glyphs — they render
+// inconsistently across devices). Keys stay pt+en normalized.
+const planetAbbreviations: Record<string, string> = {
+  sun: "Su",
+  sol: "Su",
+  moon: "Mo",
+  lua: "Mo",
+  mercury: "Me",
+  mercurio: "Me",
+  venus: "Ve",
+  mars: "Ma",
+  marte: "Ma",
+  jupiter: "Ju",
+  saturn: "Sa",
+  saturno: "Sa",
+  uranus: "Ur",
+  urano: "Ur",
+  neptune: "Ne",
+  netuno: "Ne",
+  pluto: "Pl",
+  plutao: "Pl",
+  node: "No",
+  nodo: "No",
+  chiron: "Ch",
+  quiron: "Ch",
+  fortuna: "Fo",
+  lilith: "Li",
 };
 
 const planetNames: Record<string, string> = {
@@ -305,8 +308,8 @@ export default function BirthChartPage() {
               className="glass rounded-3xl p-6 border-white/5"
             >
               <div className="flex items-center gap-3 mb-4 text-ink-300">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl leading-none text-gold-300">
-                  {"↑︎"}
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-gold-300">
+                  <ArrowUp className="h-7 w-7" />
                 </span>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-ink-400">
@@ -371,8 +374,9 @@ export default function BirthChartPage() {
                           className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-white/5 transition-colors"
                         >
                           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                            <div className="w-10 h-10 shrink-0 rounded-full bg-night-800 flex items-center justify-center text-xl leading-none text-gold-300">
-                              {planetSymbols[k] || "•"}
+                            <div className="w-10 h-10 shrink-0 rounded-full bg-night-800 border border-gold-400/30 flex items-center justify-center font-display font-semibold text-sm text-gold-300">
+                              {planetAbbreviations[k] ||
+                                (planet.name || "?").slice(0, 2)}
                             </div>
                             <div className="min-w-0">
                               <p className="font-semibold text-ink-50 text-sm sm:text-base break-words">
