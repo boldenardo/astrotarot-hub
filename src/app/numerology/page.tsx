@@ -81,11 +81,11 @@ export default function NumerologyPage() {
             <Hash className="h-7 w-7 text-night-900" />
           </span>
           <h1 className="font-display text-3xl font-semibold text-ink-50 sm:text-5xl md:text-6xl">
-            Your <span className="text-gold">Numerology</span> Profile
+            Your <span className="text-gold">lucky numbers</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-ink-400 sm:text-lg">
-            Your name and birth date carry a numeric blueprint. Discover the
-            core numbers that shape your path.
+            Your name and birthday hide the numbers that follow you through life.
+            Find out yours in seconds.
           </p>
         </motion.div>
 
@@ -122,10 +122,9 @@ export default function NumerologyPage() {
 
           <button
             type="submit"
-            className="btn-gold flex w-full items-center justify-center gap-2 rounded-full py-4"
+            className="btn-gold flex w-full items-center justify-center gap-2 rounded-full py-4 font-semibold"
           >
-            <Sparkles className="h-5 w-5" />
-            Reveal My Numbers
+            Reveal my lucky numbers
           </button>
         </form>
 

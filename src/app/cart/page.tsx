@@ -77,8 +77,8 @@ function PlansContent() {
             </h1>
           </div>
           <p className="text-ink-400 max-w-2xl mx-auto">
-            Unlock tarot readings and the full power of personalized astrology.
-            Cancel anytime.
+            Unlock everything — your soulmate reading, your fortune, your daily
+            horoscope and unlimited tarot. Cancel anytime.
           </p>
         </motion.div>
 
@@ -142,7 +142,7 @@ function PlansContent() {
                   Redirecting...
                 </>
               ) : (
-                "Buy pack"
+                "Get 5 readings"
               )}
             </button>
           </motion.div>
@@ -160,8 +160,7 @@ function PlansContent() {
           >
             {/* Most popular badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-              <span className="btn-gold rounded-full px-5 py-1.5 text-sm font-semibold inline-flex items-center gap-1.5">
-                <Crown className="w-4 h-4" />
+              <span className="btn-gold rounded-full px-5 py-1.5 text-sm font-semibold inline-flex items-center">
                 Most popular
               </span>
             </div>
@@ -204,7 +203,7 @@ function PlansContent() {
                   Redirecting...
                 </>
               ) : (
-                "Subscribe to Premium"
+                "Unlock everything"
               )}
             </button>
           </motion.div>

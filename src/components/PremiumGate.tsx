@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Lock, Check, Sparkles, LogIn } from "lucide-react";
+import { Lock, Check, LogIn } from "lucide-react";
 import { getMyProfile } from "@/lib/client/me";
 import {
   CHECKOUT_PLANS,
@@ -116,15 +116,14 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
         </motion.span>
 
         <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
-          Premium Feature
+          One step away
         </p>
         <h2 className="mb-3 break-words font-display text-2xl font-semibold text-ink-50 sm:text-3xl">
           {FEATURE_LABELS[feature]}
         </h2>
         <p className="mb-8 text-ink-400">
-          This feature is exclusive to the{" "}
-          <span className="text-gold-300">{CHECKOUT_PLANS.PREMIUM.name}</span>{" "}
-          plan. Unlock it now and access everything the stars have to reveal:
+          Unlock your soulmate reading, your fortune map, your daily horoscope
+          and more — everything the stars are trying to tell you:
         </p>
 
         <ul className="mb-8 space-y-3 text-left">
@@ -148,10 +147,9 @@ export default function PremiumGate({ feature, children }: PremiumGateProps) {
 
         <Link
           href="/cart?plan=premium"
-          className="btn-gold mb-4 flex w-full items-center justify-center gap-2 rounded-full py-4 font-semibold"
+          className="btn-gold mb-4 flex w-full items-center justify-center rounded-full py-4 font-semibold"
         >
-          <Sparkles className="h-5 w-5" />
-          Unlock with Unlimited Premium
+          Unlock everything now
         </Link>
         <Link
           href="/cart"

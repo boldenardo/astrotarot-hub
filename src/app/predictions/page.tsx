@@ -289,7 +289,7 @@ export default function PredictionsPage() {
               <Sun className="w-16 h-16 text-gold-400" />
             </motion.div>
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-ink-50 mb-4 break-words">
-              Your Daily <span className="text-gold">Forecast</span>
+              Your daily <span className="text-gold">horoscope</span>
             </h1>
             <p className="text-lg sm:text-xl text-ink-400 capitalize">
               {currentDate.toLocaleDateString("en-US", {
@@ -316,8 +316,8 @@ export default function PredictionsPage() {
                     Enter your birth details
                   </h2>
                   <p className="text-ink-400">
-                    To generate personalized forecasts based on your natal
-                    chart
+                    So your horoscope is truly about you — not everyone born
+                    your month
                   </p>
                 </div>
 
@@ -452,7 +452,7 @@ export default function PredictionsPage() {
                     type="submit"
                     className="btn-gold w-full rounded-full py-4 font-semibold text-lg"
                   >
-                    Reveal today&apos;s forecast
+                    Show my horoscope
                   </button>
                 </form>
               </motion.div>
@@ -480,10 +480,10 @@ export default function PredictionsPage() {
                   <Sun className="w-20 h-20 text-gold-400" />
                 </motion.div>
                 <h2 className="font-display text-2xl font-semibold text-ink-50 mb-4">
-                  Reading the planetary transits...
+                  Reading your stars...
                 </h2>
                 <p className="text-ink-400">
-                  Calculating the astrological energies of your day
+                  Putting together your horoscope for today
                 </p>
               </motion.div>
             )}
@@ -672,7 +672,7 @@ export default function PredictionsPage() {
                     }}
                     className="btn-gold rounded-full px-8 py-4 font-semibold text-lg"
                   >
-                    View another day&apos;s forecast
+                    See another day
                   </button>
                 </div>
               </motion.div>

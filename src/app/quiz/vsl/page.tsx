@@ -10,7 +10,6 @@ import {
   Loader2,
   Play,
   ShieldCheck,
-  Sparkles,
   Star,
   X,
 } from "lucide-react";
@@ -48,10 +47,11 @@ const SCORE_COPY: Record<Score, { label: string; color: string }> = {
 
 const OFFER_ROWS: Array<{ item: string; value: string }> = [
   { item: "Unlimited Egyptian Tarot readings", value: "$19" },
-  { item: "Personalized daily horoscope", value: "$29" },
-  { item: "Complete birth chart", value: "$27" },
-  { item: "Prosperity guide (your money windows)", value: "$19" },
-  { item: "Love compatibility readings", value: "$19" },
+  { item: "Your personalized daily horoscope", value: "$29" },
+  { item: "Your complete birth chart", value: "$27" },
+  { item: "Your fortune & money windows", value: "$19" },
+  { item: "Find-your-soulmate readings", value: "$19" },
+  { item: "Your lucky numbers", value: "$19" },
 ];
 
 const TESTIMONIALS: Array<{
@@ -63,7 +63,7 @@ const TESTIMONIALS: Array<{
   {
     name: "Rachel M.",
     city: "Austin, TX",
-    text: "The prosperity windows were scary accurate. I asked for a raise during mine and got it the same week.",
+    text: "The money windows were scary accurate. I asked for a raise during mine and got it the same week.",
     photo: "/testimonials/t1.jpg",
   },
   {
@@ -83,7 +83,7 @@ const TESTIMONIALS: Array<{
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly is included?",
-    a: "Everything in the 2026 Cosmic Plan: unlimited Egyptian Tarot readings, your personalized daily horoscope, your complete birth chart, the prosperity guide with your money windows, and love compatibility readings — all inside your private dashboard.",
+    a: "Everything in the 2026 Cosmic Plan: unlimited Egyptian Tarot readings, your personalized daily horoscope, your complete birth chart, your fortune and money windows, your find-your-soulmate readings, and your lucky numbers — all inside your private dashboard.",
   },
   {
     q: "Can I cancel anytime?",
@@ -212,10 +212,8 @@ export default function QuizVslPage() {
         className="btn-gold w-full min-h-[52px] text-base font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
         data-cta={id}
       >
-        {loadingPlan === "PREMIUM" ? (
+        {loadingPlan === "PREMIUM" && (
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-        ) : (
-          <Sparkles className="h-5 w-5" aria-hidden />
         )}
         Unlock my 2026 Cosmic Plan — $29.90/mo
       </button>
@@ -324,7 +322,7 @@ export default function QuizVslPage() {
         <div className="mt-5 border-t border-white/10 pt-4">
           <div className="flex items-baseline justify-between text-sm text-white/60">
             <span>Total value</span>
-            <span className="line-through">$113/mo</span>
+            <span className="line-through">$132/mo</span>
           </div>
           <div className="mt-1 flex items-baseline justify-between">
             <span className="font-medium">Today</span>
@@ -438,10 +436,8 @@ export default function QuizVslPage() {
             disabled={loadingPlan !== null}
             className="btn-gold mx-auto flex w-full max-w-lg min-h-[48px] items-center justify-center gap-2 text-sm font-semibold disabled:opacity-60"
           >
-            {loadingPlan === "PREMIUM" ? (
+            {loadingPlan === "PREMIUM" && (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              <Sparkles className="h-4 w-4" aria-hidden />
             )}
             Unlock my 2026 Cosmic Plan — $29.90/mo
           </button>

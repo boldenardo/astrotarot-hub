@@ -32,11 +32,11 @@ export const CHECKOUT_PLANS = {
     readings: Infinity,
     features: [
       "Unlimited tarot readings",
-      "Personalized daily horoscope",
-      "Full numerology",
+      "Your daily horoscope",
+      "Find your soulmate reading",
+      "Your fortune & money map",
       "Complete birth chart",
-      "Prosperity guide",
-      "Love compatibility",
+      "Your lucky numbers",
     ],
   },
 } as const;
@@ -56,10 +56,10 @@ export type PremiumFeature = (typeof PREMIUM_FEATURES)[number];
 
 export const FEATURE_LABELS: Record<PremiumFeature, string> = {
   horoscope: "Daily horoscope",
-  numerology: "Numerology",
+  numerology: "Lucky numbers",
   birth_chart: "Birth chart",
-  prosperity: "Prosperity guide",
-  compatibility: "Love compatibility",
+  prosperity: "Fortune reading",
+  compatibility: "Soulmate reading",
 };
 
 export interface PlanProfile {

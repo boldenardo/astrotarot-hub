@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Moon } from "lucide-react";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Your 2026 Cosmic Reading | AstroTarot",
@@ -28,9 +28,14 @@ export default function QuizLayout({
       {/* Fixed brand mark (not a link — the funnel has no exits) */}
       <div className="fixed inset-x-0 top-0 z-40 flex justify-center pt-4">
         <span className="flex items-center gap-2 text-sm font-semibold tracking-wide">
-          <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[rgba(212,175,55,0.35)] bg-[rgba(212,175,55,0.08)]">
-            <Moon className="h-3.5 w-3.5 text-[#d4af37]" aria-hidden="true" />
-          </span>
+          <Image
+            src="/brand/astrotarot-logo.png"
+            alt=""
+            width={28}
+            height={28}
+            priority
+            className="h-6 w-6 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]"
+          />
           <span className="text-gold">AstroTarot</span>
         </span>
       </div>

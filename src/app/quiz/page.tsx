@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { Star, Sparkles, Clock, Moon } from "lucide-react";
+import { Star, Clock } from "lucide-react";
 import { ZODIAC_SIGNS } from "@/lib/quiz-data";
 
 const fadeUp = {
@@ -22,10 +23,19 @@ export default function QuizLandingPage() {
         initial="hidden"
         animate="visible"
         variants={fadeUp}
-        className="mb-5 inline-flex items-center gap-2 rounded-full border border-[rgba(212,175,55,0.25)] bg-[rgba(212,175,55,0.06)] px-4 py-1.5 text-xs font-medium text-[#e8d9a8]"
+        className="mb-6 flex flex-col items-center gap-3"
       >
-        <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
-        Your 2026 Cosmic Reading
+        <Image
+          src="/brand/astrotarot-logo.png"
+          alt="AstroTarot"
+          width={104}
+          height={104}
+          priority
+          className="h-20 w-20 object-contain drop-shadow-[0_0_22px_rgba(212,175,55,0.4)]"
+        />
+        <span className="inline-flex items-center rounded-full border border-[rgba(212,175,55,0.25)] bg-[rgba(212,175,55,0.06)] px-4 py-1.5 text-xs font-medium text-[#e8d9a8]">
+          Your 2026 Cosmic Reading
+        </span>
       </motion.div>
 
       <motion.h1
@@ -58,15 +68,13 @@ export default function QuizLandingPage() {
         variants={fadeUp}
         className="mt-4 flex items-center gap-2.5 text-sm text-[#b9b2d0]"
       >
-        <span
-          aria-hidden="true"
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-          style={{
-            background: "linear-gradient(135deg, #edd9a3, #d4af37 60%, #a9822f)",
-          }}
-        >
-          <Moon className="h-3.5 w-3.5 text-[#1a1430]" />
-        </span>
+        <Image
+          src="/luna.jpg"
+          alt="Luna"
+          width={56}
+          height={56}
+          className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+        />
         <span>
           Guided by <span className="font-medium text-[#e8d9a8]">Luna</span>{" "}
           &mdash; she reads your answers as you go.

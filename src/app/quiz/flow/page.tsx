@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CircleCheck, Loader2, Lock, Moon, Star } from "lucide-react";
+import { ArrowLeft, CircleCheck, Loader2, Lock, Star } from "lucide-react";
 import {
   LUNA,
   STEPS,
@@ -410,16 +410,14 @@ function LunaBubble({ text, onDone }: { text: string; onDone: () => void }) {
         className="glass w-full rounded-2xl border border-[rgba(212,175,55,0.4)] p-4 text-left"
       >
         <span className="flex items-center gap-2.5">
-          <span
+          <Image
+            src="/luna.jpg"
+            alt=""
+            width={72}
+            height={72}
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-            style={{
-              background:
-                "linear-gradient(135deg, #edd9a3, #d4af37 60%, #a9822f)",
-            }}
-          >
-            <Moon className="h-[18px] w-[18px] text-[#1a1430]" />
-          </span>
+            className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+          />
           <span className="text-sm font-medium text-[#e8d9a8]">
             {LUNA.name} <span aria-hidden="true">&middot;</span>{" "}
             <span className="font-normal text-[#b9b2d0]">{LUNA.role}</span>

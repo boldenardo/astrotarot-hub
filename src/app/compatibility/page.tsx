@@ -6,7 +6,6 @@ import {
   Heart,
   Users,
   Sparkles,
-  ArrowRight,
   ArrowLeft,
   Loader2,
   Star,
@@ -266,11 +265,11 @@ export default function CompatibilityPage() {
           </motion.div>
 
           <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-semibold mb-4 text-ink-50 break-words">
-            Love <span className="text-gold">Compatibility</span>
+            Find your <span className="text-gold">soulmate</span>
           </h1>
           <p className="text-lg sm:text-xl text-ink-400 max-w-2xl mx-auto">
-            Discover the depth of your connection through the ancient wisdom of
-            the stars.
+            Two birthdays. One question — are you meant to be? Find out in
+            seconds.
           </p>
         </motion.div>
 
@@ -301,8 +300,8 @@ export default function CompatibilityPage() {
             ))}
           </div>
           <div className="flex justify-between mt-2 text-sm text-ink-600">
-            <span>Person 1</span>
-            <span>Person 2</span>
+            <span>You</span>
+            <span>Them</span>
             <span>Result</span>
           </div>
         </div>
@@ -385,11 +384,11 @@ export default function CompatibilityPage() {
                 />
               </motion.div>
               <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold mb-4 text-ink-50">
-                The 12 Zodiac <span className="text-gold">Signs</span>
+                Who is your <span className="text-gold">match</span>?
               </h2>
               <p className="text-lg text-ink-400 max-w-2xl mx-auto">
-                Explore the unique traits of each sign and their most harmonious
-                matches for lasting love.
+                Every sign has the people it's drawn to most. See who your heart
+                is meant to find.
               </p>
             </div>
 
@@ -446,7 +445,7 @@ export default function CompatibilityPage() {
                     <div className="mt-auto">
                       <div className="border-t border-white/5 pt-3">
                         <p className="text-xs text-ink-600 mb-2 font-semibold uppercase tracking-wide">
-                          Perfect Matches
+                          Soulmate signs
                         </p>
                         <div className="space-y-1 opacity-70 group-hover:opacity-100 transition-opacity">
                           {sign.perfectMatches.map((match, i) => (
@@ -494,8 +493,8 @@ export default function CompatibilityPage() {
               key="person1"
               person={person1}
               setPerson={setPerson1}
-              title="First Person"
-              subtitle="Your birth details"
+              title="About you"
+              subtitle="Start with your birth details"
               onNext={() => setStep(2)}
               icon={Heart}
             />
@@ -506,8 +505,8 @@ export default function CompatibilityPage() {
               key="person2"
               person={person2}
               setPerson={setPerson2}
-              title="Second Person"
-              subtitle="Your partner's birth details"
+              title="About them"
+              subtitle="The one you're curious about"
               onNext={handleCalculate}
               onBack={() => setStep(1)}
               loading={loading}
@@ -721,13 +720,12 @@ function PersonForm({
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Calculating...
+                Reading the stars...
               </>
+            ) : onBack ? (
+              "Are we soulmates?"
             ) : (
-              <>
-                {onBack ? "Calculate Compatibility" : "Continue"}
-                <ArrowRight className="w-5 h-5" />
-              </>
+              "Continue"
             )}
           </button>
         </div>
@@ -869,7 +867,7 @@ function ResultScreen({
 
         <div className="glass glass-gold rounded-2xl p-6">
           <h3 className="text-xl font-semibold text-ink-50 mb-3">
-            Final Verdict
+            Are you the one for each other?
           </h3>
           <p className="text-ink-200 italic">{result.final_verdict}</p>
         </div>
@@ -881,13 +879,13 @@ function ResultScreen({
           onClick={onReset}
           className="btn-ghost flex-1 rounded-full py-4 font-semibold"
         >
-          New Analysis
+          Try another match
         </button>
         <Link
           href="/auth/register"
           className="btn-gold flex-1 rounded-full py-4 font-semibold text-center"
         >
-          Save Result (Create Account)
+          Save my soulmate reading
         </Link>
       </div>
     </motion.div>

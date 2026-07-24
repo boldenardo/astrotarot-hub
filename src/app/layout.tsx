@@ -134,6 +134,18 @@ export default function RootLayout({
         )}
       </head>
       <body className="font-sans antialiased">
+        {/* Branded ambient watermark (the AstroTarot emblem), behind everything */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 -z-10 flex items-start justify-center overflow-hidden"
+        >
+          <img
+            src="/brand/astrotarot-logo.png"
+            alt=""
+            className="mt-[-6%] w-[min(90vw,560px)] max-w-none opacity-[0.06] blur-[1px] select-none"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#07050d]/40 to-[#07050d]" />
+        </div>
         {children}
         <Analytics />
       </body>

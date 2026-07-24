@@ -14,13 +14,12 @@ import {
   Sun,
   Moon,
   ArrowUp,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
   LogOut,
-  User,
   Lock,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
@@ -320,33 +319,33 @@ export default function DashboardPage() {
     {
       href: "/guia",
       icon: Heart,
-      title: "Spiritual Guide",
-      description: "Chat with Luna AI",
-      cta: "Chat Now",
+      title: "Talk to Luna",
+      description: "A friend who always listens",
+      cta: "Chat now",
       premiumOnly: false,
     },
     {
       href: "/compatibility",
       icon: Heart,
-      title: "Compatibility",
-      description: "Astrological love analysis",
-      cta: "Analyze",
+      title: "Soulmate",
+      description: "Is he or she the one?",
+      cta: "Find out",
       premiumOnly: true,
     },
     {
       href: "/predictions",
       icon: TrendingUp,
-      title: "Forecasts",
-      description: "Your future in the stars",
-      cta: "View Forecasts",
+      title: "Horoscope",
+      description: "Your day in the stars",
+      cta: "Read it",
       premiumOnly: true,
     },
     {
       href: "/abundance",
       icon: Zap,
-      title: "Prosperity",
-      description: "Prosperity rituals",
-      cta: "Open",
+      title: "Fortune",
+      description: "When money is coming to you",
+      cta: "See it",
       premiumOnly: true,
     },
   ];
@@ -383,9 +382,17 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-8">
           <Link
             href="/"
-            className="font-display text-2xl font-semibold text-ink-50"
+            className="flex items-center gap-2.5 font-display text-2xl font-semibold text-ink-50"
           >
-            Astro<span className="text-gold">Tarot</span> Hub
+            <Image
+              src="/brand/astrotarot-logo.png"
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 object-contain"
+              priority
+            />
+            Astro<span className="text-gold">Tarot</span>
           </Link>
           <button
             onClick={handleLogout}
@@ -440,20 +447,18 @@ export default function DashboardPage() {
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   href="/cart?plan=pack5"
-                  className="btn-ghost flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold"
+                  className="btn-ghost flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  <Sparkles className="w-4 h-4 text-gold-300" />
-                  5-Reading Pack — $9.99
+                  5 readings — $9.99
                 </Link>
                 <Link
                   href="/cart?plan=premium"
                   onClick={() =>
                     trackSubscriptionUpgradeClicked("premium_monthly")
                   }
-                  className="btn-gold flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm"
+                  className="btn-gold flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  <Crown className="w-5 h-5" />
-                  Unlimited Premium — $29.90/month
+                  Unlock everything — $29.90/mo
                 </Link>
               </div>
             )}
@@ -592,8 +597,7 @@ export default function DashboardPage() {
                 href="/dashboard/birth-chart"
                 className="btn-ghost inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold"
               >
-                <Star className="w-4 h-4 text-gold-300" />
-                View Full Chart (Planets & Houses)
+                See my full chart
               </Link>
             </div>
           </motion.div>
@@ -612,23 +616,21 @@ export default function DashboardPage() {
             <div className="relative z-10">
               <Lock className="w-12 h-12 text-gold-300 mx-auto mb-4" />
               <h3 className="font-display text-2xl font-semibold text-ink-50 mb-2">
-                Your birth chart is Premium
+                Your birth chart is waiting
               </h3>
               <p className="text-ink-300 mb-6 max-w-xl mx-auto">
-                Your complete birth chart — Sun, Moon, Ascendant, planets and
-                houses — is one step away. Unlock it with the Unlimited Premium
-                plan.
+                Your full birth chart — Sun, Moon, Ascendant, planets and houses
+                — is one step away. Unlock it and see the real you.
               </p>
               <Link
                 href="/cart?plan=premium"
                 onClick={() =>
                   trackSubscriptionUpgradeClicked("premium_monthly")
                 }
-                className="btn-gold inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full px-6 sm:px-8 py-4 text-base sm:text-lg"
+                className="btn-gold inline-flex w-full sm:w-auto items-center justify-center rounded-full px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold"
               >
-                <Crown className="w-6 h-6 shrink-0" />
                 <span className="break-words">
-                  Unlock with Unlimited Premium — $29.90/month
+                  Unlock everything — $29.90/mo
                 </span>
               </Link>
             </div>
@@ -641,18 +643,16 @@ export default function DashboardPage() {
           >
             <Star className="w-12 h-12 text-ink-600 mx-auto mb-4" />
             <h3 className="font-display text-xl font-semibold text-ink-50 mb-2">
-              Discover Your Birth Chart
+              See what the stars say about you
             </h3>
             <p className="text-ink-400 mb-6">
-              Complete your profile with your birth details to reveal what the
-              stars say about you.
+              Add your birth details and unlock your birth chart in seconds.
             </p>
             <Link
               href="/profile"
               className="btn-gold inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold"
             >
-              <User className="w-5 h-5" />
-              Complete Profile
+              Complete my profile
             </Link>
           </motion.div>
         )}
@@ -691,7 +691,7 @@ export default function DashboardPage() {
                     {action.description}
                   </p>
                   <div className="flex items-center gap-2 text-gold-300 font-semibold">
-                    {action.cta} <ArrowRight className="w-4 h-4" />
+                    {action.cta}
                   </div>
                 </Link>
               );
@@ -718,8 +718,7 @@ export default function DashboardPage() {
                 href="/challenge"
                 className="btn-gold inline-flex items-center gap-2 rounded-full px-6 py-3 font-semibold"
               >
-                <Sparkles className="w-5 h-5" />
-                Do My First Reading
+                Do my first reading
               </Link>
             </div>
           ) : (
@@ -808,10 +807,10 @@ export default function DashboardPage() {
             <div className="text-center">
               <Crown className="w-20 h-20 text-gold-300 mx-auto mb-4" />
               <h3 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-3">
-                Unlock All the Mystic Power
+                Unlock everything the stars know about you
               </h3>
               <p className="text-xl text-ink-300 mb-6">
-                For just{" "}
+                Soulmate, fortune, horoscope and unlimited tarot — for just{" "}
                 <span className="text-gold font-bold">$29.90/month</span>
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -820,17 +819,15 @@ export default function DashboardPage() {
                   onClick={() =>
                     trackSubscriptionUpgradeClicked("premium_monthly")
                   }
-                  className="btn-gold inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full px-8 py-4 text-lg"
+                  className="btn-gold inline-flex w-full sm:w-auto items-center justify-center rounded-full px-8 py-4 text-lg font-semibold"
                 >
-                  <Crown className="w-6 h-6" />
-                  Subscribe Now
+                  Unlock everything
                 </Link>
                 <Link
                   href="/cart?plan=pack5"
-                  className="btn-ghost inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full px-8 py-4"
+                  className="btn-ghost inline-flex w-full sm:w-auto items-center justify-center rounded-full px-8 py-4 font-semibold"
                 >
-                  <Sparkles className="w-5 h-5 text-gold-300" />
-                  Or buy 5 readings for $9.99
+                  Or 5 readings for $9.99
                 </Link>
               </div>
             </div>

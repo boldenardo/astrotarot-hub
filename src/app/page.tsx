@@ -283,10 +283,9 @@ export default function Home() {
 
                 <Link
                   href="/challenge"
-                  className="btn-gold mt-8 flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 sm:inline-flex sm:w-auto"
+                  className="btn-gold mt-8 flex w-full items-center justify-center rounded-full px-8 py-4 sm:inline-flex sm:w-auto"
                 >
-                  <Sparkles className="h-5 w-5" />
-                  Play Now, Free
+                  Play now, free
                 </Link>
                 <p className="mt-4 text-sm text-ink-600">
                   No sign-up &bull; Completely free &bull; Unlimited
@@ -350,9 +349,8 @@ export default function Home() {
               </p>
               <Link
                 href="/guia"
-                className="btn-gold mt-8 flex w-full items-center justify-center gap-2 rounded-full px-10 py-4 text-base sm:inline-flex sm:w-auto sm:py-5 sm:text-lg"
+                className="btn-gold mt-8 flex w-full items-center justify-center rounded-full px-10 py-4 text-base sm:inline-flex sm:w-auto sm:py-5 sm:text-lg"
               >
-                <Sparkles className="h-5 w-5" />
                 Talk to the Guide
               </Link>
               <p className="mt-6 text-sm text-ink-600">
@@ -366,7 +364,19 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative border-t border-white/5 py-12">
         <div className="mx-auto max-w-7xl px-4 text-center text-sm text-ink-600 sm:px-6">
-          <p>© 2026 AstroTarot Hub &bull; All rights reserved</p>
+          <div className="mb-4 flex items-center justify-center gap-2.5">
+            <Image
+              src="/brand/astrotarot-logo.png"
+              alt="AstroTarot"
+              width={36}
+              height={36}
+              className="h-8 w-8 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]"
+            />
+            <span className="font-display text-lg font-semibold tracking-tight text-ink-50">
+              Astro<span className="text-gold">Tarot</span>
+            </span>
+          </div>
+          <p>© 2026 AstroTarot &bull; All rights reserved</p>
           <p className="mt-2">
             Built to help you find clarity and direction.
           </p>

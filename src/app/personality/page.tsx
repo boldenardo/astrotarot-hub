@@ -300,10 +300,10 @@ export default function PersonalityReportPage() {
               <Star className="w-16 h-16 text-gold-400" fill="currentColor" />
             </motion.div>
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-ink-50 mb-4">
-              Personality <span className="text-gold">Report</span>
+              Who you <span className="text-gold">really are</span>
             </h1>
             <p className="text-base sm:text-xl text-ink-400">
-              Discover your essence through your birth chart.
+              The real you is hidden in your birth chart. See what the stars say.
             </p>
           </div>
 
@@ -454,7 +454,7 @@ export default function PersonalityReportPage() {
                     type="submit"
                     className="btn-gold w-full rounded-full py-4 font-semibold text-lg"
                   >
-                    Generate Personality Report
+                    Show me who I am
                   </button>
                 </form>
               </motion.div>

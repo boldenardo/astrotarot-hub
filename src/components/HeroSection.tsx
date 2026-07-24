@@ -1,68 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Shield, Zap, Star, ChevronDown, Moon } from "lucide-react";
+import { Star, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-
-// Light fallback shown while the 3D Canvas has not mounted yet.
-function Hero3DFallback() {
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="h-16 w-16 animate-spin rounded-full border-4 border-gold-400/30 border-t-gold-400" />
-    </div>
-  );
-}
-
-// Light, static visual (no three.js) for mobile.
-function StaticMysticVisual() {
-  return (
-    <div className="relative flex h-full w-full items-center justify-center">
-      <div className="absolute h-64 w-64 rounded-full bg-gold-400/15 blur-3xl" />
-      <div className="absolute h-80 w-80 rounded-full bg-amethyst-500/10 blur-3xl" />
-      <motion.div
-        animate={{ y: [0, -12, 0] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className="glass glass-gold relative flex h-44 w-44 items-center justify-center rounded-full shadow-gold"
-      >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-gold-400/10 to-transparent" />
-        <Moon className="h-16 w-16 text-gold-300" strokeWidth={1.25} />
-        <motion.span
-          className="absolute -right-1 -top-1"
-          animate={{ opacity: [0.4, 1, 0.4], scale: [0.9, 1.1, 0.9] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Sparkles className="h-7 w-7 text-gold-200" />
-        </motion.span>
-      </motion.div>
-    </div>
-  );
-}
-
-const FortuneTeller3D = dynamic(() => import("./FortuneTeller3D"), {
-  ssr: false,
-  loading: () => <Hero3DFallback />,
-});
+import Image from "next/image";
 
 export default function HeroSection() {
-  // We only mount the 3D Canvas on desktop and after first paint, so the
-  // landing loads instantly and never blocks on small screens.
-  const [mounted, setMounted] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    // Mobile = width < 768px → light static visual instead of the Canvas.
-    const query = window.matchMedia("(min-width: 768px)");
-    const update = () => setIsDesktop(query.matches);
-    update();
-    query.addEventListener("change", update);
-    setMounted(true);
-    return () => query.removeEventListener("change", update);
-  }, []);
-
-  const show3D = mounted && isDesktop;
-
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Ambient background */}
@@ -138,97 +81,93 @@ export default function HeroSection() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-20 pt-28 sm:px-6 sm:pt-32">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="glass glass-gold mb-8 inline-flex items-center gap-2 rounded-full px-4 py-2"
-            >
-              <Sparkles className="h-4 w-4 text-gold-300" />
-              <span className="text-sm font-medium text-ink-200">
-                Discover your path through the stars
-              </span>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.15 }}
-              className="break-words font-display text-4xl font-semibold leading-[1.05] text-ink-50 sm:text-5xl md:text-7xl lg:text-[5.25rem]"
-            >
-              Unlock your <span className="text-gold">inner power</span>
-              <br />
-              with Tarot &amp; Astrology
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="mx-auto mt-6 max-w-xl text-base text-ink-400 sm:text-lg lg:mx-0 lg:text-xl"
-            >
-              Connect with the universe through personalized tarot readings,
-              detailed birth charts, and celestial guidance to light up your
-              path.
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.45 }}
-              className="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start"
-            >
-              <Link
-                href="/challenge"
-                className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-base sm:w-auto"
-              >
-                <Sparkles className="h-5 w-5" />
-                Start Free
-              </Link>
-              <Link
-                href="/cart?plan=premium"
-                className="btn-ghost flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-base font-medium sm:w-auto"
-              >
-                <Star className="h-5 w-5 text-gold-300" />
-                Unlock Premium
-              </Link>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.7 }}
-              className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-ink-400 lg:justify-start"
-            >
-              <span className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-gold-400" />
-                Private &amp; secure
-              </span>
-              <span className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-gold-400" />
-                Instant results
-              </span>
-              <span className="flex items-center gap-2">
-                <Star className="h-4 w-4 text-gold-400" fill="currentColor" />
-                4.9/5 satisfaction
-              </span>
-            </motion.div>
-          </div>
-
-          {/* Visual — 3D on desktop, light static visual on mobile */}
+      <div className="relative z-10 mx-auto max-w-3xl px-4 pb-20 pt-28 text-center sm:px-6 sm:pt-32">
+        {/* Logo centerpiece with gold glow */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="relative mx-auto mb-8 flex w-40 items-center justify-center sm:w-52"
+        >
+          <div className="absolute inset-0 -z-10 scale-125 rounded-full bg-[radial-gradient(circle,_rgba(212,175,55,0.35),transparent_65%)] blur-2xl" />
           <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="relative h-[380px] w-full sm:h-[460px] lg:h-[600px]"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
           >
-            <div className="absolute inset-0 rounded-full bg-gradient-to-b from-amethyst-500/10 to-transparent blur-3xl" />
-            {show3D ? <FortuneTeller3D /> : <StaticMysticVisual />}
+            <Image
+              src="/brand/astrotarot-logo.png"
+              alt="AstroTarot"
+              width={416}
+              height={416}
+              priority
+              className="h-auto w-40 object-contain drop-shadow-[0_0_28px_rgba(212,175,55,0.4)] sm:w-52"
+            />
           </motion.div>
-        </div>
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.15 }}
+          className="break-words font-display text-4xl font-semibold leading-[1.05] text-ink-50 sm:text-5xl md:text-6xl lg:text-7xl"
+        >
+          What do the cards say about
+          <br />
+          your <span className="text-gold">love, money &amp; future</span>?
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          className="mx-auto mt-6 max-w-xl text-base text-ink-400 sm:text-lg lg:text-xl"
+        >
+          Answer a few quick questions and get your personal reading in 2
+          minutes. Discover who your soulmate is, when money is coming, and what
+          the stars have planned for you.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.45 }}
+          className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
+        >
+          <Link
+            href="/quiz"
+            className="btn-gold flex w-full items-center justify-center rounded-full px-8 py-4 text-base sm:w-auto"
+          >
+            Start my free reading
+          </Link>
+          <Link
+            href="/cart?plan=premium"
+            className="btn-ghost flex w-full items-center justify-center rounded-full px-8 py-4 text-base font-medium sm:w-auto"
+          >
+            Unlock Premium
+          </Link>
+        </motion.div>
+
+        {/* Trust row */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.7 }}
+          className="mt-10 flex flex-col items-center justify-center gap-2 text-sm text-ink-400"
+        >
+          <span className="flex items-center gap-1.5">
+            <span className="flex items-center gap-0.5">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Star
+                  key={i}
+                  className="h-4 w-4 text-gold-400"
+                  fill="currentColor"
+                />
+              ))}
+            </span>
+            <span className="font-semibold text-ink-100">4.9</span>
+          </span>
+          <span>120,000+ readings delivered &bull; Free to start</span>
+        </motion.div>
       </div>
 
       {/* Scroll indicator */}

@@ -2,48 +2,51 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Heart, TrendingUp, Sparkles, Shield, Star, Zap } from "lucide-react";
+import Image from "next/image";
+import { Heart, Coins, Sun, Orbit, Hash, Layers } from "lucide-react";
 
 const features = [
   {
     icon: Heart,
-    title: "Attract True Love",
+    title: "Find your soulmate",
     description:
-      "Discover when and how love will enter your life. Understand your astrological compatibility and unlock deep, lasting relationships.",
+      "Is he or she the one? See who you're truly meant for and when real love is about to walk in.",
     link: "/compatibility",
   },
   {
-    icon: TrendingUp,
-    title: "Financial Prosperity",
+    icon: Coins,
+    title: "Your money luck",
     description:
-      "Identify the cycles of abundance in your birth chart. Know the best moments to invest, launch projects, and grow your wealth.",
+      "Find out when money is coming your way — the exact windows to ask for more, start, and win big.",
     link: "/abundance",
   },
   {
-    icon: Sparkles,
-    title: "Energy Cleansing",
+    icon: Sun,
+    title: "Daily horoscope",
     description:
-      "Free yourself from the spiritual blocks holding back your growth. Personalized techniques based on your chart to clear the path and draw in positivity.",
+      "Wake up to a reading made just for you. Know what today holds before it happens.",
+    link: "/predictions",
   },
   {
-    icon: Shield,
-    title: "Spiritual Protection",
+    icon: Orbit,
+    title: "Your birth chart",
     description:
-      "Strengthen your aura and shield yourself from negative energy. Rituals aligned with the moon phases and your natal chart.",
-  },
-  {
-    icon: Star,
-    title: "Life Purpose",
-    description:
-      "Understand your mission in this life through the North Node. Discover your unique gifts and how to use them to impact the world.",
+      "The full map of who you are, drawn from your exact birth date. It explains everything.",
     link: "/personality",
   },
   {
-    icon: Zap,
-    title: "The Right Time to Act",
+    icon: Hash,
+    title: "Your lucky numbers",
     description:
-      "Never miss an opportunity again. Learn the most favorable days and hours for important decisions, travel, and new projects.",
-    link: "/predictions",
+      "The numbers the universe hides in your name and birthday — and how to use them in your favor.",
+    link: "/numerology",
+  },
+  {
+    icon: Layers,
+    title: "Tarot readings",
+    description:
+      "Pull the cards and get real answers about love, money and the choice you're facing right now.",
+    link: "/tarot",
   },
 ];
 
@@ -62,17 +65,21 @@ export default function FeaturesSection() {
           transition={{ duration: 0.6 }}
           className="mx-auto mb-12 max-w-3xl text-center sm:mb-20"
         >
-          <span className="mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
-            <Sparkles className="h-7 w-7 text-night-900" />
-          </span>
+          <Image
+            src="/brand/astrotarot-logo.png"
+            alt="AstroTarot"
+            width={72}
+            height={72}
+            className="mx-auto mb-5 h-14 w-14 object-contain drop-shadow-[0_0_18px_rgba(212,175,55,0.4)]"
+          />
           <h2 className="font-display text-3xl font-semibold text-ink-50 sm:text-4xl md:text-6xl">
-            Transform your life with
+            Everything you want to know,
             <br />
-            <span className="text-gold">ancient wisdom</span>
+            <span className="text-gold">in one place</span>
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base text-ink-400 sm:text-lg">
-            Thousands of people have already discovered their inner power. Now
-            it&apos;s your turn to shine.
+            Love, money, your future — get real answers about the questions that
+            keep you up at night.
           </p>
         </motion.div>
 
@@ -98,11 +105,10 @@ export default function FeaturesSection() {
           className="mt-12 text-center sm:mt-20"
         >
           <Link
-            href="/auth/register"
-            className="btn-gold flex w-full items-center justify-center gap-2 rounded-full px-10 py-4 text-base sm:inline-flex sm:w-auto sm:py-5 sm:text-lg"
+            href="/quiz"
+            className="btn-gold flex w-full items-center justify-center rounded-full px-10 py-4 text-base sm:inline-flex sm:w-auto sm:py-5 sm:text-lg"
           >
-            <Sparkles className="h-5 w-5" />
-            Begin your transformation
+            Start my free reading
           </Link>
           <p className="mt-4 text-sm text-ink-600">
             Start free &bull; Cancel anytime

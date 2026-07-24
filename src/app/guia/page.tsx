@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Send, Heart, Sparkles, Moon } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -18,7 +19,7 @@ export default function GuiaEspiritualPage() {
     {
       role: "assistant",
       content:
-        "Hello, dear soul. I'm Luna, your spiritual guide. This is a safe space to share your feelings, challenges, and dreams. How can I hold space for you today?",
+        "Hi, I'm Luna. Think of me as a friend who always listens — no judgment, ever. What's on your heart today?",
       timestamp: new Date(),
     },
   ]);
@@ -136,18 +137,20 @@ export default function GuiaEspiritualPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8"
           >
-            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4">
-              <Heart
-                className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 text-gold-300"
-                fill="currentColor"
+            <div className="flex flex-col items-center gap-3 mb-3">
+              <Image
+                src="/luna.jpg"
+                alt="Luna, your guide"
+                width={80}
+                height={80}
+                className="h-20 w-20 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
               />
               <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50">
-                Spiritual <span className="text-gold">Guide</span>
+                Talk to <span className="text-gold">Luna</span>
               </h1>
-              <Moon className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 text-gold-400" />
             </div>
             <p className="text-ink-400 text-sm">
-              A safe space for comfort and emotional guidance
+              A friend who listens — anytime, day or night
             </p>
           </motion.div>
 
@@ -178,7 +181,13 @@ export default function GuiaEspiritualPage() {
                   >
                     {message.role === "assistant" && (
                       <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-4 h-4 text-gold-300" />
+                        <Image
+                          src="/luna.jpg"
+                          alt="Luna"
+                          width={20}
+                          height={20}
+                          className="h-5 w-5 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+                        />
                         <span className="text-xs text-gold-300 font-semibold">
                           Luna
                         </span>

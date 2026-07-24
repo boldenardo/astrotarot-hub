@@ -37,26 +37,26 @@ interface BirthData {
 const abundanceAreas = [
   {
     icon: DollarSign,
-    title: "Financial Prosperity",
-    description: "Abundance cycles within your natal chart",
+    title: "Money luck",
+    description: "When cash is coming your way",
     gradient: "from-gold-200 to-gold-600",
   },
   {
     icon: Briefcase,
-    title: "Professional Success",
-    description: "The best moments to grow your career",
+    title: "Career wins",
+    description: "The best time to level up your income",
     gradient: "from-gold-200 to-gold-600",
   },
   {
     icon: PiggyBank,
-    title: "Investments",
-    description: "Favorable periods to multiply your resources",
+    title: "Smart money moves",
+    description: "The right windows to grow what you have",
     gradient: "from-gold-200 to-gold-600",
   },
   {
     icon: Coins,
-    title: "Opportunities",
-    description: "Moments of fortune and material expansion",
+    title: "Lucky breaks",
+    description: "The days fortune knocks on your door",
     gradient: "from-gold-200 to-gold-600",
   },
 ];
@@ -146,19 +146,19 @@ export default function AbundancePage() {
             <div className="inline-flex items-center gap-2 px-4 py-2 border border-gold-400/30 bg-gold-400/10 rounded-full mb-6">
               <TrendingUp className="w-4 h-4 text-gold-300" />
               <span className="text-gold-300 text-sm font-medium">
-                Abundance Astrology
+                Your money luck
               </span>
             </div>
 
             <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-semibold text-ink-50 mb-6">
-              Unlock Your
+              When is money
               <br />
-              <span className="text-gold">Prosperity</span>
+              coming <span className="text-gold">to you?</span>
             </h1>
 
             <p className="text-base sm:text-xl text-ink-400 max-w-3xl mx-auto leading-relaxed">
-              Discover the abundance cycles within your natal chart and learn
-              exactly when to act to multiply your material wealth
+              Your fortune is written in the stars. See the exact windows when
+              money flows to you — and how to catch them.
             </p>
           </motion.div>
 
@@ -200,10 +200,10 @@ export default function AbundancePage() {
           >
             <div className="text-center mb-10">
               <h2 className="font-display text-2xl sm:text-3xl font-semibold text-ink-50 mb-4">
-                Personalized <span className="text-gold">Abundance</span> Analysis
+                Your personal <span className="text-gold">money map</span>
               </h2>
               <p className="text-ink-400">
-                Enter your birth details to uncover your cycles of prosperity
+                Enter your birth details to see when your fortune arrives
               </p>
             </div>
 
@@ -277,13 +277,10 @@ export default function AbundancePage() {
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Analyzing your chart...
+                    Reading your stars...
                   </span>
                 ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    Reveal My Abundance
-                  </span>
+                  "Show me my money luck"
                 )}
               </button>
 
@@ -319,10 +316,10 @@ export default function AbundancePage() {
                   </div>
                   <div>
                     <h3 className="font-display text-xl font-semibold text-gold-300">
-                      Current Prosperity Cycle
+                      Your money cycle right now
                     </h3>
                     <p className="text-ink-400 text-sm">
-                      Active astrological phase
+                      What the stars are doing for your wallet today
                     </p>
                   </div>
                 </div>
@@ -333,7 +330,7 @@ export default function AbundancePage() {
               {result.scores && (
                 <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
                   <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6">
-                    Abundance Potential
+                    Your money luck score
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-gold-400/10 rounded-xl border border-gold-400/20">
@@ -372,7 +369,7 @@ export default function AbundancePage() {
               <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
                 <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6 flex items-center gap-2">
                   <Target className="w-6 h-6 text-gold-400" />
-                  Favorable Periods
+                  When money is coming
                 </h3>
                 <div className="space-y-4">
                   {result.favorablePeriods.map(
@@ -392,7 +389,7 @@ export default function AbundancePage() {
               {/* Houses Analysis */}
               <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
                 <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6">
-                  Houses of Abundance
+                  Where your money comes from
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {result.houses?.house2 && (
@@ -451,7 +448,7 @@ export default function AbundancePage() {
               {/* Recommendations */}
               <div className="glass rounded-3xl p-5 sm:p-8 border-white/5">
                 <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-6">
-                  Strategic Recommendations
+                  How to catch your luck
                 </h3>
                 <div className="space-y-3">
                   {result.recommendations.map((rec: string, index: number) => (
@@ -469,11 +466,11 @@ export default function AbundancePage() {
               {/* Upgrade CTA */}
               <div className="glass glass-gold rounded-3xl p-5 sm:p-8 text-center">
                 <h3 className="font-display text-xl sm:text-2xl font-semibold text-ink-50 mb-4">
-                  Unlock the Full Analysis
+                  See your whole year of money luck
                 </h3>
                 <p className="text-ink-400 mb-6">
-                  Access detailed monthly forecasts, personalized abundance
-                  rituals, and real-time opportunity alerts
+                  Month-by-month fortune windows, your lucky money days, and
+                  alerts the moment your luck turns
                 </p>
                 <Link
                   href="/cart?plan=premium"

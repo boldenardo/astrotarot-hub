@@ -2,27 +2,20 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import {
-  Moon,
-  ShoppingBag,
-  LogIn,
-  UserPlus,
-  LayoutDashboard,
-  Menu,
-  X,
-} from "lucide-react";
+import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 const LINKS = [
   { href: "/challenge", label: "Free Reading" },
   { href: "/tarot", label: "Tarot" },
-  { href: "/compatibility", label: "Love" },
+  { href: "/compatibility", label: "Soulmate" },
   { href: "/guia", label: "Guide" },
-  { href: "/predictions", label: "Forecasts" },
-  { href: "/numerology", label: "Numerology" },
-  { href: "/abundance", label: "Prosperity" },
+  { href: "/predictions", label: "Horoscope" },
+  { href: "/numerology", label: "Lucky Numbers" },
+  { href: "/abundance", label: "Fortune" },
   { href: "/cart", label: "Plans" },
 ];
 
@@ -61,9 +54,14 @@ export default function Navbar() {
         >
           {/* Logo */}
           <Link href="/" className="group flex items-center gap-2.5 pl-1">
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 shadow-gold">
-              <Moon className="h-5 w-5 text-night-900" strokeWidth={2.2} />
-            </span>
+            <Image
+              src="/brand/astrotarot-logo.png"
+              alt="AstroTarot"
+              width={40}
+              height={40}
+              priority
+              className="h-9 w-9 object-contain drop-shadow-[0_0_12px_rgba(212,175,55,0.35)]"
+            />
             <span className="font-display text-xl font-semibold tracking-tight text-ink-50">
               Astro<span className="text-gold">Tarot</span>
             </span>
@@ -97,9 +95,8 @@ export default function Navbar() {
               <>
                 <Link
                   href="/dashboard"
-                  className="btn-gold hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+                  className="btn-gold hidden items-center rounded-full px-5 py-2.5 text-sm sm:flex"
                 >
-                  <LayoutDashboard className="h-4 w-4" />
                   Dashboard
                 </Link>
                 <div className="hidden sm:flex">
@@ -110,16 +107,14 @@ export default function Navbar() {
               <>
                 <Link
                   href="/auth/login"
-                  className="btn-ghost hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+                  className="btn-ghost hidden items-center rounded-full px-5 py-2.5 text-sm sm:flex"
                 >
-                  <LogIn className="h-4 w-4" />
                   Sign in
                 </Link>
                 <Link
                   href="/auth/register"
-                  className="btn-gold hidden items-center gap-2 rounded-full px-5 py-2.5 text-sm sm:flex"
+                  className="btn-gold hidden items-center rounded-full px-5 py-2.5 text-sm sm:flex"
                 >
-                  <UserPlus className="h-4 w-4" />
                   Sign up
                 </Link>
               </>
@@ -168,9 +163,8 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setOpen(false)}
-                    className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                    className="btn-gold mt-1 flex items-center justify-center rounded-2xl px-4 py-3 text-sm"
                   >
-                    <LayoutDashboard className="h-4 w-4" />
                     Dashboard
                   </Link>
                   <div className="mt-2 flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -183,17 +177,15 @@ export default function Navbar() {
                   <Link
                     href="/auth/login"
                     onClick={() => setOpen(false)}
-                    className="btn-ghost mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                    className="btn-ghost mt-1 flex items-center justify-center rounded-2xl px-4 py-3 text-sm"
                   >
-                    <LogIn className="h-4 w-4" />
                     Sign in
                   </Link>
                   <Link
                     href="/auth/register"
                     onClick={() => setOpen(false)}
-                    className="btn-gold mt-1 flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm"
+                    className="btn-gold mt-1 flex items-center justify-center rounded-2xl px-4 py-3 text-sm"
                   >
-                    <UserPlus className="h-4 w-4" />
                     Sign up
                   </Link>
                 </>
