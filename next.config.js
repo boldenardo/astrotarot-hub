@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Lint runs in the editor/CI — never block a production build on it.
+  // (Locally ESLint is skipped anyway; this keeps Vercel builds consistent.)
+  eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
       {
