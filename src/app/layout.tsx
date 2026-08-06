@@ -20,9 +20,30 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AstroTarot Hub — Tarot & Astrology",
+  metadataBase: new URL("https://astrotarot.shop"),
+  title: {
+    default: "AstroTarot Hub — Tarot & Astrology",
+    template: "%s | AstroTarot Hub",
+  },
   description:
     "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+  alternates: {
+    canonical: "./",
+  },
+  openGraph: {
+    type: "website",
+    url: "https://astrotarot.shop",
+    siteName: "AstroTarot Hub",
+    title: "AstroTarot Hub — Tarot & Astrology",
+    description:
+      "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AstroTarot Hub — Tarot & Astrology",
+    description:
+      "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+  },
 };
 
 // Clerk appearance aligned with the dark mystic theme (purple/gold).
