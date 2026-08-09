@@ -111,6 +111,9 @@ const ENERGY_COLORS = {
   spirituality: "from-gold-500 to-gold-300",
 };
 
+// Ferramenta interativa — o layout da rota só a renderiza para usuários
+// autenticados (<Show when="signed-in">); anônimos veem a landing pública.
+// O gate Premium continua valendo para usuários logados.
 export default function PredictionsPage() {
   const router = useRouter();
   const [step, setStep] = useState<"form" | "loading" | "results">("form");

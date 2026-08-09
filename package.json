@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "validate:env": "node scripts/validate-env.js"
+    "validate:env": "node scripts/validate-env.js",
+    "seo:audit": "node scripts/seo-audit.mjs"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",

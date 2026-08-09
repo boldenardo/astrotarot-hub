@@ -1,24 +1,30 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Rotas que exigem login (mesmo conjunto de antes).
+// Rotas que exigem login. /tarot, /compatibility, /numerology e /predictions
+// viraram landing pages públicas (SEO) — a ferramenta em si continua gated:
+// a UI autenticada só renderiza com sessão e as APIs respondem 401 sem auth.
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
-  "/tarot(.*)",
   "/cart(.*)",
   "/personality(.*)",
-  "/compatibility(.*)",
-  "/predictions(.*)",
   "/abundance(.*)",
   "/guia(.*)",
-  "/numerology(.*)",
   "/profile(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  // Consolidação canônica: www → non-www (308 permanente, preserva path/query).
+  // Restrito ao host exato de produção — não afeta quiz.* nem *.vercel.app.
+  const host = req.headers.get("host") ?? "";
+  if (host === "www.astrotarot.shop") {
+    const url = req.nextUrl.clone();
+    url.host = "astrotarot.shop";
+    return NextResponse.redirect(url, 308);
+  }
+
   // Subdomínio do funil: quiz.astrotarot.shop/* → reescreve para /quiz/*.
   // Fica ANTES da lógica de proteção — o funil é 100% público.
-  const host = req.headers.get("host") ?? "";
   if (host === "quiz.astrotarot.shop" || host.startsWith("quiz.")) {
     const p = req.nextUrl.pathname;
     if (

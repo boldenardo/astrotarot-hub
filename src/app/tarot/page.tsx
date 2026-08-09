@@ -17,7 +17,9 @@ interface DrawnCard {
   interpretation?: string;
 }
 
-export default function EgyptianTarotPage() {
+// Ferramenta interativa — o layout da rota só a renderiza para usuários
+// autenticados (<Show when="signed-in">); anônimos veem a landing pública.
+export default function TarotPage() {
   const router = useRouter();
   const [numCards, setNumCards] = useState<number>(3);
   const [drawnCards, setDrawnCards] = useState<DrawnCard[]>([]);
@@ -31,8 +33,8 @@ export default function EgyptianTarotPage() {
     number | "unlimited" | null
   >(null);
 
-  // Access to /tarot is protected by Clerk middleware, so no client-side
-  // session check is needed here.
+  // Só renderiza para usuários autenticados (<Show> no layout da rota) —
+  // as APIs continuam exigindo auth independentemente disso.
 
   const spreadTypes: { [key: number]: string[] } = {
     1: ["Present"],

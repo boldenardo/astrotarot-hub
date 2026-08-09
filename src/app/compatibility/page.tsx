@@ -18,7 +18,6 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PremiumGate from "@/components/PremiumGate";
-
 interface PersonData {
   name: string;
   year: number;
@@ -148,6 +147,9 @@ const zodiacSigns = [
   },
 ];
 
+// Ferramenta interativa — o layout da rota só a renderiza para usuários
+// autenticados (<Show when="signed-in">); anônimos veem a landing pública.
+// Feature Premium: o acesso é controlado pelo PremiumGate e pela API.
 export default function CompatibilityPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);

@@ -2,28 +2,35 @@ import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://astrotarot.shop";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const publicRoutes: Array<{
-    path: string;
-    priority: number;
-    changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
-  }> = [
-    { path: "/", priority: 1, changeFrequency: "weekly" },
-    { path: "/tarot", priority: 0.9, changeFrequency: "weekly" },
-    { path: "/compatibility", priority: 0.8, changeFrequency: "weekly" },
-    { path: "/predictions", priority: 0.8, changeFrequency: "daily" },
-    { path: "/numerology", priority: 0.8, changeFrequency: "weekly" },
-    { path: "/personality", priority: 0.8, changeFrequency: "weekly" },
-    { path: "/abundance", priority: 0.7, changeFrequency: "weekly" },
-    { path: "/challenge", priority: 0.6, changeFrequency: "weekly" },
-    { path: "/guia", priority: 0.6, changeFrequency: "monthly" },
-    { path: "/quiz", priority: 0.7, changeFrequency: "monthly" },
-  ];
+// Apenas URLs públicas, indexáveis, HTTP 200, sem auth e sem redirect.
+// Verificado em produção (Googlebot UA) em 2026-08-09.
+//
+// Fora daqui — e por quê:
+//   /personality, /abundance, /guia  → exigem login (307 para /auth/login)
+//   /quiz/flow, /quiz/vsl            → etapas do funil (noindex), sem valor de busca
+//   /quiz/thank-you                  → pós-conversão, bloqueada no robots
+//   /dashboard, /profile, /cart      → área privada
+//   /auth/*                          → autenticação, bloqueada no robots
+//
+// Sem <lastmod>: não temos data confiável de mudança de conteúdo por URL —
+// preferimos omitir a enviar timestamp de build (Google ignora lastmod não confiável).
+// Sem <priority>/<changefreq>: Google já declarou que ignora ambos.
+// Nota: a home entra como "" (sem barra) porque o Next.js normaliza o
+// canonical renderizado para "https://astrotarot.shop" (sem trailing slash)
+// — sitemap e canonical precisam ser byte-idênticos.
+const PUBLIC_ROUTES = [
+  "",
+  "/tarot",
+  "/compatibility",
+  "/numerology",
+  "/predictions",
+  "/challenge",
+  "/quiz",
+  "/about",
+];
 
-  return publicRoutes.map(({ path, priority, changeFrequency }) => ({
+export default function sitemap(): MetadataRoute.Sitemap {
+  return PUBLIC_ROUTES.map((path) => ({
     url: `${BASE_URL}${path}`,
-    lastModified: new Date(),
-    changeFrequency,
-    priority,
   }));
 }

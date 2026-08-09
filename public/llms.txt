@@ -1,0 +1,27 @@
+# AstroTarot Hub
+
+> AstroTarot Hub (https://astrotarot.shop) is an AI-powered tarot and astrology web app. It combines real astronomical birth data with AI to deliver personalized tarot readings, birth charts, love compatibility, numerology and daily predictions. The site is in English and offers a free tier (4 free tarot readings, no credit card) plus paid plans.
+
+## Public pages
+
+- [Home](https://astrotarot.shop/): overview of the app, pricing (Free, 5-Reading Pack $9.99 one-time, Unlimited Premium $29.90/month), testimonials, free 4-card reading, FAQ.
+- [AI Tarot Reading](https://astrotarot.shop/tarot): draw 1–22 cards from the Egyptian Major Arcana deck and receive a personalized AI interpretation about love, career and decisions. Requires a free account; 4 free readings included.
+- [Free 4-Card Reading](https://astrotarot.shop/challenge): free interactive 4-card Egyptian tarot reading, no sign-up required.
+- [Love Compatibility](https://astrotarot.shop/compatibility): synastry analysis comparing two people's birth data (Premium feature).
+- [Numerology](https://astrotarot.shop/numerology): life path number and lucky numbers from name and birth date (Premium feature).
+- [Daily Predictions](https://astrotarot.shop/predictions): personalized daily horoscope based on the user's birth chart, including moon phase, energy ratings and best times (Premium feature).
+- [Cosmic Reading Quiz](https://astrotarot.shop/quiz): 2-minute onboarding quiz that builds a personalized reading plan.
+- [About](https://astrotarot.shop/about): how the product works, how AI is used, pricing and privacy.
+
+## Key facts
+
+- Pricing: Free tier (4 tarot readings, Egyptian Tarot insights, AI Spiritual Guide). 5-Reading Pack: $9.99 one-time. Unlimited Premium: $29.90/month (unlimited readings, daily horoscope, soulmate reading, birth chart, lucky numbers).
+- Birth charts use real astronomical data; AI provides the interpretation.
+- Privacy: birth data and readings are private to the user's account and never sold.
+- Disclaimer: entertainment and self-reflection tool; not medical, legal or financial advice.
+
+## Not public / not for indexing
+
+- /dashboard, /profile, /cart, /auth/* — private account and checkout areas (require login).
+- /guia, /personality, /abundance — AI tools that currently require an account.
+- /quiz/flow, /quiz/vsl, /quiz/thank-you — funnel steps (noindex).

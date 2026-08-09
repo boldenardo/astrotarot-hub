@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Your 2026 Cosmic Reading | AstroTarot",
   description:
     "Take the 2-minute cosmic reading and get your personalized 2026 plan for love, money and purpose.",
+  alternates: {
+    canonical: "https://astrotarot.shop/quiz",
+  },
 };
 
 // Funnel layout: no navbar, no footer, no exits. Brand mark is NOT a link.

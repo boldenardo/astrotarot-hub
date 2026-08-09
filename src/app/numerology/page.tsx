@@ -13,6 +13,9 @@ import {
   type NumerologyNumber,
 } from "@/lib/numerology";
 
+// Ferramenta interativa — só monta com sessão ativa (ver wrapper abaixo).
+// O layout da rota só a renderiza para usuários autenticados
+// (<Show when="signed-in">); o acesso Premium segue no PremiumGate abaixo.
 export default function NumerologyPage() {
   const router = useRouter();
   const [name, setName] = useState("");

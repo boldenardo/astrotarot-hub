@@ -5,6 +5,12 @@ import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import JsonLd from "@/components/JsonLd";
+import {
+  organizationJsonLd,
+  websiteJsonLd,
+  softwareAppJsonLd,
+} from "@/lib/seo";
 
 const display = Cormorant_Garamond({
   subsets: ["latin"],
@@ -28,7 +34,7 @@ export const metadata: Metadata = {
   description:
     "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
   alternates: {
-    canonical: "./",
+    canonical: "https://astrotarot.shop/",
   },
   openGraph: {
     type: "website",
@@ -37,12 +43,21 @@ export const metadata: Metadata = {
     title: "AstroTarot Hub — Tarot & Astrology",
     description:
       "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+    images: [
+      {
+        url: "/brand/astrotarot-logo.png",
+        width: 1080,
+        height: 1080,
+        alt: "AstroTarot Hub — Tarot & Astrology",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "AstroTarot Hub — Tarot & Astrology",
     description:
       "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+    images: ["/brand/astrotarot-logo.png"],
   },
 };
 
@@ -108,6 +123,11 @@ export default function RootLayout({
     >
     <html lang="en" className={`${display.variable} ${sans.variable}`}>
       <head>
+        {/* Structured data global: Organization + WebSite + WebApplication */}
+        <JsonLd data={organizationJsonLd()} />
+        <JsonLd data={websiteJsonLd()} />
+        <JsonLd data={softwareAppJsonLd()} />
+
         {/* Google Analytics */}
         {GA_MEASUREMENT_ID && (
           <>

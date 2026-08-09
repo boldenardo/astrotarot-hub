@@ -3,6 +3,8 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
+import FaqSection from "@/components/FaqSection";
+import { HOME_FAQS } from "@/lib/faq-data";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -361,6 +363,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* FAQ — conteúdo estático, essencial para AEO/GEO */}
+      <FaqSection faqs={HOME_FAQS} />
+
       {/* Footer */}
       <footer className="relative border-t border-white/5 py-12">
         <div className="mx-auto max-w-7xl px-4 text-center text-sm text-ink-600 sm:px-6">
@@ -379,6 +384,11 @@ export default function Home() {
           <p>© 2026 AstroTarot &bull; All rights reserved</p>
           <p className="mt-2">
             Built to help you find clarity and direction.
+          </p>
+          <p className="mt-4">
+            <Link href="/about" className="text-ink-400 underline-offset-4 hover:text-gold-300 hover:underline">
+              About AstroTarot Hub
+            </Link>
           </p>
         </div>
       </footer>

@@ -37,7 +37,19 @@ _(nenhuma)_
 
 ## Log
 
-### 2026-08-09 — Kimi
+### 2026-08-09 — Kimi (rodada 2: overhaul SEO/AEO/GEO completo)
+Brief do usuário: auditoria SEO + correções + suíte de testes. Diagnóstico feito contra produção (curl com UA Googlebot):
+- www retornava 200 (duplicado) → middleware agora faz 308 www→non-www (restrito a `host === "www.astrotarot.shop"`; quiz.* e *.vercel.app intactos).
+- Sitemap tinha 7 URLs atrás de auth (307→/auth/login) + lastmod falso de build → reescrito: só 8 URLs públicas, sem lastmod/priority/changefreq.
+- Middleware: /tarot, /compatibility, /numerology, /predictions REMOVIDAS da lista protegida → viraram páginas híbridas (SignedOut = landing SEO no SSR; SignedIn = ferramenta intacta). Decisão: mesma URL, sem migração para /app/* (brief proibia migração destrutiva). APIs continuam 401 sem auth (verificado em produção).
+- /personality, /abundance, /guia permanecem protegidas e FORA do sitemap (decisão: menor intent de busca).
+- Criados: landings (4), layouts de rota com metadata+canonical+breadcrumb (tarot/compatibility/numerology/predictions/challenge), layouts noindex (dashboard/profile/cart/auth/quiz flow-vsl-thankyou), /about, public/llms.txt, FAQ home (FaqSection + FAQPage JSON-LD), JSON-LD global (Organization/WebSite/WebApplication com offers reais, SEM aggregateRating), scripts/seo-audit.mjs + `npm run seo:audit`.
+- OG image: /brand/astrotarot-logo.png (1080x1080 — único asset disponível; ideal seria 1200x630, registrado como melhoria futura).
+- Checkpoint git inicial: d78bdca. Build e testes HTTP pendentes nesta rodada.
+
+**Para revisão adversarial (Claude):** ver lista de 18 itens no brief do usuário (auth/checkout regressions, redirects, canonical, JSON-LD, SSR/CSR, etc.). Arquivos-chave: src/middleware.ts, src/app/sitemap.ts, src/app/{tarot,compatibility,numerology,predictions}/page.tsx (wrapper), src/components/landing/*, src/lib/seo.ts, src/app/layout.tsx.
+
+### 2026-08-09 — Kimi (rodada 1)
 - Diagnóstico completo: ver seção "Contexto da tarefa".
 - Criados `src/lib/seo.ts` (geradores JSON-LD) e `src/components/JsonLd.tsx` (renderer seguro para server/client).
 - Em andamento: FAQ, metadata por rota, /about, llms.txt, build de validação.
