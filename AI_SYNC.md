@@ -45,7 +45,13 @@ Brief do usuário: auditoria SEO + correções + suíte de testes. Diagnóstico 
 - /personality, /abundance, /guia permanecem protegidas e FORA do sitemap (decisão: menor intent de busca).
 - Criados: landings (4), layouts de rota com metadata+canonical+breadcrumb (tarot/compatibility/numerology/predictions/challenge), layouts noindex (dashboard/profile/cart/auth/quiz flow-vsl-thankyou), /about, public/llms.txt, FAQ home (FaqSection + FAQPage JSON-LD), JSON-LD global (Organization/WebSite/WebApplication com offers reais, SEM aggregateRating), scripts/seo-audit.mjs + `npm run seo:audit`.
 - OG image: /brand/astrotarot-logo.png (1080x1080 — único asset disponível; ideal seria 1200x630, registrado como melhoria futura).
-- Checkpoint git inicial: d78bdca. Build e testes HTTP pendentes nesta rodada.
+- Checkpoint git inicial: d78bdca. Commit final: 62d7f22.
+- CORREÇÃO pós-build: Clerk v7.5 não exporta SignedIn/SignedOut — usa `<Show when="signed-in|signed-out">` (async server component). Gate movido das page.tsx (client) para os layout.tsx de rota (server) — arquitetura final MELHOR: landing renderiza no SSR para anônimos/Googlebot, ferramenta só monta com sessão.
+- Bug encontrado e corrigido no seo-audit.mjs: ele fazia fetch nas URLs absolutas do sitemap (produção) em vez de BASE_URL — agora fetch vai para BASE_URL e canonical é comparado com a URL do sitemap.
+- Validação local (build + npm start + curl UA Googlebot + npm run seo:audit): 56/57 checks. Único "falho" = www→non-www, que só passa após deploy (a verificação consulta produção por natureza). SSR confirmado: /tarot, /compatibility, /numerology, /predictions retornam 200 com H1 da landing + FAQPage + canonical no HTML para o Googlebot; /dashboard, /profile, /cart, /guia, /personality, /abundance → 307 p/ login.
+- PENDENTE (usuário): deploy na Vercel; depois re-rodar `npm run seo:audit` (contra produção) e seguir GSC (item 8 do relatório final).
+
+### 2026-08-09 — Kimi (rodada 2: overhaul SEO/AEO/GEO completo)
 
 **Para revisão adversarial (Claude):** ver lista de 18 itens no brief do usuário (auth/checkout regressions, redirects, canonical, JSON-LD, SSR/CSR, etc.). Arquivos-chave: src/middleware.ts, src/app/sitemap.ts, src/app/{tarot,compatibility,numerology,predictions}/page.tsx (wrapper), src/components/landing/*, src/lib/seo.ts, src/app/layout.tsx.
 
