@@ -29,7 +29,7 @@ export type QuizStep = { id: string } & (
       subtitle?: string;
       options: QuizOption[];
       /**
-       * Luna's spoken reaction per option value. Strings may contain {name}
+       * Master Aura's spoken reaction per option value. Strings may contain {name}
        * and {sign} placeholders — resolve with resolveReactionText() at
        * render time (missing values degrade gracefully, never rendering
        * a raw "{sign}").
@@ -60,7 +60,10 @@ export interface ZodiacSign {
 }
 
 /** The guide persona that reacts to answers throughout the quiz. */
-export const LUNA = { name: "Master Aura", role: "Your cosmic guide" } as const;
+export const MASTER_AURA = {
+  name: "Master Aura",
+  role: "Your cosmic guide",
+} as const;
 
 /**
  * Resolve {name} and {sign} placeholders in a reaction string.

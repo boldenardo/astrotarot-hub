@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, CircleCheck, Loader2, Lock, Star } from "lucide-react";
 import {
-  LUNA,
+  MASTER_AURA,
   STEPS,
   computeScore,
   getAnalyzingStages,
@@ -426,8 +426,8 @@ function LunaBubble({ text, onDone }: { text: string; onDone: () => void }) {
             className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
           />
           <span className="text-sm font-medium text-[#e8d9a8]">
-            {LUNA.name} <span aria-hidden="true">&middot;</span>{" "}
-            <span className="font-normal text-[#b9b2d0]">{LUNA.role}</span>
+            {MASTER_AURA.name} <span aria-hidden="true">&middot;</span>{" "}
+            <span className="font-normal text-[#b9b2d0]">{MASTER_AURA.role}</span>
           </span>
         </span>
 
