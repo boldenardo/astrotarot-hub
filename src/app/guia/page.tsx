@@ -19,7 +19,7 @@ export default function GuiaEspiritualPage() {
     {
       role: "assistant",
       content:
-        "Hi, I'm Luna. Think of me as a friend who always listens — no judgment, ever. What's on your heart today?",
+        "Hi, I'm Master Aura. Think of me as a friend who always listens — no judgment, ever. What's on your heart today?",
       timestamp: new Date(),
     },
   ]);
@@ -140,13 +140,13 @@ export default function GuiaEspiritualPage() {
             <div className="flex flex-col items-center gap-3 mb-3">
               <Image
                 src="/luna.jpg"
-                alt="Luna, your guide"
+                alt="Master Aura, your guide"
                 width={80}
                 height={80}
                 className="h-20 w-20 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
               />
               <h1 className="font-display text-3xl md:text-4xl font-semibold text-ink-50">
-                Talk to <span className="text-gold">Luna</span>
+                Talk to <span className="text-gold">Master Aura</span>
               </h1>
             </div>
             <p className="text-ink-400 text-sm">
@@ -183,13 +183,13 @@ export default function GuiaEspiritualPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <Image
                           src="/luna.jpg"
-                          alt="Luna"
+                          alt="Master Aura"
                           width={20}
                           height={20}
                           className="h-5 w-5 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
                         />
                         <span className="text-xs text-gold-300 font-semibold">
-                          Luna
+                          Master Aura
                         </span>
                       </div>
                     )}

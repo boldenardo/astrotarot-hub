@@ -6,13 +6,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
+  BadgeCheck,
   ChevronDown,
   Loader2,
-  Play,
   ShieldCheck,
   Star,
   X,
 } from "lucide-react";
+import VSLPlayer from "@/components/VSLPlayer";
+import { trackEvent } from "@/lib/analytics";
 
 type Score = "LOW" | "MEDIUM" | "HIGH";
 type PlanKey = "PREMIUM" | "PACK5";
@@ -78,6 +80,18 @@ const TESTIMONIALS: Array<{
     text: "The daily horoscope actually feels written for me, not copy-pasted. The tarot readings are unreal.",
     photo: "/testimonials/t5.jpg",
   },
+  {
+    name: "Amanda S.",
+    city: "Denver, CO",
+    text: "My plan called out a 'window for a bold career move' in March. I applied for a job I thought was out of my league — and started last month.",
+    photo: "/testimonials/t2.jpg",
+  },
+  {
+    name: "Brittany W.",
+    city: "Nashville, TN",
+    text: "I've tried other tarot apps and they all felt generic. This one uses my actual birth chart — the difference is night and day.",
+    photo: "/testimonials/t4.jpg",
+  },
 ];
 
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
@@ -114,10 +128,16 @@ export default function QuizVslPage() {
   const primaryCtaRef = useRef<HTMLDivElement | null>(null);
   const [showSticky, setShowSticky] = useState(false);
 
-  const embedUrl = process.env.NEXT_PUBLIC_QUIZ_VSL_EMBED_URL;
+  // Eventos de funil disparados uma única vez nesta visita.
+  const resultViewedRef = useRef(false);
+  const offerViewedRef = useRef(false);
 
   useEffect(() => {
     setStore(readStore());
+    if (!resultViewedRef.current) {
+      resultViewedRef.current = true;
+      trackEvent("quiz_result_viewed", { category: "quiz" });
+    }
   }, []);
 
   useEffect(() => {
@@ -126,6 +146,11 @@ export default function QuizVslPage() {
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
+        // Primeira vez que a oferta entra na viewport → offer_viewed (1x).
+        if (entry.isIntersecting && !offerViewedRef.current) {
+          offerViewedRef.current = true;
+          trackEvent("offer_viewed", { category: "quiz" });
+        }
         // Visible again → hide the bar; scrolled past → show it.
         setShowSticky(
           !entry.isIntersecting && entry.boundingClientRect.top < 0
@@ -167,6 +192,11 @@ export default function QuizVslPage() {
   const startGuestCheckout = useCallback(
     (plan: PlanKey) => {
       if (loadingPlan) return;
+      trackEvent("offer_clicked", {
+        category: "quiz",
+        label: plan,
+        placement: "quiz_result",
+      });
       const email = store.email?.trim();
       if (!email) {
         setEmailInput("");
@@ -267,29 +297,13 @@ export default function QuizVslPage() {
         </p>
       </section>
 
-      {/* b. VSL block */}
+      {/* b. VSL block — só monta nesta etapa final; preload="none" garante
+          que nenhum byte do MP4 é baixado antes do Play. */}
       <section className="mt-6">
-        {embedUrl ? (
-          <div className="relative w-full overflow-hidden rounded-2xl border border-white/10 pt-[56.25%]">
-            <iframe
-              src={embedUrl}
-              title="Your personal video briefing"
-              className="absolute inset-0 h-full w-full"
-              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        ) : (
-          <div className="glass flex flex-col items-center justify-center rounded-2xl px-6 py-14 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/20 bg-white/5">
-              <Play className="h-7 w-7 text-white/80" aria-hidden />
-            </span>
-            <p className="mt-4 font-medium">Your personal video briefing</p>
-            <p className="mt-1 text-sm text-white/60">
-              Watch how the 2026 transits shape your next 12 months.
-            </p>
-          </div>
-        )}
+        <p className="mb-2 text-center text-sm font-medium text-white/80">
+          Watch how the 2026 transits shape your next 12 months
+        </p>
+        <VSLPlayer placement="quiz_result" />
       </section>
 
       {/* c. Offer stack */}
@@ -358,17 +372,34 @@ export default function QuizVslPage() {
         <h3 className="text-center text-lg font-semibold">
           Members are already inside 2026
         </h3>
+        <p className="mt-1 flex items-center justify-center gap-1.5 text-center text-sm text-white/60">
+          <span className="flex items-center gap-0.5" aria-hidden>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className="h-3.5 w-3.5 fill-amber-300 text-amber-300"
+              />
+            ))}
+          </span>
+          4.9/5 average member rating
+        </p>
         <div className="mt-4 space-y-4">
           {TESTIMONIALS.map((t) => (
             <figure key={t.name} className="glass rounded-2xl p-4">
-              <div className="flex gap-0.5" aria-label="5 out of 5 stars">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-4 w-4 fill-amber-300 text-amber-300"
-                    aria-hidden
-                  />
-                ))}
+              <div className="flex items-center justify-between">
+                <div className="flex gap-0.5" aria-label="5 out of 5 stars">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className="h-4 w-4 fill-amber-300 text-amber-300"
+                      aria-hidden
+                    />
+                  ))}
+                </div>
+                <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
+                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                  Verified member
+                </span>
               </div>
               <blockquote className="mt-2 text-sm text-white/85">
                 &ldquo;{t.text}&rdquo;
@@ -379,7 +410,7 @@ export default function QuizVslPage() {
                   alt={t.name}
                   width={96}
                   height={96}
-                  className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-gold-400/40"
+                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-gold-400/40"
                 />
                 <span className="text-xs text-white/50">
                   {t.name} — {t.city}

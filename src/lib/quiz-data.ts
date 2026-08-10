@@ -60,7 +60,7 @@ export interface ZodiacSign {
 }
 
 /** The guide persona that reacts to answers throughout the quiz. */
-export const LUNA = { name: "Luna", role: "Your cosmic guide" } as const;
+export const LUNA = { name: "Master Aura", role: "Your cosmic guide" } as const;
 
 /**
  * Resolve {name} and {sign} placeholders in a reaction string.

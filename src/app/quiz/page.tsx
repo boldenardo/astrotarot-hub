@@ -70,13 +70,14 @@ export default function QuizLandingPage() {
       >
         <Image
           src="/luna.jpg"
-          alt="Luna"
+          alt="Master Aura"
           width={56}
           height={56}
           className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
         />
         <span>
-          Guided by <span className="font-medium text-[#e8d9a8]">Luna</span>{" "}
+          Guided by{" "}
+          <span className="font-medium text-[#e8d9a8]">Master Aura</span>{" "}
           &mdash; she reads your answers as you go.
         </span>
       </motion.div>
@@ -96,26 +97,45 @@ export default function QuizLandingPage() {
         </Link>
       </motion.div>
 
-      {/* Trust row */}
+      {/* Trust row — rostos de membros + rating */}
       <motion.div
         custom={5}
         initial="hidden"
         animate="visible"
         variants={fadeUp}
-        className="mt-6 flex flex-col items-center gap-2 text-sm text-[#b9b2d0]"
+        className="mt-6 flex flex-col items-center gap-2.5 text-sm text-[#b9b2d0]"
       >
-        <span className="flex items-center gap-1.5">
-          <span className="flex items-center gap-0.5" aria-hidden="true">
-            {[0, 1, 2, 3, 4].map((i) => (
-              <Star
-                key={i}
-                className="h-4 w-4 fill-[#d4af37] text-[#d4af37]"
+        <span className="flex items-center">
+          <span className="flex -space-x-2" aria-hidden="true">
+            {[
+              "/testimonials/t2.jpg",
+              "/testimonials/t4.jpg",
+              "/testimonials/t6.jpg",
+              "/testimonials/t8.jpg",
+            ].map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={56}
+                height={56}
+                className="h-8 w-8 rounded-full border-2 border-[#161027] object-cover"
               />
             ))}
           </span>
-          <span className="font-semibold text-[#e8e4f5]">4.9</span>
-          <span aria-hidden="true">&middot;</span>
-          <span>120,000+ readings delivered</span>
+          <span className="ml-2.5 flex items-center gap-1.5">
+            <span className="flex items-center gap-0.5" aria-hidden="true">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <Star
+                  key={i}
+                  className="h-4 w-4 fill-[#d4af37] text-[#d4af37]"
+                />
+              ))}
+            </span>
+            <span className="font-semibold text-[#e8e4f5]">4.9</span>
+            <span aria-hidden="true">&middot;</span>
+            <span>120,000+ readings</span>
+          </span>
         </span>
         <span className="flex items-center gap-1.5 text-xs">
           <Clock className="h-3.5 w-3.5" aria-hidden="true" />2 minutes
@@ -123,9 +143,36 @@ export default function QuizLandingPage() {
         </span>
       </motion.div>
 
+      {/* Mini prova social — uma voz real antes de começar */}
+      <motion.figure
+        custom={6}
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        className="glass mt-6 w-full max-w-sm rounded-2xl p-4 text-left"
+      >
+        <blockquote className="text-sm leading-relaxed text-[#d6d0e8]">
+          &ldquo;I took the reading out of curiosity &mdash; it described my
+          situation so precisely it gave me chills. The 2026 plan felt written
+          for me.&rdquo;
+        </blockquote>
+        <figcaption className="mt-3 flex items-center gap-2.5">
+          <Image
+            src="/testimonials/t4.jpg"
+            alt="Jessica L."
+            width={64}
+            height={64}
+            className="h-8 w-8 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+          />
+          <span className="text-xs text-[#b9b2d0]">
+            Jessica L. &mdash; Miami, FL
+          </span>
+        </figcaption>
+      </motion.figure>
+
       {/* Decorative zodiac strip */}
       <motion.div
-        custom={6}
+        custom={7}
         initial="hidden"
         animate="visible"
         variants={fadeUp}

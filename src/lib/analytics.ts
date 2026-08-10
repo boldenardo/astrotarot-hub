@@ -16,7 +16,19 @@ export type AnalyticsEvent =
   | "personality_analysis"
   | "predictions_viewed"
   | "abundance_viewed"
-  | "subscription_upgrade_clicked";
+  | "subscription_upgrade_clicked"
+  // Funil de quiz + VSL (placement diferencia sales_page vs quiz_result)
+  | "quiz_started"
+  | "quiz_completed"
+  | "quiz_result_viewed"
+  | "vsl_play"
+  | "vsl_25"
+  | "vsl_50"
+  | "vsl_75"
+  | "vsl_90"
+  | "vsl_complete"
+  | "offer_viewed"
+  | "offer_clicked";
 
 interface AnalyticsEventParams {
   category?: string;

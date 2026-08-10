@@ -58,13 +58,15 @@ export default function HeroSection() {
             ))}
             {[...Array(12)].map((_, i) => {
               const angle = (i * 30 * Math.PI) / 180;
+              // toFixed evita hydration mismatch: a precisão de float do
+              // Math.cos/sin pode divergir entre servidor e browser.
               return (
                 <line
                   key={i}
                   x1="100"
                   y1="100"
-                  x2={100 + 90 * Math.cos(angle)}
-                  y2={100 + 90 * Math.sin(angle)}
+                  x2={(100 + 90 * Math.cos(angle)).toFixed(3)}
+                  y2={(100 + 90 * Math.sin(angle)).toFixed(3)}
                   stroke="url(#goldGrad)"
                   strokeWidth="0.25"
                 />
@@ -105,15 +107,30 @@ export default function HeroSection() {
           </motion.div>
         </motion.div>
 
+        {/* Eyebrow badge — prova social imediata acima do H1 */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-5 inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-gold-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-gold-300 sm:text-sm"
+        >
+          <Star className="h-3.5 w-3.5 fill-gold-400 text-gold-400" aria-hidden />
+          4.9/5 &mdash; 120,000+ readings delivered
+        </motion.div>
+
         <motion.h1
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.15 }}
-          className="break-words font-display text-4xl font-semibold leading-[1.05] text-ink-50 sm:text-5xl md:text-6xl lg:text-7xl"
+          className="break-words font-display text-4xl font-semibold leading-[1.05] text-ink-50 drop-shadow-[0_0_30px_rgba(124,92,255,0.35)] sm:text-5xl md:text-6xl lg:text-7xl"
         >
           What do the cards say about
           <br />
-          your <span className="text-gold">love, money &amp; future</span>?
+          your{" "}
+          <span className="text-gold drop-shadow-[0_0_24px_rgba(212,175,55,0.45)]">
+            love, money &amp; future
+          </span>
+          ?
         </motion.h1>
 
         <motion.p
@@ -147,26 +164,46 @@ export default function HeroSection() {
           </Link>
         </motion.div>
 
-        {/* Trust row */}
+        {/* Trust row — rostos reais de membros + rating */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.7 }}
-          className="mt-10 flex flex-col items-center justify-center gap-2 text-sm text-ink-400"
+          className="mt-10 flex flex-col items-center justify-center gap-3 text-sm text-ink-400"
         >
-          <span className="flex items-center gap-1.5">
-            <span className="flex items-center gap-0.5">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Star
-                  key={i}
-                  className="h-4 w-4 text-gold-400"
-                  fill="currentColor"
-                />
-              ))}
+          <span className="flex items-center">
+            <span className="flex -space-x-2.5" aria-hidden="true">
+              {["/testimonials/t1.jpg", "/testimonials/t3.jpg", "/testimonials/t5.jpg", "/testimonials/t6.jpg", "/testimonials/t7.jpg"].map(
+                (src) => (
+                  <Image
+                    key={src}
+                    src={src}
+                    alt=""
+                    width={64}
+                    height={64}
+                    className="h-9 w-9 rounded-full border-2 border-night-900 object-cover"
+                  />
+                )
+              )}
             </span>
-            <span className="font-semibold text-ink-100">4.9</span>
+            <span className="ml-3 flex flex-col items-start leading-tight">
+              <span className="flex items-center gap-0.5" aria-label="4.9 out of 5 stars">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <Star
+                    key={i}
+                    className="h-3.5 w-3.5 text-gold-400"
+                    fill="currentColor"
+                  />
+                ))}
+              </span>
+              <span className="text-xs text-ink-400">
+                Trusted by <span className="font-semibold text-ink-100">120,000+</span> seekers
+              </span>
+            </span>
           </span>
-          <span>120,000+ readings delivered &bull; Free to start</span>
+          <span className="text-xs">
+            Free to start &bull; 2-minute reading &bull; No credit card required
+          </span>
         </motion.div>
       </div>
 

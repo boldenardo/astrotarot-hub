@@ -5,6 +5,7 @@ import HeroSection from "@/components/HeroSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import FaqSection from "@/components/FaqSection";
 import { HOME_FAQS } from "@/lib/faq-data";
+import VSLPlayer from "@/components/VSLPlayer";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -39,6 +40,39 @@ export default function Home() {
     <main className="min-h-screen overflow-x-hidden">
       <Navbar />
       <HeroSection />
+
+      {/* VSL — página comercial. preload="none": os 58 MB só saem do
+          Cloudflare R2 quando o visitante dá Play. */}
+      <section className="relative px-4 py-16 sm:px-6 sm:py-20">
+        <div className="mx-auto max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-8 text-center"
+          >
+            <h2 className="font-display text-3xl font-semibold text-ink-50 sm:text-4xl md:text-5xl">
+              Watch: what the stars already{" "}
+              <span className="text-gold">know about you</span>
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-ink-400 sm:text-lg">
+              In a few minutes, see how your birth chart and the cards reveal
+              what 2026 is preparing for your love, money and purpose.
+            </p>
+          </motion.div>
+          <VSLPlayer placement="sales_page">
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="/quiz"
+                className="btn-gold flex items-center justify-center rounded-full px-8 py-4 text-base"
+              >
+                Start my free reading
+              </Link>
+            </div>
+          </VSLPlayer>
+        </div>
+      </section>
+
       <FeaturesSection />
 
       {/* Plans & pricing */}

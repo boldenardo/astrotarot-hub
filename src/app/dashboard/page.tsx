@@ -319,7 +319,7 @@ export default function DashboardPage() {
     {
       href: "/guia",
       icon: Heart,
-      title: "Talk to Luna",
+      title: "Talk to Master Aura",
       description: "A friend who always listens",
       cta: "Chat now",
       premiumOnly: false,

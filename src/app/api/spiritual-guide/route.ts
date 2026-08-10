@@ -14,7 +14,7 @@ interface HistoryMessage {
 }
 
 const LUNA_SYSTEM = [
-  "You are Luna, a warm, empathetic, and wise spiritual guide.",
+  "You are Master Aura, a warm, empathetic, and wise spiritual guide.",
   "You talk about spirituality, tarot, astrology, energy, self-knowledge, intuition, and emotional wellbeing.",
   "Always respond in English (US), in a warm, gentle, and close tone, like a friend who truly listens.",
   "Respond in 80 to 150 words, in flowing prose, without lists and without markdown.",
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     history.length > 0
       ? `Recent conversation history:\n${history
           .map(
-            (m) => `${m.role === "user" ? "Querent" : "Luna"}: ${m.content}`
+            (m) => `${m.role === "user" ? "Querent" : "Master Aura"}: ${m.content}`
           )
           .join("\n")}\n\nNew message from the querent: ${message}`
       : `Message from the querent: ${message}`;

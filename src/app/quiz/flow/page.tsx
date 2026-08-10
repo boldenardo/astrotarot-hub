@@ -17,6 +17,7 @@ import {
   type QuizState,
   type QuizStep,
 } from "@/lib/quiz-data";
+import { trackEvent } from "@/lib/analytics";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,9 +51,14 @@ export default function QuizFlowPage() {
   }, []);
 
   // Restore persisted state on mount.
+  const startedRef = useRef(false);
   useEffect(() => {
     setState(loadQuizState());
     setHydrated(true);
+    if (!startedRef.current) {
+      startedRef.current = true;
+      trackEvent("quiz_started", { category: "quiz" });
+    }
   }, []);
 
   // Persist on every change after hydration.
@@ -152,6 +158,7 @@ export default function QuizFlowPage() {
       saveQuizState(next); // flush before navigation
       return next;
     });
+    trackEvent("quiz_completed", { category: "quiz" });
     router.push("/quiz/vsl");
   }, [router]);
 
