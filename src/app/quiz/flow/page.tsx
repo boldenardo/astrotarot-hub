@@ -580,7 +580,9 @@ function BirthdateStep({
           setValue(e.target.value);
           setError(null);
         }}
-        className="glass glass-gold mt-6 block min-h-[56px] w-full rounded-xl px-4 text-base text-[#e8e4f5] outline-none focus:border-[#d4af37] [color-scheme:dark]"
+        // appearance-none + min-w-0/max-w-full: o iOS Safari dá largura
+        // intrínseca ao controle nativo de data e estoura o w-full sem isso.
+        className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 max-w-full appearance-none rounded-xl px-4 text-center text-base text-[#e8e4f5] outline-none focus:border-[#d4af37] [color-scheme:dark] [&::-webkit-date-and-time-value]:text-center"
       />
       {error && (
         <p role="alert" className="mt-2 text-sm text-red-400">
