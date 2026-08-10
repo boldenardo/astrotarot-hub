@@ -33,9 +33,35 @@ Plano aprovado pelo usuário (arquivo de plano na sessão Kimi):
 
 ## Discordâncias abertas
 
-_(nenhuma)_
+_(nenhuma bloqueante — ver "Revisão Claude — Round 1" no Log: 0 críticos, 2 altos, 5 médios)_
+
+## Revisão Claude — Round 1 (2026-08-08)
+
+**Veredito: APROVADO COM RESSALVAS** (nenhum bloqueador de deploy; 2 achados altos a corrigir de preferência antes do deploy, nenhum deles de segurança).
+
+Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm start` + bateria HTTP local (anon vs UA Googlebot, Host www/quiz, APIs sem auth) + `BASE_URL=localhost npm run seo:audit` (56/57 reproduzido) + parse real de todos os blocos JSON-LD.
+
+- **CLOAKING: NÃO EXISTE** — zero UA sniffing no diff (grep); HTML de /tarot anônimo vs UA Googlebot = mesmo tamanho; hashes diferem apenas por key aleatória do React (2 fetches anônimos também diferem). Gate é por sessão via `<Show>` server-side. ✔
+- **AUTH: SEM REGRESSÃO** — as 10 APIs de feature continuam atrás de requireUser/requirePremium (401 verificado em 6 delas sem sessão); /personality /abundance /guia /dashboard /profile /cart → 307 login; checkout intacto. Ferramentas nas 4 rotas híbridas só renderizam signed-in. ✔ (ressalva: fluxo signed-in não testado por mim — sem credenciais; smoke test manual logado recomendado pós-deploy)
+- **SITEMAP: OK** — 8 URLs, todas 200 público sem redirect, canonical self byte-idêntico, sem lastmod/priority. Exclusões de /guia /personality /abundance corretas (307 login). ✔
+- **CANONICAL/WWW: OK** — canonical absoluto non-www em todas as públicas (renderizado, não só metadata); home normalizada sem trailing slash = sitemap. 308 www→non-www preserva path+query, sem loop; quiz.* e localhost intactos (testado via Host header). ✔
+- **ACHADO ALTO 1 — /challenge sem H1 no SSR** (src/app/challenge/): página do sitemap mirando "free 4-card reading" não tem `<h1>` no HTML inicial.
+- **ACHADO ALTO 2 — seo-audit.mjs com asserts fracos** (scripts/seo-audit.mjs): (a) não compara o sitemap com o conjunto esperado de 8 URLs — regressão para 1 URL passaria; (b) não verifica presença do H1/landing no HTML das híbridas — se o `<Show>` quebrar e anônimos receberem página vazia, o audit continua verde; (c) não testa as rotas privadas (307/noindex); (d) check www sempre bate em produção mesmo com BASE_URL local.
+- MÉDIOS: noindex de /dashboard /profile /cart /auth /quiz/thank-you é ilegível para o Google (robots.txt Disallow impede o crawl — não é "dupla proteção"; inócuo nas que redirecionam, mas em /auth/* e /quiz/thank-you o ideal é remover o Disallow e deixar só o noindex legível); JSON-LD sem parse-check no audit; bundle da ferramenta (~60kB em /tarot) baixado por anônimos que só veem a landing; 4 rotas viraram SSR dinâmico sem cache; /about com 1 único link interno (footer da home).
+- BAIXOS: WebApplication sem @id; OG image 1080x1080 (ideal 1200x630, já auto-flagrado); landings com scaffold idêntico (conteúdo é específico e claims batem com o código — readings_left:4, preços — mas diversificar estrutura com o tempo); regex de canonical do audit sensível à ordem de atributos.
+- JSON-LD: 13 blocos parseados VÁLIDOS, entity graph consistente (@id organization/website), sem www, sem aggregateRating/SearchAction (decisão correta). llms.txt: claims conferidos contra o código — verdadeiros. lastmod removido: decisão correta. /about: conteúdo real, não thin.
 
 ## Log
+
+### 2026-08-09 — Kimi — correções após Claude Round 1
+Achados validados no código antes de modificar (todos confirmados como reais):
+- **ALTO 1 (/challenge sem H1 SSR)**: confirmado — TarotChallenge só tinha `<h2>`. Corrigido em `src/app/challenge/page.tsx`: H1 "Free 4-Card Tarot Reading" + parágrafo de proposta no HTML inicial (página é ○ estática). Jogo intocado. Validado: `<h1>` presente no SSR + marker no audit.
+- **ALTO 2 (audit fraco)**: `scripts/seo-audit.mjs` reescrito — (1) conjunto EXATO de 8 URLs no sitemap (missing+extra); (2) SSR content check com `<h1>` + marcador único por página + piso de texto (300 chars — /challenge tem 448, legítimo por ser jogo interativo); (3) testes negativos: 6 privadas devem dar 3xx p/ /auth/* (sem hardcode de 307); (4) noindex real verificado em /quiz/flow, /quiz/vsl, /quiz/thank-you, /auth/login, /auth/register; (5) JSON-LD: extração + JSON.parse + validação @context/@type/www/vercel.app em todas as públicas (31 blocos); (6) canonical com parsing independente de ordem de atributos; (7) timeout 15s em todos os fetches; (8) check www rebaixado para ⚠️ aviso quando BASE_URL ≠ produção (Host header não é forjável via fetch).
+- **MÉDIO robots×noindex**: `src/app/robots.ts` — removidos Disallow de /auth/ e /quiz/thank-you (Google agora consegue rastrear e ler o noindex). Mantidos: /api/ /dashboard /profile /cart. Segurança inalterada (robots não é segurança; auth/checkout intactos).
+- **MÉDIOS/BAIXOS**: @id `#app` no WebApplication; link natural p/ /about nas 4 landings; OG 1200x630 NÃO feito (não existe asset adequado — só 1080x1080 e 433x650).
+- **Não tocado (validado pelo Claude)**: princípio anti-cloaking (gate por sessão via <Show>), APIs server-side, checkout, aggregateRating/SearchAction ausentes.
+- **Resultados**: build OK (após rm -rf .next — erro EINVAL de lock OneDrive, não de código); `npm run seo:audit` local **167/167**; anônimo vs Googlebot byte-idêntico nas 5 rotas de conteúdo; privadas 307→login; noindex servido corretamente.
+- Check www→non-www fica ⚠️ em local por natureza — validar em produção pós-deploy (`npm run seo:audit` sem BASE_URL).
 
 ### 2026-08-09 — Kimi (rodada 2: overhaul SEO/AEO/GEO completo)
 Brief do usuário: auditoria SEO + correções + suíte de testes. Diagnóstico feito contra produção (curl com UA Googlebot):

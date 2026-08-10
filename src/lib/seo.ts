@@ -41,6 +41,7 @@ export function softwareAppJsonLd() {
   return {
     "@context": "https://schema.org",
     "@type": "WebApplication",
+    "@id": `${SITE_URL}/#app`,
     name: SITE_NAME,
     url: SITE_URL,
     applicationCategory: "LifestyleApplication",

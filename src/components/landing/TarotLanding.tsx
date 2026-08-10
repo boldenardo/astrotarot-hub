@@ -131,6 +131,14 @@ export default function TarotLanding() {
       </section>
 
       <FaqSection faqs={TAROT_FAQS} />
+
+      <p className="px-4 pb-16 text-center text-sm text-ink-600">
+        Learn more{" "}
+        <Link href="/about" className="text-gold-300 hover:underline">
+          about how AstroTarot Hub works
+        </Link>
+        .
+      </p>
     </main>
   );
 }

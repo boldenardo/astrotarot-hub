@@ -18,6 +18,18 @@ export default function ChallengePage() {
         </Link>
       </div>
 
+      {/* H1 SSR (SEO/AEO): título e proposta da página no HTML inicial */}
+      <header className="relative z-10 mx-auto max-w-2xl px-4 pt-24 text-center sm:pt-28">
+        <h1 className="font-display text-3xl font-semibold text-ink-50 sm:text-4xl">
+          Free 4-Card Tarot Reading
+        </h1>
+        <p className="mx-auto mt-3 max-w-xl text-base text-ink-400">
+          A free interactive Egyptian tarot reading: shuffle the deck, pick 4
+          cards and reveal what they say about your present moment. No sign-up
+          required.
+        </p>
+      </header>
+
       <TarotChallenge />
     </main>
   );
