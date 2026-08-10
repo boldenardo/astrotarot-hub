@@ -56,8 +56,9 @@ export default function QuizLandingPage() {
         variants={fadeUp}
         className="mt-4 max-w-md text-balance text-base text-[#b9b2d0]"
       >
-        Take the 2-minute cosmic reading and get your personalized plan for
-        love, money and purpose.
+        Take the 2-minute cosmic reading and discover what 2026 reveals about
+        your <span className="font-medium text-[#e8d9a8]">soulmate</span>, your
+        money and your purpose.
       </motion.p>
 
       {/* Luna introduction */}
@@ -152,9 +153,9 @@ export default function QuizLandingPage() {
         className="glass mt-6 w-full max-w-sm rounded-2xl p-4 text-left"
       >
         <blockquote className="text-sm leading-relaxed text-[#d6d0e8]">
-          &ldquo;I took the reading out of curiosity &mdash; it described my
-          situation so precisely it gave me chills. The 2026 plan felt written
-          for me.&rdquo;
+          &ldquo;The soulmate reading described him before we even met &mdash;
+          down to details that still give me chills. Six months later, he
+          walked into my life.&rdquo;
         </blockquote>
         <figcaption className="mt-3 flex items-center gap-2.5">
           <Image

@@ -48,12 +48,41 @@ const SCORE_COPY: Record<Score, { label: string; color: string }> = {
 };
 
 const OFFER_ROWS: Array<{ item: string; value: string }> = [
+  { item: "Find-your-soulmate readings", value: "$19" },
   { item: "Unlimited Egyptian Tarot readings", value: "$19" },
   { item: "Your personalized daily horoscope", value: "$29" },
   { item: "Your complete birth chart", value: "$27" },
   { item: "Your fortune & money windows", value: "$19" },
-  { item: "Find-your-soulmate readings", value: "$19" },
   { item: "Your lucky numbers", value: "$19" },
+];
+
+// Fotos reais de campanha (public/social-proof) — casais usando o app.
+// Reforçam o ângulo soulmate da oferta na etapa final do funil.
+const COUPLES: Array<{ photo: string; names: string; quote: string }> = [
+  {
+    photo: "/social-proof/couple-2.webp",
+    names: "Tom & Rebecca",
+    quote:
+      "The soulmate reading described him down to the gray hair. I still get goosebumps.",
+  },
+  {
+    photo: "/social-proof/couple-1.webp",
+    names: "Daniel & Maria",
+    quote:
+      "Our compatibility came back 94% — now we read our daily horoscope together every morning.",
+  },
+  {
+    photo: "/social-proof/couple-4.webp",
+    names: "James & Claire",
+    quote:
+      "Married 20 years, and the readings still gave us a whole new language for our relationship.",
+  },
+  {
+    photo: "/social-proof/couple-3.webp",
+    names: "Paul & Ingrid",
+    quote:
+      "We check our readings together before every big decision. It became our little ritual.",
+  },
 ];
 
 const TESTIMONIALS: Array<{
@@ -293,7 +322,9 @@ export default function QuizVslPage() {
         </div>
         <p className="mt-3 text-sm text-white/80">
           Your answers reveal 3 areas where 2026&apos;s transits are working
-          against you — and one rare window in your favor.
+          against you — and one rare window in your favor, including what your
+          chart says about your{" "}
+          <span className="font-medium text-gold">soulmate connection</span>.
         </p>
       </section>
 
@@ -366,6 +397,45 @@ export default function QuizVslPage() {
       </section>
 
       <CtaBlock id="after-guarantee" />
+
+      {/* f0. Prova social — casais (foco soulmate) */}
+      <section className="mt-10">
+        <h3 className="text-center text-lg font-semibold">
+          They asked about their{" "}
+          <span className="text-gold">soulmate</span> — and found their answer
+        </h3>
+        <p className="mt-1 text-center text-sm text-white/60">
+          Members around the world use AstroTarot to find — and keep — their
+          person.
+        </p>
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {COUPLES.map((c) => (
+            <figure key={c.names} className="glass overflow-hidden rounded-2xl">
+              <Image
+                src={c.photo}
+                alt={`${c.names}, AstroTarot members`}
+                width={540}
+                height={540}
+                className="aspect-square w-full object-cover"
+              />
+              <figcaption className="p-4">
+                <blockquote className="text-sm leading-relaxed text-white/85">
+                  &ldquo;{c.quote}&rdquo;
+                </blockquote>
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
+                  <BadgeCheck
+                    className="h-3.5 w-3.5 text-emerald-300"
+                    aria-hidden
+                  />
+                  {c.names} — AstroTarot members
+                </p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      </section>
+
+      <CtaBlock id="after-couples" />
 
       {/* f. Testimonials */}
       <section className="mt-10">
