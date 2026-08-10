@@ -8,7 +8,10 @@ import Image from "next/image";
 import {
   BadgeCheck,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Loader2,
+  Lock,
   ShieldCheck,
   Star,
   X,
@@ -29,6 +32,11 @@ interface QuizStore {
 }
 
 const STORE_KEY = "astro_quiz_v1";
+
+// VSL fechada: a oferta só aparece após assistir VSL_UNLOCK_SECONDS do vídeo
+// (ou o vídeo terminar). Persistido por sessão para um refresh não re-trancar.
+const VSL_UNLOCK_SECONDS = 90;
+const UNLOCK_KEY = "astro_vsl_unlocked";
 
 function readStore(): QuizStore {
   try {
@@ -123,6 +131,180 @@ const TESTIMONIALS: Array<{
   },
 ];
 
+// Slides do carrossel de prova social: casais (foto grande) + membros (quote).
+type ProofSlide =
+  | { kind: "couple"; photo: string; names: string; quote: string }
+  | { kind: "member"; photo: string; name: string; city: string; quote: string };
+
+const PROOF_SLIDES: ProofSlide[] = [
+  { kind: "couple", ...COUPLES[0] },
+  { kind: "member", name: TESTIMONIALS[0].name, city: TESTIMONIALS[0].city, quote: TESTIMONIALS[0].text, photo: TESTIMONIALS[0].photo },
+  { kind: "couple", ...COUPLES[1] },
+  { kind: "member", name: TESTIMONIALS[1].name, city: TESTIMONIALS[1].city, quote: TESTIMONIALS[1].text, photo: TESTIMONIALS[1].photo },
+  { kind: "couple", ...COUPLES[2] },
+  { kind: "member", name: TESTIMONIALS[3].name, city: TESTIMONIALS[3].city, quote: TESTIMONIALS[3].text, photo: TESTIMONIALS[3].photo },
+  { kind: "couple", ...COUPLES[3] },
+  { kind: "member", name: TESTIMONIALS[2].name, city: TESTIMONIALS[2].city, quote: TESTIMONIALS[2].text, photo: TESTIMONIALS[2].photo },
+  { kind: "member", name: TESTIMONIALS[4].name, city: TESTIMONIALS[4].city, quote: TESTIMONIALS[4].text, photo: TESTIMONIALS[4].photo },
+];
+
+// Carrossel leve com scroll-snap: auto-avança a cada 5s até o usuário tocar.
+function ProofCarousel() {
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [active, setActive] = useState(0);
+  const interactedRef = useRef(false);
+
+  const goTo = useCallback((i: number) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const child = el.children[i] as HTMLElement | undefined;
+    if (child) {
+      el.scrollTo({ left: child.offsetLeft - el.offsetLeft, behavior: "smooth" });
+    }
+    setActive(i);
+  }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (interactedRef.current || document.visibilityState !== "visible") return;
+      setActive((prev) => {
+        const next = (prev + 1) % PROOF_SLIDES.length;
+        const el = trackRef.current;
+        const child = el?.children[next] as HTMLElement | undefined;
+        if (el && child) {
+          el.scrollTo({ left: child.offsetLeft - el.offsetLeft, behavior: "smooth" });
+        }
+        return next;
+      });
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el || el.scrollWidth === 0) return;
+    const i = Math.round((el.scrollLeft / el.scrollWidth) * PROOF_SLIDES.length);
+    setActive(Math.min(Math.max(i, 0), PROOF_SLIDES.length - 1));
+  }, []);
+
+  const arrow = (dir: -1 | 1) => {
+    interactedRef.current = true;
+    goTo((active + dir + PROOF_SLIDES.length) % PROOF_SLIDES.length);
+  };
+
+  return (
+    <div>
+      <div
+        ref={trackRef}
+        onScroll={handleScroll}
+        onPointerDown={() => {
+          interactedRef.current = true;
+        }}
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {PROOF_SLIDES.map((s, i) => (
+          <figure
+            key={i}
+            className="glass flex w-[85%] shrink-0 snap-center flex-col overflow-hidden rounded-2xl sm:w-[70%]"
+          >
+            {s.kind === "couple" ? (
+              <>
+                <Image
+                  src={s.photo}
+                  alt={`${s.names}, AstroTarot members`}
+                  width={540}
+                  height={405}
+                  className="aspect-[4/3] w-full object-cover"
+                />
+                <figcaption className="flex flex-1 flex-col justify-between p-4">
+                  <blockquote className="text-sm leading-relaxed text-white/85">
+                    &ldquo;{s.quote}&rdquo;
+                  </blockquote>
+                  <p className="mt-3 flex items-center gap-1.5 text-xs text-white/50">
+                    <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" aria-hidden />
+                    {s.names} — AstroTarot members
+                  </p>
+                </figcaption>
+              </>
+            ) : (
+              <figcaption className="flex flex-1 flex-col justify-between p-5">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="flex gap-0.5" aria-label="5 out of 5 stars">
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <Star
+                          key={j}
+                          className="h-4 w-4 fill-amber-300 text-amber-300"
+                          aria-hidden
+                        />
+                      ))}
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
+                      <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
+                      Verified member
+                    </span>
+                  </div>
+                  <blockquote className="mt-3 text-sm leading-relaxed text-white/85">
+                    &ldquo;{s.quote}&rdquo;
+                  </blockquote>
+                </div>
+                <div className="mt-4 flex items-center gap-2.5">
+                  <Image
+                    src={s.photo}
+                    alt={s.name}
+                    width={96}
+                    height={96}
+                    className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-gold-400/40"
+                  />
+                  <span className="text-xs text-white/50">
+                    {s.name} — {s.city}
+                  </span>
+                </div>
+              </figcaption>
+            )}
+          </figure>
+        ))}
+      </div>
+
+      {/* Controles */}
+      <div className="mt-3 flex items-center justify-center gap-4">
+        <button
+          type="button"
+          onClick={() => arrow(-1)}
+          aria-label="Previous testimonial"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:text-white"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden />
+        </button>
+        <div className="flex items-center gap-1.5" aria-hidden>
+          {PROOF_SLIDES.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              tabIndex={-1}
+              onClick={() => {
+                interactedRef.current = true;
+                goTo(i);
+              }}
+              className={`h-1.5 rounded-full transition-all ${
+                i === active ? "w-5 bg-gold-400" : "w-1.5 bg-white/25"
+              }`}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => arrow(1)}
+          aria-label="Next testimonial"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:text-white"
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly is included?",
@@ -157,19 +339,49 @@ export default function QuizVslPage() {
   const primaryCtaRef = useRef<HTMLDivElement | null>(null);
   const [showSticky, setShowSticky] = useState(false);
 
+  // Gate da VSL fechada.
+  const [unlocked, setUnlocked] = useState(false);
+
   // Eventos de funil disparados uma única vez nesta visita.
   const resultViewedRef = useRef(false);
   const offerViewedRef = useRef(false);
 
   useEffect(() => {
     setStore(readStore());
+    try {
+      if (sessionStorage.getItem(UNLOCK_KEY) === "1") setUnlocked(true);
+    } catch {
+      // storage indisponível — gate funciona só em memória
+    }
     if (!resultViewedRef.current) {
       resultViewedRef.current = true;
       trackEvent("quiz_result_viewed", { category: "quiz" });
     }
   }, []);
 
+  const handleUnlock = useCallback(() => {
+    setUnlocked((prev) => {
+      if (!prev) {
+        trackEvent("offer_unlocked", {
+          category: "quiz",
+          label: `after_${VSL_UNLOCK_SECONDS}s`,
+        });
+      }
+      return true;
+    });
+    // CTA acessível na hora (a oferta nasce abaixo do fold enquanto a pessoa
+    // assiste); o IntersectionObserver corrige quando a oferta ficar visível.
+    setShowSticky(true);
+    try {
+      sessionStorage.setItem(UNLOCK_KEY, "1");
+    } catch {
+      // ok sem persistência
+    }
+  }, []);
+
+  // Observer só faz sentido depois que a oferta existe no DOM (unlocked).
   useEffect(() => {
+    if (!unlocked) return;
     const el = primaryCtaRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
@@ -180,16 +392,15 @@ export default function QuizVslPage() {
           offerViewedRef.current = true;
           trackEvent("offer_viewed", { category: "quiz" });
         }
-        // Visible again → hide the bar; scrolled past → show it.
-        setShowSticky(
-          !entry.isIntersecting && entry.boundingClientRect.top < 0
-        );
+        // Fora da viewport (acima OU abaixo) → mostra a barra fixa, para o
+        // CTA ficar acessível assim que a oferta destrava.
+        setShowSticky(!entry.isIntersecting);
       },
       { threshold: 0 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [unlocked]);
 
   const checkout = useCallback(async (plan: PlanKey, email: string) => {
     setLoadingPlan(plan);
@@ -328,15 +539,43 @@ export default function QuizVslPage() {
         </p>
       </section>
 
-      {/* b. VSL block — só monta nesta etapa final; preload="none" garante
-          que nenhum byte do MP4 é baixado antes do Play. */}
+      {/* b. VSL fechada — preload="none" (nada baixa antes do Play); a
+          oferta/preços só entram no DOM após VSL_UNLOCK_SECONDS assistidos. */}
       <section className="mt-6">
         <p className="mb-2 text-center text-sm font-medium text-white/80">
           Watch how the 2026 transits shape your next 12 months
         </p>
-        <VSLPlayer placement="quiz_result" />
+        <VSLPlayer
+          placement="quiz_result"
+          ctaRevealSeconds={VSL_UNLOCK_SECONDS}
+          onCtaReveal={handleUnlock}
+        />
+        {!unlocked && (
+          <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-white/60">
+            <Lock className="h-4 w-4 shrink-0 text-gold" aria-hidden />
+            Keep watching — your personalized 2026 plan unlocks during the
+            video.
+          </p>
+        )}
       </section>
 
+      {/* c0. Prova social em carrossel (sempre visível, sem preços) */}
+      <section className="mt-8">
+        <h3 className="text-center text-lg font-semibold">
+          They asked about their{" "}
+          <span className="text-gold">soulmate</span> — and found their answer
+        </h3>
+        <p className="mb-4 mt-1 text-center text-sm text-white/60">
+          Members around the world use AstroTarot to find — and keep — their
+          person.
+        </p>
+        <ProofCarousel />
+      </section>
+
+      {/* Tudo abaixo (oferta, preços, garantia, FAQ) só existe no DOM após o
+          gate da VSL abrir — padrão de VSL fechada. */}
+      {unlocked && (
+        <>
       {/* c. Offer stack */}
       <section className="glass glass-gold mt-8 rounded-2xl p-5">
         <span className="inline-block rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
@@ -398,99 +637,6 @@ export default function QuizVslPage() {
 
       <CtaBlock id="after-guarantee" />
 
-      {/* f0. Prova social — casais (foco soulmate) */}
-      <section className="mt-10">
-        <h3 className="text-center text-lg font-semibold">
-          They asked about their{" "}
-          <span className="text-gold">soulmate</span> — and found their answer
-        </h3>
-        <p className="mt-1 text-center text-sm text-white/60">
-          Members around the world use AstroTarot to find — and keep — their
-          person.
-        </p>
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {COUPLES.map((c) => (
-            <figure key={c.names} className="glass overflow-hidden rounded-2xl">
-              <Image
-                src={c.photo}
-                alt={`${c.names}, AstroTarot members`}
-                width={540}
-                height={540}
-                className="aspect-square w-full object-cover"
-              />
-              <figcaption className="p-4">
-                <blockquote className="text-sm leading-relaxed text-white/85">
-                  &ldquo;{c.quote}&rdquo;
-                </blockquote>
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
-                  <BadgeCheck
-                    className="h-3.5 w-3.5 text-emerald-300"
-                    aria-hidden
-                  />
-                  {c.names} — AstroTarot members
-                </p>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
-
-      <CtaBlock id="after-couples" />
-
-      {/* f. Testimonials */}
-      <section className="mt-10">
-        <h3 className="text-center text-lg font-semibold">
-          Members are already inside 2026
-        </h3>
-        <p className="mt-1 flex items-center justify-center gap-1.5 text-center text-sm text-white/60">
-          <span className="flex items-center gap-0.5" aria-hidden>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className="h-3.5 w-3.5 fill-amber-300 text-amber-300"
-              />
-            ))}
-          </span>
-          4.9/5 average member rating
-        </p>
-        <div className="mt-4 space-y-4">
-          {TESTIMONIALS.map((t) => (
-            <figure key={t.name} className="glass rounded-2xl p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex gap-0.5" aria-label="5 out of 5 stars">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className="h-4 w-4 fill-amber-300 text-amber-300"
-                      aria-hidden
-                    />
-                  ))}
-                </div>
-                <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
-                  <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-                  Verified member
-                </span>
-              </div>
-              <blockquote className="mt-2 text-sm text-white/85">
-                &ldquo;{t.text}&rdquo;
-              </blockquote>
-              <figcaption className="mt-3 flex items-center gap-2.5">
-                <Image
-                  src={t.photo}
-                  alt={t.name}
-                  width={96}
-                  height={96}
-                  className="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-gold-400/40"
-                />
-                <span className="text-xs text-white/50">
-                  {t.name} — {t.city}
-                </span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-      </section>
-
       {/* g. FAQ */}
       <section className="mt-10">
         <h3 className="text-center text-lg font-semibold">Questions, answered</h3>
@@ -527,9 +673,11 @@ export default function QuizVslPage() {
       <p className="mt-6 text-center text-xs text-white/40">
         Secure checkout by Stripe. Cancel anytime. 7-day money-back guarantee.
       </p>
+        </>
+      )}
 
-      {/* h. Sticky bottom CTA (mobile-first) */}
-      {showSticky && (
+      {/* h. Sticky bottom CTA (mobile-first) — só após o gate abrir */}
+      {unlocked && showSticky && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/80 p-3 backdrop-blur-md">
           <button
             type="button"

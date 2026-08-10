@@ -27,6 +27,7 @@ export type AnalyticsEvent =
   | "vsl_75"
   | "vsl_90"
   | "vsl_complete"
+  | "offer_unlocked"
   | "offer_viewed"
   | "offer_clicked";
 

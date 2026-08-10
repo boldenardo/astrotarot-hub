@@ -30,6 +30,8 @@ interface VSLPlayerProps {
   placement: VSLPlacement;
   /** Segundos assistidos para revelar os children (CTA). Omitido = sempre visível. */
   ctaRevealSeconds?: number;
+  /** Chamado UMA vez quando o gate de ctaRevealSeconds abre (ou o vídeo termina). */
+  onCtaReveal?: () => void;
   className?: string;
   children?: React.ReactNode;
 }
@@ -37,6 +39,7 @@ interface VSLPlayerProps {
 export default function VSLPlayer({
   placement,
   ctaRevealSeconds,
+  onCtaReveal,
   className,
   children,
 }: VSLPlayerProps) {
@@ -44,6 +47,15 @@ export default function VSLPlayer({
   // Eventos já disparados nesta montagem (dedupe de timeupdate/replay).
   const firedRef = useRef<Set<string>>(new Set());
   const [ctaRevealed, setCtaRevealed] = useState(ctaRevealSeconds == null);
+  const onCtaRevealRef = useRef(onCtaReveal);
+  onCtaRevealRef.current = onCtaReveal;
+
+  const reveal = useCallback(() => {
+    setCtaRevealed((prev) => {
+      if (!prev) onCtaRevealRef.current?.();
+      return true;
+    });
+  }, []);
 
   const fireOnce = useCallback(
     (event: AnalyticsEvent) => {
@@ -72,14 +84,14 @@ export default function VSLPlayer({
       !ctaRevealed &&
       el.currentTime >= ctaRevealSeconds
     ) {
-      setCtaRevealed(true);
+      reveal();
     }
-  }, [fireOnce, ctaRevealSeconds, ctaRevealed]);
+  }, [fireOnce, ctaRevealSeconds, ctaRevealed, reveal]);
 
   const handleEnded = useCallback(() => {
     fireOnce("vsl_complete");
-    setCtaRevealed(true);
-  }, [fireOnce]);
+    reveal();
+  }, [fireOnce, reveal]);
 
   return (
     <div className={className}>
