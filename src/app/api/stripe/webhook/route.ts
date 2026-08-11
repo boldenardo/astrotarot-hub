@@ -21,10 +21,69 @@ async function findUserByCustomerId(customerId: string | null) {
   const admin = getSupabaseAdmin();
   const { data } = await admin
     .from("users")
-    .select("id")
+    .select("id, affiliate_code")
     .eq("stripe_customer_id", customerId)
     .maybeSingle();
-  return data as { id: string } | null;
+  return data as { id: string; affiliate_code: string | null } | null;
+}
+
+/**
+ * Credita uma venda ao afiliado. Só grava se o código existir e estiver
+ * ativo. Idempotente: os índices únicos de sessão/fatura absorvem
+ * reentregas do Stripe (23505 é sucesso silencioso).
+ */
+async function recordAffiliateSale(params: {
+  code: string | null | undefined;
+  userId: string | null;
+  email: string | null;
+  amount: number;
+  currency: string;
+  plan: string | null;
+  kind: "initial" | "renewal";
+  sessionId?: string | null;
+  invoiceId?: string | null;
+}) {
+  const code = params.code?.trim().toLowerCase();
+  if (!code) return;
+
+  const admin = getSupabaseAdmin();
+  try {
+    const { data: affiliate } = await admin
+      .from("affiliates")
+      .select("code, commission_pct")
+      .eq("code", code)
+      .eq("active", true)
+      .maybeSingle();
+    if (!affiliate) return;
+
+    const { error } = await admin.from("affiliate_sales").insert({
+      code,
+      user_id: params.userId,
+      email: params.email,
+      amount: params.amount,
+      currency: params.currency,
+      plan: params.plan,
+      kind: params.kind,
+      commission_pct: (affiliate as { commission_pct: number }).commission_pct,
+      stripe_checkout_session_id: params.sessionId ?? null,
+      stripe_invoice_id: params.invoiceId ?? null,
+    });
+    if (error && (error as { code?: string }).code !== "23505") {
+      console.error("[stripe/webhook] affiliate_sales insert falhou:", error);
+    }
+
+    // First-touch permanente no usuário — é o que credita as renovações.
+    if (params.userId) {
+      await admin
+        .from("users")
+        .update({ affiliate_code: code })
+        .eq("id", params.userId)
+        .is("affiliate_code", null);
+    }
+  } catch (e) {
+    // Tracking de afiliado NUNCA pode derrubar o processamento do pagamento.
+    console.error("[stripe/webhook] recordAffiliateSale erro:", e);
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -224,6 +283,19 @@ export async function POST(req: NextRequest) {
               })
               .eq("id", userId);
           }
+
+          // Venda atribuída ao afiliado (só quando o benefício foi concedido
+          // nesta execução — garante 1 crédito por compra).
+          await recordAffiliateSale({
+            code: session.metadata?.affiliate_code,
+            userId,
+            email: guestEmailRaw?.toLowerCase().trim() ?? null,
+            amount: (session.amount_total ?? 0) / 100,
+            currency: session.currency ?? "usd",
+            plan: session.mode === "subscription" ? "PREMIUM" : "PACK5",
+            kind: "initial",
+            sessionId: session.id,
+          });
         }
         break;
       }
@@ -270,6 +342,19 @@ export async function POST(req: NextRequest) {
         if (insErr && (insErr as { code?: string }).code !== "23505") {
           throw insErr;
         }
+
+        // Renovação: credita o afiliado que trouxe o cliente (comissão
+        // recorrente). A atribuição vive em users.affiliate_code.
+        await recordAffiliateSale({
+          code: user.affiliate_code,
+          userId: user.id,
+          email: invoice.customer_email ?? null,
+          amount: (invoice.amount_paid ?? 0) / 100,
+          currency: invoice.currency ?? "usd",
+          plan: "PREMIUM",
+          kind: "renewal",
+          invoiceId: invoice.id,
+        });
         break;
       }
 

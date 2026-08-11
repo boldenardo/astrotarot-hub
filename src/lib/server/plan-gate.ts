@@ -21,6 +21,8 @@ export interface UserProfile {
   readings_left: number;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  /** Afiliado que trouxe este usuário (first-touch), quando houver. */
+  affiliate_code?: string | null;
 }
 
 type GateResult =

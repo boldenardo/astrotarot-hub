@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import VSLPlayer from "@/components/VSLPlayer";
 import { trackEvent } from "@/lib/analytics";
+import { getStoredRef } from "@/lib/affiliate";
 
 type Score = "LOW" | "MEDIUM" | "HIGH";
 type PlanKey = "PREMIUM" | "PACK5";
@@ -409,7 +410,8 @@ export default function QuizVslPage() {
       const res = await fetch("/api/quiz/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, email }),
+        // ref: código de afiliado guardado no browser (null quando não há).
+        body: JSON.stringify({ plan, email, ref: getStoredRef() }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;

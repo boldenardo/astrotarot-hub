@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { requireUser } from "@/lib/server/plan-gate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
+import { normalizeCode } from "@/lib/affiliate";
 
 export const runtime = "nodejs";
 
@@ -14,12 +15,16 @@ export async function POST(req: NextRequest) {
   if (!gate.ok) return gate.response;
   const { profile } = gate;
 
-  let body: { plan?: string } = {};
+  let body: { plan?: string; ref?: string } = {};
   try {
     body = await req.json();
   } catch {
     // corpo inválido tratado abaixo
   }
+
+  // Afiliado: usa o código guardado no browser; se o usuário já tem
+  // atribuição no cadastro, ela vence (first-touch permanente).
+  const affiliateCode = profile.affiliate_code ?? normalizeCode(body.ref);
 
   const plan = body.plan;
   if (plan !== "PACK5" && plan !== "PREMIUM") {
@@ -65,9 +70,20 @@ export async function POST(req: NextRequest) {
       locale: "en",
       line_items: [{ price, quantity: 1 }],
       client_reference_id: profile.id,
-      metadata: { user_id: profile.id, plan },
+      metadata: {
+        user_id: profile.id,
+        plan,
+        ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
+      },
       ...(isSubscription
-        ? { subscription_data: { metadata: { user_id: profile.id } } }
+        ? {
+            subscription_data: {
+              metadata: {
+                user_id: profile.id,
+                ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
+              },
+            },
+          }
         : {}),
       ...(profile.stripe_customer_id
         ? { customer: profile.stripe_customer_id }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
@@ -6,6 +7,7 @@ import Script from "next/script";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import JsonLd from "@/components/JsonLd";
+import AffiliateTracker from "@/components/AffiliateTracker";
 import {
   organizationJsonLd,
   websiteJsonLd,
@@ -192,6 +194,11 @@ export default function RootLayout({
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#07050d]/40 to-[#07050d]" />
         </div>
         {children}
+        {/* Captura ?ref= de afiliado em qualquer página (não renderiza nada).
+            Suspense é exigido pelo useSearchParams em rotas estáticas. */}
+        <Suspense fallback={null}>
+          <AffiliateTracker />
+        </Suspense>
         <Analytics />
       </body>
     </html>

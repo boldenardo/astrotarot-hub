@@ -13,7 +13,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/dashboard", "/profile", "/cart"],
+        disallow: ["/api/", "/dashboard", "/profile", "/cart", "/admin"],
       },
     ],
     sitemap: "https://astrotarot.shop/sitemap.xml",

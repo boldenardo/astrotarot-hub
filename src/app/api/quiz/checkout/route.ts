@@ -4,13 +4,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { normalizeCode } from "@/lib/affiliate";
 
 export const runtime = "nodejs";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export async function POST(req: NextRequest) {
-  let body: { plan?: string; email?: string } = {};
+  let body: { plan?: string; email?: string; ref?: string } = {};
   try {
     body = await req.json();
   } catch {
@@ -48,7 +49,15 @@ export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const metadata = { source: "quiz", plan, quiz_email: email };
+  // Código de afiliado (opcional). Vai no metadata da sessão E da assinatura
+  // — assim o webhook credita a venda inicial e as renovações.
+  const affiliateCode = normalizeCode(body.ref);
+  const metadata: Record<string, string> = {
+    source: "quiz",
+    plan,
+    quiz_email: email,
+    ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
+  };
 
   try {
     const session = await stripe.checkout.sessions.create({

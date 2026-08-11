@@ -11,6 +11,9 @@ const isProtectedRoute = createRouteMatcher([
   "/abundance(.*)",
   "/guia(.*)",
   "/profile(.*)",
+  // /admin exige login aqui; a autorização por e-mail é checada na página
+  // (isAdmin), que responde 404 para quem não está na allowlist.
+  "/admin(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
