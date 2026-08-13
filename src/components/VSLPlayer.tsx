@@ -18,7 +18,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { trackEvent, type AnalyticsEvent } from "@/lib/analytics";
-import { VSL_URL, VSL_POSTER, VSL_ASPECT } from "@/lib/vsl";
+import {
+  VSL_URL,
+  VSL_POSTER,
+  VSL_ASPECT,
+  VSL_PROGRESS_EXPONENT,
+} from "@/lib/vsl";
 
 export type VSLPlacement = "sales_page" | "quiz_result";
 
@@ -33,6 +38,19 @@ const PROGRESS_MARKS: ReadonlyArray<{ pct: number; event: AnalyticsEvent }> = [
 // currentTime entre um timeupdate e outro, então só tratamos como "pulo"
 // saltos maiores que isso.
 const SEEK_TOLERANCE_S = 1.5;
+
+/**
+ * Converte o progresso REAL (0–1) no progresso EXIBIDO na barra.
+ * Curva côncava: sobe rápido no início e desacelera, para o vídeo parecer
+ * mais perto do fim do que está (retenção). Ver VSL_PROGRESS_EXPONENT.
+ *
+ * A conversão é puramente visual — analytics (25/50/75/90) e o gate do CTA
+ * continuam lendo o tempo real do elemento <video>.
+ */
+function displayedProgress(realRatio: number): number {
+  const clamped = Math.min(1, Math.max(0, realRatio));
+  return Math.pow(clamped, VSL_PROGRESS_EXPONENT) * 100;
+}
 
 interface VSLPlayerProps {
   placement: VSLPlacement;
@@ -118,10 +136,14 @@ export default function VSLPlayer({
     }
 
     if (el.duration && !Number.isNaN(el.duration)) {
-      const pct = (el.currentTime / el.duration) * 100;
-      setProgressPct(Math.min(100, pct));
+      const realRatio = el.currentTime / el.duration;
+      // Barra: progresso "acelerado" (só visual).
+      setProgressPct(displayedProgress(realRatio));
+      // Analytics: SEMPRE no progresso real — os marcos 25/50/75/90 precisam
+      // significar tempo de fato assistido, senão a métrica vira ficção.
+      const realPct = realRatio * 100;
       for (const mark of PROGRESS_MARKS) {
-        if (pct >= mark.pct) fireOnce(mark.event);
+        if (realPct >= mark.pct) fireOnce(mark.event);
       }
     }
 
@@ -222,7 +244,7 @@ export default function VSLPlayer({
           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3">
             {/* Progresso apenas informativo (não é interativo de propósito) */}
             <div
-              className="h-1 w-full overflow-hidden rounded-full bg-white/20"
+              className="h-2.5 w-full overflow-hidden rounded-full bg-white/25"
               role="progressbar"
               aria-valuenow={Math.round(progressPct)}
               aria-valuemin={0}
@@ -230,7 +252,7 @@ export default function VSLPlayer({
               aria-label="Video progress"
             >
               <div
-                className="h-full bg-gold-400 transition-[width] duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-gold-200 to-gold-500 shadow-[0_0_10px_rgba(212,175,55,0.55)] transition-[width] duration-300"
                 style={{ width: `${progressPct}%` }}
               />
             </div>

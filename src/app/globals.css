@@ -61,6 +61,9 @@
     background: linear-gradient(135deg, #edd9a3, #d4af37 55%, #a9822f);
     color: #1a1330;
     font-weight: 600;
+    /* Pill por padrão — utilities do Tailwind (rounded-xl etc.) sobrescrevem
+       quando um uso específico precisa de outro raio. */
+    border-radius: 9999px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   .btn-gold:hover {

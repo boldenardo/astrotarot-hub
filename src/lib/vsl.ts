@@ -10,6 +10,17 @@ export const VSL_URL =
 // tarjas pretas nas laterais. Se trocar o vídeo, ajuste aqui.
 export const VSL_ASPECT = "1 / 1";
 
+// Curva da barra de progresso (retenção): a barra avança rápido no começo e
+// desacelera no fim, passando a sensação de que o vídeo está perto de acabar.
+//   exibido = (tempoReal / duração) ^ VSL_PROGRESS_EXPONENT
+//
+// Expoente < 1 = curva côncava. Com 0.45, em um vídeo de 5min28:
+//   30s reais → 42% na barra | 90s → 56% | metade do vídeo → 73%
+// A curva é monotônica e chega exatamente a 100% no fim (nunca "termina"
+// antes, o que quebraria a confiança).
+// 1 = linear (tempo real). Quanto menor, mais agressiva a ilusão.
+export const VSL_PROGRESS_EXPONENT = 0.45;
+
 // Poster/thumbnail do player. Ainda NÃO existe um arquivo de poster no repo —
 // quando houver, salve-o em public/images/vsl-poster.webp (1280x720, <150KB)
 // e este valor passa a ser usado automaticamente pelo VSLPlayer.

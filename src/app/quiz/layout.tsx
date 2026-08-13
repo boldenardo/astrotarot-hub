@@ -28,23 +28,25 @@ export default function QuizLayout({
         }}
       />
 
-      {/* Fixed brand mark (not a link — the funnel has no exits) */}
-      <div className="fixed inset-x-0 top-0 z-40 flex justify-center pt-4">
-        <span className="flex items-center gap-2 text-sm font-semibold tracking-wide">
+      {/* Brand mark: ancorada no TOPO DA PÁGINA (absolute), não na viewport —
+          ao rolar ela sai de vista em vez de flutuar sobre o conteúdo.
+          Não é link: o funil não tem saídas. */}
+      <div className="absolute inset-x-0 top-0 z-40 flex justify-center pt-5">
+        <span className="flex items-center gap-2.5 text-lg font-semibold tracking-wide sm:text-xl">
           <Image
             src="/brand/astrotarot-logo.png"
             alt=""
-            width={28}
-            height={28}
+            width={48}
+            height={48}
             priority
-            className="h-6 w-6 object-contain drop-shadow-[0_0_10px_rgba(212,175,55,0.35)]"
+            className="h-9 w-9 object-contain drop-shadow-[0_0_14px_rgba(212,175,55,0.45)] sm:h-10 sm:w-10"
           />
           <span className="text-gold">AstroTarot</span>
         </span>
       </div>
 
       {/* Centered content column */}
-      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-10 pt-16">
+      <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-4 pb-10 pt-20">
         {children}
       </main>
     </div>

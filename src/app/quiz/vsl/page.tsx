@@ -21,7 +21,10 @@ import { trackEvent } from "@/lib/analytics";
 import { getStoredRef } from "@/lib/affiliate";
 
 type Score = "LOW" | "MEDIUM" | "HIGH";
-type PlanKey = "PREMIUM" | "PACK5";
+// Funil de alma gêmea vende UM plano: a assinatura Premium. O pacote avulso
+// foi removido de propósito — alternativa barata na mesma tela canibaliza a
+// oferta principal.
+type PlanKey = "PREMIUM";
 
 interface QuizStore {
   answers?: Record<string, string>;
@@ -322,7 +325,7 @@ const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   },
   {
     q: "Is it accurate?",
-    a: "Your plan is built from your real birth data and the actual 2026 planetary transits — the same calculations professional astrologers use — then personalized with your quiz answers. It is specific to you, not a generic sun-sign column.",
+    a: "Your reading is built from your real birth data and the actual planetary transits — the same calculations professional astrologers use — then personalized with your quiz answers. It is specific to you, not a generic sun-sign column.",
   },
 ];
 
@@ -476,32 +479,27 @@ export default function QuizVslPage() {
   const scoreMeta = SCORE_COPY[score];
   const firstName = store.name?.trim().split(/\s+/)[0];
 
+  // Plano único: assinatura. Sem pacote avulso, sem alternativa barata
+  // competindo com a oferta na mesma tela.
   const CtaBlock = ({ id }: { id: string }) => (
-    <div className="mt-6 space-y-3">
+    <div className="mt-6">
       <button
         type="button"
         onClick={() => startGuestCheckout("PREMIUM")}
         disabled={loadingPlan !== null}
-        className="btn-gold w-full min-h-[52px] text-base font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
+        className="btn-gold flex w-full min-h-[56px] items-center justify-center gap-2 rounded-full px-6 text-base font-semibold disabled:opacity-60"
         data-cta={id}
       >
         {loadingPlan === "PREMIUM" && (
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
         )}
-        Unlock my Soulmate Reading — $29.90/mo
+        Unlock my Soulmate Reading
       </button>
-      <button
-        type="button"
-        onClick={() => startGuestCheckout("PACK5")}
-        disabled={loadingPlan !== null}
-        className="block w-full min-h-[44px] text-center text-sm text-white/70 underline underline-offset-4 hover:text-white disabled:opacity-60"
-      >
-        {loadingPlan === "PACK5"
-          ? "Opening secure checkout..."
-          : "Prefer a one-time reading pack? Get 5 readings for $9.99"}
-      </button>
+      <p className="mt-2 text-center text-xs text-white/50">
+        $29.90/month &bull; Cancel anytime &bull; Secure checkout by Stripe
+      </p>
       {error && (
-        <p className="text-sm text-red-400 text-center" role="alert">
+        <p className="mt-2 text-center text-sm text-red-400" role="alert">
           {error}
         </p>
       )}
@@ -620,13 +618,9 @@ export default function QuizVslPage() {
         </div>
       </section>
 
-      {/* d. Primary CTA (observed for the sticky bar) */}
-      <div ref={primaryCtaRef}>
-        <CtaBlock id="primary" />
-      </div>
-
-      {/* e. Guarantee */}
-      <section className="glass mt-8 flex items-start gap-4 rounded-2xl p-5">
+      {/* d. Garantia — logo abaixo do preço, antes do único CTA da dobra:
+          derruba o risco no exato momento da decisão. */}
+      <section className="glass mt-4 flex items-start gap-4 rounded-2xl p-5">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-emerald-300/30 bg-emerald-300/10">
           <ShieldCheck className="h-6 w-6 text-emerald-300" aria-hidden />
         </span>
@@ -640,7 +634,10 @@ export default function QuizVslPage() {
         </div>
       </section>
 
-      <CtaBlock id="after-guarantee" />
+      {/* e. CTA principal — único nesta dobra (observado pela barra fixa) */}
+      <div ref={primaryCtaRef}>
+        <CtaBlock id="primary" />
+      </div>
 
       {/* g. FAQ */}
       <section className="mt-10">
@@ -673,11 +670,8 @@ export default function QuizVslPage() {
         </div>
       </section>
 
+      {/* Fechamento: um último CTA, bem depois do primeiro (nunca colados). */}
       <CtaBlock id="after-faq" />
-
-      <p className="mt-6 text-center text-xs text-white/40">
-        Secure checkout by Stripe. Cancel anytime. 7-day money-back guarantee.
-      </p>
         </>
       )}
 
@@ -688,7 +682,7 @@ export default function QuizVslPage() {
             type="button"
             onClick={() => startGuestCheckout("PREMIUM")}
             disabled={loadingPlan !== null}
-            className="btn-gold mx-auto flex w-full max-w-lg min-h-[48px] items-center justify-center gap-2 text-sm font-semibold disabled:opacity-60"
+            className="btn-gold mx-auto flex w-full max-w-lg min-h-[48px] items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold disabled:opacity-60"
           >
             {loadingPlan === "PREMIUM" && (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
@@ -746,7 +740,7 @@ export default function QuizVslPage() {
               type="button"
               onClick={submitEmailModal}
               disabled={loadingPlan !== null}
-              className="btn-gold mt-4 flex w-full min-h-[48px] items-center justify-center gap-2 font-semibold disabled:opacity-60"
+              className="btn-gold mt-4 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full px-6 font-semibold disabled:opacity-60"
             >
               {loadingPlan !== null && (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
