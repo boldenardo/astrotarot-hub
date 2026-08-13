@@ -34,7 +34,7 @@ export default function QuizLandingPage() {
           className="h-20 w-20 object-contain drop-shadow-[0_0_22px_rgba(212,175,55,0.4)]"
         />
         <span className="inline-flex items-center rounded-full border border-[rgba(212,175,55,0.25)] bg-[rgba(212,175,55,0.06)] px-4 py-1.5 text-xs font-medium text-[#e8d9a8]">
-          Your 2026 Cosmic Reading
+          Free Soulmate Tarot Reading
         </span>
       </motion.div>
 
@@ -45,8 +45,8 @@ export default function QuizLandingPage() {
         variants={fadeUp}
         className="text-balance text-4xl leading-tight sm:text-5xl"
       >
-        Ready to finally unlock what{" "}
-        <span className="text-gold">2026 has planned</span> for you?
+        Ready to discover{" "}
+        <span className="text-gold">who your soulmate is</span>?
       </motion.h1>
 
       <motion.p
@@ -56,9 +56,9 @@ export default function QuizLandingPage() {
         variants={fadeUp}
         className="mt-4 max-w-md text-balance text-base text-[#b9b2d0]"
       >
-        Take the 2-minute cosmic reading and discover what 2026 reveals about
-        your <span className="font-medium text-[#e8d9a8]">soulmate</span>, your
-        money and your purpose.
+        Answer 8 quick questions, draw your cards, and let your birth chart
+        reveal their traits &mdash; and{" "}
+        <span className="font-medium text-[#e8d9a8]">when your paths cross</span>.
       </motion.p>
 
       {/* Luna introduction */}

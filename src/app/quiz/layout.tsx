@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 
 export const metadata: Metadata = {
-  title: "Your 2026 Cosmic Reading | AstroTarot",
+  title: "Free Soulmate Tarot Reading | AstroTarot",
   description:
-    "Take the 2-minute cosmic reading and get your personalized 2026 plan for love, money and purpose.",
+    "Answer 8 quick questions and let the cards reveal who your soulmate is, what they're like and when your paths cross.",
   alternates: {
     canonical: "https://astrotarot.shop/quiz",
   },

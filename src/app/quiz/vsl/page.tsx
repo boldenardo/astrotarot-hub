@@ -50,19 +50,20 @@ function readStore(): QuizStore {
   }
 }
 
+// Sinal de conexão de alma gêmea (ver computeScore em quiz-data.ts).
 const SCORE_COPY: Record<Score, { label: string; color: string }> = {
-  LOW: { label: "Low", color: "bg-red-500/80" },
-  MEDIUM: { label: "Medium", color: "bg-amber-400/80" },
-  HIGH: { label: "High", color: "bg-emerald-400/80" },
+  LOW: { label: "Blocked", color: "bg-red-500/80" },
+  MEDIUM: { label: "Awakening", color: "bg-amber-400/80" },
+  HIGH: { label: "Strong", color: "bg-emerald-400/80" },
 };
 
 const OFFER_ROWS: Array<{ item: string; value: string }> = [
-  { item: "Find-your-soulmate readings", value: "$19" },
-  { item: "Unlimited Egyptian Tarot readings", value: "$19" },
-  { item: "Your personalized daily horoscope", value: "$29" },
-  { item: "Your complete birth chart", value: "$27" },
-  { item: "Your fortune & money windows", value: "$19" },
-  { item: "Your lucky numbers", value: "$19" },
+  { item: "Your full soulmate reading — who they are", value: "$29" },
+  { item: "Your meeting window — when your paths cross", value: "$27" },
+  { item: "Compatibility with anyone already in your life", value: "$19" },
+  { item: "Unlimited Egyptian Tarot readings on love", value: "$19" },
+  { item: "Your complete birth chart & Venus placement", value: "$19" },
+  { item: "Daily love horoscope & lucky numbers", value: "$19" },
 ];
 
 // Fotos reais de campanha (public/social-proof) — casais usando o app.
@@ -309,7 +310,7 @@ function ProofCarousel() {
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly is included?",
-    a: "Everything in the 2026 Cosmic Plan: unlimited Egyptian Tarot readings, your personalized daily horoscope, your complete birth chart, your fortune and money windows, your find-your-soulmate readings, and your lucky numbers — all inside your private dashboard.",
+    a: "Your complete soulmate reading (who they are, when you meet, what blocks it), compatibility analysis with anyone in your life, unlimited Egyptian Tarot readings, your full birth chart with Venus placement, daily love horoscope and lucky numbers — all inside your private dashboard.",
   },
   {
     q: "Can I cancel anytime?",
@@ -487,7 +488,7 @@ export default function QuizVslPage() {
         {loadingPlan === "PREMIUM" && (
           <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
         )}
-        Unlock my 2026 Cosmic Plan — $29.90/mo
+        Unlock my Soulmate Reading — $29.90/mo
       </button>
       <button
         type="button"
@@ -515,7 +516,7 @@ export default function QuizVslPage() {
           {firstName ? `${firstName}, your results are in` : "Your results are in"}
         </p>
         <h1 className="mt-1 text-xl font-semibold">
-          Your Cosmic Alignment:{" "}
+          Your Soulmate Signal:{" "}
           <span className="text-gold">{scoreMeta.label}</span>
         </h1>
         <div className="mt-3 grid grid-cols-3 gap-1.5" aria-hidden>
@@ -529,15 +530,17 @@ export default function QuizVslPage() {
           ))}
         </div>
         <div className="mt-1 grid grid-cols-3 text-[11px] text-white/50">
-          <span>Low</span>
-          <span className="text-center">Medium</span>
-          <span className="text-right">High</span>
+          <span>Blocked</span>
+          <span className="text-center">Awakening</span>
+          <span className="text-right">Strong</span>
         </div>
         <p className="mt-3 text-sm text-white/80">
-          Your answers reveal 3 areas where 2026&apos;s transits are working
-          against you — and one rare window in your favor, including what your
-          chart says about your{" "}
-          <span className="font-medium text-gold">soulmate connection</span>.
+          Your answers point to a specific person in your chart — their traits,
+          the window when your paths cross, and what&apos;s been standing
+          between you.{" "}
+          <span className="font-medium text-gold">
+            Master Aura explains it in the video below.
+          </span>
         </p>
       </section>
 
@@ -545,7 +548,7 @@ export default function QuizVslPage() {
           oferta/preços só entram no DOM após VSL_UNLOCK_SECONDS assistidos. */}
       <section className="mt-6">
         <p className="mb-2 text-center text-sm font-medium text-white/80">
-          Watch how the 2026 transits shape your next 12 months
+          Watch: what the cards revealed about your soulmate
         </p>
         <VSLPlayer
           placement="quiz_result"
@@ -555,7 +558,7 @@ export default function QuizVslPage() {
         {!unlocked && (
           <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-white/60">
             <Lock className="h-4 w-4 shrink-0 text-gold" aria-hidden />
-            Keep watching — your personalized 2026 plan unlocks during the
+            Keep watching — your full soulmate reading unlocks during the
             video.
           </p>
         )}
@@ -581,10 +584,10 @@ export default function QuizVslPage() {
       {/* c. Offer stack */}
       <section className="glass glass-gold mt-8 rounded-2xl p-5">
         <span className="inline-block rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
-          Includes your personalized 2026 plan
+          Includes your personalized soulmate reading
         </span>
         <h2 className="mt-3 text-2xl font-semibold leading-snug">
-          The 2026 Cosmic Plan — <span className="text-gold">Unlimited Premium</span>
+          Your Soulmate Plan — <span className="text-gold">Unlimited Premium</span>
         </h2>
         <ul className="mt-4 space-y-3">
           {OFFER_ROWS.map((row) => (
@@ -630,7 +633,7 @@ export default function QuizVslPage() {
         <div>
           <h3 className="font-semibold">7-day money-back guarantee</h3>
           <p className="mt-1 text-sm text-white/70">
-            Try your full 2026 Cosmic Plan for a week. If it doesn&apos;t feel
+            Try your full Soulmate Plan for a week. If it doesn&apos;t feel
             uncannily accurate, email us and we&apos;ll refund every cent — no
             questions, no hoops.
           </p>
@@ -690,7 +693,7 @@ export default function QuizVslPage() {
             {loadingPlan === "PREMIUM" && (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             )}
-            Unlock my 2026 Cosmic Plan — $29.90/mo
+            Unlock my Soulmate Reading — $29.90/mo
           </button>
         </div>
       )}

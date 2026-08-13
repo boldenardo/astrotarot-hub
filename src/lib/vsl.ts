@@ -6,6 +6,10 @@ export const VSL_URL =
   process.env.NEXT_PUBLIC_VSL_URL ??
   "https://pub-94956eceb3c048a7a62f1ebc80da35ec.r2.dev/vsl.mp4";
 
+// Proporção do vídeo. O MP4 atual é quadrado (1:1) — usar 16/9 criaria
+// tarjas pretas nas laterais. Se trocar o vídeo, ajuste aqui.
+export const VSL_ASPECT = "1 / 1";
+
 // Poster/thumbnail do player. Ainda NÃO existe um arquivo de poster no repo —
 // quando houver, salve-o em public/images/vsl-poster.webp (1280x720, <150KB)
 // e este valor passa a ser usado automaticamente pelo VSLPlayer.

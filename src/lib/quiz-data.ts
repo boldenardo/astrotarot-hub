@@ -155,33 +155,36 @@ export function signFromDate(isoDate: string): string | undefined {
   return undefined;
 }
 
+// Funil 100% focado em ALMA GÊMEA: cada pergunta alimenta a leitura de
+// soulmate (quem é, quando chega, o que bloqueia o encontro).
 export const STEPS: QuizStep[] = [
   {
-    id: "q_goal",
+    id: "q_status",
     kind: "question",
-    question: "What do you want to transform first in 2026?",
-    subtitle: "Pick the one that pulls at you the most.",
+    question: "Where are you in love right now?",
+    subtitle: "Be honest — the cards read the truth, not the answer you wish were true.",
     options: [
-      { value: "love", label: "Love & relationships" },
-      { value: "money", label: "Money & career" },
-      { value: "energy", label: "Energy & wellbeing" },
-      { value: "purpose", label: "Life purpose" },
+      { value: "searching", label: "Single and searching for my person" },
+      { value: "unsure", label: "With someone — but unsure they're the one" },
+      { value: "complicated", label: "In something complicated" },
+      { value: "healing", label: "Healing from a love that ended" },
     ],
     reactions: {
-      love: "Matters of the heart — I sensed that pull the moment you arrived. Love is where your chart carries the most unread pages.",
-      money:
-        "Abundance work. Good — the 2026 transits are unusually generous to people who ask direct questions about money.",
-      energy:
-        "Your energy is the foundation everything else stands on. Restoring it first is the wisest order — most people learn that too late.",
-      purpose:
-        "The deepest question of all. When purpose comes into focus, love and money tend to follow it home.",
+      searching:
+        "Searching means your heart is open — and an open heart is the only doorway a soulmate can walk through. The cards can show you which one they're standing behind.",
+      unsure:
+        "That doubt isn't disloyalty. It's your intuition asking a question you haven't answered yet — and your chart holds the answer.",
+      complicated:
+        "Complicated usually means two souls with real pull and wrong timing. There's a name for that in the cards, and we'll find it.",
+      healing:
+        "An ending is often the last obstacle before the right one arrives. Your chart can tell you how close you already are.",
     },
   },
   {
     id: "q_sign",
     kind: "question",
     question: "What's your zodiac sign?",
-    subtitle: "We'll confirm it with your exact birth date later.",
+    subtitle: "Your sign shapes who your soul is drawn to — and who's drawn to you.",
     options: ZODIAC_SIGNS.map((sign) => ({
       value: sign.name,
       label: sign.name,
@@ -189,189 +192,167 @@ export const STEPS: QuizStep[] = [
     })),
     reactions: {
       Aries:
-        "First fire of the zodiac. You were built to begin things — and 2026 finally hands you something worth finishing.",
+        "Fire falls in love fast and hard. Your soulmate isn't the one who slows you down — it's the one who can keep pace.",
       Taurus:
-        "Steady earth. You build slowly and lose nothing — your reading will show you where that patience is about to pay.",
+        "You love once and completely. That loyalty is rare, and it's exactly the frequency your person is looking for.",
       Gemini:
-        "A mind with two windows open at once. Your gift is seeing both sides — we'll find the moment you're meant to choose one.",
+        "Your soulmate will be the one conversation you never get tired of. That's how you'll know — not fireworks, curiosity that never ends.",
       Cancer:
-        "You feel the tide before it turns. That protective heart of yours is due some protecting of its own.",
-      Leo: "There's a warmth in you that other people navigate by. 2026 asks you to shine for yourself first — the rest will follow.",
+        "You love with your whole chest and hide it behind a shell. The right person won't knock — they'll wait until you open.",
+      Leo: "You give warmth freely and rarely ask who's warming you. Your soulmate is the one who arrives already carrying light of their own.",
       Virgo:
-        "You notice what everyone else misses. Pointed at your own path, that precision becomes a compass.",
+        "You notice every detail except how much you deserve. Your person will be the one whose flaws feel like home instead of a project.",
       Libra:
-        "You weigh everything — beauty, fairness, hearts. This year the scales tip in your favor, and you'll want to be ready.",
+        "Ruled by Venus — you were literally born for partnership. Your chart is one of the most readable I work with for soulmate timing.",
       Scorpio:
-        "Depth recognizes depth. You transform or you don't bother — and a transformation is exactly what sits on your horizon.",
+        "You don't do shallow. Your soulmate is someone who can meet you at the depth that scares everyone else away.",
       Sagittarius:
-        "The arrow is already in the bow. Your restlessness isn't a flaw — it's your chart insisting there's somewhere you're meant to be.",
+        "You need a companion, not a cage. The right person won't ask you to stay — they'll ask where you're going next.",
       Capricorn:
-        "You climb quietly and arrive anyway. The summit waiting in 2026 is closer than your patience assumes.",
+        "You build love the way you build everything: to last. Your person is the one worth the patience you've been holding.",
       Aquarius:
-        "You've never fit the mold — that was never the assignment. The current ahead favors exactly your kind of different.",
+        "You need to be understood more than you need to be adored. The one who does both is closer than you think.",
       Pisces:
-        "Deep waters. You feel everything before it happens — that sensitivity is the exact channel your reading will use.",
+        "You sense a connection before it announces itself. That intuition is the exact instrument this reading will use.",
     },
     reactionDefault:
-      "Noted. Your sign sets the tone — your exact birth date will sharpen it into something precise.",
+      "Noted. Your sign sets the frequency — your exact birth date sharpens it into a name, a face, a timing.",
   },
   {
-    id: "i_alignment",
+    id: "i_soulmate",
     kind: "interstitial",
-    title: "2026 is a rare alignment year for your sign",
-    body: "Astrologers agree: the 2026 transits open windows that only repeat every 12 years. Most people walk right past them. Your answers let us map YOUR exact windows — down to the week.",
+    title: "Your soulmate already exists — and your chart knows them",
+    body: "In astrology, a soulmate connection leaves marks on both birth charts: matching Venus placements, mirrored houses, the same karmic axis. Your answers let the cards read those marks — and describe the person on the other side of them.",
   },
   {
-    id: "q_stuck",
+    id: "q_met",
     kind: "question",
-    question: "How often do you feel stuck — even when you're doing everything right?",
+    question: "Do you feel you've already met your soulmate?",
     options: [
-      { value: "daily", label: "Almost every day" },
-      { value: "weekly", label: "A few times a week" },
-      { value: "occasionally", label: "Occasionally" },
-      { value: "rarely", label: "Rarely" },
+      { value: "yes", label: "Yes — and I think about them constantly" },
+      { value: "maybe", label: "Maybe... someone comes to mind" },
+      { value: "no", label: "No, not yet" },
+      { value: "unsure", label: "I don't know how I'd even tell" },
     ],
     reactions: {
-      daily:
-        "That heaviness isn't a flaw in you, {name}. It's friction between your effort and your timing — and friction can be mapped.",
-      weekly:
-        "A few times a week is your intuition tapping the glass. Something in your rhythm is slightly out of phase, and we can find where.",
-      occasionally:
-        "Occasional resistance is normal — the pattern behind when it appears is what matters. Your chart will show it clearly.",
-      rarely:
-        "You move with unusual flow. That tells me your instincts are already close to aligned — imagine what happens when we sharpen them.",
+      yes: "When someone occupies that much of your mind, it's rarely one-sided. The cards can show whether that pull is memory — or a thread still connected.",
+      maybe:
+        "A face just came to you as you read that, didn't it? Hold it. Your reading will tell you whether your intuition is right.",
+      no: "Then the most important question isn't who — it's when. And that's exactly what your transits can date.",
+      unsure:
+        "Most people can't tell, {name} — because the signs feel like coincidence until someone shows you the pattern.",
     },
   },
   {
-    id: "q_money",
+    id: "q_signs",
     kind: "question",
-    question: "When it comes to money, which sounds most like you?",
+    question: "Have you noticed any of these lately?",
+    subtitle: "These are the classic signs a soulmate connection is activating.",
     options: [
-      { value: "leaking", label: "I earn, but it slips through my fingers" },
-      { value: "ceiling", label: "I keep hitting the same ceiling, no matter what I try" },
-      { value: "scarcity", label: "I'm always afraid there won't be enough" },
-      { value: "ready", label: "I'm doing okay — I'm ready for the next level" },
+      { value: "numbers", label: "Repeating numbers — 11:11, 222, 333" },
+      { value: "dreams", label: "Dreaming of the same person" },
+      { value: "deja_vu", label: "Meeting someone who felt instantly familiar" },
+      { value: "none", label: "None that I've noticed" },
     ],
     reactions: {
-      leaking:
-        "Money that arrives but never stays is almost never about discipline. It's about timing — and yours has been off by just a little.",
-      ceiling:
-        "That ceiling isn't made of effort — you've given plenty. It's a cycle, and cycles have end dates. We'll find yours.",
-      scarcity:
-        "That quiet fear is old energy, not prophecy. Naming where it entered your pattern is the first step to closing it out.",
-      ready:
-        "I love this answer. Readiness is rare — and 2026 rewards the prepared more than any year in the last decade.",
+      numbers:
+        "11:11 and its siblings show up most often when two charts are moving toward each other. Your reading will tell you how close.",
+      dreams:
+        "Recurring dreams of one person are the oldest soulmate signal there is. Dreams don't invent faces — they remember them.",
+      deja_vu:
+        "That instant familiarity has a name: recognition. Souls that have met before don't need an introduction — they need timing.",
+      none: "Then we start clean, with no noise in the signal. Sometimes the clearest readings come from the quietest charts.",
     },
   },
   {
-    id: "q_love",
+    id: "q_past",
     kind: "question",
-    question: "In love, what's the hardest part right now?",
+    question: "Is there someone from your past you still think about?",
     options: [
-      { value: "attracting", label: "Attracting the right person" },
-      { value: "spark", label: "Reigniting the spark in my relationship" },
-      { value: "letting_go", label: "Letting go of someone" },
-      { value: "trust", label: "Trusting again after being hurt" },
+      { value: "often", label: "Yes — almost every day" },
+      { value: "sometimes", label: "Sometimes, out of nowhere" },
+      { value: "letting_go", label: "I'm trying to let go" },
+      { value: "no", label: "No, that chapter is closed" },
     ],
     reactions: {
-      attracting:
-        "You keep meeting almosts instead of answers. Your energy is broadcasting one thing while your heart asks for another — we can retune that.",
-      spark:
-        "A dimmed spark isn't a dying fire. It's usually two rhythms drifting apart — and rhythms can be brought back into step.",
+      often:
+        "I felt that before you answered. When someone stays in your mind that long, there's usually unfinished energy between the charts — and it can be read.",
+      sometimes:
+        "Those thoughts arrive on a schedule — they track a transit. Once you see the pattern, you'll know if it's a door or an echo.",
       letting_go:
-        "Release is the hardest work the heart does. Your chart can show what this bond came to teach — closure comes easier once the lesson is named.",
-      trust:
-        "The guard you built kept you safe once. Now it may be screening out the very thing you want — we'll look at when it's safe to lower it.",
+        "Trying to let go is already letting go. The cards can show which thread is still holding — and whether it's meant to.",
+      no: "A closed chapter means your energy is fully available. That's the state in which soulmates arrive fastest.",
     },
   },
   {
     id: "i_proof",
     kind: "interstitial",
-    title: "You're not alone in this",
-    body: "120,000+ readings delivered — and counting.",
+    title: "She almost skipped this quiz",
+    body: "120,000+ readings delivered — thousands of them about one question: who is my person?",
     testimonial: {
       quote:
-        "I almost didn't finish the quiz. Then the reading described my situation so accurately it was scary — I've changed two big decisions because of it.",
+        "The reading described him before we met — his work, the gray at his temples, even the month. Six months later he walked into my life and I recognized him.",
       author: "Amanda R.",
       stars: 5,
       photo: "/testimonials/t4.jpg",
     },
   },
   {
-    id: "q_past",
-    kind: "question",
-    question: "Do you still think about someone from your past?",
-    options: [
-      { value: "often", label: "Yes, often" },
-      { value: "sometimes", label: "Sometimes" },
-      { value: "letting_go", label: "I'm trying to let go" },
-      { value: "no", label: "No" },
-    ],
-    reactions: {
-      often:
-        "I felt that before you answered. Unfinished energy keeps a door open — your chart will show us how to close it gently.",
-      sometimes:
-        "Those returning thoughts arrive on a schedule — they usually track a transit. Once you see the pattern, it loses its grip.",
-      letting_go:
-        "Trying to let go is already letting go. You're mid-release — the reading can show you which thread is still holding.",
-      no: "A clear rearview is a quiet superpower. It means your energy is fully available for what's ahead.",
-    },
-  },
-  {
     id: "q_block",
     kind: "question",
-    question: "What do you believe blocks you the most?",
+    question: "What do you think keeps love from working out for you?",
     options: [
-      { value: "timing", label: "Bad timing" },
-      { value: "others", label: "Other people's energy" },
-      { value: "doubts", label: "My own doubts" },
+      { value: "timing", label: "The timing is always wrong" },
+      { value: "wrong_people", label: "I attract the wrong people" },
+      { value: "walls", label: "I don't let people get close" },
       { value: "unknown", label: "I don't know — that's why I'm here" },
     ],
     reactions: {
       timing:
         "You're more right than you know. Timing is the one force astrology reads best — and your {sign} windows are closer than they feel.",
-      others:
-        "Sensitive people absorb what others leave behind, {name}. Learning where your energy ends and theirs begins changes everything.",
-      doubts:
-        "The fact that you can name your doubts means they're not in charge — they're just loud. Your chart holds the counter-evidence.",
+      wrong_people:
+        "Attracting the wrong people is almost never bad luck. It's a pattern written in the chart — and patterns can be rewritten.",
+      walls:
+        "The walls kept you safe once, {name}. Now they may be screening out the exact person you're asking for. We'll look at when it's safe to lower them.",
       unknown:
-        "An honest answer — and the most powerful one. What you can't see from inside the pattern, the stars see from above it.",
+        "The most honest answer — and the most powerful. What you can't see from inside the pattern, the cards see from above it.",
     },
   },
   {
-    id: "q_desire",
+    id: "q_know",
     kind: "question",
-    question: "If ONE thing changed in the next 90 days, which would you choose?",
+    question: "What do you most want the cards to reveal?",
     options: [
-      { value: "love", label: "Deep, secure love" },
-      { value: "money", label: "A real breakthrough with money" },
-      { value: "peace", label: "Peace — a quiet mind at last" },
-      { value: "clarity", label: "Total clarity about my path" },
+      { value: "who", label: "Who they are — their traits, their look" },
+      { value: "when", label: "When we'll meet" },
+      { value: "already", label: "Whether they're already in my life" },
+      { value: "last", label: "Whether this love will last" },
     ],
     reactions: {
-      love: "Deep, secure love — not fireworks, foundations. That desire says you've outgrown the lessons that used to repeat.",
-      money:
-        "A real breakthrough, not a lucky month. Hold that intention — the reading will show you which weeks to move in.",
-      peace:
-        "A quiet mind is the rarest wish people bring me — and the most telling. You've been carrying more than your share.",
-      clarity:
-        "Total clarity is the master key. Choose that, and the other doors tend to unlock on their own.",
+      who: "Physical traits, temperament, even their line of work — a soulmate reading gets more specific than most people expect.",
+      when: "Timing is the hardest question and the one the transits answer best. We'll narrow it to a window, not a vague someday.",
+      already:
+        "That's the question that changes everything. The cards can tell you if the person you're picturing is the one — or a lesson on the way to them.",
+      last: "Longevity is written in the synastry between two charts. If it's built to last, your reading will show you why.",
     },
   },
   {
-    id: "q_open",
+    id: "q_ready",
     kind: "question",
-    question: "How open are you to spiritual guidance?",
+    question: "If your soulmate walked in tomorrow, would you be ready?",
     options: [
-      { value: "very", label: "Very — it guides my decisions" },
-      { value: "curious", label: "Curious but skeptical" },
-      { value: "new", label: "New to this" },
+      { value: "yes", label: "Yes — I've been ready for a while" },
+      { value: "scared", label: "Yes, but honestly? It scares me" },
+      { value: "work", label: "I have some healing left to do" },
+      { value: "unsure", label: "I'm not sure I'd even recognize them" },
     ],
     reactions: {
-      very: "Then you already know how this works — guidance meets you where your attention goes. Yours is wide open.",
-      curious:
-        "Skepticism is welcome here. The strongest readings happen when a sharp mind checks every line — bring that with you.",
-      new: "Everyone starts exactly where you are. Come as you are — the chart does the talking, not the jargon.",
+      yes: "Readiness is the loudest signal a chart can send. Yours is already broadcasting — the reading tells you where it's landing.",
+      scared:
+        "Wanting it and fearing it at the same time is the most human answer there is. It doesn't disqualify you — it means it matters.",
+      work: "Honest. And healing rarely has to finish before love arrives — often the right person is part of how it finishes.",
+      unsure:
+        "Then let's fix that first. The reading gives you the specific markers to recognize them by — so you don't walk past them.",
     },
   },
   { id: "birthdate", kind: "birthdate" },
@@ -380,7 +361,7 @@ export const STEPS: QuizStep[] = [
     // Special-cased in the flow page: staged "analyzing" animation, then → /quiz/vsl.
     id: "analyzing",
     kind: "interstitial",
-    title: "Reading your cosmic signature",
+    title: "Reading your soulmate signature",
     body: "Hold on — this takes a few seconds.",
   },
 ];
@@ -388,49 +369,53 @@ export const STEPS: QuizStep[] = [
 /** Checklist lines shown on the analyzing screen, in order. */
 export const ANALYZING_STAGES = [
   "Mapping your birth chart",
-  "Cross-referencing 2026 transits",
-  "Locating your prosperity windows",
-  "Compiling your Cosmic Plan",
+  "Locating your Venus & 7th house",
+  "Drawing your soulmate cards",
+  "Compiling your Soulmate Reading",
 ];
 
 /**
  * Analyzing-stage titles, personalized with the visitor's first name when
- * available (the last stage becomes "Compiling {name}'s Cosmic Plan").
+ * available (the last stage becomes "Compiling {name}'s Soulmate Reading").
  * Falls back to the generic ANALYZING_STAGES.
  */
 export function getAnalyzingStages(name?: string): string[] {
   const trimmed = name?.trim();
   if (!trimmed) return ANALYZING_STAGES;
   const stages = [...ANALYZING_STAGES];
-  stages[stages.length - 1] = `Compiling ${trimmed}'s Cosmic Plan`;
+  stages[stages.length - 1] = `Compiling ${trimmed}'s Soulmate Reading`;
   return stages;
 }
 
 /**
- * Score the quiz from "struggle" answers. Weighted so LOW (the strongest
- * pitch) is the modal outcome: the most intense option of a struggle
- * question scores 2, softer struggle options score 1.
+ * Sinal de conexão de alma gêmea, a partir das respostas de "bloqueio".
+ * Quanto mais atrito a pessoa relata, mais BLOCKED (que é também o pitch
+ * mais forte): opção mais intensa vale 2, opções intermediárias valem 1.
  *
- *   total >= 5 → LOW, 3–4 → MEDIUM, else → HIGH
+ *   total >= 5 → LOW (blocked) | 3—4 → MEDIUM (awakening) | else → HIGH (strong)
  */
 export function computeScore(answers: Record<string, string>): QuizScore {
   let points = 0;
 
-  // q_stuck: first two options are struggle answers.
-  if (answers.q_stuck === "daily") points += 2;
-  else if (answers.q_stuck === "weekly") points += 1;
+  // q_status: quanto mais indefinida a situação, mais atrito.
+  if (answers.q_status === "complicated") points += 2;
+  else if (answers.q_status === "unsure" || answers.q_status === "healing") {
+    points += 1;
+  }
 
-  // q_money: first three options are struggle answers.
-  if (answers.q_money === "leaking") points += 2;
-  else if (answers.q_money === "ceiling" || answers.q_money === "scarcity") points += 1;
-
-  // q_block: any answer except the last is a struggle answer.
-  if (answers.q_block === "timing" || answers.q_block === "others") points += 1;
-  else if (answers.q_block === "doubts") points += 2;
-
-  // q_past: first two options are struggle answers.
+  // q_past: laço não resolvido bloqueia a chegada de um novo.
   if (answers.q_past === "often") points += 2;
   else if (answers.q_past === "sometimes") points += 1;
+
+  // q_block: barreiras internas pesam mais que timing.
+  if (answers.q_block === "walls") points += 2;
+  else if (answers.q_block === "timing" || answers.q_block === "wrong_people") {
+    points += 1;
+  }
+
+  // q_ready: prontidão emocional.
+  if (answers.q_ready === "work" || answers.q_ready === "unsure") points += 2;
+  else if (answers.q_ready === "scared") points += 1;
 
   if (points >= 5) return "LOW";
   if (points >= 3) return "MEDIUM";

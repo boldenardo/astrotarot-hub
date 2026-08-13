@@ -629,10 +629,10 @@ function EmailStep({
     <form onSubmit={submit} className="text-center" noValidate>
       <h2 className="text-balance text-2xl leading-snug sm:text-3xl">
         Where should we send your{" "}
-        <span className="text-gold">2026 Cosmic Plan</span>?
+        <span className="text-gold">Soulmate Reading</span>?
       </h2>
       <p className="mt-2 text-sm text-[#b9b2d0]">
-        Your full reading is ready to be compiled.
+        Your cards are drawn. The reading is ready to be compiled.
       </p>
 
       <div className="mt-6 flex flex-col gap-3">
