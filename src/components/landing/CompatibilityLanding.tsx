@@ -27,7 +27,7 @@ const COMPATIBILITY_FAQS: FaqItem[] = [
   {
     question: "Is the soulmate reading free?",
     answer:
-      "The compatibility (soulmate) reading is part of the Unlimited Premium plan ($29.90/month), which also includes daily horoscopes, numerology, birth charts and fortune readings. New accounts start with 4 free tarot readings so you can try the platform first — no credit card required.",
+      "The compatibility (soulmate) reading is part of the Unlimited Premium plan ($19.99/month), which also includes daily horoscopes, numerology, birth charts and fortune readings. New accounts start with 4 free tarot readings so you can try the platform first — no credit card required.",
   },
 ];
 

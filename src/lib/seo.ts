@@ -67,7 +67,7 @@ export function softwareAppJsonLd() {
       {
         "@type": "Offer",
         name: "Unlimited Premium",
-        price: "29.90",
+        price: "19.99",
         priceCurrency: "USD",
         description:
           "Unlimited tarot readings, daily horoscope, soulmate reading, birth chart and lucky numbers. Monthly subscription.",

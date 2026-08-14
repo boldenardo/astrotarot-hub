@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error:
-          "You have no readings available. Buy the 5 Readings Pack ($9.99) or subscribe to Unlimited Premium ($29.90/month).",
+          "You have no readings available. Buy the 5 Readings Pack ($9.99) or subscribe to Unlimited Premium ($19.99/month).",
         code: "NO_READINGS_LEFT",
         needsPayment: true,
       },

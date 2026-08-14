@@ -19,7 +19,7 @@ import { trackPageView, trackPaymentInitiated } from "@/lib/analytics";
 
 const PLAN_PRICES: Record<CheckoutPlanKey, number> = {
   PACK5: 9.99,
-  PREMIUM: 29.9,
+  PREMIUM: 19.99,
 };
 
 function PlansContent() {

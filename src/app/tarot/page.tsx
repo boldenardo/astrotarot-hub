@@ -362,7 +362,7 @@ export default function TarotPage() {
                         href="/cart?plan=premium"
                         className="btn-ghost w-full rounded-full py-4 text-center font-semibold"
                       >
-                        Unlimited Premium — $29.90/month
+                        Unlimited Premium — $19.99/month
                       </Link>
                     </div>
                   </div>

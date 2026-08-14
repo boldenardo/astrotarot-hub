@@ -444,7 +444,7 @@ export default function PersonalityReportPage() {
                           href="/cart?plan=premium"
                           className="btn-gold mt-3 block w-full rounded-full px-6 py-2.5 text-center text-sm font-semibold sm:inline-block sm:w-auto"
                         >
-                          Subscribe to Premium Unlimited — $29.90/mo
+                          Subscribe to Premium Unlimited — $19.99/mo
                         </Link>
                       )}
                     </div>

@@ -12,7 +12,7 @@ export const HOME_FAQS: FaqItem[] = [
   {
     question: "Is AstroTarot Hub free?",
     answer:
-      "Yes. You get 4 free tarot readings, Egyptian Tarot insights and access to the AI Spiritual Guide without a credit card. A 5-Reading Pack ($9.99 one-time) and an Unlimited Premium plan ($29.90/month) unlock more readings and premium features.",
+      "Yes. You get 4 free tarot readings, Egyptian Tarot insights and access to the AI Spiritual Guide without a credit card. A 5-Reading Pack ($9.99 one-time) and an Unlimited Premium plan ($19.99/month) unlock more readings and premium features.",
   },
   {
     question: "How does an AI tarot reading work?",

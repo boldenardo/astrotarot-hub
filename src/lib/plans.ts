@@ -27,7 +27,7 @@ export const CHECKOUT_PLANS = {
   PREMIUM: {
     key: "PREMIUM",
     name: "Unlimited Premium",
-    priceLabel: "$29.90",
+    priceLabel: "$19.99",
     period: "per month",
     readings: Infinity,
     features: [

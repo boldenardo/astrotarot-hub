@@ -91,7 +91,7 @@ export default function AboutPage() {
           Every account starts free: 4 tarot readings, Egyptian Tarot insights
           and the AI Spiritual Guide, with no credit card required. For more,
           there is a 5-Reading Pack ($9.99 one-time payment) and the Unlimited
-          Premium subscription ($29.90/month), which unlocks unlimited
+          Premium subscription ($19.99/month), which unlocks unlimited
           readings, the daily horoscope, soulmate compatibility, your complete
           birth chart and your lucky numbers.
         </p>

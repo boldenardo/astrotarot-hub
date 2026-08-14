@@ -22,7 +22,7 @@ const NUMEROLOGY_FAQS: FaqItem[] = [
   {
     question: "Is the numerology reading free?",
     answer:
-      "The numerology and lucky numbers reading is part of the Unlimited Premium plan ($29.90/month), which also includes the daily horoscope, birth chart, fortune reading and soulmate compatibility reading. Creating an account is free and includes 4 free tarot readings, so you can try the platform before upgrading.",
+      "The numerology and lucky numbers reading is part of the Unlimited Premium plan ($19.99/month), which also includes the daily horoscope, birth chart, fortune reading and soulmate compatibility reading. Creating an account is free and includes 4 free tarot readings, so you can try the platform before upgrading.",
   },
   {
     question: "Can numerology really predict my future?",
@@ -66,7 +66,7 @@ export default function NumerologyLanding() {
             </Link>
           </div>
           <p className="mt-4 text-sm text-ink-600">
-            Numerology is included with Unlimited Premium &bull; $29.90/month
+            Numerology is included with Unlimited Premium &bull; $19.99/month
           </p>
         </div>
       </section>

@@ -22,7 +22,7 @@ const PREDICTIONS_FAQS: FaqItem[] = [
   {
     question: "Is the daily horoscope free?",
     answer:
-      "The daily personalized horoscope is a Premium feature of AstroTarot Hub. New accounts start with 4 free AI tarot readings. Unlimited Premium ($29.90/month) unlocks the daily horoscope along with numerology, birth chart, fortune and soulmate compatibility readings.",
+      "The daily personalized horoscope is a Premium feature of AstroTarot Hub. New accounts start with 4 free AI tarot readings. Unlimited Premium ($19.99/month) unlocks the daily horoscope along with numerology, birth chart, fortune and soulmate compatibility readings.",
   },
   {
     question: "What are astrological transits?",

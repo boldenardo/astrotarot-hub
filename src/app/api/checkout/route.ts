@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     const admin = getSupabaseAdmin();
     const { error: insertError } = await admin.from("payments").insert({
       user_id: profile.id,
-      amount: isSubscription ? 29.9 : 9.99,
+      amount: isSubscription ? 19.99 : 9.99,
       currency: "usd",
       status: "PENDING",
       payment_type: isSubscription ? "SUBSCRIPTION" : "READINGS_PACK",

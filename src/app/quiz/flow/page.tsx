@@ -1,17 +1,43 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+// Funil de alma gêmea em formato de conversa (DM).
+//
+// Regras de ritmo:
+// - A Master Aura NÃO comenta cada resposta: ela fala em passos `chat`
+//   dedicados, a cada 2–3 perguntas, como numa conversa de WhatsApp.
+// - Perguntas avançam sozinhas ao toque (sem botão "continuar"), para
+//   manter a fricção mínima onde estávamos perdendo gente.
+// - Estado persiste em localStorage; ao voltar, retoma no primeiro passo
+//   não respondido.
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, CircleCheck, Loader2, Lock, Star } from "lucide-react";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  CircleCheck,
+  Heart,
+  Infinity as InfinityIcon,
+  Loader2,
+  Lock,
+  MapPin,
+  Sparkles,
+  Star,
+  Sun,
+  Volume2,
+} from "lucide-react";
 import {
   MASTER_AURA,
+  SIGN_LOVE_TRAIT,
   STEPS,
+  ZODIAC_SIGNS,
   computeScore,
   getAnalyzingStages,
   loadQuizState,
   resolveReactionText,
+  resumeIndex,
   saveQuizState,
   signFromDate,
   type QuizState,
@@ -20,11 +46,12 @@ import {
 import { trackEvent } from "@/lib/analytics";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const GUIDE_PHOTO = "/luna.jpg";
 
 const slideVariants = {
-  enter: (direction: number) => ({ opacity: 0, x: direction >= 0 ? 48 : -48 }),
+  enter: (direction: number) => ({ opacity: 0, x: direction >= 0 ? 40 : -40 }),
   center: { opacity: 1, x: 0 },
-  exit: (direction: number) => ({ opacity: 0, x: direction >= 0 ? -48 : 48 }),
+  exit: (direction: number) => ({ opacity: 0, x: direction >= 0 ? -40 : 40 }),
 };
 
 export default function QuizFlowPage() {
@@ -33,27 +60,14 @@ export default function QuizFlowPage() {
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [hydrated, setHydrated] = useState(false);
-  /** Luna's reaction currently on screen (keyed to the step it belongs to). */
-  const [reaction, setReaction] = useState<{
-    stepId: string;
-    text: string;
-  } | null>(null);
   const advancingRef = useRef(false);
-  const reactionTimerRef = useRef<number | null>(null);
-
-  // Clear any pending reaction timer on unmount.
-  useEffect(() => {
-    return () => {
-      if (reactionTimerRef.current !== null) {
-        window.clearTimeout(reactionTimerRef.current);
-      }
-    };
-  }, []);
-
-  // Restore persisted state on mount.
   const startedRef = useRef(false);
+
+  // Restaura o estado e retoma exatamente onde a pessoa parou.
   useEffect(() => {
-    setState(loadQuizState());
+    const restored = loadQuizState();
+    setState(restored);
+    setStepIndex(resumeIndex(restored));
     setHydrated(true);
     if (!startedRef.current) {
       startedRef.current = true;
@@ -61,37 +75,50 @@ export default function QuizFlowPage() {
     }
   }, []);
 
-  // Persist on every change after hydration.
+  // Persiste estado + posição (o passo entra no mesmo objeto para que um
+  // refresh volte para a mesma tela, inclusive nas telas sem resposta).
   useEffect(() => {
-    if (hydrated) saveQuizState(state);
-  }, [state, hydrated]);
+    if (hydrated) saveQuizState({ ...state, stepIndex });
+  }, [state, stepIndex, hydrated]);
 
   const step: QuizStep = STEPS[Math.min(stepIndex, STEPS.length - 1)];
   const progress = Math.round(((stepIndex + 1) / STEPS.length) * 100);
   const isAnalyzing = step.id === "analyzing";
+  const firstName = state.name?.trim().split(/\s+/)[0];
 
-  const goNext = useCallback(() => {
-    advancingRef.current = false;
-    setReaction(null);
-    setDirection(1);
-    setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
+  // Trava de transição: com AnimatePresence mode="wait", trocar a key
+  // durante a animação de saída deixa a tela presa. Duplo clique / duplo
+  // submit é comum no mobile, então bloqueamos avanços em sequência.
+  const transitionLockRef = useRef(false);
+  const withTransitionLock = useCallback((move: () => void) => {
+    if (transitionLockRef.current) return;
+    transitionLockRef.current = true;
+    move();
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0 });
+      window.setTimeout(() => {
+        transitionLockRef.current = false;
+      }, 400);
+    } else {
+      transitionLockRef.current = false;
+    }
   }, []);
 
-  const goBack = useCallback(() => {
-    if (reactionTimerRef.current !== null) {
-      window.clearTimeout(reactionTimerRef.current);
-      reactionTimerRef.current = null;
-    }
-    // Back during Luna's reaction cancels it and returns to the options.
-    if (reaction !== null) {
-      setReaction(null);
+  const goNext = useCallback(() => {
+    withTransitionLock(() => {
       advancingRef.current = false;
-      return;
-    }
-    advancingRef.current = false;
-    setDirection(-1);
-    setStepIndex((i) => Math.max(i - 1, 0));
-  }, [reaction]);
+      setDirection(1);
+      setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
+    });
+  }, [withTransitionLock]);
+
+  const goBack = useCallback(() => {
+    withTransitionLock(() => {
+      advancingRef.current = false;
+      setDirection(-1);
+      setStepIndex((i) => Math.max(i - 1, 0));
+    });
+  }, [withTransitionLock]);
 
   const handleAnswer = useCallback(
     (questionId: string, value: string) => {
@@ -102,51 +129,32 @@ export default function QuizFlowPage() {
         answers: { ...prev.answers, [questionId]: value },
         ...(questionId === "q_sign" ? { sign: value } : null),
       }));
-
-      const stepConfig = STEPS.find((s) => s.id === questionId);
-      const raw =
-        stepConfig?.kind === "question"
-          ? stepConfig.reactions?.[value] ?? stepConfig.reactionDefault
-          : undefined;
-
-      if (raw) {
-        const text = resolveReactionText(raw, {
-          name: state.name,
-          sign: questionId === "q_sign" ? value : state.sign,
-        });
-        // Brief selected flash, then Luna reacts in place.
-        reactionTimerRef.current = window.setTimeout(() => {
-          reactionTimerRef.current = null;
-          setReaction({ stepId: questionId, text });
-        }, 150);
-      } else {
-        // Brief selected flash, then auto-advance.
-        window.setTimeout(goNext, 150);
-      }
+      // Flash de seleção e segue — sem reação por resposta.
+      window.setTimeout(goNext, 220);
     },
-    [goNext, state.name, state.sign]
+    [goNext]
+  );
+
+  const handleName = useCallback(
+    (name: string) => {
+      setState((prev) => ({ ...prev, name: name.trim() || undefined }));
+      goNext();
+    },
+    [goNext]
   );
 
   const handleBirthdate = useCallback(
     (birthDate: string) => {
       const derived = signFromDate(birthDate);
-      setState((prev) => ({
-        ...prev,
-        birthDate,
-        sign: derived ?? prev.sign,
-      }));
+      setState((prev) => ({ ...prev, birthDate, sign: derived ?? prev.sign }));
       goNext();
     },
     [goNext]
   );
 
   const handleEmail = useCallback(
-    (email: string, name: string) => {
-      setState((prev) => ({
-        ...prev,
-        email,
-        name: name.trim() || undefined,
-      }));
+    (email: string) => {
+      setState((prev) => ({ ...prev, email }));
       goNext();
     },
     [goNext]
@@ -155,16 +163,25 @@ export default function QuizFlowPage() {
   const handleAnalyzingDone = useCallback(() => {
     setState((prev) => {
       const next: QuizState = { ...prev, score: computeScore(prev.answers) };
-      saveQuizState(next); // flush before navigation
+      saveQuizState(next); // flush antes de navegar
       return next;
     });
     trackEvent("quiz_completed", { category: "quiz" });
     router.push("/quiz/vsl");
   }, [router]);
 
+  const vars = useMemo(
+    () => ({ name: firstName, sign: state.sign }),
+    [firstName, state.sign]
+  );
+
+  // Sem gate de hidratação: a primeira tela precisa aparecer no HTML inicial.
+  // Bloquear tudo até `hydrated` mostrava um spinner em conexões lentas —
+  // custo direto de conversão logo na entrada do funil. O passo salvo é
+  // aplicado no effect acima, logo após a hidratação.
   return (
     <div className="flex flex-1 flex-col">
-      {/* Progress bar */}
+      {/* Progresso */}
       <div
         className="mb-3 mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]"
         role="progressbar"
@@ -179,26 +196,24 @@ export default function QuizFlowPage() {
             background: "linear-gradient(90deg, #edd9a3, #d4af37 60%, #a9822f)",
           }}
           animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
         />
       </div>
 
-      {/* Back arrow */}
-      <div className="flex h-11 items-center">
-        {(stepIndex > 0 || reaction !== null) && !isAnalyzing && (
-          <button
-            type="button"
-            onClick={goBack}
-            aria-label="Go back"
-            className="btn-ghost flex h-11 w-11 items-center justify-center rounded-full"
-          >
-            <ArrowLeft className="h-5 w-5" aria-hidden="true" />
-          </button>
-        )}
-      </div>
+      {/* Voltar */}
+      {stepIndex > 0 && !isAnalyzing && (
+        <button
+          type="button"
+          onClick={goBack}
+          aria-label="Go back"
+          className="mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(255,255,255,0.12)] text-[#b9b2d0] transition-colors hover:text-[#e8e4f5]"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden />
+        </button>
+      )}
 
-      <div className="flex flex-1 flex-col justify-center py-4">
-        <AnimatePresence mode="wait" custom={direction} initial={false}>
+      <div className="relative flex flex-1 flex-col justify-center">
+        <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step.id}
             custom={direction}
@@ -207,32 +222,76 @@ export default function QuizFlowPage() {
             animate="center"
             exit="exit"
             transition={{ duration: 0.28, ease: "easeOut" }}
+            className="w-full"
           >
-            {isAnalyzing ? (
-              <AnalyzingScreen name={state.name} onDone={handleAnalyzingDone} />
-            ) : step.kind === "question" ? (
+            {step.kind === "name" && (
+              <NameStep
+                messages={step.messages}
+                placeholder={step.placeholder}
+                cta={step.cta}
+                initialValue={state.name ?? ""}
+                onContinue={handleName}
+              />
+            )}
+
+            {step.kind === "chat" && (
+              <ChatStep
+                messages={step.messages.map((m) => resolveReactionText(m, vars))}
+                cta={step.cta}
+                onContinue={goNext}
+              />
+            )}
+
+            {step.kind === "question" && (
               <QuestionStep
                 step={step}
-                selectedValue={state.answers[step.id]}
-                onSelect={handleAnswer}
-                reactionText={
-                  reaction?.stepId === step.id ? reaction.text : null
-                }
-                onReactionDone={goNext}
+                selected={state.answers[step.id]}
+                vars={vars}
+                onAnswer={handleAnswer}
               />
-            ) : step.kind === "interstitial" ? (
-              <InterstitialStep step={step} onContinue={goNext} />
-            ) : step.kind === "birthdate" ? (
+            )}
+
+            {step.kind === "reveal" && (
+              <RevealStep step={step} sign={state.sign} onContinue={goNext} />
+            )}
+
+            {step.kind === "proof" && (
+              <ProofStep step={step} onContinue={goNext} />
+            )}
+
+            {step.kind === "media" && (
+              <MediaStep
+                step={step}
+                vars={vars}
+                onContinue={goNext}
+              />
+            )}
+
+            {step.kind === "location" && (
+              <LocationStep
+                cta={step.cta}
+                name={firstName}
+                onContinue={goNext}
+              />
+            )}
+
+            {step.kind === "birthdate" && (
               <BirthdateStep
                 initialValue={state.birthDate ?? ""}
                 onContinue={handleBirthdate}
               />
-            ) : (
+            )}
+
+            {step.kind === "email" && (
               <EmailStep
                 initialEmail={state.email ?? ""}
-                initialName={state.name ?? ""}
+                name={firstName}
                 onContinue={handleEmail}
               />
+            )}
+
+            {isAnalyzing && (
+              <AnalyzingScreen name={state.name} onDone={handleAnalyzingDone} />
             )}
           </motion.div>
         </AnimatePresence>
@@ -241,291 +300,669 @@ export default function QuizFlowPage() {
   );
 }
 
-/* ------------------------------- Question ------------------------------- */
+/* ------------------------------ Chat bubbles ----------------------------- */
 
-function QuestionStep({
-  step,
-  selectedValue,
-  onSelect,
-  reactionText,
-  onReactionDone,
+/** Bolha da guia com avatar — o bloco visual base da conversa. */
+function GuideBubble({
+  children,
+  showAvatar = true,
 }: {
-  step: Extract<QuizStep, { kind: "question" }>;
-  selectedValue?: string;
-  onSelect: (questionId: string, value: string) => void;
-  reactionText: string | null;
-  onReactionDone: () => void;
+  children: React.ReactNode;
+  showAvatar?: boolean;
 }) {
-  const [tapped, setTapped] = useState<string | null>(null);
-  const isSignGrid = step.id === "q_sign";
-  const hasReactions = Boolean(step.reactions || step.reactionDefault);
-  const reacting = reactionText !== null;
-
   return (
-    <div>
-      <h2 className="text-balance text-center text-2xl leading-snug sm:text-3xl">
-        {step.question}
-      </h2>
-      {step.subtitle && (
-        <p className="mt-2 text-center text-sm text-[#b9b2d0]">
-          {step.subtitle}
-        </p>
+    <div className="flex items-end gap-2">
+      {showAvatar ? (
+        <Image
+          src={GUIDE_PHOTO}
+          alt=""
+          width={72}
+          height={72}
+          aria-hidden="true"
+          className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+        />
+      ) : (
+        <span className="h-9 w-9 shrink-0" aria-hidden />
       )}
-
-      <div
-        className={`${
-          isSignGrid ? "mt-6 grid grid-cols-2 gap-3" : "mt-6 flex flex-col gap-3"
-        } transition-all duration-300 ${
-          reacting ? "pointer-events-none scale-[0.985] opacity-50" : ""
-        }`}
-        aria-hidden={reacting || undefined}
-      >
-        {step.options.map((option) => {
-          const isActive =
-            tapped === option.value ||
-            (tapped === null && selectedValue === option.value);
-          return (
-            <button
-              key={option.value}
-              type="button"
-              disabled={reacting}
-              onClick={() => {
-                setTapped(option.value);
-                onSelect(step.id, option.value);
-              }}
-              aria-pressed={isActive}
-              className={`glass flex min-h-[56px] w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-base transition-colors duration-150 ${
-                isActive
-                  ? "glass-gold bg-[rgba(212,175,55,0.12)]"
-                  : "hover:border-[rgba(212,175,55,0.35)]"
-              }`}
-            >
-              {option.symbol && (
-                <span
-                  aria-hidden="true"
-                  className="font-display flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[rgba(212,175,55,0.3)] bg-gradient-to-br from-[rgba(212,175,55,0.18)] to-[rgba(124,92,255,0.15)] text-lg font-semibold text-[#d4af37]"
-                >
-                  {option.symbol}
-                </span>
-              )}
-              <span className="flex-1">{option.label}</span>
-            </button>
-          );
-        })}
+      <div className="glass max-w-[85%] rounded-2xl rounded-bl-md border border-[rgba(212,175,55,0.25)] px-4 py-3 text-left text-[15px] leading-relaxed text-[#e8e4f5]">
+        {children}
       </div>
+    </div>
+  );
+}
 
-      {/* Reserved area for Luna's bubble so options never shift. */}
-      {hasReactions && (
-        <div className="mt-4 min-h-[124px]">
-          <AnimatePresence>
-            {reacting && (
-              <LunaBubble
-                key={step.id}
-                text={reactionText}
-                onDone={onReactionDone}
-              />
-            )}
-          </AnimatePresence>
-        </div>
+/** Três pontinhos de "digitando". */
+function TypingBubble() {
+  return (
+    <GuideBubble>
+      <span className="flex h-5 items-center gap-1.5" aria-label="Typing">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="h-1.5 w-1.5 rounded-full bg-[#d4af37]"
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 1, repeat: Infinity, delay: i * 0.18 }}
+          />
+        ))}
+      </span>
+    </GuideBubble>
+  );
+}
+
+const TYPING_MS = 750;
+
+/**
+ * Revela as mensagens uma a uma com "digitando" entre elas.
+ * Retorna quantas já apareceram e se terminou.
+ */
+function useMessageReveal(count: number) {
+  // A PRIMEIRA mensagem já nasce visível (inclusive no HTML do servidor):
+  // esperar 750ms para a tela ter conteúdo custa conversão na entrada.
+  // As seguintes é que ganham o efeito de "digitando".
+  const [shown, setShown] = useState(count > 0 ? 1 : 0);
+  const [typing, setTyping] = useState(count > 1);
+
+  useEffect(() => {
+    setShown(count > 0 ? 1 : 0);
+    setTyping(count > 1);
+  }, [count]);
+
+  useEffect(() => {
+    if (shown >= count) {
+      setTyping(false);
+      return;
+    }
+    setTyping(true);
+    const t = window.setTimeout(() => {
+      setShown((s) => s + 1);
+    }, TYPING_MS);
+    return () => window.clearTimeout(t);
+  }, [shown, count]);
+
+  return { shown, typing: typing && shown < count, done: shown >= count };
+}
+
+function GuideConversation({ messages }: { messages: string[] }) {
+  const { shown, typing } = useMessageReveal(messages.length);
+  return (
+    <div className="flex flex-col gap-2">
+      {messages.slice(0, shown).map((m, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.22 }}
+        >
+          <GuideBubble showAvatar={i === 0}>{m}</GuideBubble>
+        </motion.div>
+      ))}
+      {typing && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <TypingBubble />
+        </motion.div>
       )}
     </div>
   );
 }
 
-/* ----------------------------- Luna reaction ---------------------------- */
-
-const TYPING_DOTS_MS = 800; // pulsing-dots pause before Luna "speaks"
-const CHAR_MS = 18; // typewriter speed per character
-const TYPE_TOTAL_CAP_MS = 1400; // long texts speed up to fit this budget
-const ADVANCE_AFTER_MS = 1400; // auto-advance once the text is complete
-
-function LunaBubble({ text, onDone }: { text: string; onDone: () => void }) {
-  const [phase, setPhase] = useState<"dots" | "typing" | "done">("dots");
-  const [shownChars, setShownChars] = useState(0);
-  const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
-
-  // Phase 1: typing indicator.
-  useEffect(() => {
-    if (phase !== "dots") return;
-    const t = window.setTimeout(() => setPhase("typing"), TYPING_DOTS_MS);
-    return () => window.clearTimeout(t);
-  }, [phase]);
-
-  // Phase 2: typewriter reveal (long texts speed up to stay under the cap).
-  useEffect(() => {
-    if (phase !== "typing") return;
-    const perChar = Math.max(
-      6,
-      Math.min(CHAR_MS, Math.floor(TYPE_TOTAL_CAP_MS / Math.max(1, text.length)))
-    );
-    const interval = window.setInterval(() => {
-      setShownChars((c) => {
-        if (c + 1 >= text.length) {
-          window.clearInterval(interval);
-          setPhase("done");
-          return text.length;
-        }
-        return c + 1;
-      });
-    }, perChar);
-    return () => window.clearInterval(interval);
-  }, [phase, text]);
-
-  // Phase 3: auto-advance shortly after the full text is visible.
-  useEffect(() => {
-    if (phase !== "done") return;
-    const t = window.setTimeout(() => onDoneRef.current(), ADVANCE_AFTER_MS);
-    return () => window.clearTimeout(t);
-  }, [phase]);
-
-  const skip = useCallback(() => {
-    if (phase === "done") {
-      onDoneRef.current();
-    } else {
-      // Reveal everything at once; the auto-advance timer takes over.
-      setShownChars(text.length);
-      setPhase("done");
-    }
-  }, [phase, text.length]);
-
-  // Keyboard: Enter skips typing / advances, wherever focus is.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        skip();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [skip]);
-
+/** Botão primário do funil (pill dourado, largura total). */
+function PrimaryButton({
+  children,
+  onClick,
+  type = "button",
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  type?: "button" | "submit";
+  disabled?: boolean;
+}) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className="btn-gold mt-6 flex min-h-[56px] w-full items-center justify-center rounded-full px-8 text-base disabled:opacity-50"
     >
-      <button
-        type="button"
-        onClick={skip}
-        aria-label={
-          phase === "done" ? "Continue" : "Skip to the full message"
-        }
-        className="glass w-full rounded-2xl border border-[rgba(212,175,55,0.4)] p-4 text-left"
-      >
-        <span className="flex items-center gap-2.5">
-          <Image
-            src="/luna.jpg"
-            alt=""
-            width={72}
-            height={72}
-            aria-hidden="true"
-            className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
-          />
-          <span className="text-sm font-medium text-[#e8d9a8]">
-            {MASTER_AURA.name} <span aria-hidden="true">&middot;</span>{" "}
-            <span className="font-normal text-[#b9b2d0]">{MASTER_AURA.role}</span>
-          </span>
-        </span>
-
-        <span className="mt-3 block min-h-[24px] text-base leading-relaxed text-[#e8e4f5]">
-          {phase === "dots" ? (
-            <span
-              className="flex h-6 items-center gap-1.5 pl-1"
-              aria-hidden="true"
-            >
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#d4af37]"
-                  style={{ animationDelay: `${i * 180}ms` }}
-                />
-              ))}
-            </span>
-          ) : (
-            <span className="relative block">
-              {/* Invisible full text keeps the bubble height stable while typing. */}
-              <span aria-hidden="true" className="invisible block">
-                {text}
-              </span>
-              <span aria-hidden="true" className="absolute inset-0">
-                {text.slice(0, shownChars)}
-              </span>
-            </span>
-          )}
-          <span className="sr-only" aria-live="polite">
-            {text}
-          </span>
-        </span>
-      </button>
-    </motion.div>
+      {children}
+    </button>
   );
 }
 
-/* ----------------------------- Interstitial ----------------------------- */
+/* --------------------------------- Name --------------------------------- */
 
-function InterstitialStep({
+function NameStep({
+  messages,
+  placeholder,
+  cta,
+  initialValue,
+  onContinue,
+}: {
+  messages: string[];
+  placeholder?: string;
+  cta?: string;
+  initialValue: string;
+  onContinue: (name: string) => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const { done } = useMessageReveal(messages.length);
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitted) return; // evita duplo submit (Enter + clique)
+    const trimmed = value.trim();
+    if (trimmed.length < 2) {
+      setError("Please tell me your name so I can read your chart.");
+      return;
+    }
+    setSubmitted(true);
+    onContinue(trimmed);
+  };
+
+  return (
+    <form onSubmit={submit} noValidate>
+      <GuideConversation messages={messages} />
+      {done && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <label htmlFor="quiz-name" className="sr-only">
+            Your first name
+          </label>
+          <input
+            id="quiz-name"
+            type="text"
+            autoComplete="given-name"
+            autoFocus
+            placeholder={placeholder ?? "Your first name"}
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setError(null);
+            }}
+            className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 rounded-2xl px-4 text-center text-base text-[#e8e4f5] placeholder:text-[rgba(185,178,208,0.6)] outline-none focus:border-[#d4af37]"
+          />
+          {error && (
+            <p role="alert" className="mt-2 text-center text-sm text-red-400">
+              {error}
+            </p>
+          )}
+          <PrimaryButton type="submit" disabled={submitted}>
+            {cta ?? "Continue"}
+          </PrimaryButton>
+        </motion.div>
+      )}
+    </form>
+  );
+}
+
+/* --------------------------------- Chat --------------------------------- */
+
+function ChatStep({
+  messages,
+  cta,
+  onContinue,
+}: {
+  messages: string[];
+  cta?: string;
+  onContinue: () => void;
+}) {
+  const { done } = useMessageReveal(messages.length);
+  return (
+    <div>
+      <GuideConversation messages={messages} />
+      {done && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <PrimaryButton onClick={onContinue}>{cta ?? "Continue"}</PrimaryButton>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------- Question -------------------------------- */
+
+function QuestionStep({
+  step,
+  selected,
+  vars,
+  onAnswer,
+}: {
+  step: Extract<QuizStep, { kind: "question" }>;
+  selected?: string;
+  vars: { name?: string; sign?: string };
+  onAnswer: (questionId: string, value: string) => void;
+}) {
+  const intro = step.intro?.map((m) => resolveReactionText(m, vars));
+  const { done } = useMessageReveal(intro?.length ?? 0);
+  const showOptions = !intro || done;
+  const isSignGrid = step.id === "q_sign";
+
+  return (
+    <div>
+      {intro && <GuideConversation messages={intro} />}
+
+      {showOptions && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className={intro ? "mt-6" : ""}
+        >
+          <h2 className="text-balance text-center text-xl font-semibold leading-snug text-[#e8e4f5] sm:text-2xl">
+            {step.question}
+          </h2>
+          {step.subtitle && (
+            <p className="mt-2 text-center text-sm text-[#b9b2d0]">
+              {step.subtitle}
+            </p>
+          )}
+
+          <div
+            className={`mt-5 grid gap-2.5 ${
+              isSignGrid ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+            }`}
+          >
+            {step.options.map((opt) => {
+              const isSelected = selected === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => onAnswer(step.id, opt.value)}
+                  className={`glass flex min-h-[60px] items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all active:scale-[0.98] ${
+                    isSelected
+                      ? "glass-gold ring-1 ring-[#d4af37]"
+                      : "hover:border-[rgba(212,175,55,0.4)]"
+                  }`}
+                >
+                  {opt.symbol && (
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(212,175,55,0.12)] text-lg text-[#e8d9a8]"
+                      aria-hidden
+                    >
+                      {opt.symbol}
+                    </span>
+                  )}
+                  <span className="flex flex-col">
+                    <span className="text-[15px] font-medium text-[#e8e4f5]">
+                      {opt.label}
+                    </span>
+                    {opt.hint && (
+                      <span className="text-xs text-[#b9b2d0]">{opt.hint}</span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------- Reveal --------------------------------- */
+
+const REVEAL_ICONS = {
+  sun: Sun,
+  venus: Heart,
+  house: InfinityIcon,
+} as const;
+
+function RevealStep({
+  step,
+  sign,
+  onContinue,
+}: {
+  step: Extract<QuizStep, { kind: "reveal" }>;
+  sign?: string;
+  onContinue: () => void;
+}) {
+  const signData = ZODIAC_SIGNS.find((s) => s.name === sign);
+  const trait = sign ? SIGN_LOVE_TRAIT[sign] : undefined;
+  const vars = { sign, trait };
+
+  const fill = (text: string) =>
+    text
+      .replace("{sign}", sign ?? "your sign")
+      .replace("{trait}", vars.trait ?? "you love with your whole heart");
+
+  return (
+    <div className="text-center">
+      <p className="flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-[#d4af37]">
+        <Sparkles className="h-3.5 w-3.5" aria-hidden />
+        {step.eyebrow}
+      </p>
+
+      {/* Card do signo */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="glass glass-gold relative mt-4 overflow-hidden rounded-3xl px-6 py-8"
+      >
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(212,175,55,0.18),transparent_60%)]"
+        />
+        <div className="relative">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#edd9a3] to-[#a9822f] text-3xl text-[#1a1330]">
+            {signData?.symbol ?? "✦"}
+          </span>
+          <p className="mt-3 font-display text-3xl font-semibold text-[#e8e4f5]">
+            {sign ?? "Your sign"}
+          </p>
+          {signData && (
+            <p className="mt-1 text-sm text-[#b9b2d0]">
+              {signData.element} · {signData.dates}
+            </p>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Leituras do mapa */}
+      <ul className="mt-4 flex flex-col gap-2.5 text-left">
+        {step.lines.map((line, i) => {
+          const Icon = REVEAL_ICONS[line.icon];
+          return (
+            <motion.li
+              key={line.title}
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 + i * 0.35, duration: 0.35 }}
+              className="glass flex items-start gap-3 rounded-2xl px-4 py-3"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[rgba(212,175,55,0.14)]">
+                <Icon className="h-4 w-4 text-[#d4af37]" aria-hidden />
+              </span>
+              <span className="text-[15px] leading-snug text-[#e8e4f5]">
+                <span className="font-semibold">{fill(line.title)}</span>{" "}
+                <span className="text-[#b9b2d0]">— {fill(line.text)}</span>
+              </span>
+            </motion.li>
+          );
+        })}
+      </ul>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4, duration: 0.4 }}
+      >
+        <p className="glass mt-4 rounded-2xl px-5 py-4 text-[15px] leading-relaxed text-[#e8e4f5]">
+          {step.closing.split("I can finally visualize their face")[0]}
+          <span className="font-semibold text-[#d4af37]">
+            I can finally visualize their face.
+          </span>
+        </p>
+        <PrimaryButton onClick={onContinue}>{step.cta ?? "Continue"}</PrimaryButton>
+      </motion.div>
+    </div>
+  );
+}
+
+/* --------------------------------- Proof --------------------------------- */
+
+const PROOF_COUPLES = [
+  {
+    photo: "/social-proof/couple-1.webp",
+    quote: "After years of waiting, I found him — exactly like the reading said.",
+    author: "Sarah C.",
+  },
+  {
+    photo: "/social-proof/couple-2.webp",
+    quote: "I found my husband right after my soulmate reading.",
+    author: "Ellen T.",
+  },
+  {
+    photo: "/social-proof/couple-3.webp",
+    quote:
+      "It described him so perfectly I thought it was a coincidence — until we met.",
+    author: "Megan R.",
+  },
+  {
+    photo: "/social-proof/couple-4.webp",
+    quote: "Aura described my partner perfectly. Now I know he's the one.",
+    author: "Priya N.",
+  },
+];
+
+function ProofStep({
   step,
   onContinue,
 }: {
-  step: Extract<QuizStep, { kind: "interstitial" }>;
+  step: Extract<QuizStep, { kind: "proof" }>;
   onContinue: () => void;
 }) {
   return (
     <div className="text-center">
-      <h2 className="text-balance text-2xl leading-snug sm:text-3xl">
-        {step.title}
+      <h2 className="text-balance font-display text-3xl font-semibold leading-tight text-[#e8e4f5]">
+        {step.title.replace(" soon", "")}{" "}
+        <span className="text-gold">soon</span>
       </h2>
-
-      {step.testimonial && (
-        <figure className="glass glass-gold mt-6 rounded-2xl p-5 text-left">
-          <div className="flex items-center gap-3">
-            {step.testimonial.photo && (
-              <Image
-                src={step.testimonial.photo}
-                alt={step.testimonial.author}
-                width={96}
-                height={96}
-                className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.4)]"
-              />
-            )}
-            <div className="flex items-center gap-0.5" aria-hidden="true">
-              {Array.from({ length: step.testimonial.stars }).map((_, i) => (
-                <Star
-                  key={i}
-                  className="h-4 w-4 fill-[#d4af37] text-[#d4af37]"
-                />
-              ))}
-            </div>
-          </div>
-          <blockquote className="mt-3 text-base leading-relaxed text-[#e8e4f5]">
-            &ldquo;{step.testimonial.quote}&rdquo;
-          </blockquote>
-          <figcaption className="mt-3 text-sm font-medium text-[#b9b2d0]">
-            {step.testimonial.author}
-          </figcaption>
-        </figure>
+      {step.subtitle && (
+        <p className="mt-2 text-sm text-[#b9b2d0]">{step.subtitle}</p>
       )}
 
-      <p className="mt-5 text-balance text-base leading-relaxed text-[#b9b2d0]">
-        {step.body}
-      </p>
+      <div className="glass mt-5 flex items-center justify-center gap-6 rounded-2xl px-4 py-4">
+        <div>
+          <p className="font-display text-2xl font-semibold text-[#e8d9a8]">
+            74,000+
+          </p>
+          <p className="text-xs text-[#b9b2d0]">readings delivered</p>
+        </div>
+        <span className="h-8 w-px bg-[rgba(255,255,255,0.12)]" aria-hidden />
+        <div>
+          <p className="flex items-center justify-center gap-1 font-display text-2xl font-semibold text-[#e8d9a8]">
+            4.9
+            <Star className="h-4 w-4 fill-[#d4af37] text-[#d4af37]" aria-hidden />
+          </p>
+          <p className="text-xs text-[#b9b2d0]">average rating</p>
+        </div>
+      </div>
 
-      <button
-        type="button"
-        onClick={onContinue}
-        className="btn-gold mt-8 flex min-h-[56px] w-full items-center justify-center rounded-xl px-8 text-base"
-      >
-        Continue
-      </button>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        {PROOF_COUPLES.map((c, i) => (
+          <motion.figure
+            key={c.author}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.12, duration: 0.3 }}
+            className="glass overflow-hidden rounded-2xl text-left"
+          >
+            <Image
+              src={c.photo}
+              alt=""
+              width={320}
+              height={320}
+              aria-hidden
+              className="aspect-square w-full object-cover"
+            />
+            <figcaption className="p-3">
+              <span className="flex gap-0.5" aria-label="5 out of 5 stars">
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <Star
+                    key={j}
+                    className="h-3 w-3 fill-[#d4af37] text-[#d4af37]"
+                    aria-hidden
+                  />
+                ))}
+              </span>
+              <p className="mt-1.5 text-xs leading-snug text-[#d6d0e8]">
+                &ldquo;{c.quote}&rdquo;
+              </p>
+              <p className="mt-2 flex items-center gap-1 text-[11px] text-[#b9b2d0]">
+                {c.author}
+                <BadgeCheck className="h-3 w-3 text-emerald-300" aria-hidden />
+              </p>
+            </figcaption>
+          </motion.figure>
+        ))}
+      </div>
+
+      <PrimaryButton onClick={onContinue}>{step.cta ?? "Continue"}</PrimaryButton>
     </div>
   );
 }
 
-/* ------------------------------- Birthdate ------------------------------ */
+/* --------------------------------- Media --------------------------------- */
+
+function MediaStep({
+  step,
+  vars,
+  onContinue,
+}: {
+  step: Extract<QuizStep, { kind: "media" }>;
+  vars: { name?: string; sign?: string };
+  onContinue: () => void;
+}) {
+  const messages = step.messages.map((m) => resolveReactionText(m, vars));
+  const { done } = useMessageReveal(messages.length);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Autoplay com som pode ser bloqueado; nesse caso oferecemos um botão.
+  const [needsTap, setNeedsTap] = useState(false);
+
+  useEffect(() => {
+    if (!done || !step.audio) return;
+    const el = audioRef.current;
+    if (!el) return;
+    el.play().catch(() => setNeedsTap(true));
+    return () => {
+      el.pause();
+      el.currentTime = 0;
+    };
+  }, [done, step.audio]);
+
+  const playAudio = useCallback(() => {
+    audioRef.current
+      ?.play()
+      .then(() => setNeedsTap(false))
+      .catch(() => setNeedsTap(true));
+  }, []);
+
+  return (
+    <div>
+      <GuideConversation messages={messages} />
+
+      {done && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+          <div
+            className="relative mt-5 overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.25)] bg-black"
+            style={{ aspectRatio: step.aspect }}
+          >
+            <video
+              src={step.src}
+              poster={step.poster}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-hidden
+              className="h-full w-full object-cover"
+            />
+            {step.audio && needsTap && (
+              <button
+                type="button"
+                onClick={playAudio}
+                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/45 text-white"
+              >
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d4af37]/90">
+                  <Volume2 className="h-6 w-6 text-[#1a1330]" aria-hidden />
+                </span>
+                <span className="text-sm font-medium">
+                  Tap to hear Master Aura
+                </span>
+              </button>
+            )}
+          </div>
+          {step.audio && (
+            // Narração da guia sincronizada com a animação.
+            <audio ref={audioRef} src={step.audio} preload="auto" />
+          )}
+          {step.caption && (
+            <p className="mt-2 text-center text-xs text-[#b9b2d0]">
+              {step.caption}
+            </p>
+          )}
+          <PrimaryButton onClick={onContinue}>
+            {step.cta ?? "Continue"}
+          </PrimaryButton>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------- Location ------------------------------- */
+
+function LocationStep({
+  cta,
+  name,
+  onContinue,
+}: {
+  cta?: string;
+  name?: string;
+  onContinue: () => void;
+}) {
+  const [place, setPlace] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/geo")
+      .then((r) => r.json())
+      .then((d: { city?: string | null; region?: string | null }) => {
+        if (!alive) return;
+        const label = [d.city, d.region].filter(Boolean).join(", ");
+        setPlace(label || null);
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (alive) setLoaded(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const messages = [
+    place
+      ? `Your birth chart shows that you are likely to meet your soulmate near to 📍 ${place}. I have prepared a special revelation for you, let's see it right now. ✨`
+      : `Your birth chart shows the meeting point is close to where you are right now${
+          name ? `, ${name}` : ""
+        }. I have prepared a special revelation for you, let's see it right now. ✨`,
+  ];
+
+  if (!loaded) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10">
+        <MapPin className="h-6 w-6 animate-pulse text-[#d4af37]" aria-hidden />
+        <p className="mt-3 text-sm text-[#b9b2d0]">
+          Locating the meeting point in your chart...
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <GuideConversation messages={messages} />
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.9 }}
+      >
+        <PrimaryButton onClick={onContinue}>
+          {cta ?? "Show me the revelation ✨"}
+        </PrimaryButton>
+      </motion.div>
+    </div>
+  );
+}
+
+/* ------------------------------- Birthdate ------------------------------- */
 
 function BirthdateStep({
   initialValue,
@@ -558,15 +995,12 @@ function BirthdateStep({
   };
 
   return (
-    <form onSubmit={submit} className="text-center" noValidate>
-      <h2 className="text-balance text-2xl leading-snug sm:text-3xl">
-        Your birth date unlocks the{" "}
-        <span className="text-gold">precise part</span> of your reading
-      </h2>
-      <p className="mt-2 text-sm text-[#b9b2d0]">
-        Picked a sign earlier? No problem — we&apos;ll use your exact date.
-      </p>
-
+    <form onSubmit={submit} noValidate>
+      <GuideConversation
+        messages={[
+          "Your exact birth date is what turns a reading into a portrait — it fixes the position of Venus at the moment you were born.",
+        ]}
+      />
       <label htmlFor="quiz-birthdate" className="sr-only">
         Birth date
       </label>
@@ -582,20 +1016,14 @@ function BirthdateStep({
         }}
         // appearance-none + min-w-0/max-w-full: o iOS Safari dá largura
         // intrínseca ao controle nativo de data e estoura o w-full sem isso.
-        className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 max-w-full appearance-none rounded-xl px-4 text-center text-base text-[#e8e4f5] outline-none focus:border-[#d4af37] [color-scheme:dark] [&::-webkit-date-and-time-value]:text-center"
+        className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 max-w-full appearance-none rounded-2xl px-4 text-center text-base text-[#e8e4f5] outline-none focus:border-[#d4af37] [color-scheme:dark] [&::-webkit-date-and-time-value]:text-center"
       />
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-400">
+        <p role="alert" className="mt-2 text-center text-sm text-red-400">
           {error}
         </p>
       )}
-
-      <button
-        type="submit"
-        className="btn-gold mt-6 flex min-h-[56px] w-full items-center justify-center rounded-xl px-8 text-base"
-      >
-        Continue
-      </button>
+      <PrimaryButton type="submit">Continue</PrimaryButton>
     </form>
   );
 }
@@ -604,15 +1032,14 @@ function BirthdateStep({
 
 function EmailStep({
   initialEmail,
-  initialName,
+  name,
   onContinue,
 }: {
   initialEmail: string;
-  initialName: string;
-  onContinue: (email: string, name: string) => void;
+  name?: string;
+  onContinue: (email: string) => void;
 }) {
   const [email, setEmail] = useState(initialEmail);
-  const [name, setName] = useState(initialName);
   const [error, setError] = useState<string | null>(null);
 
   const submit = (e: React.FormEvent) => {
@@ -622,66 +1049,43 @@ function EmailStep({
       setError("Please enter a valid email address.");
       return;
     }
-    onContinue(trimmed, name);
+    onContinue(trimmed);
   };
 
   return (
-    <form onSubmit={submit} className="text-center" noValidate>
-      <h2 className="text-balance text-2xl leading-snug sm:text-3xl">
-        Where should we send your{" "}
-        <span className="text-gold">Soulmate Reading</span>?
-      </h2>
-      <p className="mt-2 text-sm text-[#b9b2d0]">
-        Your cards are drawn. The reading is ready to be compiled.
-      </p>
+    <form onSubmit={submit} noValidate>
+      <GuideConversation
+        messages={[
+          name
+            ? `${name}, your portrait is ready. Where should I send your full Soulmate Reading?`
+            : "Your portrait is ready. Where should I send your full Soulmate Reading?",
+        ]}
+      />
 
-      <div className="mt-6 flex flex-col gap-3">
-        <div>
-          <label htmlFor="quiz-name" className="sr-only">
-            First name (optional)
-          </label>
-          <input
-            id="quiz-name"
-            type="text"
-            autoComplete="given-name"
-            placeholder="First name (optional)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="glass glass-gold block min-h-[56px] w-full rounded-xl px-4 text-base text-[#e8e4f5] placeholder:text-[rgba(185,178,208,0.6)] outline-none focus:border-[#d4af37]"
-          />
-        </div>
-        <div>
-          <label htmlFor="quiz-email" className="sr-only">
-            Email address
-          </label>
-          <input
-            id="quiz-email"
-            type="email"
-            required
-            autoComplete="email"
-            inputMode="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError(null);
-            }}
-            className="glass glass-gold block min-h-[56px] w-full rounded-xl px-4 text-base text-[#e8e4f5] placeholder:text-[rgba(185,178,208,0.6)] outline-none focus:border-[#d4af37]"
-          />
-        </div>
-      </div>
+      <label htmlFor="quiz-email" className="sr-only">
+        Email address
+      </label>
+      <input
+        id="quiz-email"
+        type="email"
+        required
+        autoComplete="email"
+        inputMode="email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          setError(null);
+        }}
+        className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 rounded-2xl px-4 text-center text-base text-[#e8e4f5] placeholder:text-[rgba(185,178,208,0.6)] outline-none focus:border-[#d4af37]"
+      />
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-400">
+        <p role="alert" className="mt-2 text-center text-sm text-red-400">
           {error}
         </p>
       )}
 
-      <button
-        type="submit"
-        className="btn-gold mt-6 flex min-h-[56px] w-full items-center justify-center rounded-xl px-8 text-base"
-      >
-        Reveal my results
-      </button>
+      <PrimaryButton type="submit">Reveal my soulmate</PrimaryButton>
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#b9b2d0]">
         <Lock className="h-3 w-3" aria-hidden="true" />
@@ -730,7 +1134,7 @@ function AnalyzingScreen({
   return (
     <div className="text-center" aria-live="polite">
       <h2 className="text-balance text-2xl leading-snug sm:text-3xl">
-        Reading your <span className="text-gold">cosmic signature</span>
+        Reading your <span className="text-gold">soulmate signature</span>
       </h2>
       <p className="mt-2 text-sm text-[#b9b2d0]">
         {firstName
@@ -767,10 +1171,7 @@ function AnalyzingScreen({
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="flex shrink-0"
                 >
-                  <CircleCheck
-                    className="h-5 w-5 text-[#d4af37]"
-                    aria-hidden="true"
-                  />
+                  <CircleCheck className="h-5 w-5 text-[#d4af37]" aria-hidden="true" />
                 </motion.span>
               ) : isCurrent ? (
                 <Loader2

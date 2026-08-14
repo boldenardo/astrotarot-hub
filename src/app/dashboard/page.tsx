@@ -458,7 +458,7 @@ export default function DashboardPage() {
                   }
                   className="btn-gold flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  Unlock everything — $29.90/mo
+                  Unlock everything — $19.99/mo
                 </Link>
               </div>
             )}
@@ -630,7 +630,7 @@ export default function DashboardPage() {
                 className="btn-gold inline-flex w-full sm:w-auto items-center justify-center rounded-full px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold"
               >
                 <span className="break-words">
-                  Unlock everything — $29.90/mo
+                  Unlock everything — $19.99/mo
                 </span>
               </Link>
             </div>
@@ -811,7 +811,7 @@ export default function DashboardPage() {
               </h3>
               <p className="text-xl text-ink-300 mb-6">
                 Soulmate, fortune, horoscope and unlimited tarot — for just{" "}
-                <span className="text-gold font-bold">$29.90/month</span>
+                <span className="text-gold font-bold">$19.99/month</span>
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link

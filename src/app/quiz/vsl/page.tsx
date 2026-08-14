@@ -496,7 +496,7 @@ export default function QuizVslPage() {
         Unlock my Soulmate Reading
       </button>
       <p className="mt-2 text-center text-xs text-white/50">
-        $29.90/month &bull; Cancel anytime &bull; Secure checkout by Stripe
+        $19.99/month &bull; Cancel anytime &bull; Secure checkout by Stripe
       </p>
       {error && (
         <p className="mt-2 text-center text-sm text-red-400" role="alert">
@@ -613,7 +613,7 @@ export default function QuizVslPage() {
           </div>
           <div className="mt-1 flex items-baseline justify-between">
             <span className="font-medium">Today</span>
-            <span className="text-2xl font-semibold text-gold">$29.90/month</span>
+            <span className="text-2xl font-semibold text-gold">$19.99/month</span>
           </div>
         </div>
       </section>
@@ -687,7 +687,7 @@ export default function QuizVslPage() {
             {loadingPlan === "PREMIUM" && (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             )}
-            Unlock my Soulmate Reading — $29.90/mo
+            Unlock my Soulmate Reading — $19.99/mo
           </button>
         </div>
       )}

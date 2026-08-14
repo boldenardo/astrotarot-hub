@@ -142,7 +142,7 @@ export async function requirePremium(
       ok: false,
       response: NextResponse.json(
         {
-          error: `${FEATURE_LABELS[feature]} is exclusive to the Unlimited Premium plan ($29.90/month).`,
+          error: `${FEATURE_LABELS[feature]} is exclusive to the Unlimited Premium plan ($19.99/month).`,
           code: "PREMIUM_REQUIRED",
           feature,
         },
@@ -190,7 +190,7 @@ export async function consumeReading(
       response: NextResponse.json(
         {
           error:
-            "You have no readings left. Buy the 5-Reading Pack ($9.99) or subscribe to Unlimited Premium ($29.90/month).",
+            "You have no readings left. Buy the 5-Reading Pack ($9.99) or subscribe to Unlimited Premium ($19.99/month).",
           code: "NO_READINGS_LEFT",
           needsPayment: true,
         },

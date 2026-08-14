@@ -22,7 +22,7 @@ const TAROT_FAQS: FaqItem[] = [
   {
     question: "How many free tarot readings do I get?",
     answer:
-      "Every new account includes 4 free tarot readings with full AI interpretation — no credit card required. After that, you can buy a 5-Reading Pack ($9.99 one-time) or subscribe to Unlimited Premium ($29.90/month).",
+      "Every new account includes 4 free tarot readings with full AI interpretation — no credit card required. After that, you can buy a 5-Reading Pack ($9.99 one-time) or subscribe to Unlimited Premium ($19.99/month).",
   },
   {
     question: "Can I ask the tarot about love or money?",
