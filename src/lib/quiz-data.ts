@@ -221,10 +221,15 @@ export function signFromDate(isoDate: string): string | undefined {
   return undefined;
 }
 
-// Funil de ALMA GÊMEA em formato de conversa (estilo DM): a Master Aura
-// fala em MOMENTOS-CHAVE — não comenta cada resposta. O ritmo alterna
-// pergunta → pergunta → fala dela → prova/revelação, para manter avanço
-// rápido sem quebrar o vínculo.
+// Funil de ALMA GÊMEA — segue a sequência do funil de referência:
+//   nome → boas-vindas → 2 perguntas → signo → revelação do mapa →
+//   2 perguntas → prova social → data → retrato (vídeo + narração) →
+//   cidade do encontro → revelação → e-mail.
+//
+// A Master Aura fala em MOMENTOS-CHAVE (nunca comentando cada resposta),
+// no ritmo de quem digita de verdade. O bloco de "show" (revelação,
+// prova, retrato, cidade) vem seguido, sem perguntas no meio — é ele que
+// leva a pessoa até a VSL.
 export const STEPS: QuizStep[] = [
   {
     id: "name",
@@ -241,9 +246,35 @@ export const STEPS: QuizStep[] = [
     kind: "chat",
     messages: [
       "It's a true pleasure to meet you, {name}. ✨",
-      "I can already feel a special connection forming around you. Are you ready to discover the soulmate the universe has been preparing for you?",
+      "I can already feel a special connection forming around you.",
+      "Are you ready to discover the soulmate the universe has been preparing for you?",
     ],
     cta: "Yes, I'm ready ✨",
+  },
+  {
+    id: "q_status",
+    kind: "question",
+    intro: [
+      "First, tell me where your heart is right now. The cards read the truth, not the answer we wish were true.",
+    ],
+    question: "Where are you in love right now?",
+    options: [
+      { value: "searching", label: "Single, waiting for my person" },
+      { value: "unsure", label: "With someone, but unsure they're the one" },
+      { value: "complicated", label: "In something complicated" },
+      { value: "healing", label: "Healing from a love that ended" },
+    ],
+  },
+  {
+    id: "q_met",
+    kind: "question",
+    question: "Do you feel you've already met them?",
+    options: [
+      { value: "yes", label: "Yes — and I think about them constantly" },
+      { value: "maybe", label: "Maybe... someone comes to mind" },
+      { value: "no", label: "No, not yet" },
+      { value: "unsure", label: "I wouldn't know how to tell" },
+    ],
   },
   {
     id: "q_sign",
@@ -282,86 +313,17 @@ export const STEPS: QuizStep[] = [
     cta: "Continue",
   },
   {
-    id: "q_status",
-    kind: "question",
-    question: "Where are you in love right now?",
-    subtitle: "The cards read the truth — not the answer you wish were true.",
-    options: [
-      { value: "searching", label: "Single, waiting for my person" },
-      { value: "unsure", label: "With someone, but unsure they're the one" },
-      { value: "complicated", label: "In something complicated" },
-      { value: "healing", label: "Healing from a love that ended" },
-    ],
-  },
-  {
-    id: "q_met",
-    kind: "question",
-    question: "Do you feel you've already met them?",
-    options: [
-      { value: "yes", label: "Yes — and I think about them constantly" },
-      { value: "maybe", label: "Maybe... someone comes to mind" },
-      { value: "no", label: "No, not yet" },
-      { value: "unsure", label: "I wouldn't know how to tell" },
-    ],
-  },
-  {
-    id: "c_after_met",
-    kind: "chat",
-    messages: [
-      "A face just came to you as you answered, didn't it, {name}?",
-      "Hold on to it. By the end of this reading you'll know whether your intuition was right — or whether they were only a lesson on the way to the real one.",
-    ],
-    cta: "Continue",
-  },
-  {
-    id: "proof",
-    kind: "proof",
-    title: "You will meet your soulmate soon",
-    subtitle: "They waited too. Then everything changed.",
-    cta: "Continue",
-  },
-  {
-    id: "q_signs",
-    kind: "question",
-    question: "Have you noticed any of these lately?",
-    subtitle: "These are the classic signs a soulmate connection is activating.",
-    options: [
-      { value: "numbers", label: "Repeating numbers — 11:11, 222, 333" },
-      { value: "dreams", label: "Dreaming of the same person" },
-      { value: "deja_vu", label: "Someone who felt instantly familiar" },
-      { value: "none", label: "None that I've noticed" },
-    ],
-  },
-  {
     id: "q_past",
     kind: "question",
+    intro: [
+      "Before I draw them, one thing can blur the image: an open door to the past.",
+    ],
     question: "Is there someone from your past you still think about?",
     options: [
       { value: "often", label: "Yes — almost every day" },
       { value: "sometimes", label: "Sometimes, out of nowhere" },
       { value: "letting_go", label: "I'm trying to let go" },
       { value: "no", label: "No, that chapter is closed" },
-    ],
-  },
-  {
-    id: "c_after_past",
-    kind: "chat",
-    messages: [
-      "I felt that answer before you gave it.",
-      "Unfinished energy keeps a door open — and an open door to the past is the one thing that can delay the person who's meant for you.",
-      "Two more questions and I can start drawing them.",
-    ],
-    cta: "Continue",
-  },
-  {
-    id: "q_block",
-    kind: "question",
-    question: "What do you think keeps love from working out for you?",
-    options: [
-      { value: "timing", label: "The timing is always wrong" },
-      { value: "wrong_people", label: "I attract the wrong people" },
-      { value: "walls", label: "I don't let people get close" },
-      { value: "unknown", label: "I don't know — that's why I'm here" },
     ],
   },
   {
@@ -375,8 +337,17 @@ export const STEPS: QuizStep[] = [
       { value: "unsure", label: "I'm not sure I'd recognize them" },
     ],
   },
+  {
+    id: "proof",
+    kind: "proof",
+    title: "You will meet your soulmate soon",
+    subtitle: "They waited too. Then everything changed.",
+    cta: "Continue",
+  },
   { id: "birthdate", kind: "birthdate" },
   {
+    // Print de referência: a guia narra enquanto o retrato é desenhado —
+    // vídeo E narração juntos, na MESMA tela.
     id: "media_drawing",
     kind: "media",
     messages: [
@@ -385,6 +356,7 @@ export const STEPS: QuizStep[] = [
     src: "/funnel/portrait-drawing.mp4",
     poster: "/funnel/portrait-drawing-poster.webp",
     aspect: "16 / 9",
+    audio: "/funnel/soulmate-narration.mp3",
     caption: "Name initial · Birth date · Zodiac sign · Meeting place · Meeting date",
     cta: "Continue",
   },
@@ -402,8 +374,6 @@ export const STEPS: QuizStep[] = [
     src: "/funnel/soulmate-reveal.mp4",
     poster: "/funnel/soulmate-reveal-poster.webp",
     aspect: "16 / 9",
-    // Narração da guia tocando junto com a animação, logo antes da VSL.
-    audio: "/funnel/soulmate-narration.mp3",
     cta: "Reveal their face",
   },
   { id: "email", kind: "email" },

@@ -3,12 +3,13 @@
 // Funil de alma gêmea em formato de conversa (DM).
 //
 // Regras de ritmo:
-// - A Master Aura NÃO comenta cada resposta: ela fala em passos `chat`
-//   dedicados, a cada 2–3 perguntas, como numa conversa de WhatsApp.
-// - Perguntas avançam sozinhas ao toque (sem botão "continuar"), para
-//   manter a fricção mínima onde estávamos perdendo gente.
-// - Estado persiste em localStorage; ao voltar, retoma no primeiro passo
-//   não respondido.
+// - A Master Aura NÃO comenta cada resposta: fala em momentos-chave, no
+//   tempo de quem digita de verdade (ver typingDelayFor) — a espera é o
+//   que cria a sensação de conversa íntima.
+// - Quem não quer esperar toca na conversa e revela tudo de uma vez.
+// - Perguntas avançam sozinhas ao toque (sem botão "continuar").
+// - Estado e posição persistem em localStorage; um refresh volta para a
+//   MESMA tela, inclusive nas que não têm resposta (vídeo, cidade).
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
@@ -349,18 +350,36 @@ function TypingBubble() {
   );
 }
 
-const TYPING_MS = 750;
+// Ritmo de digitação: proporcional ao tamanho da mensagem, como uma pessoa
+// escrevendo de verdade. Uma frase curta leva ~1,2s; uma longa, até 4,5s.
+// Conversa íntima > velocidade: a espera é o que cria a sensação de que
+// alguém está do outro lado pensando na resposta.
+const MS_PER_CHAR = 32;
+const TYPING_MIN_MS = 1200;
+const TYPING_MAX_MS = 4500;
+
+function typingDelayFor(message: string | undefined): number {
+  const len = message?.length ?? 60;
+  return Math.min(TYPING_MAX_MS, Math.max(TYPING_MIN_MS, len * MS_PER_CHAR));
+}
 
 /**
- * Revela as mensagens uma a uma com "digitando" entre elas.
- * Retorna quantas já apareceram e se terminou.
+ * Revela as mensagens uma a uma com "digitando" entre elas, no ritmo de
+ * quem realmente escreve. Retorna quantas já apareceram e se terminou.
  */
-function useMessageReveal(count: number) {
+function useMessageReveal(messages: string[]) {
+  const count = messages.length;
   // A PRIMEIRA mensagem já nasce visível (inclusive no HTML do servidor):
-  // esperar 750ms para a tela ter conteúdo custa conversão na entrada.
+  // esperar para a tela ter conteúdo custa conversão na entrada.
   // As seguintes é que ganham o efeito de "digitando".
   const [shown, setShown] = useState(count > 0 ? 1 : 0);
   const [typing, setTyping] = useState(count > 1);
+
+  // Os textos entram por ref: os componentes montam o array a cada render
+  // (map + interpolação de nome), e usá-lo como dependência reiniciaria o
+  // timer a cada render — a conversa nunca avançaria.
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   useEffect(() => {
     setShown(count > 0 ? 1 : 0);
@@ -373,25 +392,71 @@ function useMessageReveal(count: number) {
       return;
     }
     setTyping(true);
+    // O tempo é o da PRÓXIMA mensagem (a que está sendo "digitada").
     const t = window.setTimeout(() => {
       setShown((s) => s + 1);
-    }, TYPING_MS);
+    }, typingDelayFor(messagesRef.current[shown]));
     return () => window.clearTimeout(t);
   }, [shown, count]);
 
-  return { shown, typing: typing && shown < count, done: shown >= count };
+  /** Revela tudo de uma vez — para quem não quer esperar o ritmo lento. */
+  const revealAll = useCallback(() => setShown(count), [count]);
+
+  return {
+    shown,
+    typing: typing && shown < count,
+    done: shown >= count,
+    revealAll,
+  };
 }
 
-function GuideConversation({ messages }: { messages: string[] }) {
-  const { shown, typing } = useMessageReveal(messages.length);
+/**
+ * Conversa da guia. É a ÚNICA dona do estado de revelação — avisa o passo
+ * pai via `onDone` para ele mostrar o input/botão. Antes cada passo
+ * chamava o hook por conta própria e, ao pular a digitação, o conteúdo
+ * seguinte não aparecia.
+ */
+function GuideConversation({
+  messages,
+  onDone,
+}: {
+  messages: string[];
+  onDone?: () => void;
+}) {
+  const { shown, typing, done, revealAll } = useMessageReveal(messages);
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  useEffect(() => {
+    if (done) onDoneRef.current?.();
+  }, [done]);
+
   return (
-    <div className="flex flex-col gap-2">
+    // Tocar em qualquer lugar da conversa adianta as mensagens: o ritmo
+    // lento cria intimidade, mas ninguém pode ficar preso esperando.
+    <div
+      className="flex flex-col gap-2"
+      onClick={typing ? revealAll : undefined}
+      role={typing ? "button" : undefined}
+      tabIndex={typing ? 0 : undefined}
+      aria-label={typing ? "Show all messages" : undefined}
+      onKeyDown={
+        typing
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                revealAll();
+              }
+            }
+          : undefined
+      }
+    >
       {messages.slice(0, shown).map((m, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.22 }}
+          transition={{ duration: 0.3 }}
         >
           <GuideBubble showAvatar={i === 0}>{m}</GuideBubble>
         </motion.div>
@@ -447,7 +512,7 @@ function NameStep({
   const [value, setValue] = useState(initialValue);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const { done } = useMessageReveal(messages.length);
+  const [done, setDone] = useState(false);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -463,7 +528,7 @@ function NameStep({
 
   return (
     <form onSubmit={submit} noValidate>
-      <GuideConversation messages={messages} />
+      <GuideConversation messages={messages} onDone={() => setDone(true)} />
       {done && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <label htmlFor="quiz-name" className="sr-only">
@@ -507,10 +572,10 @@ function ChatStep({
   cta?: string;
   onContinue: () => void;
 }) {
-  const { done } = useMessageReveal(messages.length);
+  const [done, setDone] = useState(false);
   return (
     <div>
-      <GuideConversation messages={messages} />
+      <GuideConversation messages={messages} onDone={() => setDone(true)} />
       {done && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <PrimaryButton onClick={onContinue}>{cta ?? "Continue"}</PrimaryButton>
@@ -534,13 +599,15 @@ function QuestionStep({
   onAnswer: (questionId: string, value: string) => void;
 }) {
   const intro = step.intro?.map((m) => resolveReactionText(m, vars));
-  const { done } = useMessageReveal(intro?.length ?? 0);
-  const showOptions = !intro || done;
+  const [introDone, setIntroDone] = useState(false);
+  const showOptions = !intro || introDone;
   const isSignGrid = step.id === "q_sign";
 
   return (
     <div>
-      {intro && <GuideConversation messages={intro} />}
+      {intro && (
+        <GuideConversation messages={intro} onDone={() => setIntroDone(true)} />
+      )}
 
       {showOptions && (
         <motion.div
@@ -818,7 +885,7 @@ function MediaStep({
   onContinue: () => void;
 }) {
   const messages = step.messages.map((m) => resolveReactionText(m, vars));
-  const { done } = useMessageReveal(messages.length);
+  const [done, setDone] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Autoplay com som pode ser bloqueado; nesse caso oferecemos um botão.
   const [needsTap, setNeedsTap] = useState(false);
@@ -843,7 +910,7 @@ function MediaStep({
 
   return (
     <div>
-      <GuideConversation messages={messages} />
+      <GuideConversation messages={messages} onDone={() => setDone(true)} />
 
       {done && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -908,6 +975,7 @@ function LocationStep({
 }) {
   const [place, setPlace] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -948,16 +1016,14 @@ function LocationStep({
 
   return (
     <div>
-      <GuideConversation messages={messages} />
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.9 }}
-      >
-        <PrimaryButton onClick={onContinue}>
-          {cta ?? "Show me the revelation ✨"}
-        </PrimaryButton>
-      </motion.div>
+      <GuideConversation messages={messages} onDone={() => setDone(true)} />
+      {done && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+          <PrimaryButton onClick={onContinue}>
+            {cta ?? "Show me the revelation ✨"}
+          </PrimaryButton>
+        </motion.div>
+      )}
     </div>
   );
 }
