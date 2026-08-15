@@ -32,6 +32,19 @@ $24.99 no checkout, 3 leads no banco.
 Verificado no banco: `reading_email_sent_at` e `recovery_email_sent_at`
 existem. As 3 linhas de lead voltam com as colunas novas vazias.
 
+## ~~PENDÊNCIA 2 — variáveis na Vercel~~ ✅ FEITO
+
+Testado contra produção, não contra a tela de configuração:
+
+- `CRON_SECRET` — bate. Segredo errado leva 401; o certo passa.
+- `RESEND_API_KEY` — presente. A rota passou do portão
+  `NOT_CONFIGURED`, o que só acontece com a chave lá.
+- Descadastro — recusa token falsificado (400).
+- `/`, `/quiz`, `/quiz/flow`, `/quiz/vsl` — todas 200.
+
+**O e-mail da leitura já está funcionando** — ele não depende da coluna
+que falta abaixo. Quem preencher o funil agora recebe.
+
 ## PENDÊNCIA 1b — falta UMA SQL nova 🔴
 
 `20260815_lead_unsubscribe.sql`. Ela apareceu depois: ao renderizar os
@@ -50,8 +63,27 @@ CREATE INDEX IF NOT EXISTS idx_leads_recovery_pending
     AND unsubscribed_at IS NULL;
 ```
 
-**Rode antes do primeiro disparo do cron.** Sem ela a rota de recuperação
-falha na consulta e não manda nada.
+**Rode antes do primeiro disparo do cron.** Confirmei em produção que é
+exatamente isso que está travando — a rota devolve:
+
+```
+500 {"error":"Query failed.","detail":"column leads.unsubscribed_at does not exist"}
+```
+
+## Conferir a fila sem mandar nada
+
+Depois de rodar a SQL, dá para ver quem entraria no disparo **sem enviar
+e-mail nenhum** — acrescente `?dry=1`:
+
+```bash
+curl -X POST "https://astrotarot.shop/api/email/recover?dry=1" -H "x-cron-secret: SEU_CRON_SECRET"
+```
+
+Resposta esperada:
+`{"ok":true,"dryRun":true,"candidates":3,"emails":[...]}`
+
+Só depois de ver essa lista certa é que vale rodar sem o `?dry=1`. Envio
+não tem botão de desfazer.
 
 ---
 
