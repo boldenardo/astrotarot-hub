@@ -292,7 +292,7 @@ export default function AbundancePage() {
                       href="/cart?plan=premium"
                       className="btn-gold mt-3 block w-full rounded-full px-6 py-2.5 text-center text-sm font-semibold sm:inline-block sm:w-auto"
                     >
-                      Subscribe to Premium Unlimited — $19.99/mo
+                      Subscribe to Premium Unlimited — $14.99/mo
                     </Link>
                   )}
                 </div>
@@ -476,7 +476,7 @@ export default function AbundancePage() {
                   href="/cart?plan=premium"
                   className="btn-gold block w-full rounded-full px-8 py-3 text-center font-semibold sm:inline-block sm:w-auto"
                 >
-                  Subscribe to Premium Unlimited — $19.99/mo
+                  Subscribe to Premium Unlimited — $14.99/mo
                 </Link>
               </div>
             </motion.div>

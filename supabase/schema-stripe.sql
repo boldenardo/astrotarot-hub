@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
   birth_date TEXT,
   birth_time TEXT,
   birth_location TEXT,
-  subscription_plan TEXT DEFAULT 'FREE' CHECK (subscription_plan IN ('FREE', 'PREMIUM_MONTHLY')),
+  subscription_plan TEXT DEFAULT 'FREE' CHECK (subscription_plan IN ('FREE', 'PREMIUM_MONTHLY', 'PREMIUM_YEARLY')),
   subscription_status TEXT DEFAULT 'active' CHECK (subscription_status IN ('active', 'pending', 'cancelled', 'suspended')),
   subscription_start_date TIMESTAMP WITH TIME ZONE,
   subscription_end_date TIMESTAMP WITH TIME ZONE,
@@ -194,3 +194,26 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- =============================================================
+-- LEADS DO FUNIL DE QUIZ (ver migrations/20260814_leads.sql)
+-- =============================================================
+CREATE TABLE IF NOT EXISTS leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL UNIQUE,
+  name TEXT,
+  birth_date DATE,
+  sign TEXT,
+  score TEXT,
+  answers JSONB,
+  visitor_id TEXT,
+  affiliate_code TEXT,
+  source TEXT DEFAULT 'quiz',
+  converted_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON leads FROM anon, authenticated;
+CREATE INDEX IF NOT EXISTS idx_leads_visitor ON leads (visitor_id);
+CREATE INDEX IF NOT EXISTS idx_leads_created ON leads (created_at DESC);

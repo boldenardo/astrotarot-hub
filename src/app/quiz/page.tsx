@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { Star, Clock } from "lucide-react";
 import { ZODIAC_SIGNS } from "@/lib/quiz-data";
+import { PROOF_STATS } from "@/lib/proof-stats";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
@@ -56,7 +57,7 @@ export default function QuizLandingPage() {
         variants={fadeUp}
         className="mt-4 max-w-md text-balance text-base text-[#b9b2d0]"
       >
-        Answer 8 quick questions, draw your cards, and let your birth chart
+        Answer a few quick questions, draw your cards, and let your birth chart
         reveal their traits &mdash; and{" "}
         <span className="font-medium text-[#e8d9a8]">when your paths cross</span>.
       </motion.p>
@@ -108,11 +109,13 @@ export default function QuizLandingPage() {
       >
         <span className="flex items-center">
           <span className="flex -space-x-2" aria-hidden="true">
+            {/* Só rostos femininos: o funil vende leitura de alma gêmea para
+                mulheres, e a prova social precisa parecer com quem lê. */}
             {[
-              "/testimonials/t2.jpg",
-              "/testimonials/t4.jpg",
+              "/testimonials/t7.jpg",
+              "/testimonials/t1.jpg",
               "/testimonials/t6.jpg",
-              "/testimonials/t8.jpg",
+              "/testimonials/t4.jpg",
             ].map((src) => (
               <Image
                 key={src}
@@ -133,9 +136,9 @@ export default function QuizLandingPage() {
                 />
               ))}
             </span>
-            <span className="font-semibold text-[#e8e4f5]">4.9</span>
+            <span className="font-semibold text-[#e8e4f5]">{PROOF_STATS.rating}</span>
             <span aria-hidden="true">&middot;</span>
-            <span>120,000+ readings</span>
+            <span>{PROOF_STATS.readings} readings</span>
           </span>
         </span>
         <span className="flex items-center gap-1.5 text-xs">
@@ -158,8 +161,9 @@ export default function QuizLandingPage() {
           walked into my life.&rdquo;
         </blockquote>
         <figcaption className="mt-3 flex items-center gap-2.5">
+          {/* t3: foto exclusiva desta pessoa — t4 já é "Brittany W." na VSL. */}
           <Image
-            src="/testimonials/t4.jpg"
+            src="/testimonials/t3.jpg"
             alt="Jessica L."
             width={64}
             height={64}

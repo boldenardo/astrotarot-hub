@@ -6,6 +6,7 @@ import FeaturesSection from "@/components/FeaturesSection";
 import FaqSection from "@/components/FaqSection";
 import { HOME_FAQS } from "@/lib/faq-data";
 import VSLPlayer from "@/components/VSLPlayer";
+import CardBack from "@/components/CardBack";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -205,11 +206,13 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
+              {/* Visitante frio: começa pelo funil (grátis), não pelo /cart
+                  protegido — login antes de ver preço mata a conversão. */}
               <Link
-                href="/cart?plan=premium"
+                href="/quiz"
                 className="btn-gold block rounded-full py-4 text-center"
               >
-                Subscribe to Premium
+                Start with a free reading
               </Link>
             </motion.div>
           </div>
@@ -341,16 +344,7 @@ export default function Home() {
                   className="grid grid-cols-2 gap-4"
                 >
                   {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="aspect-[2/3] rounded-2xl border border-gold-400/30 shadow-gold"
-                      style={{
-                        backgroundImage:
-                          'url("https://i.pinimg.com/originals/8c/de/fb/8cdefb154d4d30cf5e5ef00d1b998b6c.jpg")',
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
-                    />
+                    <CardBack key={i} className="aspect-[2/3]" />
                   ))}
                 </motion.div>
               </div>

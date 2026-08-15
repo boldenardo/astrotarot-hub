@@ -412,7 +412,8 @@ export function getAnalyzingStages(name?: string): string[] {
  * Quanto mais atrito a pessoa relata, mais BLOCKED (que é também o pitch
  * mais forte): opção mais intensa vale 2, opções intermediárias valem 1.
  *
- *   total >= 5 → LOW (blocked) | 3—4 → MEDIUM (awakening) | else → HIGH (strong)
+ * Máximo real: 6 pontos (q_status 0-2, q_past 0-2, q_ready 0-2).
+ *   total >= 4 → LOW (blocked) | 2—3 → MEDIUM (awakening) | else → HIGH (strong)
  */
 export function computeScore(answers: Record<string, string>): QuizScore {
   let points = 0;
@@ -431,9 +432,6 @@ export function computeScore(answers: Record<string, string>): QuizScore {
   if (answers.q_ready === "work" || answers.q_ready === "unsure") points += 2;
   else if (answers.q_ready === "scared") points += 1;
 
-  // Máximo real = 6 pontos (3 perguntas × 2). Os cortes acompanham esse
-  // teto: com os limites antigos (5/3), calibrados para uma pergunta
-  // `q_block` que não existe mais no funil, quase todo mundo caía em HIGH.
   if (points >= 4) return "LOW";
   if (points >= 2) return "MEDIUM";
   return "HIGH";

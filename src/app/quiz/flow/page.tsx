@@ -45,6 +45,10 @@ import {
   type QuizStep,
 } from "@/lib/quiz-data";
 import { trackEvent } from "@/lib/analytics";
+import { getStoredRef, getVisitorId } from "@/lib/affiliate";
+import { PROOF_STATS } from "@/lib/proof-stats";
+import { captureSource, getStoredSource } from "@/lib/source";
+import { suggestEmailFix } from "@/lib/email-hint";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GUIDE_PHOTO = "/luna.jpg";
@@ -72,7 +76,9 @@ export default function QuizFlowPage() {
     setHydrated(true);
     if (!startedRef.current) {
       startedRef.current = true;
-      trackEvent("quiz_started", { category: "quiz" });
+      // First-touch da plataforma (?src=ig|tt|yt...) antes de qualquer coisa.
+      const src = captureSource();
+      trackEvent("quiz_started", { category: "quiz", label: src ?? "unknown", src });
     }
   }, []);
 
@@ -81,6 +87,19 @@ export default function QuizFlowPage() {
   useEffect(() => {
     if (hydrated) saveQuizState({ ...state, stepIndex });
   }, [state, stepIndex, hydrated]);
+
+  // Um evento por tela: é o que permite ver em QUAL passo as pessoas caem.
+  // Refire em retomada (refresh/volta) de propósito — também é sinal.
+  useEffect(() => {
+    if (!hydrated) return;
+    const current = STEPS[Math.min(stepIndex, STEPS.length - 1)];
+    trackEvent("quiz_step_viewed", {
+      category: "quiz",
+      label: current.id,
+      step_id: current.id,
+      step_index: stepIndex,
+    });
+  }, [stepIndex, hydrated]);
 
   const step: QuizStep = STEPS[Math.min(stepIndex, STEPS.length - 1)];
   const progress = Math.round(((stepIndex + 1) / STEPS.length) * 100);
@@ -155,7 +174,30 @@ export default function QuizFlowPage() {
 
   const handleEmail = useCallback(
     (email: string) => {
-      setState((prev) => ({ ...prev, email }));
+      setState((prev) => {
+        const next = { ...prev, email };
+        // Persiste o lead no servidor (fire-and-forget; keepalive protege
+        // contra a navegação seguinte). Sem isso, quem não compra na hora
+        // é perdido para sempre — o email morria no localStorage.
+        fetch("/api/quiz/lead", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
+            email,
+            name: next.name,
+            birthDate: next.birthDate,
+            sign: next.sign,
+            score: computeScore(next.answers),
+            answers: next.answers,
+            visitorId: getVisitorId(),
+            ref: getStoredRef(),
+            src: getStoredSource(),
+          }),
+        }).catch(() => {});
+        return next;
+      });
+      trackEvent("lead_captured", { category: "quiz", label: "quiz_email" });
       goNext();
     },
     [goNext]
@@ -213,7 +255,10 @@ export default function QuizFlowPage() {
         </button>
       )}
 
-      <div className="relative flex flex-1 flex-col justify-center">
+      {/* Alinhado ao TOPO, não centralizado: com centralização vertical as
+          telas curtas (nome, boas-vindas) começavam quase na metade da tela
+          e empurravam o botão para o fim do polegar. */}
+      <div className="relative flex flex-1 flex-col justify-start pt-1">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={step.id}
@@ -625,32 +670,55 @@ function QuestionStep({
             </p>
           )}
 
+          {/* Os 12 signos em lista vertical exigiam rolagem longa no celular
+              (só 5 cabiam na tela). Em grade de 3 colunas os 12 cabem numa
+              tela só, que é onde o tráfego orgânico decide. */}
           <div
             className={`mt-5 grid gap-2.5 ${
-              isSignGrid ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
+              isSignGrid ? "grid-cols-3 sm:grid-cols-4" : "grid-cols-1"
             }`}
           >
             {step.options.map((opt) => {
               const isSelected = selected === opt.value;
+              const base =
+                "glass rounded-2xl transition-all active:scale-[0.98] " +
+                (isSelected
+                  ? "glass-gold ring-1 ring-[#d4af37]"
+                  : "hover:border-[rgba(212,175,55,0.4)]");
+
+              if (isSignGrid) {
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => onAnswer(step.id, opt.value)}
+                    className={`${base} flex min-h-[92px] flex-col items-center justify-center gap-1 px-1.5 py-3 text-center`}
+                  >
+                    <span
+                      className="text-2xl leading-none text-[#e8d9a8]"
+                      aria-hidden
+                    >
+                      {opt.symbol}
+                    </span>
+                    <span className="text-[13px] font-medium leading-tight text-[#e8e4f5]">
+                      {opt.label}
+                    </span>
+                    {opt.hint && (
+                      <span className="text-[10px] leading-tight text-[#b9b2d0]">
+                        {opt.hint}
+                      </span>
+                    )}
+                  </button>
+                );
+              }
+
               return (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => onAnswer(step.id, opt.value)}
-                  className={`glass flex min-h-[60px] items-center gap-3 rounded-2xl px-4 py-3 text-left transition-all active:scale-[0.98] ${
-                    isSelected
-                      ? "glass-gold ring-1 ring-[#d4af37]"
-                      : "hover:border-[rgba(212,175,55,0.4)]"
-                  }`}
+                  className={`${base} flex min-h-[60px] items-center gap-3 px-4 py-3 text-left`}
                 >
-                  {opt.symbol && (
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[rgba(212,175,55,0.12)] text-lg text-[#e8d9a8]"
-                      aria-hidden
-                    >
-                      {opt.symbol}
-                    </span>
-                  )}
                   <span className="flex flex-col">
                     <span className="text-[15px] font-medium text-[#e8e4f5]">
                       {opt.label}
@@ -815,14 +883,14 @@ function ProofStep({
       <div className="glass mt-5 flex items-center justify-center gap-6 rounded-2xl px-4 py-4">
         <div>
           <p className="font-display text-2xl font-semibold text-[#e8d9a8]">
-            74,000+
+            {PROOF_STATS.readings}
           </p>
           <p className="text-xs text-[#b9b2d0]">readings delivered</p>
         </div>
         <span className="h-8 w-px bg-[rgba(255,255,255,0.12)]" aria-hidden />
         <div>
           <p className="flex items-center justify-center gap-1 font-display text-2xl font-semibold text-[#e8d9a8]">
-            4.9
+            {PROOF_STATS.rating}
             <Star className="h-4 w-4 fill-[#d4af37] text-[#d4af37]" aria-hidden />
           </p>
           <p className="text-xs text-[#b9b2d0]">average rating</p>
@@ -859,10 +927,7 @@ function ProofStep({
               <p className="mt-1.5 text-xs leading-snug text-[#d6d0e8]">
                 &ldquo;{c.quote}&rdquo;
               </p>
-              <p className="mt-2 flex items-center gap-1 text-[11px] text-[#b9b2d0]">
-                {c.author}
-                <BadgeCheck className="h-3 w-3 text-emerald-300" aria-hidden />
-              </p>
+              <p className="mt-2 text-[11px] text-[#b9b2d0]">{c.author}</p>
             </figcaption>
           </motion.figure>
         ))}
@@ -1107,6 +1172,8 @@ function EmailStep({
 }) {
   const [email, setEmail] = useState(initialEmail);
   const [error, setError] = useState<string | null>(null);
+  // Sugestão de correção de domínio (ex.: gmail.l.com → gmail.com).
+  const [suggestion, setSuggestion] = useState<string | null>(null);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1115,7 +1182,21 @@ function EmailStep({
       setError("Please enter a valid email address.");
       return;
     }
+    // "gmail.l.com" passa no regex mas não existe: a leitura nunca chega e
+    // o lead morre. Sugerimos uma vez; se insistir, respeitamos.
+    const fix = suggestEmailFix(trimmed);
+    if (fix && fix !== suggestion) {
+      setSuggestion(fix);
+      return;
+    }
     onContinue(trimmed);
+  };
+
+  const acceptSuggestion = () => {
+    if (!suggestion) return;
+    setEmail(suggestion);
+    setSuggestion(null);
+    onContinue(suggestion);
   };
 
   return (
@@ -1142,12 +1223,26 @@ function EmailStep({
         onChange={(e) => {
           setEmail(e.target.value);
           setError(null);
+          setSuggestion(null);
         }}
         className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 rounded-2xl px-4 text-center text-base text-[#e8e4f5] placeholder:text-[rgba(185,178,208,0.6)] outline-none focus:border-[#d4af37]"
       />
       {error && (
         <p role="alert" className="mt-2 text-center text-sm text-red-400">
           {error}
+        </p>
+      )}
+      {suggestion && (
+        <p className="mt-2 text-center text-sm text-[#e8d9a8]">
+          Did you mean{" "}
+          <button
+            type="button"
+            onClick={acceptSuggestion}
+            className="font-semibold underline underline-offset-2"
+          >
+            {suggestion}
+          </button>
+          ? Tap to fix, or continue to keep what you typed.
         </p>
       )}
 

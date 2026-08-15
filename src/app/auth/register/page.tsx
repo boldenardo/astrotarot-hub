@@ -1,10 +1,18 @@
 "use client";
 
+import { Suspense } from "react";
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
-export default function RegisterPage() {
+function RegisterContent() {
+  // ?email= vem da thank-you do funil: pré-preenche o cadastro com o MESMO
+  // email do checkout — o benefício destrava por match de email, então cada
+  // tecla a menos aqui é menos risco de acesso órfão.
+  const searchParams = useSearchParams();
+  const email = searchParams.get("email")?.trim() || undefined;
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4 py-16">
       <Link
@@ -27,7 +35,16 @@ export default function RegisterPage() {
         routing="hash"
         signInUrl="/auth/login"
         fallbackRedirectUrl="/dashboard"
+        initialValues={email ? { emailAddress: email } : undefined}
       />
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterContent />
+    </Suspense>
   );
 }

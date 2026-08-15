@@ -30,6 +30,7 @@ import {
   type MeReading,
 } from "@/lib/client/me";
 import { isPremium as isPremiumPlan } from "@/lib/plans";
+import StreakCard from "@/components/StreakCard";
 import {
   trackPageView,
   trackSubscriptionUpgradeClicked,
@@ -325,9 +326,18 @@ export default function DashboardPage() {
       premiumOnly: false,
     },
     {
+      // Primeiro card premium: é a promessa que trouxe a pessoa até aqui.
+      href: "/soulmate",
+      icon: Sparkles,
+      title: "Draw My Soulmate",
+      description: "See the face your chart points to",
+      cta: "Draw them",
+      premiumOnly: true,
+    },
+    {
       href: "/compatibility",
       icon: Heart,
-      title: "Soulmate",
+      title: "Compatibility",
       description: "Is he or she the one?",
       cta: "Find out",
       premiumOnly: true,
@@ -416,6 +426,12 @@ export default function DashboardPage() {
           <p className="text-ink-600">{user?.email}</p>
         </motion.div>
 
+        {/* Streak: acima do status de plano de propósito — é o que traz a
+            pessoa de volta amanhã. Some sozinho se ainda não houver dados. */}
+        <div className="mb-8">
+          <StreakCard />
+        </div>
+
         {/* Subscription status */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -458,7 +474,7 @@ export default function DashboardPage() {
                   }
                   className="btn-gold flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  Unlock everything — $19.99/mo
+                  Unlock everything — $14.99/mo
                 </Link>
               </div>
             )}
@@ -630,7 +646,7 @@ export default function DashboardPage() {
                 className="btn-gold inline-flex w-full sm:w-auto items-center justify-center rounded-full px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold"
               >
                 <span className="break-words">
-                  Unlock everything — $19.99/mo
+                  Unlock everything — $14.99/mo
                 </span>
               </Link>
             </div>
@@ -811,7 +827,7 @@ export default function DashboardPage() {
               </h3>
               <p className="text-xl text-ink-300 mb-6">
                 Soulmate, fortune, horoscope and unlimited tarot — for just{" "}
-                <span className="text-gold font-bold">$19.99/month</span>
+                <span className="text-gold font-bold">$14.99/month</span>
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link

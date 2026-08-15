@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Star, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { PROOF_STATS } from "@/lib/proof-stats";
 
 export default function HeroSection() {
   return (
@@ -115,7 +116,7 @@ export default function HeroSection() {
           className="mb-5 inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-gold-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-gold-300 sm:text-sm"
         >
           <Star className="h-3.5 w-3.5 fill-gold-400 text-gold-400" aria-hidden />
-          4.9/5 &mdash; 120,000+ readings delivered
+          {PROOF_STATS.rating}/5 &mdash; {PROOF_STATS.readings} readings delivered
         </motion.div>
 
         <motion.h1
@@ -156,11 +157,13 @@ export default function HeroSection() {
           >
             Start my free reading
           </Link>
+          {/* Visitante frio vai pro FUNIL, não pro /cart (rota protegida —
+              cair em tela de login antes de ver preço mata a conversão). */}
           <Link
-            href="/cart?plan=premium"
+            href="/quiz"
             className="btn-ghost flex w-full items-center justify-center rounded-full px-8 py-4 text-base font-medium sm:w-auto"
           >
-            Unlock Premium
+            Find your soulmate
           </Link>
         </motion.div>
 
@@ -173,7 +176,7 @@ export default function HeroSection() {
         >
           <span className="flex items-center">
             <span className="flex -space-x-2.5" aria-hidden="true">
-              {["/testimonials/t1.jpg", "/testimonials/t3.jpg", "/testimonials/t5.jpg", "/testimonials/t6.jpg", "/testimonials/t7.jpg"].map(
+              {["/testimonials/t7.jpg", "/testimonials/t1.jpg", "/testimonials/t6.jpg", "/testimonials/t4.jpg", "/testimonials/t3.jpg"].map(
                 (src) => (
                   <Image
                     key={src}
@@ -197,7 +200,7 @@ export default function HeroSection() {
                 ))}
               </span>
               <span className="text-xs text-ink-400">
-                Trusted by <span className="font-semibold text-ink-100">120,000+</span> seekers
+                Trusted by <span className="font-semibold text-ink-100">{PROOF_STATS.readings}</span> seekers
               </span>
             </span>
           </span>

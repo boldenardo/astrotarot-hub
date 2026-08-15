@@ -1,5 +1,6 @@
 // POST /api/checkout — cria uma sessão de Checkout do Stripe.
 // PACK5 → pagamento único (5 leituras). PREMIUM → assinatura mensal.
+// PREMIUM_YEARLY → assinatura anual ($79/ano).
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -27,36 +28,40 @@ export async function POST(req: NextRequest) {
   const affiliateCode = profile.affiliate_code ?? normalizeCode(body.ref);
 
   const plan = body.plan;
-  if (plan !== "PACK5" && plan !== "PREMIUM") {
+  if (plan !== "PACK5" && plan !== "PREMIUM" && plan !== "PREMIUM_YEARLY") {
     return NextResponse.json(
-      { error: "Plano inválido. Escolha 'PACK5' ou 'PREMIUM'." },
+      { error: "Invalid plan. Choose 'PACK5', 'PREMIUM' or 'PREMIUM_YEARLY'." },
       { status: 400 }
     );
   }
 
+  const isSubscription = plan === "PREMIUM" || plan === "PREMIUM_YEARLY";
+
   // Bloqueia nova assinatura quando já existe uma (ativa OU suspensa).
   // stripe_subscription_id só fica null após cancelamento definitivo.
-  if (plan === "PREMIUM" && (isPremium(profile) || profile.stripe_subscription_id)) {
+  if (isSubscription && (isPremium(profile) || profile.stripe_subscription_id)) {
     return NextResponse.json(
       {
         error:
           profile.subscription_status === "suspended"
-            ? "Sua assinatura está com pagamento pendente. Atualize seu método de pagamento no portal de cobrança em vez de assinar novamente."
-            : "Você já é assinante Premium.",
+            ? "Your subscription has a pending payment. Please update your payment method instead of subscribing again."
+            : "You already have an active Premium subscription.",
         code: "SUBSCRIPTION_EXISTS",
       },
       { status: 400 }
     );
   }
 
-  const isSubscription = plan === "PREMIUM";
-  const price = isSubscription
-    ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
-    : process.env.STRIPE_PRICE_READINGS_PACK;
+  const price =
+    plan === "PREMIUM_YEARLY"
+      ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
+      : plan === "PREMIUM"
+        ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
+        : process.env.STRIPE_PRICE_READINGS_PACK;
 
   if (!process.env.STRIPE_SECRET_KEY || !price) {
     return NextResponse.json(
-      { error: "Pagamentos não configurados. Tente novamente mais tarde." },
+      { error: "Payments are not configured. Please try again later." },
       { status: 503 }
     );
   }
@@ -96,7 +101,7 @@ export async function POST(req: NextRequest) {
     const admin = getSupabaseAdmin();
     const { error: insertError } = await admin.from("payments").insert({
       user_id: profile.id,
-      amount: isSubscription ? 19.99 : 9.99,
+      amount: plan === "PREMIUM_YEARLY" ? 79 : isSubscription ? 14.99 : 9.99,
       currency: "usd",
       status: "PENDING",
       payment_type: isSubscription ? "SUBSCRIPTION" : "READINGS_PACK",
@@ -106,7 +111,7 @@ export async function POST(req: NextRequest) {
     if (insertError) {
       console.error("[/api/checkout] erro ao registrar pagamento:", insertError);
       return NextResponse.json(
-        { error: "Não foi possível iniciar o checkout. Tente novamente." },
+        { error: "Could not start checkout. Please try again." },
         { status: 500 }
       );
     }
@@ -115,7 +120,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error("[/api/checkout] erro ao criar sessão Stripe:", e);
     return NextResponse.json(
-      { error: "Não foi possível iniciar o checkout. Tente novamente." },
+      { error: "Could not start checkout. Please try again." },
       { status: 500 }
     );
   }

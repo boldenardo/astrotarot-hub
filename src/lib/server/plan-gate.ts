@@ -142,8 +142,68 @@ export async function requirePremium(
       ok: false,
       response: NextResponse.json(
         {
-          error: `${FEATURE_LABELS[feature]} is exclusive to the Unlimited Premium plan ($19.99/month).`,
+          error: `${FEATURE_LABELS[feature]} is exclusive to the Unlimited Premium plan ($14.99/month).`,
           code: "PREMIUM_REQUIRED",
+          feature,
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return gate;
+}
+
+/**
+ * Add-ons comprados por fora do plano base (tabela user_entitlements).
+ * Diferente de PremiumFeature: aquilo vem junto com a assinatura, isto
+ * é comprado separado e o plano sozinho não destrava.
+ */
+export type AddonFeature = "soulmate_portrait" | "vibes";
+
+const ADDON_LABELS: Record<AddonFeature, string> = {
+  soulmate_portrait: "The full Soulmate Portrait",
+  vibes: "Vibes & Meditations",
+};
+
+/** Responde se o usuário tem o add-on ativo (e ainda não expirado). */
+export async function hasEntitlement(
+  userId: string,
+  feature: AddonFeature
+): Promise<boolean> {
+  const admin = getSupabaseAdmin();
+  const { data, error } = await admin
+    .from("user_entitlements")
+    .select("expires_at")
+    .eq("user_id", userId)
+    .eq("feature", feature)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[plan-gate] hasEntitlement falhou:", error);
+    return false;
+  }
+  if (!data) return false;
+
+  const expires = (data as { expires_at: string | null }).expires_at;
+  return !expires || new Date(expires).getTime() > Date.now();
+}
+
+/** Exige um add-on comprado. Usa requireUser antes, como requirePremium. */
+export async function requireEntitlement(
+  feature: AddonFeature
+): Promise<GateResult> {
+  const gate = await requireUser();
+  if (!gate.ok) return gate;
+
+  if (!(await hasEntitlement(gate.profile.id, feature))) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        {
+          error: `${ADDON_LABELS[feature]} is a separate unlock.`,
+          code: "ADDON_REQUIRED",
           feature,
         },
         { status: 403 }
@@ -190,7 +250,7 @@ export async function consumeReading(
       response: NextResponse.json(
         {
           error:
-            "You have no readings left. Buy the 5-Reading Pack ($9.99) or subscribe to Unlimited Premium ($19.99/month).",
+            "You have no readings left. Buy the 5-Reading Pack ($9.99) or subscribe to Unlimited Premium ($14.99/month).",
           code: "NO_READINGS_LEFT",
           needsPayment: true,
         },

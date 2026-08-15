@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Shuffle, Sparkles } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { trackEvent } from "@/lib/analytics";
 
 interface TarotCard {
   id: number;
@@ -23,8 +25,7 @@ const cards: TarotCard[] = [
     description:
       "The Hermit represents the inner quest, a period of deep reflection and solitude needed to find answers. Carrying his lantern of wisdom, he reminds us that sometimes we must step away from the outer world to illuminate our inner one. This card invites you into a moment of pause, meditation, and self-knowledge.",
     keywords: ["introspection", "wisdom", "solitude", "reflection", "inner guide"],
-    image:
-      "https://cdn.pixabay.com/photo/2021/02/15/07/52/hermit-6016941_960_720.jpg",
+    image: "/cards/egyptian/9.jpg",
     rotation: -3,
   },
   {
@@ -34,8 +35,7 @@ const cards: TarotCard[] = [
     description:
       "Temperance symbolizes the perfect balance between opposites. The angel pours water between two cups, blending elements with grace and patience. This card teaches us about moderation, patience, and the art of finding the middle ground. It appears when you need to integrate different aspects of your life or find harmony amid conflicting situations.",
     keywords: ["balance", "moderation", "harmony", "patience", "integration"],
-    image:
-      "https://cdn.pixabay.com/photo/2021/02/15/07/42/temperance-6016917_960_720.jpg",
+    image: "/cards/egyptian/14.jpg",
     rotation: 4,
   },
   {
@@ -45,8 +45,7 @@ const cards: TarotCard[] = [
     description:
       "The Hanged Man shows us that sometimes we must completely shift our perspective. Suspended upside down, he sees the world differently. This card suggests a period of purposeful waiting, where you release control and allow things to unfold. It is about voluntary sacrifice that leads to profound insight and spiritual transformation.",
     keywords: ["perspective", "suspension", "sacrifice", "surrender", "vision"],
-    image:
-      "https://cdn.pixabay.com/photo/2021/02/15/07/52/hanged-man-6016939_960_720.jpg",
+    image: "/cards/egyptian/12.jpg",
     rotation: 10,
   },
   {
@@ -56,14 +55,10 @@ const cards: TarotCard[] = [
     description:
       "The Hierophant represents the wisdom of traditions, knowledge passed down through generations, and spiritual guidance. As guardian of the sacred mysteries, he connects us with larger structures of meaning. This card appears when you seek formal education, counsel from mentors, or when you need to follow the established path before forging your own.",
     keywords: ["tradition", "knowledge", "guidance", "spirituality", "mentor"],
-    image:
-      "https://cdn.pixabay.com/photo/2021/02/15/07/53/hierophant-6016942_960_720.jpg",
+    image: "/cards/egyptian/5.jpg",
     rotation: 4,
   },
 ];
-
-const CARD_BACK_IMAGE =
-  "https://i.pinimg.com/originals/8c/de/fb/8cdefb154d4d30cf5e5ef00d1b998b6c.jpg";
 
 export default function TarotChallenge() {
   const [cardStack, setCardStack] = useState<number[]>([0, 1, 2, 3]);
@@ -321,26 +316,55 @@ export default function TarotChallenge() {
                   </div>
                 </div>
 
-                {/* Close button */}
-                <button
-                  onClick={() => setSelectedCard(null)}
-                  className="btn-gold mt-8 w-full rounded-full py-3 font-semibold"
-                >
-                  Got it
-                </button>
+                {/* CTA: o resultado da carta é o pico de curiosidade — daqui
+                    a pessoa segue pro funil, não pra um beco sem saída. */}
+                <div className="mt-8 space-y-3">
+                  <Link
+                    href="/quiz"
+                    onClick={() =>
+                      trackEvent("challenge_cta_clicked", {
+                        category: "challenge",
+                        label: selectedCard.name,
+                      })
+                    }
+                    className="btn-gold flex w-full items-center justify-center gap-2 rounded-full py-3 font-semibold"
+                  >
+                    <Sparkles className="h-5 w-5" aria-hidden />
+                    Reveal who your soulmate is — free reading
+                  </Link>
+                  <button
+                    onClick={() => setSelectedCard(null)}
+                    className="btn-ghost w-full rounded-full py-3 text-sm font-medium"
+                  >
+                    Draw another card
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Footer */}
+      {/* Footer — CTA persistente pro funil + assinatura */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2 }}
         className="relative z-10 mt-16 text-center text-sm text-ink-600"
       >
+        <Link
+          href="/quiz"
+          onClick={() =>
+            trackEvent("challenge_cta_clicked", {
+              category: "challenge",
+              label: "footer",
+            })
+          }
+          className="btn-gold mx-auto mb-6 inline-flex items-center gap-2 rounded-full px-8 py-3 font-semibold"
+        >
+          <Sparkles className="h-4 w-4" aria-hidden />
+          Get my full free reading
+        </Link>
         <p>
           Crafted with care by{" "}
           <span className="font-semibold text-gold-300">AstroTarot Hub</span>

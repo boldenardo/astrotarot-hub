@@ -445,7 +445,7 @@ export default function PredictionsPage() {
                           href="/cart?plan=premium"
                           className="btn-gold mt-3 inline-block rounded-full px-6 py-2 text-sm font-semibold"
                         >
-                          Subscribe to Premium Unlimited — $19.99/mo
+                          Subscribe to Premium Unlimited — $14.99/mo
                         </Link>
                       )}
                     </div>

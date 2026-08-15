@@ -21,9 +21,7 @@ export const VSL_ASPECT = "1 / 1";
 // 1 = linear (tempo real). Quanto menor, mais agressiva a ilusão.
 export const VSL_PROGRESS_EXPONENT = 0.45;
 
-// Poster/thumbnail do player. Ainda NÃO existe um arquivo de poster no repo —
-// quando houver, salve-o em public/images/vsl-poster.webp (1280x720, <150KB)
-// e este valor passa a ser usado automaticamente pelo VSLPlayer.
-// Mantido undefined de propósito para não referenciar um asset inexistente.
-export const VSL_POSTER: string | undefined = undefined;
-// export const VSL_POSTER = "/images/vsl-poster.webp";
+// Poster/thumbnail do player (1080x1080, mesmo aspecto 1:1 do vídeo, ~74KB).
+// Frame extraído aos 3s da VSL: Master Aura sorrindo em contato direto.
+// Sem poster o player abria PRETO até o Play — custo real de conversão.
+export const VSL_POSTER: string | undefined = "/images/vsl-poster.webp";

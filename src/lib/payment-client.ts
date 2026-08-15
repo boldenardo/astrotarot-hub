@@ -4,7 +4,9 @@ import { getStoredRef } from "@/lib/affiliate";
  * Starts the Stripe checkout for the chosen plan.
  * Redirects the browser to the Stripe payment page.
  */
-export async function startCheckout(plan: "PACK5" | "PREMIUM"): Promise<void> {
+export async function startCheckout(
+  plan: "PACK5" | "PREMIUM" | "PREMIUM_YEARLY"
+): Promise<void> {
   const res = await fetch("/api/checkout", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

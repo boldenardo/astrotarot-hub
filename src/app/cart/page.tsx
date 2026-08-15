@@ -19,7 +19,8 @@ import { trackPageView, trackPaymentInitiated } from "@/lib/analytics";
 
 const PLAN_PRICES: Record<CheckoutPlanKey, number> = {
   PACK5: 9.99,
-  PREMIUM: 19.99,
+  PREMIUM: 14.99,
+  PREMIUM_YEARLY: 79,
 };
 
 function PlansContent() {
@@ -204,6 +205,22 @@ function PlansContent() {
                 </>
               ) : (
                 "Unlock everything"
+              )}
+            </button>
+
+            {/* Opção anual: mesmo acesso, $79/ano (economia de $100). */}
+            <button
+              onClick={() => handleCheckout("PREMIUM_YEARLY")}
+              disabled={loadingPlan !== null}
+              className="mt-3 w-full rounded-full py-3 px-8 text-sm font-medium text-gold-300 border border-gold-400/30 bg-white/5 hover:border-gold-400/60 hover:bg-white/10 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingPlan === "PREMIUM_YEARLY" ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                <>Or pay yearly — $79/yr (save $100)</>
               )}
             </button>
           </motion.div>

@@ -1,4 +1,8 @@
-import ReactGA from "react-ga4";
+// Analytics client — GA4 (via window.gtag, injetado no layout) + Meta Pixel.
+//
+// IMPORTANTE: NÃO usar react-ga4 aqui. O snippet gtag.js do src/app/layout.tsx
+// é quem inicializa o GA4; react-ga4 nunca era inicializado e descartava
+// silenciosamente todos os eventos. Tudo passa por window.gtag direto.
 
 // Custom event types
 export type AnalyticsEvent =
@@ -21,6 +25,8 @@ export type AnalyticsEvent =
   | "quiz_started"
   | "quiz_completed"
   | "quiz_result_viewed"
+  | "quiz_step_viewed"
+  | "lead_captured"
   | "vsl_play"
   | "vsl_25"
   | "vsl_50"
@@ -29,7 +35,14 @@ export type AnalyticsEvent =
   | "vsl_complete"
   | "offer_unlocked"
   | "offer_viewed"
-  | "offer_clicked";
+  | "offer_clicked"
+  | "downsell_viewed"
+  | "downsell_clicked"
+  | "challenge_cta_clicked"
+  | "soulmate_draw_started"
+  | "soulmate_unlock_clicked"
+  | "streak_checkin"
+  | "vibes_subscribe_clicked";
 
 interface AnalyticsEventParams {
   category?: string;
@@ -39,33 +52,33 @@ interface AnalyticsEventParams {
   [key: string]: any;
 }
 
-/**
- * Initializes Google Analytics
- * Should be called once at application startup
- */
-export function initializeAnalytics(measurementId: string) {
-  if (typeof window !== "undefined" && measurementId) {
-    ReactGA.initialize(measurementId);
-    console.log("Google Analytics initialized:", measurementId);
-  }
+type GtagFn = (...args: any[]) => void;
+
+function getGtag(): GtagFn | undefined {
+  if (typeof window === "undefined") return undefined;
+  const gtag = (window as any).gtag;
+  return typeof gtag === "function" ? gtag : undefined;
+}
+
+function getFbq(): GtagFn | undefined {
+  if (typeof window === "undefined") return undefined;
+  const fbq = (window as any).fbq;
+  return typeof fbq === "function" ? fbq : undefined;
 }
 
 /**
  * Tracks a page view
  */
 export function trackPageView(path: string, title?: string) {
-  if (typeof window !== "undefined") {
-    ReactGA.send({
-      hitType: "pageview",
-      page: path,
-      title: title || document.title,
-    });
+  if (typeof window === "undefined") return;
 
-    // Meta Pixel PageView
-    if ((window as any).fbq) {
-      (window as any).fbq("track", "PageView");
-    }
-  }
+  getGtag()?.("event", "page_view", {
+    page_path: path,
+    page_title: title || document.title,
+  });
+
+  // Meta Pixel PageView
+  getFbq()?.("track", "PageView");
 }
 
 /**
@@ -75,47 +88,49 @@ export function trackEvent(
   eventName: AnalyticsEvent,
   params?: AnalyticsEventParams
 ) {
-  if (typeof window !== "undefined") {
-    // Google Analytics
-    ReactGA.event({
-      category: params?.category || "engagement",
-      action: eventName,
-      label: params?.label,
-      value: params?.value,
-      ...params,
-    });
+  if (typeof window === "undefined") return;
 
-    // Meta Pixel Events
-    const fbq = (window as any).fbq;
-    if (fbq) {
-      switch (eventName) {
-        case "sign_up":
-          fbq("track", "CompleteRegistration");
-          break;
-        case "login":
-          fbq("track", "Login");
-          break;
-        case "payment_initiated":
-          fbq("track", "InitiateCheckout", {
-            value: params?.value || 0,
-            currency: "USD",
-          });
-          break;
-        case "payment_completed":
-          fbq("track", "Purchase", {
-            value: params?.value || 0,
-            currency: "USD",
-          });
-          break;
-        case "tarot_reading_completed":
-          fbq("track", "ViewContent", {
-            content_name: "Tarot Reading",
-            content_category: "Tarot",
-          });
-          break;
-        default:
-          fbq("trackCustom", eventName, params);
-      }
+  // Google Analytics (GA4 event; params extras viram event params)
+  getGtag()?.("event", eventName, {
+    event_category: params?.category || "engagement",
+    event_label: params?.label,
+    value: params?.value,
+    ...params,
+  });
+
+  // Meta Pixel Events
+  const fbq = getFbq();
+  if (fbq) {
+    switch (eventName) {
+      case "sign_up":
+        fbq("track", "CompleteRegistration");
+        break;
+      case "login":
+        fbq("track", "Login");
+        break;
+      case "lead_captured":
+        fbq("track", "Lead");
+        break;
+      case "payment_initiated":
+        fbq("track", "InitiateCheckout", {
+          value: params?.value || 0,
+          currency: "USD",
+        });
+        break;
+      case "payment_completed":
+        fbq("track", "Purchase", {
+          value: params?.value || 0,
+          currency: "USD",
+        });
+        break;
+      case "tarot_reading_completed":
+        fbq("track", "ViewContent", {
+          content_name: "Tarot Reading",
+          content_category: "Tarot",
+        });
+        break;
+      default:
+        fbq("trackCustom", eventName, params);
     }
   }
 }
@@ -124,9 +139,44 @@ export function trackEvent(
  * Sets the user ID for tracking
  */
 export function setUserId(userId: string) {
-  if (typeof window !== "undefined") {
-    ReactGA.set({ userId });
+  getGtag()?.("set", { user_id: userId });
+}
+
+/**
+ * Tracks a confirmed purchase, deduplicated per Stripe Checkout Session.
+ * Fires GA4 `purchase` (transaction_id = session id) and Meta Pixel
+ * `Purchase` with eventID = session id (ready for CAPI dedup later).
+ */
+export function trackPurchase(params: {
+  sessionId: string;
+  value: number;
+  currency: string;
+  plan?: string;
+}) {
+  if (typeof window === "undefined") return;
+  const { sessionId, value, currency, plan } = params;
+
+  const dedupKey = `astro_purchase_${sessionId}`;
+  try {
+    if (window.localStorage.getItem(dedupKey)) return;
+    window.localStorage.setItem(dedupKey, "1");
+  } catch {
+    // Private mode: fire anyway — melhor risco de duplicar que perder o evento.
   }
+
+  getGtag()?.("event", "purchase", {
+    transaction_id: sessionId,
+    value,
+    currency,
+    items: plan ? [{ item_id: plan, item_name: plan }] : undefined,
+  });
+
+  getFbq()?.(
+    "track",
+    "Purchase",
+    { value, currency: currency.toUpperCase() },
+    { eventID: sessionId }
+  );
 }
 
 /**
@@ -184,9 +234,15 @@ export function trackTarotReadingCompleted(
 }
 
 /**
- * Tracks the start of a payment
+ * Tracks the start of a payment.
+ * Also emits GA4 `begin_checkout` (the standard ecommerce event).
  */
 export function trackPaymentInitiated(type: string, amount: number) {
+  getGtag()?.("event", "begin_checkout", {
+    value: amount,
+    currency: "USD",
+    items: [{ item_id: type, item_name: type }],
+  });
   trackEvent("payment_initiated", {
     category: "payment",
     label: type,
@@ -269,12 +325,12 @@ export function trackSubscriptionUpgradeClicked(plan: string) {
  * Checks whether the Meta Pixel is loaded
  */
 export function isMetaPixelLoaded(): boolean {
-  return typeof window !== "undefined" && !!(window as any).fbq;
+  return !!getFbq();
 }
 
 /**
  * Checks whether Google Analytics is loaded
  */
 export function isGALoaded(): boolean {
-  return typeof window !== "undefined" && !!ReactGA;
+  return !!getGtag();
 }

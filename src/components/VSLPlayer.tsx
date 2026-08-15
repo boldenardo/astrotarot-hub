@@ -10,8 +10,9 @@
 // - Seek é bloqueado no evento `seeking` (defesa contra atalhos de teclado,
 //   media keys e controles do sistema): qualquer salto adiante volta para
 //   o ponto máximo realmente assistido.
-// - preload="none": NENHUM byte do MP4 é baixado até o usuário dar Play
-//   (o arquivo tem ~58 MB e mora no Cloudflare R2).
+// - preload="metadata": só o cabeçalho do MP4 (alguns KB) é baixado antes
+//   do Play — o arquivo tem ~58 MB e mora no Cloudflare R2. O poster local
+//   (VSL_POSTER) garante que o player nunca abre preto.
 // - Eventos de progresso (25/50/75/90/complete) disparam UMA vez cada.
 // - ctaRevealSeconds: revela os children (CTA/oferta) após N segundos.
 
@@ -95,8 +96,8 @@ export default function VSLPlayer({
     (event: AnalyticsEvent) => {
       if (firedRef.current.has(event)) return;
       firedRef.current.add(event);
-      // label duplica o placement porque o react-ga4 só encaminha
-      // category/label/value ao GA; o Meta Pixel recebe o objeto completo.
+      // label duplica o placement por compatibilidade histórica dos
+      // relatórios; gtag e Meta Pixel recebem o objeto completo.
       trackEvent(event, { category: "vsl", label: placement, placement });
     },
     [placement]
@@ -195,7 +196,7 @@ export default function VSLPlayer({
         <video
           ref={videoRef}
           playsInline
-          preload="none"
+          preload="metadata"
           poster={VSL_POSTER}
           disablePictureInPicture
           controlsList="nodownload noplaybackrate noremoteplayback"

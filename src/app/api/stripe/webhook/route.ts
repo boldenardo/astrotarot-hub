@@ -7,7 +7,8 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS = 30 * ONE_DAY_MS;
 
 function customerIdOf(
   customer: string | Stripe.Customer | Stripe.DeletedCustomer | null | undefined
@@ -83,6 +84,79 @@ async function recordAffiliateSale(params: {
   } catch (e) {
     // Tracking de afiliado NUNCA pode derrubar o processamento do pagamento.
     console.error("[stripe/webhook] recordAffiliateSale erro:", e);
+  }
+}
+
+/**
+ * Concede (ou revoga) um add-on comprado fora do plano base.
+ * Idempotente por (user_id, feature): reentrega do Stripe apenas
+ * reafirma o mesmo direito em vez de duplicar linha.
+ */
+async function setEntitlement(params: {
+  userId: string;
+  feature: "soulmate_portrait" | "vibes";
+  active: boolean;
+  source?: string;
+  reference?: string | null;
+  expiresAt?: string | null;
+}) {
+  const admin = getSupabaseAdmin();
+  try {
+    const { error } = await admin.from("user_entitlements").upsert(
+      {
+        user_id: params.userId,
+        feature: params.feature,
+        active: params.active,
+        source: params.source ?? "stripe_one_time",
+        stripe_reference: params.reference ?? null,
+        expires_at: params.expiresAt ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,feature" }
+    );
+    if (error) {
+      console.error("[stripe/webhook] setEntitlement falhou:", error);
+    }
+  } catch (e) {
+    console.error("[stripe/webhook] setEntitlement erro:", e);
+  }
+}
+
+/** Price ids dos add-ons (undefined quando ainda não configurados). */
+const VIBES_PRICE = process.env.STRIPE_PRICE_VIBES_MONTHLY;
+const PORTRAIT_PRICE = process.env.STRIPE_PRICE_SOULMATE_PORTRAIT;
+
+/**
+ * Sincroniza o add-on recorrente Vibes com o que a assinatura realmente
+ * contém: se o item do price de Vibes está lá, o direito vale até o fim
+ * do período; se saiu, o direito é revogado.
+ */
+async function syncVibesFromSubscription(
+  sub: Stripe.Subscription,
+  userId: string
+) {
+  if (!VIBES_PRICE) return;
+  const item = sub.items.data.find((i) => i.price?.id === VIBES_PRICE);
+  if (item) {
+    const end = item.current_period_end
+      ? new Date(item.current_period_end * 1000).toISOString()
+      : null;
+    await setEntitlement({
+      userId,
+      feature: "vibes",
+      active: sub.status === "active" || sub.status === "trialing",
+      source: "stripe_subscription_item",
+      reference: item.id,
+      expiresAt: end,
+    });
+  } else {
+    await setEntitlement({
+      userId,
+      feature: "vibes",
+      active: false,
+      source: "stripe_subscription_item",
+      reference: null,
+    });
   }
 }
 
@@ -255,13 +329,24 @@ export async function POST(req: NextRequest) {
 
         if (granted) {
           if (session.mode === "payment") {
-            // Pacote de 5 leituras — crédito atômico via função SQL.
-            const { error } = await admin.rpc("grant_readings", {
-              p_user_id: userId,
-              p_amount: 5,
-            });
-            if (error) {
-              console.error("[stripe/webhook] grant_readings falhou:", error);
+            // Compra única: ou é o add-on do retrato, ou o pacote de leituras.
+            if (session.metadata?.product === "soulmate_portrait") {
+              await setEntitlement({
+                userId,
+                feature: "soulmate_portrait",
+                active: true,
+                source: "stripe_one_time",
+                reference: session.id,
+              });
+            } else {
+              // Pacote de 5 leituras — crédito atômico via função SQL.
+              const { error } = await admin.rpc("grant_readings", {
+                p_user_id: userId,
+                p_amount: 5,
+              });
+              if (error) {
+                console.error("[stripe/webhook] grant_readings falhou:", error);
+              }
             }
           } else if (session.mode === "subscription") {
             const now = new Date();
@@ -270,18 +355,34 @@ export async function POST(req: NextRequest) {
                 ? session.subscription
                 : session.subscription?.id ?? null;
 
+            // Plano/duração vêm do metadata (PREMIUM_YEARLY = 365 dias);
+            // default mensal preserva o comportamento das sessões antigas.
+            const yearly = session.metadata?.plan === "PREMIUM_YEARLY";
             await admin
               .from("users")
               .update({
-                subscription_plan: "PREMIUM_MONTHLY",
+                subscription_plan: yearly ? "PREMIUM_YEARLY" : "PREMIUM_MONTHLY",
                 subscription_status: "active",
                 subscription_start_date: now.toISOString(),
                 subscription_end_date: new Date(
-                  now.getTime() + THIRTY_DAYS_MS
+                  now.getTime() + (yearly ? 365 * ONE_DAY_MS : THIRTY_DAYS_MS)
                 ).toISOString(),
                 stripe_subscription_id: subscriptionId,
               })
               .eq("id", userId);
+          }
+
+          // Lead do quiz convertido: carimba converted_at (best-effort;
+          // não pode quebrar a concessão do benefício).
+          if (guestEmailRaw) {
+            const { error: leadErr } = await admin
+              .from("leads")
+              .update({ converted_at: new Date().toISOString() })
+              .eq("email", guestEmailRaw.toLowerCase().trim())
+              .is("converted_at", null);
+            if (leadErr) {
+              console.error("[stripe/webhook] leads.converted_at:", leadErr);
+            }
           }
 
           // Venda atribuída ao afiliado (só quando o benefício foi concedido
@@ -387,6 +488,10 @@ export async function POST(req: NextRequest) {
             .update({ subscription_status: status })
             .eq("id", user.id);
         }
+
+        // O add-on Vibes vive como item DENTRO desta assinatura: quem manda
+        // é o que a assinatura contém agora, não o que continha antes.
+        await syncVibesFromSubscription(sub, user.id);
         break;
       }
 
@@ -403,6 +508,60 @@ export async function POST(req: NextRequest) {
             stripe_subscription_id: null,
           })
           .eq("id", user.id);
+
+        // Assinatura acabou: Vibes cai junto. O retrato é compra única e
+        // continua valendo — quem pagou por ele não perde o que comprou.
+        await setEntitlement({
+          userId: user.id,
+          feature: "vibes",
+          active: false,
+          source: "stripe_subscription_item",
+        });
+        break;
+      }
+
+      // Reembolso ou disputa: revoga o add-on de compra única para que a
+      // pessoa não siga com o produto depois do dinheiro voltar.
+      //
+      // A revogação precisa acertar o charge CERTO. A condição antiga era
+      // `if (PORTRAIT_PRICE || ...)` — PORTRAIT_PRICE é a env var, sempre
+      // truthy quando o produto existe, então QUALQUER reembolso (inclusive
+      // de um pack de $9,99) derrubava o retrato de $24,99 já pago.
+      case "charge.refunded":
+      case "charge.dispute.created": {
+        const charge = event.data.object as Stripe.Charge;
+        const user = await findUserByCustomerId(customerIdOf(charge.customer));
+        if (!user) break;
+
+        // O entitlement guarda o id da sessão de checkout que o concedeu.
+        // Resolvemos o payment_intent do charge e comparamos com ela.
+        const intentId =
+          typeof charge.payment_intent === "string"
+            ? charge.payment_intent
+            : charge.payment_intent?.id ?? null;
+
+        let isPortraitCharge = false;
+        if (intentId) {
+          const sessions = await stripe.checkout.sessions.list({
+            payment_intent: intentId,
+            limit: 1,
+          });
+          const session = sessions.data[0];
+          isPortraitCharge =
+            session?.metadata?.product === "soulmate_portrait" ||
+            (!!PORTRAIT_PRICE &&
+              session?.metadata?.price_id === PORTRAIT_PRICE);
+        }
+
+        if (isPortraitCharge) {
+          await setEntitlement({
+            userId: user.id,
+            feature: "soulmate_portrait",
+            active: false,
+            source: "stripe_one_time",
+            reference: charge.id,
+          });
+        }
         break;
       }
 

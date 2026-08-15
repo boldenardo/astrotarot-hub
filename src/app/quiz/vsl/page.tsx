@@ -17,14 +17,19 @@ import {
   X,
 } from "lucide-react";
 import VSLPlayer from "@/components/VSLPlayer";
-import { trackEvent } from "@/lib/analytics";
-import { getStoredRef } from "@/lib/affiliate";
+import { trackEvent, trackPaymentInitiated } from "@/lib/analytics";
+import { getStoredRef, getVisitorId } from "@/lib/affiliate";
+import { computeScore } from "@/lib/quiz-data";
+import { getStoredSource } from "@/lib/source";
 
 type Score = "LOW" | "MEDIUM" | "HIGH";
-// Funil de alma gêmea vende UM plano: a assinatura Premium. O pacote avulso
-// foi removido de propósito — alternativa barata na mesma tela canibaliza a
-// oferta principal.
-type PlanKey = "PREMIUM";
+// A oferta principal é UMA: a assinatura Premium. O PACK5 ($9.99 avulso) só
+// existe como DOWNSELL pós-recusa — aparece apenas para quem foi ao checkout
+// do Premium e voltou sem pagar (?canceled=1). Nunca na mesma dobra da
+// oferta principal, para não canibalizar.
+type PlanKey = "PREMIUM" | "PACK5";
+
+const PLAN_PRICES: Record<PlanKey, number> = { PREMIUM: 14.99, PACK5: 9.99 };
 
 interface QuizStore {
   answers?: Record<string, string>;
@@ -41,6 +46,9 @@ const STORE_KEY = "astro_quiz_v1";
 // (ou o vídeo terminar). Persistido por sessão para um refresh não re-trancar.
 const VSL_UNLOCK_SECONDS = 90;
 const UNLOCK_KEY = "astro_vsl_unlocked";
+// Downsell persistido por sessão: um refresh após voltar do Stripe não
+// esconde a oferta de $9.99.
+const DOWNSELL_KEY = "astro_vsl_downsell";
 
 function readStore(): QuizStore {
   try {
@@ -60,9 +68,12 @@ const SCORE_COPY: Record<Score, { label: string; color: string }> = {
   HIGH: { label: "Strong", color: "bg-emerald-400/80" },
 };
 
+// O que a ASSINATURA entrega de fato. O retrato completo (traços, janela
+// do encontro, download) é o add-on de $24,99 — prometer aqui o que só sai
+// com o segundo pagamento é a receita de reembolso e chargeback.
 const OFFER_ROWS: Array<{ item: string; value: string }> = [
-  { item: "Your full soulmate reading — who they are", value: "$29" },
-  { item: "Your meeting window — when your paths cross", value: "$27" },
+  { item: "Your soulmate reading — their nature and your bond", value: "$29" },
+  { item: "A first look at your soulmate portrait", value: "$27" },
   { item: "Compatibility with anyone already in your life", value: "$19" },
   { item: "Unlimited Egyptian Tarot readings on love", value: "$19" },
   { item: "Your complete birth chart & Venus placement", value: "$19" },
@@ -225,8 +236,7 @@ function ProofCarousel() {
                   <blockquote className="text-sm leading-relaxed text-white/85">
                     &ldquo;{s.quote}&rdquo;
                   </blockquote>
-                  <p className="mt-3 flex items-center gap-1.5 text-xs text-white/50">
-                    <BadgeCheck className="h-3.5 w-3.5 text-emerald-300" aria-hidden />
+                  <p className="mt-3 text-xs text-white/50">
                     {s.names} — AstroTarot members
                   </p>
                 </figcaption>
@@ -244,9 +254,10 @@ function ProofCarousel() {
                         />
                       ))}
                     </span>
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-300">
-                      <BadgeCheck className="h-3.5 w-3.5" aria-hidden />
-                      Verified member
+                    {/* Sem selo de "verificado": não há verificação real por
+                        trás, e afirmar isso é exposição desnecessária. */}
+                    <span className="text-[11px] font-medium text-white/40">
+                      Member story
                     </span>
                   </div>
                   <blockquote className="mt-3 text-sm leading-relaxed text-white/85">
@@ -347,6 +358,9 @@ export default function QuizVslPage() {
   // Gate da VSL fechada.
   const [unlocked, setUnlocked] = useState(false);
 
+  // Downsell PACK5: só para quem abandonou o checkout do Premium.
+  const [showDownsell, setShowDownsell] = useState(false);
+
   // Eventos de funil disparados uma única vez nesta visita.
   const resultViewedRef = useRef(false);
   const offerViewedRef = useRef(false);
@@ -357,6 +371,26 @@ export default function QuizVslPage() {
       if (sessionStorage.getItem(UNLOCK_KEY) === "1") setUnlocked(true);
     } catch {
       // storage indisponível — gate funciona só em memória
+    }
+    // Retorno do Stripe sem pagar (cancel_url → ?canceled=1): destrava a
+    // página (a pessoa já viu a oferta) e mostra o downsell de $9.99.
+    let canceled = false;
+    try {
+      canceled =
+        new URLSearchParams(window.location.search).get("canceled") === "1";
+      if (canceled) sessionStorage.setItem(DOWNSELL_KEY, "1");
+      if (sessionStorage.getItem(DOWNSELL_KEY) === "1") {
+        setUnlocked(true);
+        setShowDownsell(true);
+      }
+    } catch {
+      if (canceled) {
+        setUnlocked(true);
+        setShowDownsell(true);
+      }
+    }
+    if (canceled) {
+      trackEvent("downsell_viewed", { category: "quiz", label: "PACK5" });
     }
     if (!resultViewedRef.current) {
       resultViewedRef.current = true;
@@ -415,7 +449,7 @@ export default function QuizVslPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // ref: código de afiliado guardado no browser (null quando não há).
-        body: JSON.stringify({ plan, email, ref: getStoredRef() }),
+        body: JSON.stringify({ plan, email, ref: getStoredRef(), src: getStoredSource() }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
@@ -443,6 +477,8 @@ export default function QuizVslPage() {
         label: plan,
         placement: "quiz_result",
       });
+      // Evento padrão de ecommerce (fbq InitiateCheckout + gtag begin_checkout).
+      trackPaymentInitiated(plan, PLAN_PRICES[plan]);
       const email = store.email?.trim();
       if (!email) {
         setEmailInput("");
@@ -471,11 +507,36 @@ export default function QuizVslPage() {
     } catch {
       // storage unavailable — checkout still works
     }
+    // Quem chegou à VSL sem email do quiz também vira lead no servidor.
+    const snapshot = readStore();
+    fetch("/api/quiz/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        email,
+        name: snapshot.name,
+        birthDate: snapshot.birthDate,
+        sign: snapshot.sign,
+        score: snapshot.score,
+        answers: snapshot.answers,
+        visitorId: getVisitorId(),
+        ref: getStoredRef(),
+        src: getStoredSource(),
+      }),
+    }).catch(() => {});
+    trackEvent("lead_captured", { category: "quiz", label: "vsl_modal" });
     setEmailModalPlan(null);
     void checkout(plan, email);
   }, [emailInput, emailModalPlan, checkout]);
 
-  const score: Score = store.score ?? "LOW";
+  // Defesa: se o score não foi persistido (storage limpo), recalcula das
+  // respostas; sem respostas, "LOW"/Blocked é o default (pitch mais forte).
+  const score: Score =
+    store.score ??
+    (store.answers && Object.keys(store.answers).length > 0
+      ? computeScore(store.answers)
+      : "LOW");
   const scoreMeta = SCORE_COPY[score];
   const firstName = store.name?.trim().split(/\s+/)[0];
 
@@ -496,7 +557,7 @@ export default function QuizVslPage() {
         Unlock my Soulmate Reading
       </button>
       <p className="mt-2 text-center text-xs text-white/50">
-        $19.99/month &bull; Cancel anytime &bull; Secure checkout by Stripe
+        $14.99/month &bull; Cancel anytime &bull; Secure checkout by Stripe
       </p>
       {error && (
         <p className="mt-2 text-center text-sm text-red-400" role="alert">
@@ -542,8 +603,48 @@ export default function QuizVslPage() {
         </p>
       </section>
 
-      {/* b. VSL fechada — preload="none" (nada baixa antes do Play); a
-          oferta/preços só entram no DOM após VSL_UNLOCK_SECONDS assistidos. */}
+      {/* a2. Downsell PACK5 — só para quem voltou do checkout sem pagar.
+          Card (não modal): retorno de checkout com modal na cara irrita. */}
+      {showDownsell && (
+        <section className="glass mt-6 rounded-2xl border border-amber-300/40 p-5">
+          <p className="text-xs font-medium uppercase tracking-widest text-amber-200">
+            Wait — a one-time option, no subscription
+          </p>
+          <h2 className="mt-2 text-xl font-semibold leading-snug">
+            Get your full Soulmate Reading for a single payment of{" "}
+            <span className="text-gold">$9.99</span>
+          </h2>
+          <p className="mt-2 text-sm text-white/75">
+            5 Egyptian Tarot readings &bull; your soulmate questions answered
+            &bull; no recurring charge
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              trackEvent("downsell_clicked", {
+                category: "quiz",
+                label: "PACK5",
+              });
+              startGuestCheckout("PACK5");
+            }}
+            disabled={loadingPlan !== null}
+            className="btn-gold mt-4 flex w-full min-h-[52px] items-center justify-center gap-2 rounded-full px-6 font-semibold disabled:opacity-60"
+          >
+            {loadingPlan === "PACK5" && (
+              <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            )}
+            Get my reading — $9.99 one-time
+          </button>
+          <p className="mt-2 text-center text-xs text-white/50">
+            Prefer everything unlimited? The $14.99/mo plan is still available
+            below.
+          </p>
+        </section>
+      )}
+
+      {/* b. VSL fechada — preload="metadata" (só o cabeçalho do vídeo baixa
+          antes do Play); a oferta/preços só entram no DOM após
+          VSL_UNLOCK_SECONDS assistidos. */}
       <section className="mt-6">
         <p className="mb-2 text-center text-sm font-medium text-white/80">
           Watch: what the cards revealed about your soulmate
@@ -613,7 +714,7 @@ export default function QuizVslPage() {
           </div>
           <div className="mt-1 flex items-baseline justify-between">
             <span className="font-medium">Today</span>
-            <span className="text-2xl font-semibold text-gold">$19.99/month</span>
+            <span className="text-2xl font-semibold text-gold">$14.99/month</span>
           </div>
         </div>
       </section>
@@ -687,7 +788,7 @@ export default function QuizVslPage() {
             {loadingPlan === "PREMIUM" && (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
             )}
-            Unlock my Soulmate Reading — $19.99/mo
+            Unlock my Soulmate Reading — $14.99/mo
           </button>
         </div>
       )}

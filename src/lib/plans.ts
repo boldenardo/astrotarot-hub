@@ -4,6 +4,7 @@
 export const PLANS = {
   FREE: "FREE",
   PREMIUM_MONTHLY: "PREMIUM_MONTHLY",
+  PREMIUM_YEARLY: "PREMIUM_YEARLY",
 } as const;
 
 export type SubscriptionPlan = (typeof PLANS)[keyof typeof PLANS];
@@ -27,7 +28,7 @@ export const CHECKOUT_PLANS = {
   PREMIUM: {
     key: "PREMIUM",
     name: "Unlimited Premium",
-    priceLabel: "$19.99",
+    priceLabel: "$14.99",
     period: "per month",
     readings: Infinity,
     features: [
@@ -37,6 +38,19 @@ export const CHECKOUT_PLANS = {
       "Your fortune & money map",
       "Complete birth chart",
       "Your lucky numbers",
+    ],
+  },
+  /** Yearly subscription: same access, one payment per year (67% off). */
+  PREMIUM_YEARLY: {
+    key: "PREMIUM_YEARLY",
+    name: "Unlimited Premium — Yearly",
+    priceLabel: "$79",
+    period: "per year",
+    readings: Infinity,
+    features: [
+      "Everything in Unlimited Premium",
+      "One payment covers 12 months",
+      "Save $100 vs paying monthly",
     ],
   },
 } as const;
@@ -72,7 +86,8 @@ export interface PlanProfile {
 export function isPremium(profile: PlanProfile | null | undefined): boolean {
   if (!profile) return false;
   return (
-    profile.subscription_plan === PLANS.PREMIUM_MONTHLY &&
+    (profile.subscription_plan === PLANS.PREMIUM_MONTHLY ||
+      profile.subscription_plan === PLANS.PREMIUM_YEARLY) &&
     profile.subscription_status === "active"
   );
 }

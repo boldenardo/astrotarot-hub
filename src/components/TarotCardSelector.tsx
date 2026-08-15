@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import CardBack from "@/components/CardBack";
 
 interface TarotCard {
   id: number;
@@ -167,18 +168,17 @@ export default function TarotCardSelector() {
                 transformStyle: "preserve-3d",
               }}
             >
-              {/* Card Back */}
+              {/* Card Back — asset local (CardBack), sem hotlink externo */}
               <div
-                className="absolute inset-0 rounded-3xl"
+                className="absolute inset-0"
                 style={{
                   backfaceVisibility: "hidden",
-                  background:
-                    "url(https://i.pinimg.com/originals/8c/de/fb/8cdefb154d4d30cf5e5ef00d1b998b6c.jpg)",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
                   boxShadow: "0px 5px 25px 0px rgba(212,175,55,0.35)",
+                  borderRadius: "1.5rem",
                 }}
-              />
+              >
+                <CardBack className="h-full w-full rounded-3xl" />
+              </div>
 
               {/* Card Front */}
               <div

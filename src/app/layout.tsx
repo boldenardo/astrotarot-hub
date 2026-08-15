@@ -47,9 +47,9 @@ export const metadata: Metadata = {
       "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
     images: [
       {
-        url: "/brand/astrotarot-logo.png",
-        width: 1080,
-        height: 1080,
+        url: "/brand/og-1200x630.jpg",
+        width: 1200,
+        height: 630,
         alt: "AstroTarot Hub — Tarot & Astrology",
       },
     ],
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     title: "AstroTarot Hub — Tarot & Astrology",
     description:
       "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
-    images: ["/brand/astrotarot-logo.png"],
+    images: ["/brand/og-1200x630.jpg"],
   },
 };
 

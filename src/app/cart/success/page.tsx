@@ -1,14 +1,36 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, Sparkles, LayoutDashboard, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { trackPurchase } from "@/lib/analytics";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+
+  // Fire the Purchase pixel with the real amount (deduped per session).
+  useEffect(() => {
+    if (!sessionId) return;
+    fetch(`/api/quiz/session?session_id=${encodeURIComponent(sessionId)}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.paid && typeof data.amount === "number") {
+          trackPurchase({
+            sessionId,
+            value: data.amount,
+            currency: data.currency ?? "usd",
+            plan: data.plan ?? undefined,
+          });
+        }
+      })
+      .catch(() => {
+        // Endpoint indisponível: melhor um evento aproximado que nenhum.
+        trackPurchase({ sessionId, value: 14.99, currency: "usd" });
+      });
+  }, [sessionId]);
 
   return (
     <div className="relative min-h-screen text-ink-200 pt-24 pb-12 flex items-center justify-center">

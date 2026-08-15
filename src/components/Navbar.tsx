@@ -11,7 +11,8 @@ import { UserButton, useUser } from "@clerk/nextjs";
 const LINKS = [
   { href: "/challenge", label: "Free Reading" },
   { href: "/tarot", label: "Tarot" },
-  { href: "/compatibility", label: "Soulmate" },
+  { href: "/soulmate", label: "Draw My Soulmate" },
+  { href: "/compatibility", label: "Compatibility" },
   { href: "/guia", label: "Guide" },
   { href: "/predictions", label: "Horoscope" },
   { href: "/numerology", label: "Lucky Numbers" },
