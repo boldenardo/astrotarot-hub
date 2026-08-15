@@ -55,10 +55,27 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("[email/recover] query falhou:", error);
-    return NextResponse.json({ error: "Query failed." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Query failed.", detail: error.message },
+      { status: 500 }
+    );
   }
 
   const leads = (data ?? []) as Array<{ email: string; name: string | null }>;
+
+  // ?dry=1 — mostra a fila sem mandar nada. Serve para conferir a
+  // configuração (segredo, chave, consulta) antes de disparar de
+  // verdade: um envio errado não tem botão de desfazer.
+  if (req.nextUrl.searchParams.get("dry") === "1") {
+    return NextResponse.json({
+      ok: true,
+      dryRun: true,
+      configured: true,
+      candidates: leads.length,
+      emails: leads.map((l) => l.email),
+    });
+  }
+
   let sent = 0;
 
   for (const lead of leads) {
