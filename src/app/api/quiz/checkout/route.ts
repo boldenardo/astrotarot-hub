@@ -7,6 +7,7 @@ import Stripe from "stripe";
 import { normalizeCode } from "@/lib/affiliate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
+import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 
@@ -116,10 +117,16 @@ export async function POST(req: NextRequest) {
   // é assim que se sabe qual conta orgânica gerou receita, sem pixel.
   const srcPlatform = (body.src ?? "").trim().toLowerCase().slice(0, 20);
 
+  // Idioma do funil viaja até o webhook: o e-mail de boas-vindas sai na
+  // mesma língua em que a pessoa comprou.
+  const cookieLang = req.cookies.get(LANG_COOKIE)?.value;
+  const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE;
+
   const metadata: Record<string, string> = {
     source: "quiz",
     plan,
     quiz_email: email,
+    locale,
     ...(srcPlatform ? { src_platform: srcPlatform } : {}),
     ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
   };

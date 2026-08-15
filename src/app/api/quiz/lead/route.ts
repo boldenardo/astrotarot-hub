@@ -7,6 +7,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { normalizeCode } from "@/lib/affiliate";
+import { sendEmail } from "@/lib/server/email";
+import { leadReadingEmail } from "@/lib/server/email-templates";
+import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 
@@ -19,6 +22,19 @@ function cleanText(value: unknown, max: number): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim().slice(0, max);
   return trimmed || null;
+}
+
+/** Este lead já recebeu a leitura por e-mail? Evita reenvio a cada submit. */
+async function leadAlreadyEmailed(
+  admin: ReturnType<typeof getSupabaseAdmin>,
+  email: string
+): Promise<boolean> {
+  const { data } = await admin
+    .from("leads")
+    .select("reading_email_sent_at")
+    .eq("email", email)
+    .maybeSingle();
+  return Boolean((data as { reading_email_sent_at?: string } | null)?.reading_email_sent_at);
 }
 
 export async function POST(req: NextRequest) {
@@ -59,14 +75,17 @@ export async function POST(req: NextRequest) {
   const birthDate = cleanText(body.birthDate, 10);
   const score = cleanText(body.score, 10)?.toUpperCase() ?? null;
 
+  const name = cleanText(body.name, 100);
+  const sign = cleanText(body.sign, 20);
+
   try {
     const admin = getSupabaseAdmin();
     const { error } = await admin.from("leads").upsert(
       {
         email,
-        name: cleanText(body.name, 100),
+        name,
         birth_date: birthDate && DATE_RE.test(birthDate) ? birthDate : null,
-        sign: cleanText(body.sign, 20),
+        sign,
         score: score && SCORES.has(score) ? score : null,
         answers,
         visitor_id: cleanText(body.visitorId, 64),
@@ -79,6 +98,23 @@ export async function POST(req: NextRequest) {
     );
     if (error) {
       console.error("[quiz/lead] upsert falhou:", error);
+    } else {
+      // A leitura prometida, entregue de fato — no idioma do funil.
+      // Só no PRIMEIRO cadastro deste e-mail: reenviar a cada re-submit
+      // seria spam e queimaria a reputação do domínio.
+      const isNew = !(await leadAlreadyEmailed(admin, email));
+      if (isNew) {
+        const cookieLang = req.cookies.get(LANG_COOKIE)?.value;
+        const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE;
+        const mail = leadReadingEmail({ name, sign, locale });
+        const sent = await sendEmail({ to: email, ...mail });
+        if (sent) {
+          await admin
+            .from("leads")
+            .update({ reading_email_sent_at: new Date().toISOString() })
+            .eq("email", email);
+        }
+      }
     }
   } catch (e) {
     console.error("[quiz/lead] erro:", e);

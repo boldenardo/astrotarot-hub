@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { sendEmail } from "@/lib/server/email";
+import { welcomeEmail } from "@/lib/server/email-templates";
 
 export const runtime = "nodejs";
 
@@ -375,14 +377,30 @@ export async function POST(req: NextRequest) {
           // Lead do quiz convertido: carimba converted_at (best-effort;
           // não pode quebrar a concessão do benefício).
           if (guestEmailRaw) {
+            const leadEmail = guestEmailRaw.toLowerCase().trim();
             const { error: leadErr } = await admin
               .from("leads")
               .update({ converted_at: new Date().toISOString() })
-              .eq("email", guestEmailRaw.toLowerCase().trim())
+              .eq("email", leadEmail)
               .is("converted_at", null);
             if (leadErr) {
               console.error("[stripe/webhook] leads.converted_at:", leadErr);
             }
+
+            // Boas-vindas com o passo de ativação. O checkout é GUEST: sem
+            // criar a conta com o MESMO e-mail, a pessoa paga e não acessa
+            // nada — este e-mail é o que fecha esse buraco.
+            const { data: lead } = await admin
+              .from("leads")
+              .select("name")
+              .eq("email", leadEmail)
+              .maybeSingle();
+            const mail = welcomeEmail({
+              name: (lead as { name?: string } | null)?.name ?? null,
+              email: leadEmail,
+              locale: session.metadata?.locale === "es" ? "es" : "en",
+            });
+            await sendEmail({ to: leadEmail, ...mail });
           }
 
           // Venda atribuída ao afiliado (só quando o benefício foi concedido
