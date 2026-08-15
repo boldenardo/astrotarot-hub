@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { cookies } from "next/headers";
+import { LocaleProvider } from "@/components/LocaleProvider";
+import { DEFAULT_LOCALE, LANG_COOKIE, isLocale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Free Soulmate Tarot Reading | AstroTarot",
@@ -11,11 +14,23 @@ export const metadata: Metadata = {
 };
 
 // Funnel layout: no navbar, no footer, no exits. Brand mark is NOT a link.
-export default function QuizLayout({
+export default async function QuizLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Idioma vem do cookie que o middleware grava a partir do Accept-Language:
+  // assim o HTML do servidor já sai traduzido, sem flash de inglês.
+  const store = await cookies();
+  const raw = store.get(LANG_COOKIE)?.value;
+  const locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+
+  return (
+    <LocaleProvider initialLocale={locale}>{renderShell(children)}</LocaleProvider>
+  );
+}
+
+function renderShell(children: React.ReactNode) {
   return (
     <div className="relative min-h-dvh overflow-x-hidden">
       {/* Ambient glows */}

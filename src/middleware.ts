@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest, type NextFetchEvent } from "next/server";
+import { LANG_COOKIE, localeFromAcceptLanguage } from "@/lib/i18n";
 
 // Rotas que exigem login. /tarot, /compatibility, /numerology e /predictions
 // viraram landing pages públicas (SEO) — a ferramenta em si continua gated:
@@ -97,12 +98,42 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
   }
 });
 
+/**
+ * Grava o idioma detectado no cookie, para o SSR já renderizar traduzido.
+ *
+ * O Accept-Language chega em toda requisição (Safari e Chrome mandam), então
+ * a primeira tela sai no idioma certo — sem flash de inglês, que é o que
+ * mataria a conversão de quem fala espanhol.
+ *
+ * Só grava quando ainda não há cookie: assim uma escolha manual futura ou a
+ * correção via navigator.language não é sobrescrita a cada navegação.
+ */
+function withLangCookie(req: NextRequest, res: NextResponse): NextResponse {
+  if (req.cookies.get(LANG_COOKIE)) return res;
+  const locale = localeFromAcceptLanguage(req.headers.get("accept-language"));
+  res.cookies.set(LANG_COOKIE, locale, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: "lax",
+  });
+  return res;
+}
+
 export default function middleware(req: NextRequest, ev: NextFetchEvent) {
   // Sem Clerk real, o handshake dele quebraria até as páginas públicas.
   if (!isClerkConfigured()) {
-    return hostRewrite(req as never) ?? NextResponse.next();
+    const res = hostRewrite(req as never) ?? NextResponse.next();
+    return withLangCookie(req, res);
   }
-  return clerkHandler(req, ev);
+  const result = clerkHandler(req, ev);
+  // O handler do Clerk pode devolver Response ou Promise; só anexamos o
+  // cookie quando temos um NextResponse em mãos.
+  if (result instanceof Promise) {
+    return result.then((res) =>
+      res instanceof NextResponse ? withLangCookie(req, res) : res
+    );
+  }
+  return result instanceof NextResponse ? withLangCookie(req, result) : result;
 }
 
 export const config = {

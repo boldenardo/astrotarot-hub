@@ -30,12 +30,9 @@ import {
   Volume2,
 } from "lucide-react";
 import {
-  MASTER_AURA,
-  SIGN_LOVE_TRAIT,
   STEPS,
   ZODIAC_SIGNS,
   computeScore,
-  getAnalyzingStages,
   loadQuizState,
   resolveReactionText,
   resumeIndex,
@@ -44,6 +41,8 @@ import {
   type QuizState,
   type QuizStep,
 } from "@/lib/quiz-data";
+import { useQuizContent } from "@/components/LocaleProvider";
+import { analyzingStagesFor, type QuizContent, type QuizUI } from "@/lib/i18n/content";
 import { trackEvent } from "@/lib/analytics";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import { PROOF_STATS } from "@/lib/proof-stats";
@@ -61,6 +60,11 @@ const slideVariants = {
 
 export default function QuizFlowPage() {
   const router = useRouter();
+  // Conteúdo no idioma detectado (steps + textos). Os ids e os `value`
+  // das opções são iguais em todo idioma, então score e analytics não mudam.
+  const content = useQuizContent();
+  const { ui } = content;
+  const LOCALIZED_STEPS = content.steps;
   const [state, setState] = useState<QuizState>({ answers: {} });
   const [stepIndex, setStepIndex] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -92,7 +96,7 @@ export default function QuizFlowPage() {
   // Refire em retomada (refresh/volta) de propósito — também é sinal.
   useEffect(() => {
     if (!hydrated) return;
-    const current = STEPS[Math.min(stepIndex, STEPS.length - 1)];
+    const current = LOCALIZED_STEPS[Math.min(stepIndex, LOCALIZED_STEPS.length - 1)];
     trackEvent("quiz_step_viewed", {
       category: "quiz",
       label: current.id,
@@ -101,8 +105,8 @@ export default function QuizFlowPage() {
     });
   }, [stepIndex, hydrated]);
 
-  const step: QuizStep = STEPS[Math.min(stepIndex, STEPS.length - 1)];
-  const progress = Math.round(((stepIndex + 1) / STEPS.length) * 100);
+  const step: QuizStep = LOCALIZED_STEPS[Math.min(stepIndex, LOCALIZED_STEPS.length - 1)];
+  const progress = Math.round(((stepIndex + 1) / LOCALIZED_STEPS.length) * 100);
   const isAnalyzing = step.id === "analyzing";
   const firstName = state.name?.trim().split(/\s+/)[0];
 
@@ -128,7 +132,7 @@ export default function QuizFlowPage() {
     withTransitionLock(() => {
       advancingRef.current = false;
       setDirection(1);
-      setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
+      setStepIndex((i) => Math.min(i + 1, LOCALIZED_STEPS.length - 1));
     });
   }, [withTransitionLock]);
 
@@ -231,7 +235,7 @@ export default function QuizFlowPage() {
         aria-valuenow={progress}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label="Quiz progress"
+        aria-label={ui.progress}
       >
         <motion.div
           className="h-full rounded-full"
@@ -248,7 +252,7 @@ export default function QuizFlowPage() {
         <button
           type="button"
           onClick={goBack}
-          aria-label="Go back"
+          aria-label={ui.back}
           className="mb-2 flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(255,255,255,0.12)] text-[#b9b2d0] transition-colors hover:text-[#e8e4f5]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
@@ -272,6 +276,7 @@ export default function QuizFlowPage() {
           >
             {step.kind === "name" && (
               <NameStep
+                ui={ui}
                 messages={step.messages}
                 placeholder={step.placeholder}
                 cta={step.cta}
@@ -282,6 +287,7 @@ export default function QuizFlowPage() {
 
             {step.kind === "chat" && (
               <ChatStep
+                ui={ui}
                 messages={step.messages.map((m) => resolveReactionText(m, vars))}
                 cta={step.cta}
                 onContinue={goNext}
@@ -290,6 +296,7 @@ export default function QuizFlowPage() {
 
             {step.kind === "question" && (
               <QuestionStep
+                ui={ui}
                 step={step}
                 selected={state.answers[step.id]}
                 vars={vars}
@@ -298,15 +305,16 @@ export default function QuizFlowPage() {
             )}
 
             {step.kind === "reveal" && (
-              <RevealStep step={step} sign={state.sign} onContinue={goNext} />
+              <RevealStep step={step} sign={state.sign} content={content} onContinue={goNext} />
             )}
 
             {step.kind === "proof" && (
-              <ProofStep step={step} onContinue={goNext} />
+              <ProofStep step={step} ui={ui} onContinue={goNext} />
             )}
 
             {step.kind === "media" && (
               <MediaStep
+                ui={ui}
                 step={step}
                 vars={vars}
                 onContinue={goNext}
@@ -315,6 +323,7 @@ export default function QuizFlowPage() {
 
             {step.kind === "location" && (
               <LocationStep
+                ui={ui}
                 cta={step.cta}
                 name={firstName}
                 onContinue={goNext}
@@ -323,6 +332,7 @@ export default function QuizFlowPage() {
 
             {step.kind === "birthdate" && (
               <BirthdateStep
+                ui={ui}
                 initialValue={state.birthDate ?? ""}
                 onContinue={handleBirthdate}
               />
@@ -330,6 +340,7 @@ export default function QuizFlowPage() {
 
             {step.kind === "email" && (
               <EmailStep
+                ui={ui}
                 initialEmail={state.email ?? ""}
                 name={firstName}
                 onContinue={handleEmail}
@@ -337,7 +348,7 @@ export default function QuizFlowPage() {
             )}
 
             {isAnalyzing && (
-              <AnalyzingScreen name={state.name} onDone={handleAnalyzingDone} />
+              <AnalyzingScreen name={state.name} content={content} onDone={handleAnalyzingDone} />
             )}
           </motion.div>
         </AnimatePresence>
@@ -542,12 +553,14 @@ function PrimaryButton({
 /* --------------------------------- Name --------------------------------- */
 
 function NameStep({
+  ui,
   messages,
   placeholder,
   cta,
   initialValue,
   onContinue,
 }: {
+  ui: QuizUI;
   messages: string[];
   placeholder?: string;
   cta?: string;
@@ -564,7 +577,7 @@ function NameStep({
     if (submitted) return; // evita duplo submit (Enter + clique)
     const trimmed = value.trim();
     if (trimmed.length < 2) {
-      setError("Please tell me your name so I can read your chart.");
+      setError(ui.nameError);
       return;
     }
     setSubmitted(true);
@@ -584,7 +597,7 @@ function NameStep({
             type="text"
             autoComplete="given-name"
             autoFocus
-            placeholder={placeholder ?? "Your first name"}
+            placeholder={placeholder ?? ui.yourFirstName}
             value={value}
             onChange={(e) => {
               setValue(e.target.value);
@@ -598,7 +611,7 @@ function NameStep({
             </p>
           )}
           <PrimaryButton type="submit" disabled={submitted}>
-            {cta ?? "Continue"}
+            {cta ?? ui.continue}
           </PrimaryButton>
         </motion.div>
       )}
@@ -609,10 +622,12 @@ function NameStep({
 /* --------------------------------- Chat --------------------------------- */
 
 function ChatStep({
+  ui,
   messages,
   cta,
   onContinue,
 }: {
+  ui: QuizUI;
   messages: string[];
   cta?: string;
   onContinue: () => void;
@@ -623,7 +638,7 @@ function ChatStep({
       <GuideConversation messages={messages} onDone={() => setDone(true)} />
       {done && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <PrimaryButton onClick={onContinue}>{cta ?? "Continue"}</PrimaryButton>
+          <PrimaryButton onClick={onContinue}>{cta ?? ui.continue}</PrimaryButton>
         </motion.div>
       )}
     </div>
@@ -633,11 +648,13 @@ function ChatStep({
 /* ------------------------------- Question -------------------------------- */
 
 function QuestionStep({
+  ui,
   step,
   selected,
   vars,
   onAnswer,
 }: {
+  ui: QuizUI;
   step: Extract<QuizStep, { kind: "question" }>;
   selected?: string;
   vars: { name?: string; sign?: string };
@@ -748,20 +765,30 @@ const REVEAL_ICONS = {
 function RevealStep({
   step,
   sign,
+  content,
   onContinue,
 }: {
   step: Extract<QuizStep, { kind: "reveal" }>;
   sign?: string;
+  content: QuizContent;
   onContinue: () => void;
 }) {
   const signData = ZODIAC_SIGNS.find((s) => s.name === sign);
-  const trait = sign ? SIGN_LOVE_TRAIT[sign] : undefined;
+  const trait = sign ? content.loveTrait[sign] : undefined;
   const vars = { sign, trait };
 
   const fill = (text: string) =>
     text
-      .replace("{sign}", sign ?? "your sign")
-      .replace("{trait}", vars.trait ?? "you love with your whole heart");
+      .replace("{sign}", sign ? content.signLabel(sign) : "")
+      .replace("{trait}", vars.trait ?? "");
+
+  // Destaca a ÚLTIMA frase do fecho ("...posso finalmente ver o rosto dela").
+  // Feito por posição, não por texto em inglês — assim vale em qualquer idioma.
+  const sentences = step.closing.match(/[^.!?]+[.!?]*/g) ?? [step.closing];
+  const closingHighlight = sentences.length > 1 ? sentences[sentences.length - 1].trim() : "";
+  const closingLead = closingHighlight
+    ? step.closing.slice(0, step.closing.length - closingHighlight.length)
+    : step.closing;
 
   return (
     <div className="text-center">
@@ -786,7 +813,7 @@ function RevealStep({
             {signData?.symbol ?? "✦"}
           </span>
           <p className="mt-3 font-display text-3xl font-semibold text-[#e8e4f5]">
-            {sign ?? "Your sign"}
+            {sign ? content.signLabel(sign) : ""}
           </p>
           {signData && (
             <p className="mt-1 text-sm text-[#b9b2d0]">
@@ -826,12 +853,14 @@ function RevealStep({
         transition={{ delay: 1.4, duration: 0.4 }}
       >
         <p className="glass mt-4 rounded-2xl px-5 py-4 text-[15px] leading-relaxed text-[#e8e4f5]">
-          {step.closing.split("I can finally visualize their face")[0]}
-          <span className="font-semibold text-[#d4af37]">
-            I can finally visualize their face.
-          </span>
+          {closingLead}
+          {closingHighlight && (
+            <span className="font-semibold text-[#d4af37]">{closingHighlight}</span>
+          )}
         </p>
-        <PrimaryButton onClick={onContinue}>{step.cta ?? "Continue"}</PrimaryButton>
+        <PrimaryButton onClick={onContinue}>
+          {step.cta ?? content.ui.continue}
+        </PrimaryButton>
       </motion.div>
     </div>
   );
@@ -865,9 +894,11 @@ const PROOF_COUPLES = [
 
 function ProofStep({
   step,
+  ui,
   onContinue,
 }: {
   step: Extract<QuizStep, { kind: "proof" }>;
+  ui: QuizUI;
   onContinue: () => void;
 }) {
   return (
@@ -885,7 +916,7 @@ function ProofStep({
           <p className="font-display text-2xl font-semibold text-[#e8d9a8]">
             {PROOF_STATS.readings}
           </p>
-          <p className="text-xs text-[#b9b2d0]">readings delivered</p>
+          <p className="text-xs text-[#b9b2d0]">{ui.proofReadings}</p>
         </div>
         <span className="h-8 w-px bg-[rgba(255,255,255,0.12)]" aria-hidden />
         <div>
@@ -893,7 +924,7 @@ function ProofStep({
             {PROOF_STATS.rating}
             <Star className="h-4 w-4 fill-[#d4af37] text-[#d4af37]" aria-hidden />
           </p>
-          <p className="text-xs text-[#b9b2d0]">average rating</p>
+          <p className="text-xs text-[#b9b2d0]">{ui.proofRating}</p>
         </div>
       </div>
 
@@ -915,7 +946,7 @@ function ProofStep({
               className="aspect-square w-full object-cover"
             />
             <figcaption className="p-3">
-              <span className="flex gap-0.5" aria-label="5 out of 5 stars">
+              <span className="flex gap-0.5" aria-label={ui.fiveStars}>
                 {Array.from({ length: 5 }).map((_, j) => (
                   <Star
                     key={j}
@@ -941,10 +972,12 @@ function ProofStep({
 /* --------------------------------- Media --------------------------------- */
 
 function MediaStep({
+  ui,
   step,
   vars,
   onContinue,
 }: {
+  ui: QuizUI;
   step: Extract<QuizStep, { kind: "media" }>;
   vars: { name?: string; sign?: string };
   onContinue: () => void;
@@ -1004,7 +1037,7 @@ function MediaStep({
                   <Volume2 className="h-6 w-6 text-[#1a1330]" aria-hidden />
                 </span>
                 <span className="text-sm font-medium">
-                  Tap to hear Master Aura
+                  {ui.tapToHear}
                 </span>
               </button>
             )}
@@ -1019,7 +1052,7 @@ function MediaStep({
             </p>
           )}
           <PrimaryButton onClick={onContinue}>
-            {step.cta ?? "Continue"}
+            {step.cta ?? ui.continue}
           </PrimaryButton>
         </motion.div>
       )}
@@ -1030,10 +1063,12 @@ function MediaStep({
 /* -------------------------------- Location ------------------------------- */
 
 function LocationStep({
+  ui,
   cta,
   name,
   onContinue,
 }: {
+  ui: QuizUI;
   cta?: string;
   name?: string;
   onContinue: () => void;
@@ -1062,10 +1097,8 @@ function LocationStep({
 
   const messages = [
     place
-      ? `Your birth chart shows that you are likely to meet your soulmate near to 📍 ${place}. I have prepared a special revelation for you, let's see it right now. ✨`
-      : `Your birth chart shows the meeting point is close to where you are right now${
-          name ? `, ${name}` : ""
-        }. I have prepared a special revelation for you, let's see it right now. ✨`,
+      ? ui.locationWithPlace(place)
+      : ui.locationGeneric(name),
   ];
 
   if (!loaded) {
@@ -1073,7 +1106,7 @@ function LocationStep({
       <div className="flex flex-col items-center justify-center py-10">
         <MapPin className="h-6 w-6 animate-pulse text-[#d4af37]" aria-hidden />
         <p className="mt-3 text-sm text-[#b9b2d0]">
-          Locating the meeting point in your chart...
+          {ui.locating}
         </p>
       </div>
     );
@@ -1085,7 +1118,7 @@ function LocationStep({
       {done && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <PrimaryButton onClick={onContinue}>
-            {cta ?? "Show me the revelation ✨"}
+            {cta ?? ui.continue}
           </PrimaryButton>
         </motion.div>
       )}
@@ -1096,9 +1129,11 @@ function LocationStep({
 /* ------------------------------- Birthdate ------------------------------- */
 
 function BirthdateStep({
+  ui,
   initialValue,
   onContinue,
 }: {
+  ui: QuizUI;
   initialValue: string;
   onContinue: (birthDate: string) => void;
 }) {
@@ -1115,11 +1150,11 @@ function BirthdateStep({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!value || !signFromDate(value)) {
-      setError("Please enter your full birth date.");
+      setError(ui.birthdateError);
       return;
     }
     if (maxDate && value > maxDate) {
-      setError("Your birth date can't be in the future.");
+      setError(ui.birthdateFuture);
       return;
     }
     onContinue(value);
@@ -1129,11 +1164,11 @@ function BirthdateStep({
     <form onSubmit={submit} noValidate>
       <GuideConversation
         messages={[
-          "Your exact birth date is what turns a reading into a portrait — it fixes the position of Venus at the moment you were born.",
+          ui.birthdateIntro,
         ]}
       />
       <label htmlFor="quiz-birthdate" className="sr-only">
-        Birth date
+        {ui.birthdateLabel}
       </label>
       <input
         id="quiz-birthdate"
@@ -1154,7 +1189,7 @@ function BirthdateStep({
           {error}
         </p>
       )}
-      <PrimaryButton type="submit">Continue</PrimaryButton>
+      <PrimaryButton type="submit">{ui.continue}</PrimaryButton>
     </form>
   );
 }
@@ -1162,10 +1197,12 @@ function BirthdateStep({
 /* --------------------------------- Email -------------------------------- */
 
 function EmailStep({
+  ui,
   initialEmail,
   name,
   onContinue,
 }: {
+  ui: QuizUI;
   initialEmail: string;
   name?: string;
   onContinue: (email: string) => void;
@@ -1179,7 +1216,7 @@ function EmailStep({
     e.preventDefault();
     const trimmed = email.trim();
     if (!EMAIL_RE.test(trimmed)) {
-      setError("Please enter a valid email address.");
+      setError(ui.emailError);
       return;
     }
     // "gmail.l.com" passa no regex mas não existe: a leitura nunca chega e
@@ -1203,14 +1240,12 @@ function EmailStep({
     <form onSubmit={submit} noValidate>
       <GuideConversation
         messages={[
-          name
-            ? `${name}, your portrait is ready. Where should I send your full Soulmate Reading?`
-            : "Your portrait is ready. Where should I send your full Soulmate Reading?",
+          ui.emailIntro(name),
         ]}
       />
 
       <label htmlFor="quiz-email" className="sr-only">
-        Email address
+        {ui.emailLabel}
       </label>
       <input
         id="quiz-email"
@@ -1234,7 +1269,7 @@ function EmailStep({
       )}
       {suggestion && (
         <p className="mt-2 text-center text-sm text-[#e8d9a8]">
-          Did you mean{" "}
+          {ui.emailSuggestion("")}{" "}
           <button
             type="button"
             onClick={acceptSuggestion}
@@ -1242,15 +1277,15 @@ function EmailStep({
           >
             {suggestion}
           </button>
-          ? Tap to fix, or continue to keep what you typed.
+          {ui.emailSuggestionTail}
         </p>
       )}
 
-      <PrimaryButton type="submit">Reveal my soulmate</PrimaryButton>
+      <PrimaryButton type="submit">{ui.emailCta}</PrimaryButton>
 
       <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#b9b2d0]">
         <Lock className="h-3 w-3" aria-hidden="true" />
-        No spam. Your reading stays private.
+        {ui.noSpam}
       </p>
     </form>
   );
@@ -1262,14 +1297,16 @@ const STAGE_INTERVAL_MS = 1100; // 4 stages ≈ 4.4s + exit pause
 
 function AnalyzingScreen({
   name,
+  content,
   onDone,
 }: {
   name?: string;
+  content: QuizContent;
   onDone: () => void;
 }) {
   const [completed, setCompleted] = useState(0);
   const doneRef = useRef(false);
-  const stages = getAnalyzingStages(name);
+  const stages = analyzingStagesFor(content, name);
   const firstName = name?.trim();
 
   useEffect(() => {
@@ -1295,12 +1332,11 @@ function AnalyzingScreen({
   return (
     <div className="text-center" aria-live="polite">
       <h2 className="text-balance text-2xl leading-snug sm:text-3xl">
-        Reading your <span className="text-gold">soulmate signature</span>
+        {content.ui.analyzingTitle}{" "}
+        <span className="text-gold">{content.ui.analyzingTitleAccent}</span>
       </h2>
       <p className="mt-2 text-sm text-[#b9b2d0]">
-        {firstName
-          ? `Hold on, ${firstName} — this takes a few seconds.`
-          : "Hold on — this takes a few seconds."}
+        {content.ui.analyzingBody(firstName)}
       </p>
 
       <div className="mx-auto mt-8 h-1.5 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.08)]">
