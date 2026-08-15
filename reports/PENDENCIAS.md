@@ -45,7 +45,28 @@ Testado contra produção, não contra a tela de configuração:
 **O e-mail da leitura já está funcionando** — ele não depende da coluna
 que falta abaixo. Quem preencher o funil agora recebe.
 
-## PENDÊNCIA 1b — falta UMA SQL nova 🔴
+## ~~PENDÊNCIA 1b — SQL do descadastro~~ ✅ FEITO
+
+Coluna `unsubscribed_at` existe. E o disparo real rodou:
+**3 enviados, 3 `delivered`** (confirmado nos logs do Resend, não só
+aceito). Rodando de novo agora dá `candidates: 0` — a trava de envio
+único funciona.
+
+### Se você clicar no "Unsubscribe" para testar
+
+O link é real: ele tira o endereço da lista de verdade. Para desfazer:
+
+```sql
+UPDATE leads SET unsubscribed_at = NULL WHERE email = 'seu@email.com';
+```
+
+E para poder receber o de carrinho abandonado outra vez:
+
+```sql
+UPDATE leads SET recovery_email_sent_at = NULL WHERE email = 'seu@email.com';
+```
+
+## ~~PENDÊNCIA 1b — falta UMA SQL nova~~ (histórico) 🔴
 
 `20260815_lead_unsubscribe.sql`. Ela apareceu depois: ao renderizar os
 e-mails para conferir, vi que o de carrinho abandonado sairia **sem
