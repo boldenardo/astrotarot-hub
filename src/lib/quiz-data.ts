@@ -427,18 +427,15 @@ export function computeScore(answers: Record<string, string>): QuizScore {
   if (answers.q_past === "often") points += 2;
   else if (answers.q_past === "sometimes") points += 1;
 
-  // q_block: barreiras internas pesam mais que timing.
-  if (answers.q_block === "walls") points += 2;
-  else if (answers.q_block === "timing" || answers.q_block === "wrong_people") {
-    points += 1;
-  }
-
   // q_ready: prontidão emocional.
   if (answers.q_ready === "work" || answers.q_ready === "unsure") points += 2;
   else if (answers.q_ready === "scared") points += 1;
 
-  if (points >= 5) return "LOW";
-  if (points >= 3) return "MEDIUM";
+  // Máximo real = 6 pontos (3 perguntas × 2). Os cortes acompanham esse
+  // teto: com os limites antigos (5/3), calibrados para uma pergunta
+  // `q_block` que não existe mais no funil, quase todo mundo caía em HIGH.
+  if (points >= 4) return "LOW";
+  if (points >= 2) return "MEDIUM";
   return "HIGH";
 }
 
