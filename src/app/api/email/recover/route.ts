@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
     .select("email, name")
     .is("converted_at", null)
     .is("recovery_email_sent_at", null)
+    // Quem pediu para sair fica fora — ignorar isso é o caminho mais
+    // rápido para o domínio inteiro cair em spam.
+    .is("unsubscribed_at", null)
     .lt("created_at", cutoff)
     .order("created_at", { ascending: true })
     .limit(BATCH_SIZE);
@@ -61,7 +64,11 @@ export async function POST(req: NextRequest) {
   for (const lead of leads) {
     // Idioma do lead não é guardado hoje; recuperação sai em inglês, que
     // é o padrão do site. (Melhoria futura: coluna `locale` em leads.)
-    const mail = abandonedCartEmail({ name: lead.name, locale: "en" });
+    const mail = abandonedCartEmail({
+      name: lead.name,
+      email: lead.email,
+      locale: "en",
+    });
     const ok = await sendEmail({ to: lead.email, ...mail });
     if (ok) {
       sent++;

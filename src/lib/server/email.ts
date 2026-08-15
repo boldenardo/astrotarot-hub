@@ -16,6 +16,13 @@ export interface EmailMessage {
   /** Texto puro — melhora entregabilidade e cobre clientes sem HTML. */
   text?: string;
   replyTo?: string;
+  /**
+   * Marca o envio como promocional. Adiciona os cabeçalhos de descadastro
+   * de um clique (RFC 8058), que Gmail e Yahoo exigem de quem manda em
+   * volume — sem eles o disparo em massa vai para spam.
+   * Não use em transacional (recibo, boas-vindas): esses não são lista.
+   */
+  unsubscribeUrl?: string;
 }
 
 /** Remetente configurado. Precisa ser de domínio verificado no Resend. */
@@ -49,6 +56,14 @@ export async function sendEmail(msg: EmailMessage): Promise<boolean> {
         html: msg.html,
         ...(msg.text ? { text: msg.text } : {}),
         ...(msg.replyTo ? { reply_to: msg.replyTo } : {}),
+        ...(msg.unsubscribeUrl
+          ? {
+              headers: {
+                "List-Unsubscribe": `<${msg.unsubscribeUrl}>`,
+                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+              },
+            }
+          : {}),
       }),
     });
 
