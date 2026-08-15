@@ -27,66 +27,51 @@ $24.99 no checkout, 3 leads no banco.
 
 ---
 
-## PENDÊNCIA 1 — SQL no Supabase (2 min) 🔴
+## ~~PENDÊNCIA 1 — SQL do lead_emails~~ ✅ FEITO
 
-**Só uma migration ficou de fora: `20260815_lead_emails`.** Confirmei o
-erro exato: `column leads.reading_email_sent_at does not exist`.
+Verificado no banco: `reading_email_sent_at` e `recovery_email_sent_at`
+existem. As 3 linhas de lead voltam com as colunas novas vazias.
 
-Sem ela **os e-mails não funcionam** — a rota tenta gravar o carimbo,
-falha, e o mesmo e-mail seria reenviado a cada re-submit do formulário.
+## PENDÊNCIA 1b — falta UMA SQL nova 🔴
 
-Cole isso no **SQL Editor do Supabase** e clique **RUN**. É idempotente:
-rodar de novo não quebra nada (por isso incluí junto o `premium_yearly`,
-que é a única que não consigo verificar por fora — ela só mexe numa
-constraint, e re-rodar é de graça).
+`20260815_lead_unsubscribe.sql`. Ela apareceu depois: ao renderizar os
+e-mails para conferir, vi que o de carrinho abandonado sairia **sem
+link de descadastro** — e disparo em massa sem saída é o caminho curto
+para o domínio inteiro cair em spam. Já corrigi no código; falta a coluna.
 
 ```sql
--- ============================================================
--- 1) CONTROLE DE ENVIO DE E-MAIL (a que está faltando)
--- ============================================================
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS reading_email_sent_at TIMESTAMPTZ;
-ALTER TABLE leads ADD COLUMN IF NOT EXISTS recovery_email_sent_at TIMESTAMPTZ;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS unsubscribed_at TIMESTAMPTZ;
 
+DROP INDEX IF EXISTS idx_leads_recovery_pending;
 CREATE INDEX IF NOT EXISTS idx_leads_recovery_pending
   ON leads (created_at)
-  WHERE converted_at IS NULL AND recovery_email_sent_at IS NULL;
-
--- ============================================================
--- 2) PLANO ANUAL (seguro re-rodar; sem isto o webhook falha ao
---    gravar PREMIUM_YEARLY na compra de $79/ano)
--- ============================================================
-ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_subscription_plan_check;
-ALTER TABLE public.users ADD CONSTRAINT users_subscription_plan_check
-  CHECK (subscription_plan IN ('FREE', 'PREMIUM_MONTHLY', 'PREMIUM_YEARLY'));
+  WHERE converted_at IS NULL
+    AND recovery_email_sent_at IS NULL
+    AND unsubscribed_at IS NULL;
 ```
 
-**Como saber que deu certo:** rode em seguida
-
-```sql
-SELECT email, reading_email_sent_at, recovery_email_sent_at FROM leads;
-```
-
-Tem que retornar as 3 linhas com as colunas novas vazias. Se der erro de
-coluna, o passo acima não rodou.
+**Rode antes do primeiro disparo do cron.** Sem ela a rota de recuperação
+falha na consulta e não manda nada.
 
 ---
 
 ## PENDÊNCIA 2 — 3 variáveis na Vercel (5 min) 🔴
 
-Domínio no Resend você já adicionou. Falta a chave e o resto.
+Conferi a conta Resend pela API: chave **válida**, domínio
+`astrotarot.shop` com status **verified**, e os 3 registros (DKIM, SPF
+TXT, SPF MX) todos verificados. O `EMAIL_FROM` bate com o domínio. Está
+tudo certo do lado do Resend — falta só colar na Vercel.
+
 Vercel → Settings → Environment Variables → **Production**:
 
 ```
-RESEND_API_KEY=re_...
+RESEND_API_KEY=<a chave que você gerou>
 EMAIL_FROM=AstroTarot <hello@astrotarot.shop>
-CRON_SECRET=<senha longa aleatória, você inventa>
+CRON_SECRET=8S8g-2oQXooUxUYYPzxnEjJVObRM6_EWE2e1pZXjlVk
 ```
 
-- A chave sai em **resend.com → API Keys → Create** (permissão *Sending
-  access*). Só aparece uma vez.
-- `EMAIL_FROM` tem que usar o domínio que você verificou. Se ele ainda
-  estiver *Pending*, o envio falha calado.
-- `CRON_SECRET` é qualquer string longa. Ela protege o disparo em massa.
+O `CRON_SECRET` acima eu gerei (32 bytes aleatórios) — pode usar esse ou
+trocar por outro, desde que seja o mesmo no cron.
 
 **Depois de salvar: Deployments → ⋯ → Redeploy.** Variável nova não entra
 sozinha no deploy que já existe.
@@ -166,7 +151,7 @@ Aviso porque é barato de arrumar, não porque está quebrado.
 
 ## A ordem que eu seguiria
 
-1. **SQL no Supabase** (Pendência 1) — 2 min, destrava os e-mails
+1. **SQL do descadastro** (Pendência 1b) — 1 min
 2. **3 variáveis + Redeploy** (Pendência 2) — 5 min
 3. **Testar:** faça o funil com um e-mail seu; a leitura tem que chegar
    em segundos. Se não chegar, **Resend → Logs** diz o motivo
@@ -174,4 +159,4 @@ Aviso porque é barato de arrumar, não porque está quebrado.
 5. Me dá o ok para **espanhol na oferta** + **páginas legais** (4 e 5)
 6. Vídeo do retrato e chave do Gemini quando der (6 e 7)
 
-Os passos 1 a 4 são seus e dão menos de 15 minutos. O 5 é meu.
+Os passos 1 a 4 são seus e dão menos de 10 minutos. O 5 é meu.
