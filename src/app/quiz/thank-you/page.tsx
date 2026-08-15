@@ -13,8 +13,9 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { CircleCheck, Crown, Loader2 } from "lucide-react";
+import { CircleCheck, Crown, Loader2, Sparkles } from "lucide-react";
 import { trackPurchase, trackEvent } from "@/lib/analytics";
 
 const STORE_KEY = "astro_quiz_v1";
@@ -36,6 +37,10 @@ function ThankYouContent() {
   const [upsell, setUpsell] = useState<"idle" | "loading" | "done" | "hidden">(
     "idle"
   );
+  // Upsell do retrato ($24.99): mesma máquina de estados.
+  const [portrait, setPortrait] = useState<
+    "idle" | "loading" | "done" | "hidden"
+  >("idle");
 
   useEffect(() => {
     try {
@@ -103,6 +108,38 @@ function ThankYouContent() {
       }
     } catch {
       setUpsell("hidden");
+    }
+  };
+
+  // Retrato completo no cartão salvo. O funil inteiro prometeu essa imagem;
+  // oferecer só em /soulmate (atrás de login) perdia quase todo mundo.
+  const buyPortrait = async () => {
+    if (!sessionId || portrait === "loading") return;
+    setPortrait("loading");
+    trackEvent("offer_clicked", {
+      category: "upsell",
+      label: "soulmate_portrait",
+      value: 24.99,
+    });
+    try {
+      const res = await fetch("/api/quiz/portrait-upsell", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (res.ok) {
+        setPortrait("done");
+        trackPurchase({
+          sessionId: `${sessionId}_portrait`,
+          value: 24.99,
+          currency: "usd",
+        });
+      } else {
+        // Cartão recusado / 3DS: some daqui, mas segue comprável em /soulmate.
+        setPortrait("hidden");
+      }
+    } catch {
+      setPortrait("hidden");
     }
   };
 
@@ -175,6 +212,65 @@ function ThankYouContent() {
                 Your card on file will be charged now. 7-day money-back
                 guarantee still applies.
               </p>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Retrato completo — a promessa que trouxe a pessoa até aqui.
+          Só para assinatura (o cartão salvo vem da subscription) e só
+          depois que o upgrade anual foi resolvido, para não competir. */}
+      {!isPack && plan === "PREMIUM" && portrait !== "hidden" && upsell !== "loading" && (
+        <div className="glass mt-4 w-full overflow-hidden rounded-2xl border border-white/10 text-left">
+          {portrait === "done" ? (
+            <p className="flex items-center gap-2 p-5 text-sm font-medium text-emerald-300">
+              <CircleCheck className="h-5 w-5 shrink-0" aria-hidden />
+              Your full portrait is unlocked — it&apos;s waiting inside your
+              account.
+            </p>
+          ) : (
+            <>
+              <div className="relative">
+                <Image
+                  src="/funnel/soulmate-reveal-poster.webp"
+                  alt=""
+                  width={640}
+                  height={360}
+                  aria-hidden
+                  className="h-32 w-full object-cover opacity-80"
+                />
+                <span className="absolute inset-0 bg-gradient-to-t from-[#0e0a1a] to-transparent" />
+              </div>
+              <div className="p-5">
+                <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-violet-200">
+                  <Sparkles className="h-4 w-4" aria-hidden />
+                  Draw your soulmate
+                </p>
+                <h2 className="mt-2 text-lg font-semibold leading-snug">
+                  See their face in full —{" "}
+                  <span className="text-gold">$24.99</span>
+                </h2>
+                <p className="mt-1.5 text-sm text-white/75">
+                  Your plan includes a first look. This unlocks the full
+                  portrait: their features in detail, when your paths cross,
+                  and the image to download and keep.
+                </p>
+                <button
+                  type="button"
+                  onClick={buyPortrait}
+                  disabled={portrait === "loading"}
+                  className="btn-gold mt-4 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full px-6 text-sm font-semibold disabled:opacity-60"
+                >
+                  {portrait === "loading" && (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  )}
+                  Unlock my full portrait — $24.99
+                </button>
+                <p className="mt-2 text-center text-[11px] text-white/50">
+                  One-time charge on the card you just used. Same 7-day
+                  guarantee.
+                </p>
+              </div>
             </>
           )}
         </div>
