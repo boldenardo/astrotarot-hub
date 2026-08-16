@@ -30,11 +30,11 @@ const sans = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://astrotarot.shop"),
   title: {
-    default: "AstroTarot Hub — Tarot & Astrology",
+    default: "AstroTarot Hub — Tarot & Soulmate Readings",
     template: "%s | AstroTarot Hub",
   },
   description:
-    "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+    "Free Egyptian Tarot readings drawn against your birth chart — plus the portrait of the soulmate your cards point to.",
   alternates: {
     canonical: "https://astrotarot.shop/",
   },
@@ -42,23 +42,23 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://astrotarot.shop",
     siteName: "AstroTarot Hub",
-    title: "AstroTarot Hub — Tarot & Astrology",
+    title: "AstroTarot Hub — Tarot & Soulmate Readings",
     description:
-      "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+      "Free Egyptian Tarot readings drawn against your birth chart — plus the portrait of the soulmate your cards point to.",
     images: [
       {
         url: "/brand/og-1200x630.jpg",
         width: 1200,
         height: 630,
-        alt: "AstroTarot Hub — Tarot & Astrology",
+        alt: "AstroTarot Hub — Tarot & Soulmate Readings",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "AstroTarot Hub — Tarot & Astrology",
+    title: "AstroTarot Hub — Tarot & Soulmate Readings",
     description:
-      "Personalized tarot readings integrated with detailed birth charts to illuminate your path.",
+      "Free Egyptian Tarot readings drawn against your birth chart — plus the portrait of the soulmate your cards point to.",
     images: ["/brand/og-1200x630.jpg"],
   },
 };

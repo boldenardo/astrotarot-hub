@@ -57,6 +57,25 @@ export const CHECKOUT_PLANS = {
 
 export type CheckoutPlanKey = keyof typeof CHECKOUT_PLANS;
 
+/**
+ * Retrato da alma gêmea — add-on de compra única, FORA de CHECKOUT_PLANS
+ * de propósito: aquele tipo significa "comprável no /cart", e este produto
+ * é vendido dentro do funil (/api/quiz/portrait-upsell, no cartão já
+ * salvo). Misturar os dois faria o /cart precisar tratar um plano que ele
+ * nunca mostra.
+ */
+export const SOULMATE_PORTRAIT = {
+  key: "SOULMATE_PORTRAIT",
+  name: "Draw My Soulmate",
+  priceLabel: "$24.99",
+  period: "one-time payment",
+  features: [
+    "Your soulmate's portrait, unblurred",
+    "How you'll recognize them",
+    "The window when you're most likely to meet",
+  ],
+} as const;
+
 /** Features exclusivas do plano Premium Ilimitado. */
 export const PREMIUM_FEATURES = [
   "horoscope",

@@ -125,13 +125,13 @@ export default function HeroSection() {
           transition={{ duration: 0.7, delay: 0.15 }}
           className="break-words font-display text-4xl font-semibold leading-[1.05] text-ink-50 drop-shadow-[0_0_30px_rgba(124,92,255,0.35)] sm:text-5xl md:text-6xl lg:text-7xl"
         >
-          What do the cards say about
+          Pull your cards.
           <br />
-          your{" "}
+          See{" "}
           <span className="text-gold drop-shadow-[0_0_24px_rgba(212,175,55,0.45)]">
-            love, money &amp; future
+            who&rsquo;s coming
           </span>
-          ?
+          .
         </motion.h1>
 
         <motion.p
@@ -140,9 +140,8 @@ export default function HeroSection() {
           transition={{ duration: 0.7, delay: 0.3 }}
           className="mx-auto mt-6 max-w-xl text-base text-ink-400 sm:text-lg lg:text-xl"
         >
-          Answer a few quick questions and get your personal reading in 2
-          minutes. Discover who your soulmate is, when money is coming, and what
-          the stars have planned for you.
+          A personal Egyptian Tarot reading in 2 minutes &mdash; and the face of
+          the person your cards say is already on the way to you.
         </motion.p>
 
         <motion.div
@@ -151,19 +150,22 @@ export default function HeroSection() {
           transition={{ duration: 0.7, delay: 0.45 }}
           className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
+          {/* Visitante frio vai pro FUNIL, não pro /cart (rota protegida —
+              cair em tela de login antes de ver preço mata a conversão). */}
           <Link
             href="/quiz"
             className="btn-gold flex w-full items-center justify-center rounded-full px-8 py-4 text-base sm:w-auto"
           >
             Start my free reading
           </Link>
-          {/* Visitante frio vai pro FUNIL, não pro /cart (rota protegida —
-              cair em tela de login antes de ver preço mata a conversão). */}
+          {/* Segunda porta, de verdade diferente da primeira: joga as cartas
+              na hora, sem cadastro. Dois botões para o mesmo destino só
+              ocupariam espaço. */}
           <Link
-            href="/quiz"
+            href="/challenge"
             className="btn-ghost flex w-full items-center justify-center rounded-full px-8 py-4 text-base font-medium sm:w-auto"
           >
-            Find your soulmate
+            Pull 4 cards now
           </Link>
         </motion.div>
 
@@ -206,6 +208,9 @@ export default function HeroSection() {
           </span>
           <span className="text-xs">
             Free to start &bull; 2-minute reading &bull; No credit card required
+          </span>
+          <span className="text-xs text-ink-600">
+            Egyptian Tarot &bull; Read against your birth chart
           </span>
         </motion.div>
       </div>

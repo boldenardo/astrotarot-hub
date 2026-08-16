@@ -1,16 +1,24 @@
 "use client";
 
+// Home. Ordem: tarot (produto principal) → alma gêmea (o retrato) →
+// prova → planos → o resto do catálogo em uma faixa.
+//
+// A versão anterior abria com seis cards de features (dinheiro, horóscopo,
+// mapa astral, números) antes de qualquer um dos dois produtos, e a
+// leitura de tarot — o que a pessoa veio buscar — só aparecia perto do
+// rodapé. Agora cada bloco vende uma coisa só.
+
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import FeaturesSection from "@/components/FeaturesSection";
+import TarotSection from "@/components/TarotSection";
+import SoulmateSection from "@/components/SoulmateSection";
+import AlsoIncluded from "@/components/AlsoIncluded";
 import FaqSection from "@/components/FaqSection";
 import { HOME_FAQS } from "@/lib/faq-data";
-import VSLPlayer from "@/components/VSLPlayer";
-import CardBack from "@/components/CardBack";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Check, Star, Sparkles, Heart, Crown } from "lucide-react";
+import { Check, Star, Sparkles, Crown } from "lucide-react";
 import { CHECKOUT_PLANS } from "@/lib/plans";
 
 const freePerks = [
@@ -22,14 +30,14 @@ const freePerks = [
 const testimonials = [
   {
     name: "Sarah M.",
-    text: "I finally found clarity about my path in love. The accuracy genuinely surprised me.",
+    text: "The cards named the thing I hadn't told anyone. Then the portrait looked like someone I'd already met.",
     rating: 5,
     location: "Austin, TX",
     photo: "/testimonials/t6.jpg",
   },
   {
     name: "Emily R.",
-    text: "I discovered my purpose and everything started to make sense. An incredible tool.",
+    text: "I've paid for readings before and got horoscope copy. This one actually answered what I asked.",
     rating: 5,
     location: "Portland, OR",
     photo: "/testimonials/t3.jpg",
@@ -42,41 +50,86 @@ export default function Home() {
       <Navbar />
       <HeroSection />
 
-      {/* VSL — página comercial. preload="none": os 58 MB só saem do
-          Cloudflare R2 quando o visitante dá Play. */}
-      <section className="relative px-4 py-16 sm:px-6 sm:py-20">
-        <div className="mx-auto max-w-3xl">
+      {/* 1. Tarot — o produto principal, logo abaixo da dobra. */}
+      <TarotSection />
+
+      {/* 2. Alma gêmea — a VSL mora dentro dela, é o argumento do retrato. */}
+      <SoulmateSection />
+
+      {/* Prova social */}
+      <section className="relative overflow-hidden py-16 sm:py-24">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-night-900/50 to-transparent" />
+        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
+          <motion.h2
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-12 text-center font-display text-3xl font-semibold text-ink-50 sm:text-4xl"
+          >
+            Real stories
+          </motion.h2>
+
+          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+            {testimonials.map((t, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+                className="glass rounded-3xl p-6 sm:p-8"
+              >
+                <div className="mb-4 flex gap-1">
+                  {[...Array(t.rating)].map((_, s) => (
+                    <Star
+                      key={s}
+                      className="h-5 w-5 text-gold-400"
+                      fill="currentColor"
+                    />
+                  ))}
+                </div>
+                <p className="mb-6 break-words text-base italic leading-relaxed text-ink-200 sm:text-lg">
+                  &ldquo;{t.text}&rdquo;
+                </p>
+                <div className="flex items-center gap-3">
+                  <Image
+                    src={t.photo}
+                    alt={t.name}
+                    width={96}
+                    height={96}
+                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-1 ring-gold-400/40"
+                  />
+                  <div>
+                    <p className="font-semibold text-ink-50">{t.name}</p>
+                    <p className="text-sm text-ink-600">{t.location}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Casais: a prova que importa para o retrato é gente junta. */}
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-8 text-center"
+            className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4"
           >
-            <h2 className="font-display text-3xl font-semibold text-ink-50 sm:text-4xl md:text-5xl">
-              Watch: what the stars already{" "}
-              <span className="text-gold">know about you</span>
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base text-ink-400 sm:text-lg">
-              In a few minutes, see how your birth chart and the cards reveal
-              what 2026 is preparing for your love, money and purpose.
-            </p>
+            {["couple-1", "couple-2", "couple-3", "couple-4"].map((c) => (
+              <Image
+                key={c}
+                src={`/social-proof/${c}.webp`}
+                alt=""
+                width={320}
+                height={320}
+                className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10"
+              />
+            ))}
           </motion.div>
-          <VSLPlayer placement="sales_page">
-            <div className="mt-6 flex justify-center">
-              <Link
-                href="/quiz"
-                className="btn-gold flex items-center justify-center rounded-full px-8 py-4 text-base"
-              >
-                Start my free reading
-              </Link>
-            </div>
-          </VSLPlayer>
         </div>
       </section>
 
-      <FeaturesSection />
-
-      {/* Plans & pricing */}
+      {/* Planos */}
       <section className="relative px-4 py-16 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-6xl">
           <motion.div
@@ -219,177 +272,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="relative overflow-hidden py-16 sm:py-24">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-night-900/50 to-transparent" />
-        <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
-          <motion.h2
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center font-display text-3xl font-semibold text-ink-50 sm:text-4xl"
-          >
-            Real stories
-          </motion.h2>
-
-          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
-            {testimonials.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="glass rounded-3xl p-6 sm:p-8"
-              >
-                <div className="mb-4 flex gap-1">
-                  {[...Array(t.rating)].map((_, s) => (
-                    <Star
-                      key={s}
-                      className="h-5 w-5 text-gold-400"
-                      fill="currentColor"
-                    />
-                  ))}
-                </div>
-                <p className="mb-6 break-words text-base italic leading-relaxed text-ink-200 sm:text-lg">
-                  &ldquo;{t.text}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <Image
-                    src={t.photo}
-                    alt={t.name}
-                    width={96}
-                    height={96}
-                    className="h-12 w-12 flex-shrink-0 rounded-full object-cover ring-1 ring-gold-400/40"
-                  />
-                  <div>
-                    <p className="font-semibold text-ink-50">{t.name}</p>
-                    <p className="text-sm text-ink-600">{t.location}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Free 4-card reading */}
-      <section className="relative px-4 py-16 sm:px-6 sm:py-24">
-        <div className="mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-12 text-center"
-          >
-            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-gold-400/10 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-gold-300">
-              100% Free
-            </span>
-            <h2 className="font-display text-3xl font-semibold text-ink-50 sm:text-4xl md:text-5xl">
-              The 4-Card Reading
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-ink-400 sm:text-lg">
-              Uncover insights about your present moment with our free
-              interactive reading.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="glass glass-gold relative overflow-hidden rounded-4xl p-6 sm:p-8 md:p-12"
-          >
-            <div className="relative z-10 grid grid-cols-1 items-center gap-8 md:grid-cols-2">
-              <div>
-                <h3 className="mb-6 font-display text-2xl font-semibold text-gold-300">
-                  How it works
-                </h3>
-                <div className="space-y-5">
-                  {[
-                    "Pick 4 cards from the shuffled Egyptian deck",
-                    "Reveal the mystical meaning of each card",
-                    "Receive insights on love, growth, and decisions",
-                  ].map((step, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 font-semibold text-night-900">
-                        {i + 1}
-                      </span>
-                      <p className="text-ink-200">{step}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  href="/challenge"
-                  className="btn-gold mt-8 flex w-full items-center justify-center rounded-full px-8 py-4 sm:inline-flex sm:w-auto"
-                >
-                  Play now, free
-                </Link>
-                <p className="mt-4 text-sm text-ink-600">
-                  No sign-up &bull; Completely free &bull; Unlimited
-                </p>
-              </div>
-
-              <div className="relative">
-                <motion.div
-                  initial={{ rotate: -4 }}
-                  animate={{ rotate: 4 }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut",
-                  }}
-                  className="grid grid-cols-2 gap-4"
-                >
-                  {[1, 2, 3, 4].map((i) => (
-                    <CardBack key={i} className="aspect-[2/3]" />
-                  ))}
-                </motion.div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Spiritual Guide */}
-      <section className="relative px-4 py-16 sm:px-6 sm:py-24">
-        <div className="mx-auto max-w-5xl">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="glass glass-gold relative overflow-hidden rounded-4xl p-6 text-center sm:p-12 md:p-20"
-          >
-            <div className="absolute left-1/2 top-0 h-64 w-64 -translate-x-1/2 rounded-full bg-amethyst-500/10 blur-3xl" />
-            <div className="relative z-10">
-              <span className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
-                <Heart className="h-8 w-8 text-gold-300" />
-              </span>
-              <h2 className="font-display text-3xl font-semibold leading-tight text-ink-50 sm:text-4xl md:text-5xl">
-                Your personal spiritual guide
-              </h2>
-              <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-ink-400 sm:text-lg">
-                Chat with our AI specialized in emotional and spiritual
-                well-being.
-                <span className="mt-2 block font-medium text-gold-300">
-                  Comfort &bull; Guidance &bull; Reflection
-                </span>
-              </p>
-              <Link
-                href="/guia"
-                className="btn-gold mt-8 flex w-full items-center justify-center rounded-full px-10 py-4 text-base sm:inline-flex sm:w-auto sm:py-5 sm:text-lg"
-              >
-                Talk to the Guide
-              </Link>
-              <p className="mt-6 text-sm text-ink-600">
-                Available 24/7 &bull; Confidential &bull; Positive psychology
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      {/* Resto do catálogo, sem competir com os dois produtos. */}
+      <AlsoIncluded />
 
       {/* FAQ — conteúdo estático, essencial para AEO/GEO */}
       <FaqSection faqs={HOME_FAQS} />
@@ -411,7 +295,7 @@ export default function Home() {
           </div>
           <p>© 2026 AstroTarot &bull; All rights reserved</p>
           <p className="mt-2">
-            Built to help you find clarity and direction.
+            Tarot and soulmate readings, for entertainment and reflection.
           </p>
           <p className="mt-4">
             <Link href="/about" className="text-ink-400 underline-offset-4 hover:text-gold-300 hover:underline">
