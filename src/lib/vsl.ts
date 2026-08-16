@@ -2,9 +2,12 @@
 // ÚNICO lugar onde a URL do vídeo existe. Para migrar para o domínio
 // próprio (https://video.astrotarot.shop/vsl.mp4), defina a env
 // NEXT_PUBLIC_VSL_URL na Vercel OU troque o fallback abaixo — nada mais.
+// O nome do arquivo no R2 tem espaços — daí os %20. Trocar por um nome
+// sem espaço evitaria isso, mas exige subir de novo lá; enquanto for
+// assim, mantenha a URL codificada (URL crua com espaço não carrega).
 export const VSL_URL =
   process.env.NEXT_PUBLIC_VSL_URL ??
-  "https://pub-94956eceb3c048a7a62f1ebc80da35ec.r2.dev/vsl.mp4";
+  "https://pub-94956eceb3c048a7a62f1ebc80da35ec.r2.dev/vsl%202.0%20-%20AstroTarot%20APP%20-%20comprimido.mp4";
 
 // Proporção do vídeo. O MP4 atual é quadrado (1:1) — usar 16/9 criaria
 // tarjas pretas nas laterais. Se trocar o vídeo, ajuste aqui.
