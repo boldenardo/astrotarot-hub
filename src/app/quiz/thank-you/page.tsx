@@ -64,6 +64,16 @@ function ThankYouContent() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data: SessionInfo | null) => {
         if (!data?.paid) return;
+        // Fecha o funil do lado do cliente. A fonte da verdade da compra
+        // continua sendo o webhook — este evento só existe para o relatório
+        // conseguir ligar quiz_vsl_view → checkout_cta_clicked →
+        // checkout_session_created → compra pelo mesmo session_id.
+        trackEvent("purchase_completed", {
+          category: "quiz",
+          label: data.plan ?? undefined,
+          session_id: sessionId,
+          value: data.amount ?? undefined,
+        });
         if (typeof data.amount === "number") {
           trackPurchase({
             sessionId,

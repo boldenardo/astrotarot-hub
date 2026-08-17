@@ -36,6 +36,21 @@ export type AnalyticsEvent =
   // Vídeo não carregou (404, rede, codec). Alerta de receita: quando
   // dispara, o portão da oferta abriu por falha, não por audiência.
   | "vsl_error"
+  // Etapas explícitas do handoff VSL → Stripe. Separadas de propósito: a
+  // diferença entre "clicou" e "sessão criada" é a diferença entre um
+  // problema de oferta e um problema de backend, e sem os dois eventos as
+  // duas falhas parecem a mesma coisa.
+  | "quiz_vsl_view"
+  | "vsl_video_started"
+  | "vsl_video_25"
+  | "vsl_video_50"
+  | "vsl_video_75"
+  | "vsl_video_completed"
+  | "checkout_cta_clicked"
+  | "checkout_session_created"
+  | "checkout_redirect_started"
+  | "checkout_error"
+  | "purchase_completed"
   | "offer_unlocked"
   | "offer_viewed"
   | "offer_clicked"

@@ -44,8 +44,24 @@ async function findExistingCustomer(email: string) {
   }
 }
 
+/** Valor curto e sem surpresa para ir ao metadata do Stripe (limite 500). */
+function meta(raw: unknown, max = 80): string | null {
+  if (typeof raw !== "string") return null;
+  const v = raw.trim().slice(0, max);
+  return v || null;
+}
+
 export async function POST(req: NextRequest) {
-  let body: { plan?: string; email?: string; ref?: string; src?: string } = {};
+  let body: {
+    plan?: string;
+    email?: string;
+    ref?: string;
+    src?: string;
+    funnelSessionId?: string;
+    signal?: string;
+    offer?: string;
+    utm?: Record<string, string>;
+  } = {};
   try {
     body = await req.json();
   } catch {
@@ -122,11 +138,28 @@ export async function POST(req: NextRequest) {
   const cookieLang = req.cookies.get(LANG_COOKIE)?.value;
   const locale = isLocale(cookieLang) ? cookieLang : DEFAULT_LOCALE;
 
+  // Correlação funil → Stripe. O funnel_session_id é pseudônimo (número
+  // aleatório do browser): sem ele, "N pessoas viram a oferta" e "N sessões
+  // criadas" ficam sendo dois números que não se cruzam.
+  const funnelSessionId = meta(body.funnelSessionId, 64);
+  const signal = meta(body.signal, 20);
+  const offer = meta(body.offer, 40);
+  const utm = body.utm && typeof body.utm === "object" ? body.utm : {};
+  const utmMeta: Record<string, string> = {};
+  for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
+    const v = meta(utm[k]);
+    if (v) utmMeta[k] = v;
+  }
+
   const metadata: Record<string, string> = {
-    source: "quiz",
+    source: "quiz_vsl",
     plan,
     quiz_email: email,
     locale,
+    ...(offer ? { offer } : {}),
+    ...(signal ? { soulmate_signal: signal } : {}),
+    ...(funnelSessionId ? { funnel_session_id: funnelSessionId } : {}),
+    ...utmMeta,
     ...(srcPlatform ? { src_platform: srcPlatform } : {}),
     ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
   };
@@ -161,7 +194,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ url: session.url });
+    // sessionId volta para o cliente disparar checkout_session_created com
+    // a mesma chave que aparece no Stripe.
+    return NextResponse.json({ url: session.url, sessionId: session.id });
   } catch (e) {
     console.error("[/api/quiz/checkout] failed to create Stripe session:", e);
     return NextResponse.json(

@@ -28,11 +28,18 @@ import {
 
 export type VSLPlacement = "sales_page" | "quiz_result";
 
-const PROGRESS_MARKS: ReadonlyArray<{ pct: number; event: AnalyticsEvent }> = [
-  { pct: 25, event: "vsl_25" },
-  { pct: 50, event: "vsl_50" },
-  { pct: 75, event: "vsl_75" },
-  { pct: 90, event: "vsl_90" },
+// Cada marco dispara DOIS nomes: o histórico (vsl_25…) para não quebrar os
+// relatórios que já existem, e o nome canônico do funil (vsl_video_25…),
+// que é o usado para medir VSL → checkout.
+const PROGRESS_MARKS: ReadonlyArray<{
+  pct: number;
+  event: AnalyticsEvent;
+  alias: AnalyticsEvent;
+}> = [
+  { pct: 25, event: "vsl_25", alias: "vsl_video_25" },
+  { pct: 50, event: "vsl_50", alias: "vsl_video_50" },
+  { pct: 75, event: "vsl_75", alias: "vsl_video_75" },
+  { pct: 90, event: "vsl_90", alias: "vsl_video_completed" },
 ];
 
 // Tolerância para o bloqueio de seek: o próprio playback avança o
@@ -133,6 +140,7 @@ export default function VSLPlayer({
     setStarted(true);
     setPlaying(true);
     fireOnce("vsl_play");
+    fireOnce("vsl_video_started");
   }, [fireOnce]);
 
   const handleTimeUpdate = useCallback(() => {
@@ -151,7 +159,10 @@ export default function VSLPlayer({
       // significar tempo de fato assistido, senão a métrica vira ficção.
       const realPct = realRatio * 100;
       for (const mark of PROGRESS_MARKS) {
-        if (realPct >= mark.pct) fireOnce(mark.event);
+        if (realPct >= mark.pct) {
+          fireOnce(mark.event);
+          fireOnce(mark.alias);
+        }
       }
     }
 
@@ -179,6 +190,7 @@ export default function VSLPlayer({
   const handleEnded = useCallback(() => {
     setPlaying(false);
     fireOnce("vsl_complete");
+    fireOnce("vsl_video_completed");
     reveal();
   }, [fireOnce, reveal]);
 
