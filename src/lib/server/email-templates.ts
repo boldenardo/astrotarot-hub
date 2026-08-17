@@ -130,7 +130,71 @@ export function leadReadingEmail(input: {
 }
 
 /* ------------------------------------------------------------------ */
-/* 2. Carrinho abandonado — quem deu o e-mail e não comprou.            */
+/* 2. Cartão recusado — a pessoa TENTOU pagar e o banco negou.          */
+/*                                                                      */
+/* É o sinal de intenção mais alto do funil inteiro: ela digitou o       */
+/* cartão. Tratar isso como "carrinho abandonado" é errar o diagnóstico  */
+/* na cara dela — não desistiu, foi barrada. Recusa de emissor costuma   */
+/* passar numa segunda tentativa (a própria Stripe devolve              */
+/* advice_code: try_again_later), então o e-mail diz o que aconteceu e   */
+/* devolve o link, sem culpar ninguém e sem expor dado do cartão.       */
+/* ------------------------------------------------------------------ */
+
+export function paymentFailedEmail(input: {
+  name?: string | null;
+  email: string;
+  locale: Locale;
+}): { subject: string; html: string; text: string } {
+  const name = input.name?.trim().split(/\s+/)[0];
+  const link = `${APP_URL}/quiz/vsl`;
+
+  if (input.locale === "es") {
+    const html = shell(
+      [
+        h1(
+          name
+            ? `${name}, tu banco rechazó el pago`
+            : "Tu banco rechazó el pago"
+        ),
+        p(
+          "No fue culpa tuya y no se te cobró nada. A veces el banco bloquea una compra nueva por seguridad — suele funcionar al segundo intento, o con otra tarjeta."
+        ),
+        p("Tu lectura sigue reservada:"),
+        button("Terminar mi lectura", link),
+        p(
+          `<span style="color:${MUTED};font-size:13px;">Master Aura</span>`
+        ),
+      ].join(""),
+      { preheader: "No se te cobró nada — tu lectura sigue esperando.", locale: "es" }
+    );
+    return {
+      subject: name ? `${name}, no pudimos procesar tu pago` : "No pudimos procesar tu pago",
+      html,
+      text: `Tu banco rechazó el pago y no se te cobró nada. Termina tu lectura: ${link}`,
+    };
+  }
+
+  const html = shell(
+    [
+      h1(name ? `${name}, your bank declined the payment` : "Your bank declined the payment"),
+      p(
+        "Nothing was charged, and nothing on your end went wrong. Banks often block a first purchase from a new merchant — a second try, or a different card, usually goes through."
+      ),
+      p("Your reading is still held for you:"),
+      button("Finish my reading", link),
+      p(`<span style="color:${MUTED};font-size:13px;">Master Aura</span>`),
+    ].join(""),
+    { preheader: "You weren't charged — your reading is still waiting.", locale: "en" }
+  );
+  return {
+    subject: name ? `${name}, we couldn't process your payment` : "We couldn't process your payment",
+    html,
+    text: `Your bank declined the payment and you were not charged. Finish your reading: ${link}`,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Carrinho abandonado — quem deu o e-mail e não comprou.            */
 /* ------------------------------------------------------------------ */
 
 export function abandonedCartEmail(input: {

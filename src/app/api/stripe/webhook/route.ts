@@ -5,7 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { sendEmail } from "@/lib/server/email";
-import { welcomeEmail } from "@/lib/server/email-templates";
+import { welcomeEmail, paymentFailedEmail } from "@/lib/server/email-templates";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 
@@ -486,6 +487,59 @@ export async function POST(req: NextRequest) {
           .from("users")
           .update({ subscription_status: "suspended" })
           .eq("id", user.id);
+        break;
+      }
+
+      // Compra ÚNICA recusada pelo banco (o pacote de leituras).
+      //
+      // Quem digitou o cartão é a pessoa com maior intenção do funil, e até
+      // aqui não recebia absolutamente nada — o lote de carrinho abandonado
+      // ainda a trataria como quem "desistiu", que é o diagnóstico errado.
+      // Recusa de emissor costuma passar na segunda tentativa.
+      case "payment_intent.payment_failed": {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        const email = (
+          pi.last_payment_error?.payment_method?.billing_details?.email ??
+          pi.receipt_email ??
+          ""
+        )
+          .toLowerCase()
+          .trim();
+        if (!email) break;
+
+        // Só o primeiro tropeço gera e-mail: várias tentativas seguidas no
+        // mesmo cartão não podem virar várias mensagens.
+        const { data: lead } = await admin
+          .from("leads")
+          .select("email, name, converted_at, recovery_email_sent_at, unsubscribed_at")
+          .eq("email", email)
+          .maybeSingle();
+        if (
+          !lead ||
+          lead.converted_at ||
+          lead.recovery_email_sent_at ||
+          lead.unsubscribed_at
+        ) {
+          break;
+        }
+
+        const mail = paymentFailedEmail({
+          name: lead.name,
+          email,
+          locale: DEFAULT_LOCALE,
+        });
+        const sent = await sendEmail({ to: email, ...mail });
+        if (sent) {
+          // Carimba o mesmo campo do carrinho abandonado: a pessoa já
+          // recebeu a mensagem de recuperação que cabia no caso dela.
+          await admin
+            .from("leads")
+            .update({ recovery_email_sent_at: new Date().toISOString() })
+            .eq("email", email);
+        }
+        console.warn(
+          `[stripe/webhook] pagamento recusado (${pi.last_payment_error?.decline_code ?? "?"}) para ${email}; e-mail enviado=${sent}`
+        );
         break;
       }
 
