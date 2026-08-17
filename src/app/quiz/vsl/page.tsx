@@ -11,7 +11,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
-  Lock,
   ShieldCheck,
   Star,
   X,
@@ -42,10 +41,6 @@ interface QuizStore {
 
 const STORE_KEY = "astro_quiz_v1";
 
-// VSL fechada: a oferta só aparece após assistir VSL_UNLOCK_SECONDS do vídeo
-// (ou o vídeo terminar). Persistido por sessão para um refresh não re-trancar.
-const VSL_UNLOCK_SECONDS = 90;
-const UNLOCK_KEY = "astro_vsl_unlocked";
 // Downsell persistido por sessão: um refresh após voltar do Stripe não
 // esconde a oferta de $9.99.
 const DOWNSELL_KEY = "astro_vsl_downsell";
@@ -355,8 +350,6 @@ export default function QuizVslPage() {
   const primaryCtaRef = useRef<HTMLDivElement | null>(null);
   const [showSticky, setShowSticky] = useState(false);
 
-  // Gate da VSL fechada.
-  const [unlocked, setUnlocked] = useState(false);
 
   // Downsell PACK5: só para quem abandonou o checkout do Premium.
   const [showDownsell, setShowDownsell] = useState(false);
@@ -367,27 +360,16 @@ export default function QuizVslPage() {
 
   useEffect(() => {
     setStore(readStore());
-    try {
-      if (sessionStorage.getItem(UNLOCK_KEY) === "1") setUnlocked(true);
-    } catch {
-      // storage indisponível — gate funciona só em memória
-    }
-    // Retorno do Stripe sem pagar (cancel_url → ?canceled=1): destrava a
-    // página (a pessoa já viu a oferta) e mostra o downsell de $9.99.
+    // Retorno do Stripe sem pagar (cancel_url → ?canceled=1): mostra o
+    // downsell de $9.99.
     let canceled = false;
     try {
       canceled =
         new URLSearchParams(window.location.search).get("canceled") === "1";
       if (canceled) sessionStorage.setItem(DOWNSELL_KEY, "1");
-      if (sessionStorage.getItem(DOWNSELL_KEY) === "1") {
-        setUnlocked(true);
-        setShowDownsell(true);
-      }
+      if (sessionStorage.getItem(DOWNSELL_KEY) === "1") setShowDownsell(true);
     } catch {
-      if (canceled) {
-        setUnlocked(true);
-        setShowDownsell(true);
-      }
+      if (canceled) setShowDownsell(true);
     }
     if (canceled) {
       trackEvent("downsell_viewed", { category: "quiz", label: "PACK5" });
@@ -398,29 +380,7 @@ export default function QuizVslPage() {
     }
   }, []);
 
-  const handleUnlock = useCallback(() => {
-    setUnlocked((prev) => {
-      if (!prev) {
-        trackEvent("offer_unlocked", {
-          category: "quiz",
-          label: `after_${VSL_UNLOCK_SECONDS}s`,
-        });
-      }
-      return true;
-    });
-    // CTA acessível na hora (a oferta nasce abaixo do fold enquanto a pessoa
-    // assiste); o IntersectionObserver corrige quando a oferta ficar visível.
-    setShowSticky(true);
-    try {
-      sessionStorage.setItem(UNLOCK_KEY, "1");
-    } catch {
-      // ok sem persistência
-    }
-  }, []);
-
-  // Observer só faz sentido depois que a oferta existe no DOM (unlocked).
   useEffect(() => {
-    if (!unlocked) return;
     const el = primaryCtaRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
@@ -432,14 +392,14 @@ export default function QuizVslPage() {
           trackEvent("offer_viewed", { category: "quiz" });
         }
         // Fora da viewport (acima OU abaixo) → mostra a barra fixa, para o
-        // CTA ficar acessível assim que a oferta destrava.
+        // CTA continuar ao alcance do polegar.
         setShowSticky(!entry.isIntersecting);
       },
       { threshold: 0 }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [unlocked]);
+  }, []);
 
   const checkout = useCallback(async (plan: PlanKey, email: string) => {
     setLoadingPlan(plan);
@@ -642,25 +602,18 @@ export default function QuizVslPage() {
         </section>
       )}
 
-      {/* b. VSL fechada — preload="metadata" (só o cabeçalho do vídeo baixa
-          antes do Play); a oferta/preços só entram no DOM após
-          VSL_UNLOCK_SECONDS assistidos. */}
+      {/* b. VSL — preload="metadata" (só o cabeçalho do vídeo baixa antes
+          do Play). O vídeo convence; ele não guarda mais a oferta. */}
       <section className="mt-6">
         <p className="mb-2 text-center text-sm font-medium text-white/80">
           Watch: what the cards revealed about your soulmate
         </p>
-        <VSLPlayer
-          placement="quiz_result"
-          ctaRevealSeconds={VSL_UNLOCK_SECONDS}
-          onCtaReveal={handleUnlock}
-        />
-        {!unlocked && (
-          <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-white/60">
-            <Lock className="h-4 w-4 shrink-0 text-gold" aria-hidden />
-            Keep watching — your full soulmate reading unlocks during the
-            video.
-          </p>
-        )}
+        <VSLPlayer placement="quiz_result" />
+        <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-white/60">
+          <Star className="h-4 w-4 shrink-0 fill-gold text-gold" aria-hidden />
+          Master Aura explains what she saw &mdash; your reading is right
+          below.
+        </p>
       </section>
 
       {/* c0. Prova social em carrossel (sempre visível, sem preços) */}
@@ -676,10 +629,6 @@ export default function QuizVslPage() {
         <ProofCarousel />
       </section>
 
-      {/* Tudo abaixo (oferta, preços, garantia, FAQ) só existe no DOM após o
-          gate da VSL abrir — padrão de VSL fechada. */}
-      {unlocked && (
-        <>
       {/* c. Offer stack */}
       <section className="glass glass-gold mt-8 rounded-2xl p-5">
         <span className="inline-block rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1 text-xs font-medium text-amber-200">
@@ -773,11 +722,10 @@ export default function QuizVslPage() {
 
       {/* Fechamento: um último CTA, bem depois do primeiro (nunca colados). */}
       <CtaBlock id="after-faq" />
-        </>
-      )}
 
-      {/* h. Sticky bottom CTA (mobile-first) — só após o gate abrir */}
-      {unlocked && showSticky && (
+      {/* h. Sticky bottom CTA (mobile-first) — aparece quando a oferta sai
+          da viewport, para o botão nunca ficar longe do polegar. */}
+      {showSticky && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/80 p-3 backdrop-blur-md">
           <button
             type="button"
