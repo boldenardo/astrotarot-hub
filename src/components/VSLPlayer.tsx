@@ -40,6 +40,11 @@ const PROGRESS_MARKS: ReadonlyArray<{ pct: number; event: AnalyticsEvent }> = [
 // saltos maiores que isso.
 const SEEK_TOLERANCE_S = 1.5;
 
+// Prazo para o vídeo ao menos anunciar a própria duração. Generoso porque
+// a maior parte do tráfego é 4G dentro do navegador do Facebook; passou
+// disso sem nenhum metadado, é falha, não lentidão.
+const WATCHDOG_MS = 12000;
+
 /**
  * Converte o progresso REAL (0–1) no progresso EXIBIDO na barra.
  * Curva côncava: sobe rápido no início e desacelera, para o vídeo parecer
@@ -81,6 +86,8 @@ export default function VSLPlayer({
   const [muted, setMuted] = useState(false);
   const [progressPct, setProgressPct] = useState(0);
   const [ctaRevealed, setCtaRevealed] = useState(ctaRevealSeconds == null);
+  /** Vídeo não carregou. O gate abre assim mesmo — ver handleError. */
+  const [failed, setFailed] = useState(false);
 
   const onCtaRevealRef = useRef(onCtaReveal);
   onCtaRevealRef.current = onCtaReveal;
@@ -175,6 +182,44 @@ export default function VSLPlayer({
     reveal();
   }, [fireOnce, reveal]);
 
+  /**
+   * O vídeo não carregou (404 no R2, rede, codec).
+   *
+   * ABRE O GATE MESMO ASSIM, de propósito. Numa VSL fechada a oferta só
+   * existe no DOM depois do gate: se o vídeo morre e o gate fica fechado,
+   * a página inteira perde preço e botão de compra — receita zero, sem
+   * nenhum sinal na tela. Já aconteceu: o arquivo foi trocado no R2 e por
+   * 24h ninguém conseguiu comprar.
+   *
+   * Oferta destravada sem o vídeo converte pior que com ele. Mas converte.
+   */
+  const handleError = useCallback(() => {
+    setFailed(true);
+    fireOnce("vsl_error");
+    reveal();
+  }, [fireOnce, reveal]);
+
+  // Rede de segurança para a falha silenciosa: alguns browsers (Safari e a
+  // webview do Facebook, que é de onde vem a maior parte do tráfego) não
+  // disparam `error` de forma confiável em preload="metadata". Se depois de
+  // WATCHDOG_MS o vídeo ainda não sabe nem a própria duração, trata como
+  // falha em vez de deixar a pessoa olhando um play que não responde.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const timer = setTimeout(() => {
+      if (el.readyState === 0 && !el.error) handleError();
+    }, WATCHDOG_MS);
+    const clear = () => clearTimeout(timer);
+    el.addEventListener("loadedmetadata", clear);
+    el.addEventListener("playing", clear);
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener("loadedmetadata", clear);
+      el.removeEventListener("playing", clear);
+    };
+  }, [handleError]);
+
   // Media keys / controles do sistema podem mudar a taxa de reprodução:
   // trava em 1x sempre que alguém tentar acelerar.
   useEffect(() => {
@@ -205,6 +250,7 @@ export default function VSLPlayer({
           onTimeUpdate={handleTimeUpdate}
           onSeeking={handleSeeking}
           onEnded={handleEnded}
+          onError={handleError}
           onClick={togglePlay}
           aria-label="AstroTarot video presentation"
           className="h-full w-full cursor-pointer object-cover"
@@ -220,8 +266,22 @@ export default function VSLPlayer({
           </p>
         </video>
 
+        {/* Vídeo fora do ar: diz o que houve e manda a pessoa seguir. Um
+            play que não responde faz ela achar que o site quebrou e sair —
+            a oferta abaixo já está destravada por handleError. */}
+        {failed && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/75 px-6 text-center">
+            <p className="text-sm font-medium text-white/90">
+              The video won&apos;t load right now.
+            </p>
+            <p className="text-sm text-white/70">
+              Your reading is ready below — nothing was lost.
+            </p>
+          </div>
+        )}
+
         {/* Capa: botão grande de play antes do primeiro toque */}
-        {!started && (
+        {!started && !failed && (
           <button
             type="button"
             onClick={togglePlay}

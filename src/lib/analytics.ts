@@ -33,6 +33,9 @@ export type AnalyticsEvent =
   | "vsl_75"
   | "vsl_90"
   | "vsl_complete"
+  // Vídeo não carregou (404, rede, codec). Alerta de receita: quando
+  // dispara, o portão da oferta abriu por falha, não por audiência.
+  | "vsl_error"
   | "offer_unlocked"
   | "offer_viewed"
   | "offer_clicked"
