@@ -7,14 +7,14 @@ import NumerologyLanding from "@/components/landing/NumerologyLanding";
 export const metadata: Metadata = {
   title: "Numerology Reading & Lucky Numbers — Life Path Calculator",
   description:
-    "Discover your life path number, lucky numbers and what your birth date reveals about love, career and money. Personalized AI numerology reading.",
+    "Discover your life path number, lucky numbers and what your birth date reveals about love, career and money. Personalized numerology reading.",
   alternates: {
     canonical: "https://astrotarot.shop/numerology",
   },
   openGraph: {
     title: "Numerology Reading & Lucky Numbers — Life Path Calculator",
     description:
-      "Discover your life path number, lucky numbers and what your birth date reveals about love, career and money. Personalized AI numerology reading.",
+      "Discover your life path number, lucky numbers and what your birth date reveals about love, career and money. Personalized numerology reading.",
     url: "https://astrotarot.shop/numerology",
   },
 };

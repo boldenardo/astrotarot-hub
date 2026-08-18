@@ -7,14 +7,14 @@ import CompatibilityLanding from "@/components/landing/CompatibilityLanding";
 export const metadata: Metadata = {
   title: "Love Compatibility Reading — Synastry & Soulmate Test Online",
   description:
-    "Compare two birth charts with an AI synastry reading: love, communication, values and long-term scores, plus the strengths and challenges of your match.",
+    "Compare two birth charts with a full synastry reading: love, communication, values and long-term scores, plus the strengths and challenges of your match.",
   alternates: {
     canonical: "https://astrotarot.shop/compatibility",
   },
   openGraph: {
     title: "Love Compatibility Reading — Synastry & Soulmate Test Online",
     description:
-      "Compare two birth charts with an AI synastry reading: love, communication, values and long-term scores, plus the strengths and challenges of your match.",
+      "Compare two birth charts with a full synastry reading: love, communication, values and long-term scores, plus the strengths and challenges of your match.",
     url: "https://astrotarot.shop/compatibility",
   },
 };

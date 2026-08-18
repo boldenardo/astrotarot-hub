@@ -47,7 +47,7 @@ export default function CompatibilityLanding() {
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-ink-200 sm:text-lg">
             A compatibility reading compares the birth charts of two people —
             a technique astrologers call synastry. Enter both birth dates,
-            times and cities, and the AI calculates how your planets interact:
+            times and cities, and we calculate how your planets interact:
             attraction, communication, values and long-term potential, with a
             clear score for each.
           </p>

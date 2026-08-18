@@ -5,14 +5,14 @@ import Navbar from "@/components/Navbar";
 export const metadata: Metadata = {
   title: "About — How AstroTarot Hub Works",
   description:
-    "AstroTarot Hub combines real astronomical data with AI to deliver personalized tarot readings, birth charts, compatibility, numerology and daily predictions.",
+    "AstroTarot Hub reads your real birth chart against the Egyptian Major Arcana to deliver personalized tarot readings, birth charts, compatibility, numerology and daily predictions.",
   alternates: {
     canonical: "https://astrotarot.shop/about",
   },
   openGraph: {
     title: "About — How AstroTarot Hub Works",
     description:
-      "AstroTarot Hub combines real astronomical data with AI to deliver personalized tarot readings, birth charts, compatibility, numerology and daily predictions.",
+      "AstroTarot Hub reads your real birth chart against the Egyptian Major Arcana to deliver personalized tarot readings, birth charts, compatibility, numerology and daily predictions.",
     url: "https://astrotarot.shop/about",
   },
 };
@@ -30,7 +30,7 @@ export default function AboutPage() {
 
         <p className="mt-6 text-lg leading-relaxed text-ink-200">
           AstroTarot Hub is a web app that combines real astrological data
-          with artificial intelligence to deliver personalized tarot readings,
+          with the symbolism of the Egyptian Major Arcana to deliver personalized tarot readings,
           birth charts, love compatibility, numerology and daily predictions.
         </p>
 
@@ -40,7 +40,7 @@ export default function AboutPage() {
         <p className="mt-4 leading-relaxed text-ink-200">
           Every reading starts from your real birth data — date, time and
           city. Birth charts and planetary positions are calculated from
-          astronomical ephemeris data, not generated at random. The AI layer
+          astronomical ephemeris data, not generated at random. Your reading
           then interprets those charts and the tarot cards you draw, turning
           traditional symbolism into clear, personal guidance about love,
           career, money and purpose.
@@ -52,7 +52,7 @@ export default function AboutPage() {
         <ul className="mt-4 space-y-3 text-ink-200">
           <li>
             <Link href="/tarot" className="text-gold-300 hover:underline">
-              AI Tarot readings
+              Egyptian Tarot readings
             </Link>{" "}
             — draw cards from the Egyptian Major Arcana and receive a
             personalized interpretation. 4 free readings for every new
@@ -89,7 +89,7 @@ export default function AboutPage() {
         </h2>
         <p className="mt-4 leading-relaxed text-ink-200">
           Every account starts free: 4 tarot readings, Egyptian Tarot insights
-          and the AI Spiritual Guide, with no credit card required. For more,
+          and the Spiritual Guide, with no credit card required. For more,
           there is a 5-Reading Pack ($9.99 one-time payment) and the Unlimited
           Premium subscription ($14.99/month), which unlocks unlimited
           readings, the daily horoscope, soulmate compatibility, your complete
@@ -101,7 +101,7 @@ export default function AboutPage() {
         </h2>
         <p className="mt-4 leading-relaxed text-ink-200">
           Your birth data and readings belong to your private account and are
-          never sold or shared. Conversations with the AI Spiritual Guide are
+          never sold or shared. Conversations with the Spiritual Guide are
           confidential.
         </p>
 

@@ -5,16 +5,16 @@ import { breadcrumbJsonLd } from "@/lib/seo";
 import TarotLanding from "@/components/landing/TarotLanding";
 
 export const metadata: Metadata = {
-  title: "Free AI Tarot Reading Online — Egyptian Tarot & 3-Card Spreads",
+  title: "Free Egyptian Tarot Reading Online — Major Arcana & 3-Card Spreads",
   description:
-    "Draw cards from the Egyptian Major Arcana and get a personalized AI tarot reading about love, career and decisions. 4 free readings — no credit card required.",
+    "Draw cards from the Egyptian Major Arcana and get a personalized tarot reading about love, career and decisions. 4 free readings — no credit card required.",
   alternates: {
     canonical: "https://astrotarot.shop/tarot",
   },
   openGraph: {
-    title: "Free AI Tarot Reading Online — Egyptian Tarot & 3-Card Spreads",
+    title: "Free Egyptian Tarot Reading Online — Major Arcana & 3-Card Spreads",
     description:
-      "Draw cards from the Egyptian Major Arcana and get a personalized AI tarot reading about love, career and decisions. 4 free readings — no credit card required.",
+      "Draw cards from the Egyptian Major Arcana and get a personalized tarot reading about love, career and decisions. 4 free readings — no credit card required.",
     url: "https://astrotarot.shop/tarot",
   },
 };

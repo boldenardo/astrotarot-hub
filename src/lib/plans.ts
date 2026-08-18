@@ -20,7 +20,7 @@ export const CHECKOUT_PLANS = {
     readings: 5,
     features: [
       "5 Egyptian Tarot readings",
-      "Personalized AI interpretation",
+      "A personalized interpretation of every card",
       "Reading history",
     ],
   },

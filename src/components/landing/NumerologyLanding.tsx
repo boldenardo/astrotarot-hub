@@ -48,7 +48,7 @@ export default function NumerologyLanding() {
             Numerology turns your birth name and birth date into five core
             numbers — Life Path, Expression, Soul Urge, Personality and
             Birthday — that describe your talents, motivations and life theme.
-            Enter your details and the AI explains what each number means for
+            Enter your details and we explain what each number means for
             you.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -82,7 +82,7 @@ export default function NumerologyLanding() {
               "Create your free account — it takes less than a minute.",
               "Enter your full name exactly as given at birth and your birth date.",
               "Your five core numbers are calculated instantly, with Master Numbers (11, 22, 33) detected automatically.",
-              "Receive a personalized AI interpretation connecting your numbers into one coherent profile.",
+              "Receive a personalized interpretation connecting your numbers into one coherent profile.",
             ].map((step, i) => (
               <li key={i} className="glass flex items-start gap-4 rounded-3xl p-5">
                 <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 font-semibold text-night-900">
@@ -106,7 +106,7 @@ export default function NumerologyLanding() {
               "Your Life Path number — your core life theme",
               "Expression, Soul Urge, Personality and Birthday numbers",
               "Master Number detection with its special meaning",
-              "A personalized AI interpretation of your full profile",
+              "A personalized interpretation of your full profile",
             ].map((item) => (
               <li key={item} className="glass rounded-3xl p-5 text-ink-200">
                 {item}

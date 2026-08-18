@@ -7,17 +7,17 @@ export const HOME_FAQS: FaqItem[] = [
   {
     question: "What is AstroTarot Hub?",
     answer:
-      "AstroTarot Hub is an AI-powered tarot and astrology web app. It combines your real birth data with AI to generate personalized tarot readings, birth charts, love compatibility, numerology and daily predictions.",
+      "AstroTarot Hub is a tarot and astrology web app. It reads your real birth data against the Egyptian Major Arcana to build personalized tarot readings, birth charts, love compatibility, numerology and daily predictions.",
   },
   {
     question: "Is AstroTarot Hub free?",
     answer:
-      "Yes. You get 4 free tarot readings, Egyptian Tarot insights and access to the AI Spiritual Guide without a credit card. A 5-Reading Pack ($9.99 one-time) and an Unlimited Premium plan ($14.99/month) unlock more readings and premium features.",
+      "Yes. You get 4 free tarot readings, Egyptian Tarot insights and access to the Spiritual Guide without a credit card. A 5-Reading Pack ($9.99 one-time) and an Unlimited Premium plan ($14.99/month) unlock more readings and premium features.",
   },
   {
-    question: "How does an AI tarot reading work?",
+    question: "How does a personalized tarot reading work?",
     answer:
-      "You pick cards from a shuffled Egyptian tarot deck, and our AI interprets each card in the context of your question and your astrological profile. The result is a personalized reading about love, growth and decisions — not a generic card description.",
+      "You pick cards from a shuffled Egyptian tarot deck, and each card is interpreted in the context of your question and your astrological profile. The result is a personalized reading about love, growth and decisions — not a generic card description.",
   },
   {
     question: "What is the free 4-card reading?",
@@ -27,7 +27,7 @@ export const HOME_FAQS: FaqItem[] = [
   {
     question: "What is a birth chart and what do I need to get mine?",
     answer:
-      "A birth chart (natal chart) maps the positions of the planets at the exact moment and place you were born. On AstroTarot Hub you only need your birth date, time and city — the chart is calculated from real astronomical data and interpreted by AI.",
+      "A birth chart (natal chart) maps the positions of the planets at the exact moment and place you were born. On AstroTarot Hub you only need your birth date, time and city — the chart is calculated from real astronomical data and interpreted for you.",
   },
   {
     question: "How does the love compatibility reading work?",
@@ -42,6 +42,6 @@ export const HOME_FAQS: FaqItem[] = [
   {
     question: "Is my personal data private?",
     answer:
-      "Yes. Your birth data and readings are tied to your private account and are never shared or sold. Chats with the AI Spiritual Guide are confidential and available 24/7.",
+      "Yes. Your birth data and readings are tied to your private account and are never shared or sold. Chats with the Spiritual Guide are confidential and available 24/7.",
   },
 ];

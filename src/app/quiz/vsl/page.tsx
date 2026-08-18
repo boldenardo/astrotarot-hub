@@ -734,19 +734,48 @@ export default function QuizVslPage() {
         </div>
       </section>
 
-      {/* BLOCO 9 — Oferta simplificada */}
-      <section className="glass glass-gold mt-12 rounded-2xl p-6 text-center">
-        <h3 className="text-xl font-semibold leading-snug">
-          Unlock what your answers uncovered
-        </h3>
-        <p className="mt-4 text-sm text-white/70">
-          {OFFER.readings} personalized readings
-        </p>
-        <p className="mt-1 text-4xl font-bold text-gold">{OFFER.price}</p>
-        <p className="mt-1 text-sm text-white/60">
-          {OFFER.terms} &middot; {OFFER.perReading}
-        </p>
-        <CtaBlock id="offer_card" />
+      {/* BLOCO 9 — Oferta.
+          O retrato borrado entra aqui de propósito: é a mesma imagem que
+          abre o funil, então a oferta fecha o círculo em vez de virar uma
+          tabela de preço. Preço em texto puro não lembra o que está em jogo;
+          um rosto quase visível lembra. */}
+      <section className="glass glass-gold mt-12 overflow-hidden rounded-2xl">
+        <div className="relative">
+          <Image
+            src="/images/soulmate-blur-portrait.webp"
+            alt="A soulmate portrait, still blurred"
+            width={620}
+            height={680}
+            loading="lazy"
+            className="h-44 w-full object-cover object-top opacity-80"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#161027] via-[#161027]/70 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 pb-3">
+            <Lock className="h-3.5 w-3.5 shrink-0 text-gold" aria-hidden />
+            <span className="text-xs font-medium uppercase tracking-widest text-white/70">
+              Still hidden
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6 pt-4 text-center">
+          <h3 className="text-2xl font-semibold leading-snug">
+            Unlock what your answers{" "}
+            <span className="text-gold">uncovered</span>
+          </h3>
+
+          <div className="mt-5 flex items-end justify-center gap-2">
+            <span className="text-5xl font-bold leading-none text-gold drop-shadow-[0_0_24px_rgba(212,175,55,0.35)]">
+              {OFFER.price}
+            </span>
+            <span className="pb-1 text-sm text-white/55">{OFFER.terms}</span>
+          </div>
+          <p className="mt-2 text-sm text-white/70">
+            {OFFER.readings} personalized readings &middot; {OFFER.perReading}
+          </p>
+
+          <CtaBlock id="offer_card" />
+        </div>
       </section>
 
       {/* BLOCO 10 — Garantia */}

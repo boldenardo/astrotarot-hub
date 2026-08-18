@@ -24,7 +24,7 @@ import { CHECKOUT_PLANS } from "@/lib/plans";
 const freePerks = [
   "4 free tarot readings",
   "Egyptian Tarot insights",
-  "AI Spiritual Guide",
+  "Spiritual Guide",
 ];
 
 const testimonials = [

@@ -175,7 +175,7 @@ export default function NumerologyPage() {
                 <div className="mb-4 flex items-center gap-3">
                   <Sparkles className="h-6 w-6 flex-shrink-0 text-gold-300" />
                   <h3 className="font-display text-xl font-semibold text-ink-50 sm:text-2xl">
-                    Personalized AI Interpretation
+                    Your Personalized Interpretation
                   </h3>
                 </div>
                 {aiLoading ? (

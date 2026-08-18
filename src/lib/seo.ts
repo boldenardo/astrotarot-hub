@@ -21,7 +21,7 @@ export function organizationJsonLd() {
       url: `${SITE_URL}/brand/astrotarot-logo.png`,
     },
     description:
-      "AstroTarot Hub combines real astrological data with AI to deliver personalized tarot readings, birth charts, compatibility, numerology and daily predictions.",
+      "AstroTarot Hub reads your real birth chart against the Egyptian Major Arcana to deliver personalized tarot readings, birth charts, compatibility, numerology and daily predictions.",
   };
 }
 
@@ -48,21 +48,21 @@ export function softwareAppJsonLd() {
     operatingSystem: "Any",
     inLanguage: "en",
     description:
-      "Free AI-powered tarot readings, birth charts, love compatibility, numerology and daily predictions.",
+      "Free personalized tarot readings, birth charts, love compatibility, numerology and daily predictions.",
     offers: [
       {
         "@type": "Offer",
         name: "Free",
         price: "0",
         priceCurrency: "USD",
-        description: "4 free tarot readings, Egyptian Tarot insights and AI Spiritual Guide.",
+        description: "4 free tarot readings, Egyptian Tarot insights and Spiritual Guide.",
       },
       {
         "@type": "Offer",
         name: "5-Reading Pack",
         price: "9.99",
         priceCurrency: "USD",
-        description: "5 Egyptian Tarot readings with personalized AI interpretation. One-time payment.",
+        description: "5 Egyptian Tarot readings with a personalized interpretation. One-time payment.",
       },
       {
         "@type": "Offer",

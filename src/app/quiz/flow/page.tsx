@@ -427,13 +427,23 @@ function typingDelayFor(message: string | undefined): number {
  * Revela as mensagens uma a uma com "digitando" entre elas, no ritmo de
  * quem realmente escreve. Retorna quantas já apareceram e se terminou.
  */
-function useMessageReveal(messages: string[]) {
+function useMessageReveal(messages: string[], typeFirst = false) {
   const count = messages.length;
-  // A PRIMEIRA mensagem já nasce visível (inclusive no HTML do servidor):
-  // esperar para a tela ter conteúdo custa conversão na entrada.
-  // As seguintes é que ganham o efeito de "digitando".
-  const [shown, setShown] = useState(count > 0 ? 1 : 0);
-  const [typing, setTyping] = useState(count > 1);
+  /**
+   * Quantas mensagens já nascem visíveis.
+   *
+   * Por padrão a PRIMEIRA já vem pronta, inclusive no HTML do servidor:
+   * numa tela de entrada, esperar para ter conteúdo custa conversão.
+   *
+   * Com `typeFirst`, ela também é digitada. Isso é para os momentos em que
+   * a guia está mandando uma mensagem de verdade no meio da conversa — ver
+   * a bolha aparecer é o que faz parecer uma pessoa do outro lado, e não um
+   * bloco de texto que já estava lá. Só faz sentido depois que a tela já
+   * tem contexto; na porta do funil continuaria custando caro.
+   */
+  const initialShown = typeFirst ? 0 : count > 0 ? 1 : 0;
+  const [shown, setShown] = useState(initialShown);
+  const [typing, setTyping] = useState(count > initialShown);
 
   // Os textos entram por ref: os componentes montam o array a cada render
   // (map + interpolação de nome), e usá-lo como dependência reiniciaria o
@@ -442,9 +452,9 @@ function useMessageReveal(messages: string[]) {
   messagesRef.current = messages;
 
   useEffect(() => {
-    setShown(count > 0 ? 1 : 0);
-    setTyping(count > 1);
-  }, [count]);
+    setShown(initialShown);
+    setTyping(count > initialShown);
+  }, [count, initialShown]);
 
   useEffect(() => {
     if (shown >= count) {
@@ -479,11 +489,17 @@ function useMessageReveal(messages: string[]) {
 function GuideConversation({
   messages,
   onDone,
+  typeFirst = false,
 }: {
   messages: string[];
   onDone?: () => void;
+  /** Digita também a PRIMEIRA mensagem (ver useMessageReveal). */
+  typeFirst?: boolean;
 }) {
-  const { shown, typing, done, revealAll } = useMessageReveal(messages);
+  const { shown, typing, done, revealAll } = useMessageReveal(
+    messages,
+    typeFirst
+  );
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
@@ -987,11 +1003,19 @@ function ProofStep({
 const VOICE_NOTE_VIDEO_DELAY_MS = 7000;
 
 /**
- * Se o autoplay for bloqueado e a pessoa não tocar em nada, o contador do
- * vídeo começa assim mesmo. Ninguém pode ficar preso num passo do funil
- * esperando um áudio que o browser decidiu não tocar.
+ * O áudio NÃO toca sozinho: a pessoa aperta o play.
+ *
+ * Autoplay resolvia a mensagem de voz por ela e transformava a bolha em
+ * decoração — e, na metade dos casos, o browser mutava ou bloqueava e a
+ * narração passava sem ninguém ouvir. Apertar o play é um micro-compromisso
+ * e a única forma de saber que o som está de fato ligado.
+ *
+ * Rede de segurança: se ninguém tocar em nada, o vídeo e o botão de seguir
+ * aparecem assim mesmo depois deste tempo. É longo de propósito — quem está
+ * ali vai tocar antes; ele existe só para que ninguém fique preso num passo
+ * sem saída.
  */
-const VOICE_NOTE_GRACE_MS = 3000;
+const VOICE_NOTE_IDLE_MS = 20000;
 
 /**
  * Alturas fixas da onda. Constante, e não aleatória: Math.random aqui daria
@@ -1014,7 +1038,7 @@ function VoiceNote({
   src,
   audioRef,
   playing,
-  needsTap,
+  started,
   elapsed,
   duration,
   onToggle,
@@ -1023,7 +1047,8 @@ function VoiceNote({
   src: string;
   audioRef: React.MutableRefObject<HTMLAudioElement | null>;
   playing: boolean;
-  needsTap: boolean;
+  /** Já tocou alguma vez. Antes disso o play pulsa e o texto convida. */
+  started: boolean;
   elapsed: number;
   duration: number;
   onToggle: () => void;
@@ -1047,7 +1072,7 @@ function VoiceNote({
           onClick={onToggle}
           aria-label={playing ? ui.pauseAudio : ui.tapToHear}
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d4af37] text-[#1a1330] ${
-            needsTap ? "animate-pulse" : ""
+            started ? "" : "animate-pulse"
           }`}
         >
           {playing ? (
@@ -1080,7 +1105,7 @@ function VoiceNote({
             <span className="tabular-nums">
               {formatClock(elapsed > 0 ? elapsed : duration)}
             </span>
-            {needsTap && <span>{ui.tapToHear}</span>}
+            {!started && <span>{ui.tapToHear}</span>}
           </div>
         </div>
       </div>
@@ -1103,8 +1128,8 @@ function MediaStep({
   const messages = step.messages.map((m) => resolveReactionText(m, vars));
   const [done, setDone] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Autoplay com som pode ser bloqueado; nesse caso oferecemos um botão.
-  const [needsTap, setNeedsTap] = useState(false);
+  // Começa parado: quem manda no play é a pessoa (ver VOICE_NOTE_IDLE_MS).
+  const [started, setStarted] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -1113,19 +1138,19 @@ function MediaStep({
   // Sem áudio (passo da revelação) nada muda: o vídeo entra junto com a fala.
   const [videoReady, setVideoReady] = useState(!hasAudio);
 
+  // Sem autoplay. Só a limpeza: sair do passo para o áudio.
   useEffect(() => {
     if (!done || !hasAudio) return;
     const el = audioRef.current;
     if (!el) return;
-    el.play().catch(() => setNeedsTap(true));
     return () => {
       el.pause();
       el.currentTime = 0;
     };
   }, [done, hasAudio]);
 
-  // O vídeo chega DEPOIS da voz. O contador começa quando o áudio realmente
-  // toca; se o browser não deixar, começa assim mesmo (ver GRACE).
+  // O vídeo chega DEPOIS da voz: o contador dos 7s só começa quando o áudio
+  // toca de verdade. O timer de ocioso é a saída para quem nunca tocar.
   useEffect(() => {
     if (!done || !hasAudio || videoReady) return;
     let delay: number | undefined;
@@ -1138,10 +1163,10 @@ function MediaStep({
     };
     const el = audioRef.current;
     el?.addEventListener("playing", start);
-    const grace = window.setTimeout(start, VOICE_NOTE_GRACE_MS);
+    const idle = window.setTimeout(() => setVideoReady(true), VOICE_NOTE_IDLE_MS);
     return () => {
       el?.removeEventListener("playing", start);
-      window.clearTimeout(grace);
+      window.clearTimeout(idle);
       if (delay != null) window.clearTimeout(delay);
     };
   }, [done, hasAudio, videoReady]);
@@ -1150,9 +1175,9 @@ function MediaStep({
     const el = audioRef.current;
     if (!el) return;
     if (el.paused) {
-      el.play()
-        .then(() => setNeedsTap(false))
-        .catch(() => setNeedsTap(true));
+      // O toque É o gesto do usuário, então o play não deveria ser recusado;
+      // se for, o passo continua saindo pelo timer de ocioso.
+      el.play().catch(() => {});
     } else {
       el.pause();
     }
@@ -1166,7 +1191,10 @@ function MediaStep({
     const onMeta = () => {
       if (Number.isFinite(el.duration)) setDuration(el.duration);
     };
-    const onPlay = () => setPlaying(true);
+    const onPlay = () => {
+      setPlaying(true);
+      setStarted(true);
+    };
     const onStop = () => setPlaying(false);
     el.addEventListener("timeupdate", onTime);
     el.addEventListener("loadedmetadata", onMeta);
@@ -1185,7 +1213,14 @@ function MediaStep({
 
   return (
     <div>
-      <GuideConversation messages={messages} onDone={() => setDone(true)} />
+      {/* A guia DIGITA esta mensagem antes de mandar. É o passo em que ela
+          diz que está desenhando o retrato — vir com o texto já pronto na
+          tela entregava que era conteúdo de página, não alguém escrevendo. */}
+      <GuideConversation
+        messages={messages}
+        onDone={() => setDone(true)}
+        typeFirst
+      />
 
       {done && hasAudio && step.audio && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -1194,7 +1229,7 @@ function MediaStep({
             src={step.audio}
             audioRef={audioRef}
             playing={playing}
-            needsTap={needsTap}
+            started={started}
             elapsed={elapsed}
             duration={duration}
             onToggle={toggleAudio}

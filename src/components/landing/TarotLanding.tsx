@@ -7,7 +7,7 @@ const TAROT_FAQS: FaqItem[] = [
   {
     question: "What is a 3-card tarot reading?",
     answer:
-      "A 3-card tarot reading is the most popular tarot spread: the first card represents your past, the second your present, and the third your future. On AstroTarot Hub you draw the cards yourself and our AI interprets them together as one coherent story about your situation.",
+      "A 3-card tarot reading is the most popular tarot spread: the first card represents your past, the second your present, and the third your future. On AstroTarot Hub you draw the cards yourself and they are read together as one coherent story about your situation.",
   },
   {
     question: "What is the Egyptian tarot deck?",
@@ -17,17 +17,17 @@ const TAROT_FAQS: FaqItem[] = [
   {
     question: "Do I need to know tarot to use this?",
     answer:
-      "No. You simply choose how many cards to draw (1 to 22), pick them from the shuffled deck, and the AI explains each card's meaning and how they connect. No prior tarot knowledge is required.",
+      "No. You simply choose how many cards to draw (1 to 22), pick them from the shuffled deck, and your reading explains each card's meaning and how they connect. No prior tarot knowledge is required.",
   },
   {
     question: "How many free tarot readings do I get?",
     answer:
-      "Every new account includes 4 free tarot readings with full AI interpretation — no credit card required. After that, you can buy a 5-Reading Pack ($9.99 one-time) or subscribe to Unlimited Premium ($14.99/month).",
+      "Every new account includes 4 free tarot readings with a full personalized interpretation — no credit card required. After that, you can buy a 5-Reading Pack ($9.99 one-time) or subscribe to Unlimited Premium ($14.99/month).",
   },
   {
     question: "Can I ask the tarot about love or money?",
     answer:
-      "Yes. You can focus your reading on love, relationships, career or money. The AI takes your question's context into account when interpreting the cards you draw.",
+      "Yes. You can focus your reading on love, relationships, career or money. Your question's context is taken into account when the cards you draw are interpreted.",
   },
 ];
 
@@ -42,11 +42,11 @@ export default function TarotLanding() {
       <section className="relative px-4 pb-12 pt-28 text-center sm:px-6 sm:pt-32">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-4xl font-semibold text-ink-50 sm:text-5xl">
-            Free AI Tarot Reading Online
+            Free Egyptian Tarot Reading Online
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-ink-200 sm:text-lg">
-            An AI tarot reading combines the symbolism of the Egyptian Major
-            Arcana with your personal context. You draw the cards — the AI
+            An Egyptian tarot reading combines the symbolism of the Major
+            Arcana with your personal context. You draw the cards — your chart
             explains what they mean for your love life, career and decisions.
             Your first 4 readings are free.
           </p>
@@ -81,7 +81,7 @@ export default function TarotLanding() {
               "Create your free account — it takes less than a minute.",
               "Choose your spread: 1 card for a quick answer, 3 cards for past/present/future, or up to 22 for a deep reading.",
               "Draw your cards from the shuffled Egyptian deck.",
-              "Receive a personalized AI interpretation connecting the cards to your question.",
+              "Receive a personalized interpretation connecting the cards to your question.",
             ].map((step, i) => (
               <li key={i} className="glass flex items-start gap-4 rounded-3xl p-5">
                 <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-200 to-gold-600 font-semibold text-night-900">

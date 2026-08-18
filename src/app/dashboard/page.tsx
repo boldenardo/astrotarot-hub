@@ -313,7 +313,7 @@ export default function DashboardPage() {
       href: "/tarot",
       icon: Sparkles,
       title: "Full Tarot",
-      description: "Complete AI-powered reading",
+      description: "Complete personalized reading",
       cta: "Start Reading",
       premiumOnly: false,
     },
