@@ -198,7 +198,18 @@ export async function POST(req: NextRequest) {
         ? { customer: existing.stripe_customer_id }
         : { customer_email: email }),
       metadata,
-      ...(isSubscription ? { subscription_data: { metadata } } : {}),
+      // Marca do PRODUTO na fatura do cartão.
+      //
+      // O descritor da conta é da EMPRESA e vale para todos os produtos que
+      // rodam nela. O sufixo é o que diferencia cada um: a fatura sai como
+      // "<empresa>* ASTROTAROT", então quem comprou aqui reconhece a compra
+      // sem que a conta precise ser exclusiva deste site.
+      //
+      // Reconhecer a cobrança é o que evita o chargeback de "não fui eu".
+      // Só vale em pagamento único; assinatura usa o descritor da conta.
+      ...(isSubscription
+        ? { subscription_data: { metadata } }
+        : { payment_intent_data: { statement_descriptor_suffix: "ASTROTAROT" } }),
       success_url: `${appUrl}/quiz/thank-you?session_id={CHECKOUT_SESSION_ID}`,
       // ?canceled=1 → a VSL retoma de onde parou para quem desistiu.
       // Volta para a MESMA página que abriu o checkout: mandar quem estava
