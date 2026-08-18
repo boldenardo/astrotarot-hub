@@ -14,6 +14,16 @@ export const runtime = "nodejs";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
+ * Páginas comerciais para onde o Stripe pode devolver quem cancela.
+ *
+ * ALLOWLIST FECHADA de propósito: o valor chega do browser e vira URL de
+ * redirect assinada pelo Stripe. Aceitar string livre aqui seria um open
+ * redirect com o checkout como trampolim. Fora da lista → cai na V1.
+ */
+const CANCEL_PATHS = new Set(["/quiz/vsl", "/quiz/vsl-v2"]);
+const DEFAULT_CANCEL_PATH = "/quiz/vsl";
+
+/**
  * Cliente já existente para este e-mail, se houver.
  *
  * Este checkout é GUEST (sem login), então a única chave é o e-mail. Sem
@@ -60,6 +70,10 @@ export async function POST(req: NextRequest) {
     funnelSessionId?: string;
     signal?: string;
     offer?: string;
+    /** Braço do experimento de página comercial (vsl_v1_control | vsl_v2_ignite). */
+    variant?: string;
+    /** Página que iniciou o checkout — para o cancel voltar ao MESMO braço. */
+    cancelPath?: string;
     utm?: Record<string, string>;
   } = {};
   try {
@@ -144,6 +158,13 @@ export async function POST(req: NextRequest) {
   const funnelSessionId = meta(body.funnelSessionId, 64);
   const signal = meta(body.signal, 20);
   const offer = meta(body.offer, 40);
+  // Variante também no metadata: o relatório de receita por braço passa a
+  // existir do lado do servidor, sem depender do localStorage do browser.
+  const variant = meta(body.variant, 40);
+  const cancelPath =
+    typeof body.cancelPath === "string" && CANCEL_PATHS.has(body.cancelPath)
+      ? body.cancelPath
+      : DEFAULT_CANCEL_PATH;
   const utm = body.utm && typeof body.utm === "object" ? body.utm : {};
   const utmMeta: Record<string, string> = {};
   for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
@@ -158,6 +179,7 @@ export async function POST(req: NextRequest) {
     locale,
     ...(offer ? { offer } : {}),
     ...(signal ? { soulmate_signal: signal } : {}),
+    ...(variant ? { page_variant: variant } : {}),
     ...(funnelSessionId ? { funnel_session_id: funnelSessionId } : {}),
     ...utmMeta,
     ...(srcPlatform ? { src_platform: srcPlatform } : {}),
@@ -178,8 +200,10 @@ export async function POST(req: NextRequest) {
       metadata,
       ...(isSubscription ? { subscription_data: { metadata } } : {}),
       success_url: `${appUrl}/quiz/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-      // ?canceled=1 → a VSL mostra o downsell do PACK5 para quem desistiu.
-      cancel_url: `${appUrl}/quiz/vsl?canceled=1`,
+      // ?canceled=1 → a VSL retoma de onde parou para quem desistiu.
+      // Volta para a MESMA página que abriu o checkout: mandar quem estava
+      // na V2 de volta para a V1 contaminaria o experimento inteiro.
+      cancel_url: `${appUrl}${cancelPath}?canceled=1`,
       allow_promotion_codes: true,
     });
 

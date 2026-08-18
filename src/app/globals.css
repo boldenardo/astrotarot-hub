@@ -111,3 +111,46 @@
 .card-back.flipped {
   transform: rotateY(180deg);
 }
+
+/* --------------------------------------------------------------------------
+   VSL v2 (experimento `vsl_v2_ignite`, rota /quiz/vsl-v2)
+   Duas animações na página inteira, ambas com desligamento por
+   prefers-reduced-motion. Nada disso é usado fora da variante.
+   -------------------------------------------------------------------------- */
+
+/* Varredura lenta sobre o retrato selado: sugere uma imagem sendo
+   revelada, que é a lacuna de curiosidade que a página inteira sustenta. */
+@keyframes v2-sweep {
+  0% {
+    transform: translateX(-130%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(230%) skewX(-12deg);
+  }
+}
+.v2-sweep {
+  animation: v2-sweep 6s ease-in-out infinite;
+}
+
+/* Entrada por scroll. CSS puro + IntersectionObserver — sem biblioteca de
+   animação nesta rota, porque o LCP dela é um vídeo. */
+.v2-reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+.v2-reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-sweep {
+    animation: none;
+  }
+  .v2-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

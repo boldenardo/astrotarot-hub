@@ -17,6 +17,10 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { CircleCheck, Crown, Loader2, Sparkles } from "lucide-react";
 import { trackPurchase, trackEvent } from "@/lib/analytics";
+// Qual página comercial originou a venda. Sem isto o guardrail do
+// experimento (checkout start → purchase) fica cego: a compra é confirmada
+// aqui, uma página depois do braço que a gerou.
+import { getFunnelVariant } from "@/lib/funnel-variant";
 
 const STORE_KEY = "astro_quiz_v1";
 
@@ -68,11 +72,13 @@ function ThankYouContent() {
         // continua sendo o webhook — este evento só existe para o relatório
         // conseguir ligar quiz_vsl_view → checkout_cta_clicked →
         // checkout_session_created → compra pelo mesmo session_id.
+        const variant = getFunnelVariant() ?? undefined;
         trackEvent("purchase_completed", {
           category: "quiz",
           label: data.plan ?? undefined,
           session_id: sessionId,
           value: data.amount ?? undefined,
+          variant,
         });
         if (typeof data.amount === "number") {
           trackPurchase({
@@ -80,6 +86,7 @@ function ThankYouContent() {
             value: data.amount,
             currency: data.currency ?? "usd",
             plan: data.plan ?? undefined,
+            variant,
           });
         }
         if (data.plan) setPlan(data.plan);
