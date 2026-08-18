@@ -24,10 +24,11 @@ import {
   Loader2,
   Lock,
   MapPin,
+  Pause,
+  Play,
   Sparkles,
   Star,
   Sun,
-  Volume2,
 } from "lucide-react";
 import {
   STEPS,
@@ -214,7 +215,10 @@ export default function QuizFlowPage() {
       return next;
     });
     trackEvent("quiz_completed", { category: "quiz" });
-    router.push("/quiz/vsl");
+    // Saída do funil apontada para a VARIANTE (vsl_v2_ignite) em 17/08/2026.
+    // A V1 continua servindo em /quiz/vsl — nada foi apagado: para voltar
+    // atrás, troque só esta linha. Ver src/lib/funnel-variant.ts.
+    router.push("/quiz/vsl-v2");
   }, [router]);
 
   const vars = useMemo(
@@ -971,6 +975,120 @@ function ProofStep({
 
 /* --------------------------------- Media --------------------------------- */
 
+/**
+ * A guia manda um ÁUDIO, e o vídeo chega depois.
+ *
+ * O passo mostrava narração e animação ao mesmo tempo: a voz virava trilha
+ * sonora de um vídeo, e a pessoa lia a legenda em vez de escutar. Como
+ * mensagem de voz numa DM — bolha, onda, duração correndo — a voz vira o
+ * conteúdo, e o retrato chegando depois soa como a guia terminando de
+ * desenhar enquanto fala. Mesma promessa, na ordem em que ela convence.
+ */
+const VOICE_NOTE_VIDEO_DELAY_MS = 7000;
+
+/**
+ * Se o autoplay for bloqueado e a pessoa não tocar em nada, o contador do
+ * vídeo começa assim mesmo. Ninguém pode ficar preso num passo do funil
+ * esperando um áudio que o browser decidiu não tocar.
+ */
+const VOICE_NOTE_GRACE_MS = 3000;
+
+/**
+ * Alturas fixas da onda. Constante, e não aleatória: Math.random aqui daria
+ * marcações diferentes no servidor e no cliente (mismatch de hidratação).
+ */
+const WAVE_BARS = [
+  38, 62, 45, 80, 55, 95, 70, 48, 88, 60, 100, 72, 52, 84, 44, 66, 92, 58, 76,
+  40, 68, 96, 50, 82, 64, 46, 90, 56, 74, 42,
+];
+
+function formatClock(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const total = Math.floor(seconds);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+}
+
+/** Mensagem de voz da guia — bolha, onda e relógio, no estilo de uma DM. */
+function VoiceNote({
+  ui,
+  src,
+  audioRef,
+  playing,
+  needsTap,
+  elapsed,
+  duration,
+  onToggle,
+}: {
+  ui: QuizUI;
+  src: string;
+  audioRef: React.MutableRefObject<HTMLAudioElement | null>;
+  playing: boolean;
+  needsTap: boolean;
+  elapsed: number;
+  duration: number;
+  onToggle: () => void;
+}) {
+  const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
+  const filled = Math.round(ratio * WAVE_BARS.length);
+
+  return (
+    <div className="mt-3 flex items-end gap-2">
+      <Image
+        src={GUIDE_PHOTO}
+        alt=""
+        width={72}
+        height={72}
+        aria-hidden="true"
+        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+      />
+      <div className="glass flex w-full max-w-[85%] items-center gap-3 rounded-2xl rounded-bl-md border border-[rgba(212,175,55,0.25)] px-3 py-2.5">
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={playing ? ui.pauseAudio : ui.tapToHear}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#d4af37] text-[#1a1330] ${
+            needsTap ? "animate-pulse" : ""
+          }`}
+        >
+          {playing ? (
+            <Pause className="h-4 w-4 fill-current" aria-hidden />
+          ) : (
+            <Play className="ml-0.5 h-4 w-4 fill-current" aria-hidden />
+          )}
+        </button>
+
+        <div className="min-w-0 flex-1">
+          <div
+            className="flex h-7 w-full items-center gap-[2px]"
+            role="progressbar"
+            aria-label={ui.voiceMessage}
+            aria-valuenow={Math.round(ratio * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            {WAVE_BARS.map((h, i) => (
+              <span
+                key={i}
+                style={{ height: `${h}%` }}
+                className={`min-w-[2px] flex-1 rounded-full transition-colors ${
+                  i < filled ? "bg-[#d4af37]" : "bg-[rgba(255,255,255,0.22)]"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[#b9b2d0]">
+            <span className="tabular-nums">
+              {formatClock(elapsed > 0 ? elapsed : duration)}
+            </span>
+            {needsTap && <span>{ui.tapToHear}</span>}
+          </div>
+        </div>
+      </div>
+      <audio ref={audioRef} src={src} preload="auto" />
+    </div>
+  );
+}
+
 function MediaStep({
   ui,
   step,
@@ -987,9 +1105,16 @@ function MediaStep({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Autoplay com som pode ser bloqueado; nesse caso oferecemos um botão.
   const [needsTap, setNeedsTap] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const hasAudio = Boolean(step.audio);
+  // Sem áudio (passo da revelação) nada muda: o vídeo entra junto com a fala.
+  const [videoReady, setVideoReady] = useState(!hasAudio);
 
   useEffect(() => {
-    if (!done || !step.audio) return;
+    if (!done || !hasAudio) return;
     const el = audioRef.current;
     if (!el) return;
     el.play().catch(() => setNeedsTap(true));
@@ -997,23 +1122,101 @@ function MediaStep({
       el.pause();
       el.currentTime = 0;
     };
-  }, [done, step.audio]);
+  }, [done, hasAudio]);
 
-  const playAudio = useCallback(() => {
-    audioRef.current
-      ?.play()
-      .then(() => setNeedsTap(false))
-      .catch(() => setNeedsTap(true));
+  // O vídeo chega DEPOIS da voz. O contador começa quando o áudio realmente
+  // toca; se o browser não deixar, começa assim mesmo (ver GRACE).
+  useEffect(() => {
+    if (!done || !hasAudio || videoReady) return;
+    let delay: number | undefined;
+    const start = () => {
+      if (delay != null) return;
+      delay = window.setTimeout(
+        () => setVideoReady(true),
+        VOICE_NOTE_VIDEO_DELAY_MS
+      );
+    };
+    const el = audioRef.current;
+    el?.addEventListener("playing", start);
+    const grace = window.setTimeout(start, VOICE_NOTE_GRACE_MS);
+    return () => {
+      el?.removeEventListener("playing", start);
+      window.clearTimeout(grace);
+      if (delay != null) window.clearTimeout(delay);
+    };
+  }, [done, hasAudio, videoReady]);
+
+  const toggleAudio = useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) {
+      el.play()
+        .then(() => setNeedsTap(false))
+        .catch(() => setNeedsTap(true));
+    } else {
+      el.pause();
+    }
   }, []);
+
+  // Relógio e onda da mensagem de voz.
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTime = () => setElapsed(el.currentTime);
+    const onMeta = () => {
+      if (Number.isFinite(el.duration)) setDuration(el.duration);
+    };
+    const onPlay = () => setPlaying(true);
+    const onStop = () => setPlaying(false);
+    el.addEventListener("timeupdate", onTime);
+    el.addEventListener("loadedmetadata", onMeta);
+    el.addEventListener("play", onPlay);
+    el.addEventListener("pause", onStop);
+    el.addEventListener("ended", onStop);
+    onMeta();
+    return () => {
+      el.removeEventListener("timeupdate", onTime);
+      el.removeEventListener("loadedmetadata", onMeta);
+      el.removeEventListener("play", onPlay);
+      el.removeEventListener("pause", onStop);
+      el.removeEventListener("ended", onStop);
+    };
+  }, [done, hasAudio]);
 
   return (
     <div>
       <GuideConversation messages={messages} onDone={() => setDone(true)} />
 
-      {done && (
+      {done && hasAudio && step.audio && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <VoiceNote
+            ui={ui}
+            src={step.audio}
+            audioRef={audioRef}
+            playing={playing}
+            needsTap={needsTap}
+            elapsed={elapsed}
+            duration={duration}
+            onToggle={toggleAudio}
+          />
+        </motion.div>
+      )}
+
+      {/* Enquanto a voz corre, a guia "ainda está desenhando". */}
+      {done && !videoReady && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mt-3"
+        >
+          <TypingBubble />
+        </motion.div>
+      )}
+
+      {done && videoReady && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <div
-            className="relative mt-5 overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.25)] bg-black"
+            className="relative mt-3 overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.25)] bg-black"
             style={{ aspectRatio: step.aspect }}
           >
             <video
@@ -1027,25 +1230,7 @@ function MediaStep({
               aria-hidden
               className="h-full w-full object-cover"
             />
-            {step.audio && needsTap && (
-              <button
-                type="button"
-                onClick={playAudio}
-                className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/45 text-white"
-              >
-                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#d4af37]/90">
-                  <Volume2 className="h-6 w-6 text-[#1a1330]" aria-hidden />
-                </span>
-                <span className="text-sm font-medium">
-                  {ui.tapToHear}
-                </span>
-              </button>
-            )}
           </div>
-          {step.audio && (
-            // Narração da guia sincronizada com a animação.
-            <audio ref={audioRef} src={step.audio} preload="auto" />
-          )}
           {step.caption && (
             <p className="mt-2 text-center text-xs text-[#b9b2d0]">
               {step.caption}

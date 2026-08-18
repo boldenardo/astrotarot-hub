@@ -248,6 +248,8 @@ export const UI_ES = {
       name ? `, ${name}` : ""
     }. Preparé una revelación especial para ti, veámosla ahora mismo. ✨`,
   tapToHear: "Toca para escuchar a Master Aura",
+  voiceMessage: "Mensaje de voz de Master Aura",
+  pauseAudio: "Pausar",
   analyzingTitle: "Leyendo tu",
   analyzingTitleAccent: "firma de alma gemela",
   analyzingBody: (name?: string) =>
