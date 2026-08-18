@@ -67,6 +67,13 @@ function displayedProgress(realRatio: number): number {
 
 interface VSLPlayerProps {
   placement: VSLPlacement;
+  /**
+   * Braço do experimento de página comercial (ver lib/funnel-variant).
+   * Vai junto em TODO evento do player — sem isso, vsl_play de duas
+   * páginas diferentes chega como um número só no GA4.
+   * Omitido = comportamento histórico, sem o parâmetro.
+   */
+  variant?: string;
   /** Segundos assistidos para revelar os children (CTA). Omitido = sempre visível. */
   ctaRevealSeconds?: number;
   /** Chamado UMA vez quando o gate de ctaRevealSeconds abre (ou o vídeo termina). */
@@ -77,6 +84,7 @@ interface VSLPlayerProps {
 
 export default function VSLPlayer({
   placement,
+  variant,
   ctaRevealSeconds,
   onCtaReveal,
   className,
@@ -112,9 +120,14 @@ export default function VSLPlayer({
       firedRef.current.add(event);
       // label duplica o placement por compatibilidade histórica dos
       // relatórios; gtag e Meta Pixel recebem o objeto completo.
-      trackEvent(event, { category: "vsl", label: placement, placement });
+      trackEvent(event, {
+        category: "vsl",
+        label: placement,
+        placement,
+        ...(variant ? { variant } : null),
+      });
     },
-    [placement]
+    [placement, variant]
   );
 
   const togglePlay = useCallback(() => {

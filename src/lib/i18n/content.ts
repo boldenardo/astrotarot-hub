@@ -50,6 +50,8 @@ export const UI_EN = {
       name ? `, ${name}` : ""
     }. I have prepared a special revelation for you, let's see it right now. ✨`,
   tapToHear: "Tap to hear Master Aura",
+  voiceMessage: "Voice message from Master Aura",
+  pauseAudio: "Pause",
   analyzingTitle: "Reading your",
   analyzingTitleAccent: "soulmate signature",
   analyzingBody: (name?: string) =>

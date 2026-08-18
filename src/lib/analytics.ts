@@ -46,6 +46,9 @@ export type AnalyticsEvent =
   | "vsl_video_50"
   | "vsl_video_75"
   | "vsl_video_completed"
+  // CTA principal ENTROU na tela (distinto de offer_viewed: mede quantos
+  // chegaram ao botão, e é o denominador honesto do cta_click).
+  | "cta_viewed"
   | "checkout_cta_clicked"
   | "checkout_session_created"
   | "checkout_redirect_started"
@@ -170,9 +173,11 @@ export function trackPurchase(params: {
   value: number;
   currency: string;
   plan?: string;
+  /** Braço da página comercial que originou a venda (ver funnel-variant). */
+  variant?: string;
 }) {
   if (typeof window === "undefined") return;
-  const { sessionId, value, currency, plan } = params;
+  const { sessionId, value, currency, plan, variant } = params;
 
   const dedupKey = `astro_purchase_${sessionId}`;
   try {
@@ -187,6 +192,7 @@ export function trackPurchase(params: {
     value,
     currency,
     items: plan ? [{ item_id: plan, item_name: plan }] : undefined,
+    ...(variant ? { variant } : null),
   });
 
   getFbq()?.(

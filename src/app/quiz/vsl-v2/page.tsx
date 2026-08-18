@@ -1,0 +1,1081 @@
+"use client";
+
+// ============================================================================
+// VARIANTE `vsl_v2_ignite` — área comercial do funil de quiz.
+//
+// A V1 (/quiz/vsl) continua intacta e é o CONTROLE. Esta rota existe para
+// responder UMA pergunta: outra forma de apresentar a MESMA oferta aumenta
+// a fração de gente que clica no CTA e abre o checkout?
+//
+// HIPÓTESE
+//   O quiz termina com um retrato sendo desenhado e uma cidade dita em voz
+//   alta. Quem chega aqui está segurando um rosto que ainda não viu. A V1
+//   troca esse objeto por um DIAGNÓSTICO ("Your Soulmate Signal: Blocked")
+//   com barra de três níveis — muda de assunto no primeiro scroll, e a
+//   lacuna de curiosidade passa a ser AFIRMADA ("one part is still hidden")
+//   em vez de DEMONSTRADA. Se a V2 continuar o fio do retrato e devolver à
+//   pessoa, em linguagem de leitura, o que ela mesma respondeu — antes de
+//   pedir dinheiro —, a oferta deixa de ser uma compra nova e vira o
+//   fechamento de um loop que já está aberto.
+//
+// VARIÁVEL PRIMÁRIA: apresentação (narrativa, ordem, revelação parcial,
+// identidade visual, microcopy do CTA).
+//
+// PRESERVADO: produto (PACK5), preço ($9.99 AVULSO), endpoint
+// (/api/quiz/checkout), metadata do Stripe, webhook, estado do quiz
+// (astro_quiz_v1), vídeo, assets de prova, política de noindex.
+//
+// SOBRE "$9.99/mês": o price da Stripe live (price_1Tvg2V…9Tqm) é
+// `type: one_time`, `recurring: null`, `unit_amount: 999` — verificado na
+// conta live. Escrever "/month" aqui seria assinatura inventada, e
+// pagamento único é a oferta MAIS forte pelo mesmo preço. O texto segue o
+// price, não o contrário. A assinatura de verdade ($14.99/mês) aparece no
+// fim, identificada, como segunda opção.
+//
+// NENHUMA prova social fabricada: só as fotos que já existem no projeto.
+// Sem número de usuários, sem nota média, sem depoimento sem consentimento,
+// sem escassez, sem contagem regressiva.
+// ============================================================================
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { ChevronDown, Loader2, Lock, ShieldCheck, X } from "lucide-react";
+import VSLPlayer from "@/components/VSLPlayer";
+import { trackEvent, trackPaymentInitiated } from "@/lib/analytics";
+import { getStoredRef, getVisitorId } from "@/lib/affiliate";
+import {
+  QUIZ_STORAGE_KEY,
+  SIGN_LOVE_TRAIT,
+  computeScore,
+  type QuizScore,
+} from "@/lib/quiz-data";
+import { getStoredSource } from "@/lib/source";
+import { getFunnelSessionId, getUtmParams } from "@/lib/funnel-session";
+import {
+  VARIANT_IGNITE,
+  getDeviceClass,
+  setFunnelVariant,
+} from "@/lib/funnel-variant";
+
+type PlanKey = "PREMIUM" | "PACK5";
+
+const PLAN_PRICES: Record<PlanKey, number> = { PREMIUM: 14.99, PACK5: 9.99 };
+
+/** Mesmos rótulos da V1: os dois braços precisam bater no Stripe. */
+const OFFER_ID = "five_readings_999_onetime";
+const PREMIUM_OFFER_ID = "premium_1499_monthly";
+
+/** Oferta, num lugar só — o texto não pode divergir do price da Stripe. */
+const OFFER = {
+  plan: "PACK5" as PlanKey,
+  readings: 5,
+  price: "$9.99",
+  terms: "one-time",
+  /** $9.99 / 5 = $1.998. A conta fecha; se o preço mudar, revise. */
+  perReading: "under $2 a reading",
+} as const;
+
+const RETURNED_KEY = "astro_vsl_returned";
+
+interface QuizStore {
+  answers?: Record<string, string>;
+  email?: string;
+  name?: string;
+  birthDate?: string;
+  sign?: string;
+  score?: QuizScore;
+}
+
+function readStore(): QuizStore {
+  try {
+    const raw = localStorage.getItem(QUIZ_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as QuizStore;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+// ---------------------------------------------------------------------------
+// REVELAÇÃO PARCIAL
+//
+// Tudo abaixo é DERIVADO de respostas que a pessoa realmente deu no quiz —
+// devolvido a ela em linguagem de leitura. Nada aqui afirma um fato novo
+// sobre o futuro, cita uma carta que não foi tirada ou mostra um número
+// que não foi calculado. É a diferença entre personalização real e teatro
+// de personalização: o segundo funciona uma vez e queima a marca.
+// ---------------------------------------------------------------------------
+
+/** Espelho de q_status — a situação que a própria pessoa declarou. */
+const STATUS_MIRROR: Record<string, string> = {
+  searching: "single, and still waiting for your person",
+  unsure: "with someone, and not sure they are the one",
+  complicated: "inside something complicated",
+  healing: "still healing from a love that ended",
+};
+
+/** Espelho de q_met + a lacuna que ele abre. Agenda dominante: RECONHECER. */
+const MET_MIRROR: Record<string, { said: string; gap: string }> = {
+  yes: {
+    said: "you have already met them, and you think about them constantly",
+    gap: "So your reading has one job: describe who your chart actually points to, in enough detail for you to hold it next to the person you cannot stop thinking about.",
+  },
+  maybe: {
+    said: "someone comes to mind, and you cannot be sure",
+    gap: "That is the exact question your reading answers. It describes who your chart points to — the traits, the way they show up — so the maybe stops being a maybe.",
+  },
+  no: {
+    said: "you have not met them yet",
+    gap: "Which makes the description the whole point. Your reading is what tells you who to recognize, before you walk past them.",
+  },
+  unsure: {
+    said: "you would not know how to tell",
+    gap: "Your reading exists for that exact problem. It does not hand you a name — it gives you traits specific enough to recognize.",
+  },
+};
+
+/**
+ * Espelho do atrito. `computeScore` é literalmente o somatório de q_status +
+ * q_past + q_ready, então falar em "o que está no caminho" aqui é ler as
+ * respostas de volta, não inventar um diagnóstico.
+ */
+const FRICTION_MIRROR: Record<QuizScore, string> = {
+  LOW: "Your answers also pointed at something in the way — a door still open behind you, and a connection that keeps getting interrupted by it.",
+  MEDIUM:
+    "Your answers also pointed at something unsettled. Not blocking the connection — blurring it, which is harder to notice and easier to ignore.",
+  HIGH: "Your answers pointed at almost nothing in the way. That is rarer than you would think, and it is usually the shortest window.",
+};
+
+/** O que continua selado até a compra. Tudo aqui é leitura de carta. */
+const SEALED: Array<{ n: string; text: string }> = [
+  { n: "I", text: "Who the cards point to" },
+  { n: "II", text: "The traits that make them recognizable" },
+  { n: "III", text: "What may be standing between you" },
+  { n: "IV", text: "When your paths are most likely to cross" },
+  { n: "V", text: "What the cards suggest doing next" },
+];
+
+/** As 5 leituras — exatamente o que o PACK5 credita (readings_left +5). */
+const PASS: Array<{ n: string; title: string }> = [
+  { n: "01", title: "Your complete Soulmate Reading" },
+  { n: "02", title: "Ask what may be standing between you" },
+  { n: "03", title: "Ask when your paths are most likely to cross" },
+  { n: "04", title: "Ask what the cards suggest doing next" },
+  { n: "05", title: "Ask the question you cannot stop thinking about" },
+];
+
+/** Fotos reais do projeto. Sem frase atribuída — nenhuma delas tem uma. */
+const PROOF_PHOTOS = [
+  "/social-proof/couple-2.webp",
+  "/social-proof/couple-1.webp",
+  "/social-proof/couple-4.webp",
+  "/social-proof/couple-3.webp",
+];
+
+/** As três objeções que aparecem ANTES da prova, na ordem em que surgem. */
+const OBJECTIONS: Array<{ q: string; a: string }> = [
+  {
+    q: "Is this a subscription?",
+    a: "No. One payment of $9.99 for 5 readings. Nothing recurring, nothing to cancel.",
+  },
+  {
+    q: "Do I need an account first?",
+    a: "No. Checkout is guest. You create the account afterwards with the same email, and your readings are already there.",
+  },
+  {
+    q: "What if the reading does not land?",
+    a: "You have 7 days. Email us and we refund every cent.",
+  },
+];
+
+const FAQ_ITEMS: Array<{ q: string; a: string }> = [
+  {
+    q: "What exactly do I unlock?",
+    a: "Five personalized Egyptian Tarot readings, starting with your complete Soulmate Reading — who the cards point toward, the traits that make them recognizable, what may be standing between you, and when your paths are most likely to cross. The remaining four are yours to spend on any question you want to ask.",
+  },
+  {
+    q: "When do I get access?",
+    a: "Immediately after a successful payment. Create your account with the same email you used at checkout and your 5 readings are already there.",
+  },
+  {
+    q: "Is my payment secure?",
+    a: "Payment is processed by Stripe. Your card details go straight to Stripe and never touch our servers.",
+  },
+  {
+    q: "What happens to my quiz answers?",
+    a: "They are carried into your first reading, so it continues from where the quiz stopped instead of starting over.",
+  },
+  {
+    q: "How accurate is a reading?",
+    a: "Your reading is built from your birth data and your quiz answers rather than a generic sun-sign column, so it is specific to you. Tarot is interpretation — it is offered for reflection and insight, not as a factual prediction of the future.",
+  },
+];
+
+/**
+ * Dimensões que acompanham TODO evento desta página.
+ *
+ * Função PURA sobre o store porque o `quiz_vsl_view` dispara no mesmo
+ * effect que lê o localStorage — se dependesse do state já renderizado, o
+ * evento mais importante do funil sairia sempre com o `signal` default e
+ * `quiz_complete: false`, que é ruído puro no relatório.
+ */
+function buildParams(store: QuizStore) {
+  const answers = store.answers ?? {};
+  const hasQuiz = Object.keys(answers).length > 0;
+  return {
+    category: "quiz",
+    variant: VARIANT_IGNITE,
+    offer: OFFER_ID,
+    signal: store.score ?? (hasQuiz ? computeScore(answers) : "MEDIUM"),
+    quiz_complete: hasQuiz,
+    device: getDeviceClass(),
+    src: getStoredSource() ?? undefined,
+    funnel_session_id: getFunnelSessionId(),
+    ...getUtmParams(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// ENTRADA POR SCROLL
+//
+// Um IntersectionObserver por bloco é o caminho óbvio e tem um modo de falha
+// caro: ele só avisa quando o elemento CRUZA a viewport. Num salto instantâneo
+// — scroll restaurado no reload, volta do Stripe, fling no celular — o bloco
+// pula de "abaixo da tela" para "acima da tela" sem nunca intersectar, e fica
+// em opacity 0 PARA SEMPRE. Foi exatamente o que aconteceu no teste: 2 de 9
+// blocos visíveis depois de um pulo até a oferta. Copy invisível é copy que
+// não vende.
+//
+// Um único listener de scroll com rAF reavalia todos os pendentes: qualquer
+// bloco que já esteja na tela — ou que tenha ficado para trás — aparece. O
+// listener se remove sozinho quando não sobra ninguém. Zero biblioteca de
+// animação: o LCP desta página é um vídeo.
+// ---------------------------------------------------------------------------
+
+type PendingReveal = { el: HTMLElement; show: () => void };
+
+const pendingReveals = new Set<PendingReveal>();
+let revealScheduled = false;
+let revealListening = false;
+
+function flushReveals() {
+  revealScheduled = false;
+  const limit = window.innerHeight * 0.94;
+  for (const item of Array.from(pendingReveals)) {
+    if (item.el.getBoundingClientRect().top < limit) {
+      pendingReveals.delete(item);
+      item.show();
+    }
+  }
+  if (pendingReveals.size === 0 && revealListening) {
+    window.removeEventListener("scroll", scheduleReveals);
+    window.removeEventListener("resize", scheduleReveals);
+    revealListening = false;
+  }
+}
+
+function scheduleReveals() {
+  if (revealScheduled) return;
+  revealScheduled = true;
+  requestAnimationFrame(flushReveals);
+}
+
+function watchReveal(el: HTMLElement, show: () => void) {
+  const item: PendingReveal = { el, show };
+  pendingReveals.add(item);
+  if (!revealListening) {
+    window.addEventListener("scroll", scheduleReveals, { passive: true });
+    window.addEventListener("resize", scheduleReveals);
+    revealListening = true;
+  }
+  scheduleReveals();
+  return () => {
+    pendingReveals.delete(item);
+  };
+}
+
+function Reveal({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [shown, setShown] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    return watchReveal(el, () => setShown(true));
+  }, []);
+
+  return (
+    <div ref={ref} data-shown={shown} className={`v2-reveal ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+/** Regra editorial com rótulo — o separador de seção da variante. */
+function Rule({ label }: { label: string }) {
+  return (
+    <div className="mt-14 flex items-center gap-3">
+      <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold-400/35" />
+      <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-gold-300/70">
+        {label}
+      </span>
+      <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold-400/35" />
+    </div>
+  );
+}
+
+export default function QuizVslV2Page() {
+  const [store, setStore] = useState<QuizStore>({});
+  const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [city, setCity] = useState<string | null>(null);
+  const [returned, setReturned] = useState(false);
+
+  const [emailModalPlan, setEmailModalPlan] = useState<PlanKey | null>(null);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const offerRef = useRef<HTMLDivElement | null>(null);
+  const ctaRef = useRef<HTMLDivElement | null>(null);
+  const [showSticky, setShowSticky] = useState(false);
+
+  const viewFiredRef = useRef(false);
+  const offerViewedRef = useRef(false);
+  const ctaViewedRef = useRef(false);
+  /** Trava síncrona contra duplo clique — setState não é imediato. */
+  const submittingRef = useRef(false);
+
+  const answers = store.answers ?? {};
+  const score: QuizScore =
+    store.score ??
+    (Object.keys(answers).length > 0 ? computeScore(answers) : "MEDIUM");
+  const firstName = store.name?.trim().split(/\s+/)[0];
+  const sign = store.sign?.trim();
+  const signTrait = sign ? SIGN_LOVE_TRAIT[sign] : undefined;
+  const statusMirror = STATUS_MIRROR[answers.q_status ?? ""];
+  const metMirror = MET_MIRROR[answers.q_met ?? ""];
+  const hasQuiz = Object.keys(answers).length > 0;
+
+  const baseParams = useCallback(() => buildParams(store), [store]);
+
+  useEffect(() => {
+    const initial = readStore();
+    setStore(initial);
+    setFunnelVariant(VARIANT_IGNITE);
+
+    // Denominador de tudo: quantas pessoas a área comercial recebeu.
+    if (!viewFiredRef.current) {
+      viewFiredRef.current = true;
+      const params = buildParams(initial);
+      trackEvent("quiz_vsl_view", params);
+      trackEvent("quiz_result_viewed", params);
+    }
+
+    let canceled = false;
+    try {
+      canceled =
+        new URLSearchParams(window.location.search).get("canceled") === "1";
+      if (canceled) sessionStorage.setItem(RETURNED_KEY, "1");
+      if (sessionStorage.getItem(RETURNED_KEY) === "1") setReturned(true);
+    } catch {
+      if (canceled) setReturned(true);
+    }
+  }, []);
+
+  // Cidade: MESMA fonte que o quiz usou na tela de "onde vocês se
+  // encontram" (/api/geo, headers da borda). Continuidade, não invenção —
+  // e se falhar, o bloco simplesmente não existe.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/geo")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { city?: string | null; region?: string | null } | null) => {
+        if (!alive || !d) return;
+        const label = [d.city, d.region].filter(Boolean).join(", ");
+        if (label) setCity(label);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // -------------------------------------------------------------------
+  // Medição de posição: offer_viewed, cta_viewed e a barra fixa.
+  //
+  // Um IntersectionObserver aqui tem o mesmo furo do Reveal — ele não avisa
+  // sobre o que a pessoa PULOU. E offer_viewed é métrica de funil: perder o
+  // evento num fling faria a V2 parecer pior do que é, que é o pior tipo de
+  // erro num teste A/B. Um handler de scroll com rAF avalia posição real, e
+  // "passou por cima" conta como visto — que é o que a métrica quer dizer.
+  // -------------------------------------------------------------------
+  useEffect(() => {
+    let scheduled = false;
+
+    const evaluate = () => {
+      scheduled = false;
+      const vh = window.innerHeight;
+
+      const offerEl = offerRef.current;
+      if (offerEl) {
+        const rect = offerEl.getBoundingClientRect();
+        if (!offerViewedRef.current && rect.top < vh) {
+          offerViewedRef.current = true;
+          trackEvent("offer_viewed", baseParams());
+        }
+        // Barra fixa só DEPOIS que a oferta apareceu uma vez, e só enquanto
+        // ela não está na tela: antes disso cobriria o vídeo com um preço
+        // que a pessoa ainda não sabe do que é.
+        setShowSticky(
+          offerViewedRef.current && (rect.bottom < 0 || rect.top > vh)
+        );
+      }
+
+      const ctaEl = ctaRef.current;
+      if (ctaEl && !ctaViewedRef.current) {
+        const rect = ctaEl.getBoundingClientRect();
+        if (rect.top < vh) {
+          ctaViewedRef.current = true;
+          trackEvent("cta_viewed", { ...baseParams(), cta_position: "primary" });
+        }
+      }
+    };
+
+    const onScroll = () => {
+      if (scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(evaluate);
+    };
+
+    evaluate();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [baseParams]);
+
+  const checkout = useCallback(
+    async (plan: PlanKey, email: string, ctaPosition: string) => {
+      setLoadingPlan(plan);
+      setError(null);
+      try {
+        const res = await fetch("/api/quiz/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plan,
+            email,
+            ref: getStoredRef(),
+            src: getStoredSource(),
+            funnelSessionId: getFunnelSessionId(),
+            signal: score,
+            offer: plan === "PACK5" ? OFFER_ID : PREMIUM_OFFER_ID,
+            variant: VARIANT_IGNITE,
+            // Quem desiste no Stripe volta para ESTA página, não para a V1.
+            cancelPath: "/quiz/vsl-v2",
+            utm: getUtmParams(),
+          }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          url?: string;
+          sessionId?: string;
+          error?: string;
+        };
+        if (!res.ok || !data.url) {
+          trackEvent("checkout_error", {
+            ...baseParams(),
+            label: plan,
+            status: res.status,
+            cta_position: ctaPosition,
+          });
+          console.error("[quiz/vsl-v2] checkout falhou", res.status, data.error);
+          setError(
+            data.error ||
+              "We couldn't open the secure checkout. Please try again."
+          );
+          setLoadingPlan(null);
+          submittingRef.current = false;
+          return;
+        }
+        // Só aqui a sessão existe de fato no Stripe. Separar este evento do
+        // clique é o que distingue "oferta fraca" de "backend quebrado".
+        trackEvent("checkout_session_created", {
+          ...baseParams(),
+          label: plan,
+          session_id: data.sessionId,
+          cta_position: ctaPosition,
+        });
+        trackEvent("checkout_redirect_started", {
+          ...baseParams(),
+          label: plan,
+        });
+        window.location.href = data.url;
+      } catch (e) {
+        trackEvent("checkout_error", {
+          ...baseParams(),
+          label: plan,
+          reason: "network",
+          cta_position: ctaPosition,
+        });
+        console.error("[quiz/vsl-v2] erro de rede no checkout:", e);
+        setError("We couldn't open the secure checkout. Please try again.");
+        setLoadingPlan(null);
+        submittingRef.current = false;
+      }
+    },
+    [score, baseParams]
+  );
+
+  const startGuestCheckout = useCallback(
+    (plan: PlanKey, ctaPosition: string) => {
+      // Guarda síncrona: dois toques rápidos criariam duas Checkout
+      // Sessions, e a pessoa poderia pagar as duas.
+      if (submittingRef.current || loadingPlan) return;
+      submittingRef.current = true;
+
+      // Disparado ANTES de falar com o backend: é a intenção do usuário, e
+      // precisa existir mesmo que a criação da sessão falhe depois.
+      trackEvent("checkout_cta_clicked", {
+        ...baseParams(),
+        label: plan,
+        offer: plan === "PACK5" ? OFFER_ID : PREMIUM_OFFER_ID,
+        cta_position: ctaPosition,
+      });
+      trackEvent("offer_clicked", {
+        ...baseParams(),
+        label: plan,
+        cta_position: ctaPosition,
+      });
+      trackPaymentInitiated(plan, PLAN_PRICES[plan]);
+
+      const email = store.email?.trim();
+      if (!email) {
+        setEmailInput("");
+        setEmailError(null);
+        setEmailModalPlan(plan);
+        submittingRef.current = false;
+        return;
+      }
+      void checkout(plan, email, ctaPosition);
+    },
+    [loadingPlan, store.email, checkout, baseParams]
+  );
+
+  const submitEmailModal = useCallback(() => {
+    const email = emailInput.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+    const plan = emailModalPlan;
+    if (!plan) return;
+    try {
+      const next = { ...readStore(), email };
+      localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(next));
+      setStore(next);
+    } catch {
+      // storage indisponível — o checkout segue funcionando
+    }
+    const snapshot = readStore();
+    fetch("/api/quiz/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({
+        email,
+        name: snapshot.name,
+        birthDate: snapshot.birthDate,
+        sign: snapshot.sign,
+        score: snapshot.score,
+        answers: snapshot.answers,
+        visitorId: getVisitorId(),
+        ref: getStoredRef(),
+        src: getStoredSource(),
+      }),
+    }).catch(() => {});
+    trackEvent("lead_captured", { ...baseParams(), label: "vsl_v2_modal" });
+    setEmailModalPlan(null);
+    void checkout(plan, email, "email_modal");
+  }, [emailInput, emailModalPlan, checkout, baseParams]);
+
+  /** CTA. Vende o desejo; o preço fica logo abaixo, legível, sempre. */
+  const Cta = ({ id }: { id: string }) => (
+    <div className="mt-7">
+      <button
+        type="button"
+        onClick={() => startGuestCheckout(OFFER.plan, id)}
+        disabled={loadingPlan !== null}
+        data-cta={id}
+        className="btn-gold flex w-full min-h-[60px] items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold uppercase tracking-[0.06em] disabled:opacity-60"
+      >
+        {loadingPlan === OFFER.plan ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+            Opening your reading...
+          </>
+        ) : (
+          <>
+            Show me who my soulmate is
+            <span aria-hidden>&rarr;</span>
+          </>
+        )}
+      </button>
+      <p className="mt-3 text-center text-sm font-medium text-white/80">
+        {OFFER.readings} personalized readings &middot;{" "}
+        <span className="text-gold">{OFFER.price}</span> {OFFER.terms}
+      </p>
+      <p className="mt-1 text-center text-xs text-white/45">
+        No subscription &middot; Instant access &middot; Secure checkout by
+        Stripe
+      </p>
+      {error && (
+        <p className="mt-3 text-center text-sm text-red-400" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="w-full pb-40">
+      {/* ===================================================================
+          ACIMA DA DOBRA — continuidade com o fim do quiz.
+          Ordem deliberada: (1) isso é sobre você, (2) suas respostas foram
+          lidas, (3) o retrato existe e está selado, (4) o vídeo.
+          =================================================================== */}
+      <section>
+        {/* Faixa de estado: o retrato desenhado no quiz, ainda selado. É o
+            objeto emocional que a pessoa trouxe do passo anterior. */}
+        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.035] p-2.5">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+            <Image
+              src="/images/soulmate-blur-portrait.webp"
+              alt=""
+              width={620}
+              height={680}
+              priority
+              className="h-full w-full object-cover"
+            />
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 overflow-hidden"
+            >
+              <span className="v2-sweep absolute inset-y-0 -left-1/3 w-1/3 bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold-300/80">
+              Portrait drawn
+            </p>
+            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-white/70">
+              <Lock className="h-3.5 w-3.5 shrink-0 text-gold-400" aria-hidden />
+              Reading still sealed
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-6 text-[11px] font-medium uppercase tracking-[0.22em] text-white/45">
+          {sign ? `Read against your ${sign} chart` : "Read against your chart"}
+        </p>
+
+        <h1 className="mt-2 text-balance text-[1.75rem] leading-[1.1] min-[380px]:text-[2rem] sm:text-[2.4rem]">
+          {firstName ? `${firstName}, their face is` : "Their face is"}{" "}
+          <span className="text-gold drop-shadow-[0_0_22px_rgba(212,175,55,0.35)]">
+            already drawn
+          </span>
+          .
+          <span className="block text-white/70">
+            Your reading is what says who it belongs to.
+          </span>
+        </h1>
+      </section>
+
+      {/* VÍDEO — encostado no H1. Nada entre a manchete e o player: em
+          320px cada linha de texto aqui empurra o vídeo para fora da dobra,
+          e o vídeo é o ativo de retenção da página. */}
+      <section className="mt-5">
+        <VSLPlayer placement="quiz_result" variant={VARIANT_IGNITE} />
+        <p className="mt-3 text-[15px] leading-relaxed text-white/70">
+          Master Aura goes through what your answers turned up — and the one
+          part she can only show you inside the reading.
+        </p>
+      </section>
+
+      {/* Voltou do Stripe sem concluir. Sem desconto falso, sem contagem
+          regressiva — só retoma de onde parou. */}
+      {returned && (
+        <div className="mt-6 rounded-2xl border border-amber-300/35 bg-amber-300/[0.06] p-4">
+          <p className="text-sm text-white/85">
+            Nothing was lost{firstName ? `, ${firstName}` : ""} — your reading
+            is still here, exactly where you left it.
+          </p>
+        </div>
+      )}
+
+      {/* ===================================================================
+          REVELAÇÃO PARCIAL — o coração da variante.
+          Devolve à pessoa o que ela respondeu, em linguagem de leitura, e
+          só então abre a lacuna. A V1 afirma a lacuna sem demonstrar nada.
+          =================================================================== */}
+      {/* Sem respostas no storage (link direto, e-mail de recuperação,
+          storage limpo) este bloco inteiro sai do ar. Ele existe para
+          DEVOLVER o que a pessoa respondeu — sem respostas, "your answers
+          pointed at something" seria exatamente a personalização falsa que
+          esta página se recusa a fazer. */}
+      {hasQuiz && (
+        <>
+          <Rule label="What your answers turned up" />
+
+          <Reveal className="mt-6">
+            <div className="space-y-5 border-l border-gold-400/25 pl-5">
+              {signTrait && (
+                <p className="text-[15px] leading-relaxed text-white/80">
+                  <span className="font-medium text-gold">Sun in {sign}</span> —{" "}
+                  {signTrait}.
+                </p>
+              )}
+
+              {statusMirror && (
+                <p className="text-[15px] leading-relaxed text-white/80">
+                  Right now you are {statusMirror}.
+                </p>
+              )}
+
+              {metMirror && (
+                <p className="text-[15px] leading-relaxed text-white/80">
+                  And you said {metMirror.said}.
+                </p>
+              )}
+
+              <p className="text-[15px] leading-relaxed text-white/80">
+                {FRICTION_MIRROR[score]}
+              </p>
+
+              {city && (
+                <p className="text-[15px] leading-relaxed text-white/80">
+                  And your chart placed the meeting near{" "}
+                  <span className="font-medium text-white">{city}</span> — the
+                  nearest place your paths are drawn to cross.
+                </p>
+              )}
+            </div>
+          </Reveal>
+        </>
+      )}
+
+      {/* A LACUNA — a única coisa que o vídeo não pode entregar. */}
+      <Reveal className="mt-10">
+        <h2 className="text-[1.6rem] leading-tight sm:text-[1.9rem]">
+          {/* "None of THAT" só faz sentido se o bloco espelho existiu. */}
+          {hasQuiz
+            ? "None of that is the part you came for."
+            : "The part you came for is still sealed."}
+        </h2>
+        <p className="mt-4 text-[15px] leading-relaxed text-white/75">
+          {metMirror?.gap ??
+            "Your reading has one job: describe who your chart points to, in enough detail that you would recognize them."}
+        </p>
+      </Reveal>
+
+      {/* O QUE SEGUE SELADO */}
+      <Reveal className="mt-8">
+        <ul className="divide-y divide-white/[0.07] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          {SEALED.map((item) => (
+            <li
+              key={item.n}
+              className="flex items-center gap-3.5 px-4 py-3.5 text-sm text-white/75"
+            >
+              <span className="w-5 shrink-0 font-display text-xs tracking-widest text-gold-400/60">
+                {item.n}
+              </span>
+              <span className="flex-1">{item.text}</span>
+              <Lock
+                className="h-3.5 w-3.5 shrink-0 text-gold-400/70"
+                aria-hidden
+              />
+            </li>
+          ))}
+        </ul>
+      </Reveal>
+
+      {/* ===================================================================
+          PONTE — significado, consequência, saída. O produto entra como
+          consequência da história, não como um botão que apareceu.
+          =================================================================== */}
+      <Reveal className="mt-10">
+        <p className="text-[15px] leading-relaxed text-white/75">
+          A signal you never read is a signal you act on anyway. It is why
+          people stay a year too long in the wrong thing, and walk past the
+          right one without a second look
+          {city ? ` — sometimes on the same street in ${city}` : ""}.
+        </p>
+        <p className="mt-4 text-[15px] leading-relaxed text-white/75">
+          The reading is not a promise about your future. It is the description
+          you have been missing — specific enough to recognize, and yours to
+          keep.
+        </p>
+      </Reveal>
+
+      {/* ===================================================================
+          OFERTA — resultado primeiro, formato depois. Sem value stack.
+          =================================================================== */}
+      <div ref={offerRef}>
+        <Rule label="Your complete reading" />
+
+        <Reveal className="mt-6">
+          <div className="rounded-3xl border border-gold-400/25 bg-gradient-to-b from-gold-400/[0.07] to-transparent p-6">
+            <h2 className="text-[1.55rem] leading-tight">
+              Everything the cards had to say about this connection
+              {firstName ? `, ${firstName}` : ""}.
+            </h2>
+
+            <ol className="mt-6 space-y-3.5">
+              {PASS.map((r) => (
+                <li key={r.n} className="flex items-start gap-3.5">
+                  <span className="mt-px w-6 shrink-0 font-mono text-[11px] font-semibold text-gold-400/70">
+                    {r.n}
+                  </span>
+                  <span className="text-sm leading-snug text-white/85">
+                    {r.title}
+                  </span>
+                </li>
+              ))}
+            </ol>
+
+            <p className="mt-5 text-sm text-white/55">
+              Five personalized Egyptian Tarot readings. They do not expire, and
+              they are yours to spend whenever a new question shows up.
+            </p>
+
+            {/* Formato e preço — depois do resultado, nunca antes. */}
+            <div className="mt-7 border-t border-white/10 pt-6 text-center">
+              <p className="text-sm text-white/65">
+                {OFFER.readings} personalized readings
+              </p>
+              <p className="mt-1 text-[2.75rem] font-bold leading-none text-gold">
+                {OFFER.price}
+              </p>
+              <p className="mt-2 text-sm text-white/60">
+                One-time payment &middot; {OFFER.perReading} &middot; no
+                subscription
+              </p>
+            </div>
+
+            <div ref={ctaRef}>
+              <Cta id="offer_card" />
+            </div>
+          </div>
+        </Reveal>
+      </div>
+
+      {/* ===================================================================
+          OBJEÇÕES — inline, antes da prova, na ordem em que aparecem.
+          =================================================================== */}
+      <Reveal className="mt-10">
+        <div className="space-y-4">
+          {OBJECTIONS.map((o) => (
+            <div key={o.q}>
+              <p className="text-sm font-semibold text-white/90">{o.q}</p>
+              <p className="mt-1 text-sm leading-relaxed text-white/65">{o.a}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-6 flex items-start gap-2.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <ShieldCheck
+            className="mt-0.5 h-5 w-5 shrink-0 text-gold-400"
+            aria-hidden
+          />
+          <p className="text-sm leading-relaxed text-white/70">
+            7 days to decide. If AstroTarot is not for you, email us and we
+            refund every cent.
+          </p>
+        </div>
+      </Reveal>
+
+      {/* ===================================================================
+          PROVA — só o que existe de verdade no projeto: fotos.
+          Sem depoimento fabricado, sem contagem de usuários, sem estrelas
+          sem origem. Um bloco honesto vale mais que um carrossel inventado.
+          =================================================================== */}
+      <Rule label="Already reading" />
+
+      <Reveal className="mt-6">
+        <div className="grid grid-cols-2 gap-2.5">
+          {PROOF_PHOTOS.map((photo) => (
+            <div
+              key={photo}
+              className="overflow-hidden rounded-2xl border border-white/10"
+            >
+              <Image
+                src={photo}
+                alt=""
+                width={1080}
+                height={1080}
+                loading="lazy"
+                sizes="(max-width: 640px) 45vw, 240px"
+                className="aspect-square h-auto w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-center text-xs text-white/40">
+          People exploring their answers with AstroTarot.
+        </p>
+      </Reveal>
+
+      <Reveal>
+        <Cta id="after_proof" />
+      </Reveal>
+
+      {/* ===================================================================
+          FAQ
+          =================================================================== */}
+      <Rule label="Before you decide" />
+
+      <div className="mt-5 space-y-2">
+        {FAQ_ITEMS.map((item, i) => {
+          const open = openFaq === i;
+          return (
+            <div
+              key={item.q}
+              className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenFaq(open ? null : i)}
+                aria-expanded={open}
+                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm font-medium"
+              >
+                {item.q}
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform ${
+                    open ? "rotate-180" : ""
+                  }`}
+                  aria-hidden
+                />
+              </button>
+              {open && (
+                <p className="px-4 pb-4 text-sm leading-relaxed text-white/70">
+                  {item.a}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* FECHAMENTO */}
+      <Reveal className="mt-10">
+        <p className="text-center text-[15px] leading-relaxed text-white/75">
+          The portrait is drawn{firstName ? `, ${firstName}` : ""}. The only
+          thing left is the name of what you are looking at.
+        </p>
+        <Cta id="after_faq" />
+      </Reveal>
+
+      {/* Segunda opção, deliberadamente discreta e identificada como
+          assinatura: quem quer tudo encontra, quem está frio não é obrigado
+          a decidir sobre recorrência agora. */}
+      <p className="mt-10 text-center text-xs leading-relaxed text-white/40">
+        Want unlimited readings, your daily horoscope, birth chart and
+        compatibility tools?{" "}
+        <button
+          type="button"
+          onClick={() => startGuestCheckout("PREMIUM", "secondary_premium")}
+          disabled={loadingPlan !== null}
+          className="underline underline-offset-4 hover:text-white/70 disabled:opacity-60"
+        >
+          Unlimited Premium is $14.99/month
+        </button>
+        , cancel anytime.
+      </p>
+
+      {/* Barra fixa — só depois que a oferta já apareceu uma vez. */}
+      {showSticky && (
+        <div
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/85 px-3 pt-3 backdrop-blur-md"
+          style={{
+            paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => startGuestCheckout(OFFER.plan, "sticky")}
+            disabled={loadingPlan !== null}
+            className="btn-gold mx-auto flex w-full max-w-lg min-h-[54px] items-center justify-center gap-2 rounded-full px-6 text-sm font-bold uppercase tracking-[0.06em] disabled:opacity-60"
+          >
+            {loadingPlan === OFFER.plan ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Opening your reading...
+              </>
+            ) : (
+              <>
+                Show me who my soulmate is
+                <span aria-hidden>&rarr;</span>
+              </>
+            )}
+          </button>
+          <p className="mt-1.5 text-center text-[11px] text-white/55">
+            {OFFER.readings} readings &middot; {OFFER.price} {OFFER.terms}
+          </p>
+        </div>
+      )}
+
+      {/* Email modal (guest sem e-mail guardado) */}
+      {emailModalPlan && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 sm:items-center">
+          <div className="glass w-full max-w-sm rounded-2xl p-5">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-semibold">
+                Where should we send your reading?
+              </h2>
+              <button
+                type="button"
+                onClick={() => setEmailModalPlan(null)}
+                aria-label="Close"
+                className="text-white/50 hover:text-white"
+              >
+                <X className="h-5 w-5" aria-hidden />
+              </button>
+            </div>
+            <input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitEmailModal();
+              }}
+              placeholder="you@email.com"
+              className="mt-4 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-base outline-none focus:border-gold-400/60"
+            />
+            {emailError && (
+              <p className="mt-2 text-sm text-red-400" role="alert">
+                {emailError}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={submitEmailModal}
+              className="btn-gold mt-4 flex w-full min-h-[52px] items-center justify-center rounded-full px-6 font-semibold"
+            >
+              Continue to secure checkout
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

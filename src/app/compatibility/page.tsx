@@ -389,7 +389,7 @@ export default function CompatibilityPage() {
                 Who is your <span className="text-gold">match</span>?
               </h2>
               <p className="text-lg text-ink-400 max-w-2xl mx-auto">
-                Every sign has the people it's drawn to most. See who your heart
+                Every sign has the people it&apos;s drawn to most. See who your heart
                 is meant to find.
               </p>
             </div>

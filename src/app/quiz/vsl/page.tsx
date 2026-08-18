@@ -32,6 +32,10 @@ import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import { computeScore } from "@/lib/quiz-data";
 import { getStoredSource } from "@/lib/source";
 import { getFunnelSessionId, getUtmParams } from "@/lib/funnel-session";
+// Braço de CONTROLE do experimento de página comercial. A V2 vive em
+// /quiz/vsl-v2; sem carimbar a variante aqui também, os eventos dos dois
+// braços chegam somados no GA4 e o teste não mede nada.
+import { VARIANT_CONTROL, setFunnelVariant } from "@/lib/funnel-variant";
 
 type Score = "LOW" | "MEDIUM" | "HIGH";
 type PlanKey = "PREMIUM" | "PACK5";
@@ -317,6 +321,7 @@ export default function QuizVslPage() {
 
   useEffect(() => {
     setStore(readStore());
+    setFunnelVariant(VARIANT_CONTROL);
     let canceled = false;
     try {
       canceled =
@@ -329,8 +334,15 @@ export default function QuizVslPage() {
     if (!viewFiredRef.current) {
       viewFiredRef.current = true;
       // Denominador de tudo: quantas pessoas a área comercial recebeu.
-      trackEvent("quiz_vsl_view", { category: "quiz", offer: OFFER_ID });
-      trackEvent("quiz_result_viewed", { category: "quiz" });
+      trackEvent("quiz_vsl_view", {
+        category: "quiz",
+        offer: OFFER_ID,
+        variant: VARIANT_CONTROL,
+      });
+      trackEvent("quiz_result_viewed", {
+        category: "quiz",
+        variant: VARIANT_CONTROL,
+      });
     }
   }, []);
 
@@ -342,7 +354,11 @@ export default function QuizVslPage() {
         const entry = entries[0];
         if (entry.isIntersecting && !offerViewedRef.current) {
           offerViewedRef.current = true;
-          trackEvent("offer_viewed", { category: "quiz", offer: OFFER_ID });
+          trackEvent("offer_viewed", {
+            category: "quiz",
+            offer: OFFER_ID,
+            variant: VARIANT_CONTROL,
+          });
         }
         // Barra fixa só depois que a oferta já apareceu uma vez: antes disso
         // ela cobriria o vídeo sem a pessoa saber do que se trata.
@@ -370,6 +386,8 @@ export default function QuizVslPage() {
             funnelSessionId: getFunnelSessionId(),
             signal: score,
             offer: plan === "PACK5" ? OFFER_ID : "premium_1499_monthly",
+            variant: VARIANT_CONTROL,
+            cancelPath: "/quiz/vsl",
             utm: getUtmParams(),
           }),
         });
@@ -383,6 +401,7 @@ export default function QuizVslPage() {
             category: "quiz",
             label: plan,
             offer: OFFER_ID,
+            variant: VARIANT_CONTROL,
             status: res.status,
             cta_position: ctaPosition,
           });
@@ -401,6 +420,7 @@ export default function QuizVslPage() {
           category: "quiz",
           label: plan,
           offer: OFFER_ID,
+          variant: VARIANT_CONTROL,
           session_id: data.sessionId,
           funnel_session_id: getFunnelSessionId(),
         });
@@ -408,6 +428,7 @@ export default function QuizVslPage() {
           category: "quiz",
           label: plan,
           offer: OFFER_ID,
+          variant: VARIANT_CONTROL,
         });
         window.location.href = data.url;
       } catch (e) {
@@ -415,6 +436,7 @@ export default function QuizVslPage() {
           category: "quiz",
           label: plan,
           offer: OFFER_ID,
+          variant: VARIANT_CONTROL,
           reason: "network",
         });
         console.error("[quiz/vsl] erro de rede no checkout:", e);
@@ -439,6 +461,7 @@ export default function QuizVslPage() {
         category: "quiz",
         label: plan,
         offer: plan === "PACK5" ? OFFER_ID : "premium_1499_monthly",
+        variant: VARIANT_CONTROL,
         signal: score,
         cta_position: ctaPosition,
         funnel_session_id: getFunnelSessionId(),
@@ -591,7 +614,7 @@ export default function QuizVslPage() {
         <p className="mb-2 text-center text-sm font-medium text-white/80">
           Watch: what the cards revealed about your soulmate
         </p>
-        <VSLPlayer placement="quiz_result" />
+        <VSLPlayer placement="quiz_result" variant={VARIANT_CONTROL} />
       </section>
 
       {/* BLOCO 3 — Ponte: o vídeo acaba, a curiosidade continua */}
