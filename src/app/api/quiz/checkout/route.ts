@@ -190,36 +190,47 @@ export async function POST(req: NextRequest) {
   };
 
   try {
-    const session = await stripe.checkout.sessions.create({
+    // Objeto montado ANTES da chamada e tipado: os spreads condicionais
+    // criavam uma união que o TS não conseguia casar com SessionCreateParams.
+    const params: Stripe.Checkout.SessionCreateParams = {
       mode: isSubscription ? "subscription" : "payment",
       locale: "en",
       line_items: [{ price, quantity: 1 }],
-      // Reaproveita o Customer quando o e-mail já comprou antes: sem isso o
-      // Stripe cria um cus_* novo a cada compra e o histórico de cobrança
-      // do cliente fica espalhado por vários registros.
-      ...(existing?.stripe_customer_id
-        ? { customer: existing.stripe_customer_id }
-        : { customer_email: email }),
       metadata,
-      // Marca do PRODUTO na fatura do cartão.
-      //
-      // O descritor da conta é da EMPRESA e vale para todos os produtos que
-      // rodam nela. O sufixo é o que diferencia cada um: a fatura sai como
-      // "<empresa>* ASTROTAROT", então quem comprou aqui reconhece a compra
-      // sem que a conta precise ser exclusiva deste site.
-      //
-      // Reconhecer a cobrança é o que evita o chargeback de "não fui eu".
-      // Só vale em pagamento único; assinatura usa o descritor da conta.
-      ...(isSubscription
-        ? { subscription_data: { metadata } }
-        : { payment_intent_data: { statement_descriptor_suffix: "ASTROTAROT" } }),
-      success_url: `${appUrl}/quiz/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-      // ?canceled=1 → a VSL retoma de onde parou para quem desistiu.
+      allow_promotion_codes: true,
+    };
+
+    // Reaproveita o Customer quando o e-mail já comprou antes: sem isso o
+    // Stripe cria um cus_* novo a cada compra e o histórico do cliente fica
+    // espalhado por vários registros.
+    if (existing?.stripe_customer_id) params.customer = existing.stripe_customer_id;
+    else params.customer_email = email;
+
+    if (isSubscription) {
+      params.subscription_data = { metadata };
+    } else {
+      // Marca do PRODUTO na fatura: "<empresa>* ASTROTAROT". Reconhecer a
+      // cobrança é o que evita o chargeback de "não fui eu".
+      params.payment_intent_data = { statement_descriptor_suffix: "ASTROTAROT" };
+    }
+
+    if (embedded) {
+      // O formulário roda dentro da nossa página. O Stripe não redireciona,
+      // então exige return_url e REJEITA success_url/cancel_url — mandar os
+      // três juntos foi o que derrubou o checkout: a sessão nascia hospedada,
+      // sem client_secret, e a rota devolvia 500 para todo mundo.
+      // "embedded" foi descontinuado pela Stripe; este SDK exige
+      // "embedded_page" e recusa o valor antigo com erro explícito.
+      params.ui_mode = "embedded_page";
+      params.return_url = `${appUrl}/quiz/thank-you?session_id={CHECKOUT_SESSION_ID}`;
+    } else {
+      params.success_url = `${appUrl}/quiz/thank-you?session_id={CHECKOUT_SESSION_ID}`;
       // Volta para a MESMA página que abriu o checkout: mandar quem estava
       // na V2 de volta para a V1 contaminaria o experimento inteiro.
-      cancel_url: `${appUrl}${cancelPath}?canceled=1`,
-      allow_promotion_codes: true,
-    });
+      params.cancel_url = `${appUrl}${cancelPath}?canceled=1`;
+    }
+
+    const session = await stripe.checkout.sessions.create(params);
 
     // NOTE: no payments row is inserted here — the guest has no user row
     // yet. The webhook (checkout.session.completed) creates the user by
