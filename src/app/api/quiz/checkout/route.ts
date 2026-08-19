@@ -209,9 +209,20 @@ export async function POST(req: NextRequest) {
     if (isSubscription) {
       params.subscription_data = { metadata };
     } else {
-      // Marca do PRODUTO na fatura: "<empresa>* ASTROTAROT". Reconhecer a
-      // cobrança é o que evita o chargeback de "não fui eu".
-      params.payment_intent_data = { statement_descriptor_suffix: "ASTROTAROT" };
+      params.payment_intent_data = {
+        // Marca do PRODUTO na fatura: "<empresa>* ASTROTAROT". Reconhecer
+        // a cobrança é o que evita o chargeback de "não fui eu".
+        statement_descriptor_suffix: "ASTROTAROT",
+        // Guarda o cartão para o one-click do retrato na thank-you. Sem
+        // isto, o upsell de $24.99 não tem onde cobrar: a assinatura salva
+        // cartão por natureza, o pagamento único NÃO. O Checkout mostra o
+        // aviso de cartão salvo sozinho quando este campo existe.
+        setup_future_usage: "off_session",
+      };
+      // Cartão salvo precisa de um Customer para morar. Só quando não
+      // estamos reaproveitando um existente (os dois campos são
+      // mutuamente exclusivos na API).
+      if (!existing?.stripe_customer_id) params.customer_creation = "always";
     }
 
     if (embedded) {

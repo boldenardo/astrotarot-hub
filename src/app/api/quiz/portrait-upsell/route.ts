@@ -23,7 +23,6 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
-const PORTRAIT_AMOUNT_CENTS = 2499;
 
 export async function POST(req: NextRequest) {
   let body: { session_id?: string } = {};
@@ -47,10 +46,11 @@ export async function POST(req: NextRequest) {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
+    // "quiz" é o metadata histórico; "quiz_vsl" é o atual — a troca do
+    // rótulo tinha desligado este upsell até para assinantes.
     if (
       session.payment_status !== "paid" ||
-      session.mode !== "subscription" ||
-      session.metadata?.source !== "quiz"
+      !["quiz", "quiz_vsl"].includes(session.metadata?.source ?? "")
     ) {
       return NextResponse.json({ error: "Not eligible." }, { status: 400 });
     }
@@ -90,34 +90,67 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, alreadyOwned: true });
     }
 
-    // Cartão salvo da assinatura que acabou de ser paga.
     const customerId =
       typeof session.customer === "string"
         ? session.customer
         : session.customer?.id;
-    const subscriptionId =
-      typeof session.subscription === "string"
-        ? session.subscription
-        : session.subscription?.id;
-    if (!customerId || !subscriptionId) {
+    if (!customerId) {
       return NextResponse.json({ error: "Not eligible." }, { status: 400 });
     }
 
-    const sub = await stripe.subscriptions.retrieve(subscriptionId);
-    const paymentMethod =
-      typeof sub.default_payment_method === "string"
-        ? sub.default_payment_method
-        : sub.default_payment_method?.id;
+    // O cartão salvo vem de onde a compra veio: da assinatura (Premium) ou
+    // do PaymentIntent com setup_future_usage (pacote de $9.99 — a oferta
+    // principal do funil, que este upsell recusava por inteiro).
+    let paymentMethod: string | undefined;
+    if (session.mode === "subscription") {
+      const subscriptionId =
+        typeof session.subscription === "string"
+          ? session.subscription
+          : session.subscription?.id;
+      if (subscriptionId) {
+        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        paymentMethod =
+          typeof sub.default_payment_method === "string"
+            ? sub.default_payment_method
+            : sub.default_payment_method?.id;
+      }
+    } else if (session.mode === "payment") {
+      const piId =
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : session.payment_intent?.id;
+      if (piId) {
+        const pi = await stripe.paymentIntents.retrieve(piId);
+        paymentMethod =
+          typeof pi.payment_method === "string"
+            ? pi.payment_method
+            : pi.payment_method?.id;
+      }
+    }
     if (!paymentMethod) {
       return NextResponse.json({ error: "No card on file." }, { status: 400 });
     }
+
+    // Moeda do upsell = moeda em que a pessoa ACABOU de pagar. Cobrar USD
+    // no cartão de quem pagou em BRL não é só grosseiro: cartão brasileiro
+    // em dólar é RECUSADO por regra de bandeira, e o upsell falharia
+    // sempre. Valores charm ancorados nos $24.99.
+    const PORTRAIT_BY_CURRENCY: Record<string, number> = {
+      usd: 2499, eur: 2299, gbp: 1999, aud: 3799,
+      cad: 3399, nzd: 4099, brl: 12900, mxn: 44900,
+    };
+    const chargeCurrency =
+      session.currency && PORTRAIT_BY_CURRENCY[session.currency]
+        ? session.currency
+        : "usd";
+    const chargeAmount = PORTRAIT_BY_CURRENCY[chargeCurrency];
 
     // Idempotency key derivada da sessão: um duplo clique (ou um retry de
     // rede) não vira duas cobranças de $24.99.
     const intent = await stripe.paymentIntents.create(
       {
-        amount: PORTRAIT_AMOUNT_CENTS,
-        currency: "usd",
+        amount: chargeAmount,
+        currency: chargeCurrency,
         customer: customerId,
         payment_method: paymentMethod,
         off_session: true,
@@ -161,8 +194,8 @@ export async function POST(req: NextRequest) {
     // Registra a receita: sem isto o upsell não existiria no banco.
     const { error: payErr } = await admin.from("payments").insert({
       user_id: userId,
-      amount: PORTRAIT_AMOUNT_CENTS / 100,
-      currency: "usd",
+      amount: chargeAmount / 100,
+      currency: chargeCurrency,
       status: "COMPLETED",
       payment_type: "READINGS_PACK", // CHECK atual não tem tipo próprio
       stripe_payment_intent_id: intent.id,

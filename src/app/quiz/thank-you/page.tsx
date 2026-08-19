@@ -235,9 +235,13 @@ function ThankYouContent() {
       )}
 
       {/* Retrato completo — a promessa que trouxe a pessoa até aqui.
-          Só para assinatura (o cartão salvo vem da subscription) e só
-          depois que o upgrade anual foi resolvido, para não competir. */}
-      {!isPack && plan === "PREMIUM" && portrait !== "hidden" && upsell !== "loading" && (
+          Para ASSINATURA e para o PACOTE: o cartão salvo vem da
+          subscription num caso e do setup_future_usage no outro. O pacote
+          é a oferta principal do funil — era justamente quem nunca via
+          este upsell. Depois do upgrade anual, para não competir. */}
+      {(plan === "PREMIUM" || plan === "PACK5") &&
+        portrait !== "hidden" &&
+        upsell !== "loading" && (
         <div className="glass mt-4 w-full overflow-hidden rounded-2xl border border-white/10 text-left">
           {portrait === "done" ? (
             <p className="flex items-center gap-2 p-5 text-sm font-medium text-emerald-300">
