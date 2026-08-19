@@ -344,19 +344,12 @@ function Rule({ label }: { label: string }) {
   );
 }
 
-/**
- * MODO CINEMA — só o vídeo sobre a galáxia até 3:30 assistidos.
- *
- * A oferta e o resto da página entram no DOM quando o gate abre. O gate
- * NÃO é uma jaula: abre também quando o vídeo termina, quando o vídeo
- * FALHA (fail-open do VSLPlayer — a lição do dia em que a página inteira
- * ficou sem preço), quando a pessoa volta do Stripe (?canceled=1), e fica
- * aberto pela sessão inteira depois da primeira vez.
- */
-const GATE_SECONDS = 210;
-const GATE_KEY = "astro_vsl2_open";
+/* Céu do hero cinema — a estética ficou; o portão de 3:30 saiu.
+   Ele derrubou lead→checkout de 25% para 8% na manhã em que rodou: a
+   página inteira (oferta incluída) volta a existir desde o primeiro
+   paint, que era a configuração que convertia.
 
-/* Céu do modo cinema. Coordenadas ESTÁTICAS: Math.random() no render
+   Céu: Coordenadas ESTÁTICAS: Math.random() no render
    divergiria entre servidor e browser e quebraria a hidratação. */
 const GALAXY_STARS: Array<[number, number, number]> = [
   [4, 12, 1], [11, 34, 2], [18, 7, 1], [24, 58, 2], [31, 22, 1],
@@ -382,7 +375,10 @@ const GALAXY_CARDS: Array<{
 
 function GalaxyBackdrop() {
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 overflow-hidden"
+    >
       <div
         className="absolute inset-0"
         style={{
@@ -447,26 +443,6 @@ export default function QuizVslV2Page() {
   const ctaRef = useRef<HTMLDivElement | null>(null);
   const [showSticky, setShowSticky] = useState(false);
 
-  // Modo cinema (ver GATE_SECONDS). Começa fechado; abre por tempo
-  // assistido, fim de vídeo, falha do vídeo, volta do Stripe ou sessão.
-  const [gateOpen, setGateOpen] = useState(false);
-  const openGate = useCallback(() => {
-    setGateOpen((prev) => {
-      if (!prev) {
-        trackEvent("offer_unlocked", {
-          category: "quiz",
-          label: `after_${GATE_SECONDS}s`,
-          variant: VARIANT_IGNITE,
-        });
-      }
-      return true;
-    });
-    try {
-      sessionStorage.setItem(GATE_KEY, "1");
-    } catch {
-      // sem storage: o gate vive só em memória nesta visita
-    }
-  }, []);
 
   const viewFiredRef = useRef(false);
   const offerViewedRef = useRef(false);
@@ -506,13 +482,8 @@ export default function QuizVslV2Page() {
         new URLSearchParams(window.location.search).get("canceled") === "1";
       if (canceled) sessionStorage.setItem(RETURNED_KEY, "1");
       if (sessionStorage.getItem(RETURNED_KEY) === "1") setReturned(true);
-      // Quem volta do Stripe já viu tudo; quem destravou não re-tranca.
-      if (canceled || sessionStorage.getItem(GATE_KEY) === "1") setGateOpen(true);
     } catch {
-      if (canceled) {
-        setReturned(true);
-        setGateOpen(true);
-      }
+      if (canceled) setReturned(true);
     }
   }, []);
 
@@ -818,7 +789,10 @@ export default function QuizVslV2Page() {
 
   return (
     <div className="w-full pb-40">
-      {!gateOpen && <GalaxyBackdrop />}
+      {/* HERO CINEMA — galáxia, estrelas, arcanos e poeira atrás do
+          resultado e do vídeo. Daqui para baixo, a página normal. */}
+      <div className="relative">
+      <GalaxyBackdrop />
       {/* ===================================================================
           ACIMA DA DOBRA — continuidade com o fim do quiz.
           Ordem deliberada: (1) isso é sobre você, (2) suas respostas foram
@@ -875,27 +849,14 @@ export default function QuizVslV2Page() {
           320px cada linha de texto aqui empurra o vídeo para fora da dobra,
           e o vídeo é o ativo de retenção da página. */}
       <section className="mt-5">
-        <VSLPlayer
-          placement="quiz_result"
-          variant={VARIANT_IGNITE}
-          ctaRevealSeconds={GATE_SECONDS}
-          onCtaReveal={openGate}
-        />
+        <VSLPlayer placement="quiz_result" variant={VARIANT_IGNITE} />
         <p className="mt-3 text-[15px] leading-relaxed text-white/70">
           Master Aura goes through what your answers turned up — and the one
           part she can only show you inside the reading.
         </p>
-        {!gateOpen && (
-          <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-sm text-white/60">
-            <Lock className="h-3.5 w-3.5 shrink-0 text-gold" aria-hidden />
-            Your full reading unlocks as the video plays
-          </p>
-        )}
       </section>
+      </div>
 
-      {/* MODO CINEMA: tudo daqui para baixo só entra quando o gate abre. */}
-      {gateOpen && (
-        <>
       {/* Voltou do Stripe sem concluir. Sem desconto falso, sem contagem
           regressiva — só retoma de onde parou. */}
       {returned && (
@@ -1186,10 +1147,7 @@ export default function QuizVslV2Page() {
       </p>
 
       {/* Barra fixa — só depois que a oferta já apareceu uma vez. */}
-        </>
-      )}
-
-      {gateOpen && showSticky && (
+      {showSticky && (
         <div
           className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/85 px-3 pt-3 backdrop-blur-md"
           style={{

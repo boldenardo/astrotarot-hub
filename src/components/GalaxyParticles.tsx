@@ -51,20 +51,23 @@ export default function GalaxyParticles() {
     let h = 0;
     let cx = 0;
     let cy = 0;
+    // O canvas mede o PRÓPRIO contêiner (o hero), não a viewport: o céu
+    // deixou de ser fixed na página inteira e passou a viver só atrás do
+    // resultado + vídeo.
     const resize = () => {
-      w = window.innerWidth;
-      h = window.innerHeight;
+      const rect = canvas.getBoundingClientRect();
+      w = Math.max(1, Math.round(rect.width));
+      h = Math.max(1, Math.round(rect.height));
       canvas.width = w * dpr;
       canvas.height = h * dpr;
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cx = w / 2;
-      // Centro de gravidade um pouco acima do meio — atrás do vídeo.
-      cy = h * 0.42;
+      // Centro de gravidade no meio do hero — atrás do vídeo.
+      cy = h * 0.5;
     };
     resize();
-    window.addEventListener("resize", resize);
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
 
     // Sprites: os círculos concêntricos do motor original ("fills"),
     // desenhados uma única vez por cor. Por frame, só drawImage.
@@ -153,7 +156,7 @@ export default function GalaxyParticles() {
     return () => {
       running = false;
       cancelAnimationFrame(raf);
-      window.removeEventListener("resize", resize);
+      ro.disconnect();
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
