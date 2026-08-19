@@ -155,8 +155,10 @@ export default function QuizFlowPage() {
         answers: { ...prev.answers, [questionId]: value },
         ...(questionId === "q_sign" ? { sign: value } : null),
       }));
-      // Flash de seleção e segue — sem reação por resposta.
-      window.setTimeout(goNext, 220);
+      // Pausa para o balão dela ASSENTAR na conversa antes de trocar de
+      // tela. Com 220ms a resposta aparecia e sumia no mesmo piscar, o que
+      // anulava o efeito de estar conversando com alguém.
+      window.setTimeout(goNext, 760);
     },
     [goNext]
   );
@@ -683,13 +685,42 @@ function QuestionStep({
 }) {
   const intro = step.intro?.map((m) => resolveReactionText(m, vars));
   const [introDone, setIntroDone] = useState(false);
-  const showOptions = !intro || introDone;
   const isSignGrid = step.id === "q_sign";
+  /**
+   * O que ela acabou de tocar, para virar balão do lado dela.
+   *
+   * Antes a resposta simplesmente sumia: a pessoa escolhia e a tela
+   * trocava, sem nada indicando que alguém do outro lado tinha ouvido.
+   * Numa conversa, o que você diz fica na conversa.
+   */
+  const [answered, setAnswered] = useState<{ label: string } | null>(null);
+  const showOptions = (!intro || introDone) && !answered;
+
+  const pick = (value: string, label: string) => {
+    if (answered) return;
+    setAnswered({ label });
+    onAnswer(step.id, value);
+  };
 
   return (
     <div>
       {intro && (
         <GuideConversation messages={intro} onDone={() => setIntroDone(true)} />
+      )}
+
+      {/* A resposta dela entra na conversa, alinhada à direita — é o que
+          faz a tela parecer DM e não formulário. */}
+      {answered && (
+        <motion.div
+          initial={{ opacity: 0, y: 8, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.22, ease: "easeOut" }}
+          className="mt-4 flex justify-end"
+        >
+          <span className="max-w-[80%] rounded-2xl rounded-br-sm bg-gradient-to-br from-[#d4af37] to-[#a9822f] px-4 py-2.5 text-[15px] font-medium leading-snug text-[#1a1330] shadow-[0_6px_18px_rgba(212,175,55,0.28)]">
+            {answered.label}
+          </span>
+        </motion.div>
       )}
 
       {showOptions && (
@@ -729,7 +760,7 @@ function QuestionStep({
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => onAnswer(step.id, opt.value)}
+                    onClick={() => pick(opt.value, opt.label)}
                     className={`${base} flex min-h-[92px] flex-col items-center justify-center gap-1 px-1.5 py-3 text-center`}
                   >
                     <span
@@ -754,7 +785,7 @@ function QuestionStep({
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => onAnswer(step.id, opt.value)}
+                  onClick={() => pick(opt.value, opt.label)}
                   className={`${base} flex min-h-[60px] items-center gap-3 px-4 py-3 text-left`}
                 >
                   <span className="flex flex-col">
