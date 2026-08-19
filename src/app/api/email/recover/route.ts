@@ -26,11 +26,34 @@ const MIN_AGE_HOURS = 4;
 /** Teto por execução — protege contra rajada e contra limite do provedor. */
 const BATCH_SIZE = 50;
 
+/**
+ * GET — como o cron da Vercel chama.
+ *
+ * A Vercel invoca crons com GET e manda `Authorization: Bearer CRON_SECRET`
+ * sozinha quando a env existe. É o que permite agendar por código
+ * (vercel.json) em vez de depender de configuração manual no painel — que
+ * foi exatamente o passo que ficou 4 dias sem acontecer, com 93 leads
+ * acumulando na fila.
+ */
+export async function GET(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers.get("authorization");
+  if (!secret || auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+  return runBatch(req);
+}
+
+/** POST — chamada manual/externa com o header x-cron-secret. */
 export async function POST(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (!secret || req.headers.get("x-cron-secret") !== secret) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
+  return runBatch(req);
+}
+
+async function runBatch(req: NextRequest) {
   if (!isEmailConfigured()) {
     return NextResponse.json(
       { error: "Email not configured.", code: "NOT_CONFIGURED" },
