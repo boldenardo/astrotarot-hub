@@ -664,17 +664,19 @@ export default function QuizVslV2Page() {
         No subscription &middot; Instant access &middot; Secure checkout by
         Stripe
       </p>
-      {/* Resgate: o redirect nao levou a pessoa embora (webview do
-          Facebook). Link explicito, que funciona no toque dela. */}
+      {/* Redirect engolido pela webview: uma linha, sem berrar. */}
       {manualUrl && (
-        <a
-          href={manualUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-gold mt-3 flex w-full min-h-[54px] items-center justify-center rounded-full px-6 text-sm font-bold uppercase tracking-wide"
-        >
-          Open secure checkout &rarr;
-        </a>
+        <p className="mt-3 text-center text-sm text-white/70">
+          Taking too long?{" "}
+          <a
+            href={manualUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-gold underline underline-offset-4"
+          >
+            Open the secure checkout
+          </a>
+        </p>
       )}
       {error && (
         <p className="mt-3 text-center text-sm text-red-400" role="alert">
