@@ -49,6 +49,11 @@ const EmbeddedCheckoutPanel = dynamic(
   () => import("@/components/EmbeddedCheckoutPanel"),
   { ssr: false }
 );
+// Canvas de poeira estelar do modo cinema. ssr:false porque é 100% canvas
+// e o gate abre cedo para parte das visitas — sem razão para pagar no SSR.
+const GalaxyParticles = dynamic(() => import("@/components/GalaxyParticles"), {
+  ssr: false,
+});
 import { trackEvent, trackPaymentInitiated } from "@/lib/analytics";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import {
@@ -385,6 +390,7 @@ function GalaxyBackdrop() {
             "radial-gradient(60% 40% at 20% 10%, rgba(124,92,255,0.22), transparent 60%), radial-gradient(50% 35% at 85% 25%, rgba(212,175,55,0.10), transparent 55%), radial-gradient(70% 50% at 50% 95%, rgba(124,92,255,0.14), transparent 60%)",
         }}
       />
+      <GalaxyParticles />
       {GALAXY_STARS.map(([l, t, s], i) => (
         <span
           key={i}
