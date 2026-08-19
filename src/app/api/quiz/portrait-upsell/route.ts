@@ -138,6 +138,9 @@ export async function POST(req: NextRequest) {
     const PORTRAIT_BY_CURRENCY: Record<string, number> = {
       usd: 2499, eur: 2299, gbp: 1999, aud: 3799,
       cad: 3399, nzd: 4099, brl: 12900, mxn: 44900,
+      // ZAR entrou quando o tráfego sul-africano apareceu nos cartões —
+      // mesmo valor do price na Stripe (R449).
+      zar: 44900,
     };
     const chargeCurrency =
       session.currency && PORTRAIT_BY_CURRENCY[session.currency]
