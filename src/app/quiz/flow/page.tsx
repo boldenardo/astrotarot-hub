@@ -332,7 +332,7 @@ export default function QuizFlowPage() {
               <LocationStep
                 ui={ui}
                 cta={step.cta}
-                name={firstName}
+                vars={vars}
                 onContinue={goNext}
               />
             )}
@@ -1334,14 +1334,15 @@ function MediaStep({
 function LocationStep({
   ui,
   cta,
-  name,
+  vars,
   onContinue,
 }: {
   ui: QuizUI;
   cta?: string;
-  name?: string;
+  vars: { name?: string; sign?: string; birthDate?: string };
   onContinue: () => void;
 }) {
+  const name = vars.name;
   const [place, setPlace] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [done, setDone] = useState(false);
@@ -1384,6 +1385,26 @@ function LocationStep({
   return (
     <div>
       <GuideConversation messages={messages} onDone={() => setDone(true)} />
+      {/* A carta: os dados dela na folha da esquerda, a do soulmate sendo
+          escrita na direita — e "Meeting location" preenchida com a cidade
+          que acabou de aparecer na conversa. É o fecho do funil antes da
+          página de venda. */}
+      {done && (
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="mt-4"
+        >
+          <SoulmateLetter
+            name={vars.name}
+            birthDate={vars.birthDate}
+            sign={vars.sign}
+            meetingPlace={place}
+            labels={ui.letter}
+          />
+        </motion.div>
+      )}
       {done && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <PrimaryButton onClick={onContinue}>

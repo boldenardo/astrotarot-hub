@@ -359,10 +359,9 @@ export const STEPS: QuizStep[] = [
     messages: [
       "Based on your birth chart, I am preparing a portrait of your soulmate. I'm starting right now 👇🔮",
     ],
-    // O vídeo aqui mostrava um casal num parque enquanto a narração
-    // dizia "estou preparando o retrato" — a incoerência aparecia no
-    // ponto mais caro do funil. A carta mostra os dados DELA.
-    letter: true,
+    src: "/funnel/portrait-drawing.mp4",
+    poster: "/funnel/portrait-drawing-poster.webp",
+    aspect: "16 / 9",
     audio: "/funnel/soulmate-narration.mp3",
     caption: "Name initial · Birth date · Zodiac sign · Meeting place · Meeting date",
     cta: "Continue",

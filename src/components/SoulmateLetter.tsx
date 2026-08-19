@@ -2,9 +2,10 @@
 
 // A carta sendo preenchida com os dados DELA.
 //
-// Substitui o vídeo do casal no parque, que dizia uma coisa ("estou
-// preparando o retrato") e mostrava outra — a incoerência aparecia no
-// momento mais caro do funil.
+// Vive no passo da LOCALIZAÇÃO — o fecho do funil, logo antes da página
+// de venda. A folha da esquerda repete o que ela digitou; a da direita é
+// a ficha do soulmate sendo escrita, com o "Meeting location" preenchido
+// com a cidade que o /api/geo acabou de revelar na conversa.
 //
 // Nada aqui é imagem gerada: são duas folhas de papel em CSS e o nome, a
 // data e o signo que a própria pessoa acabou de digitar. Personalizado de
@@ -20,6 +21,12 @@ interface Props {
   name?: string;
   birthDate?: string;
   sign?: string;
+  /**
+   * Cidade resolvida pelo /api/geo. Quando presente, o campo "Meeting
+   * location" da folha da direita é escrito de verdade — é o único dado
+   * do "outro lado" que já sabemos, e vê-lo preenchido é o gancho.
+   */
+  meetingPlace?: string | null;
   /** Rótulos no idioma do funil. */
   labels: {
     name: string;
@@ -41,6 +48,7 @@ export default function SoulmateLetter({
   name,
   birthDate,
   sign,
+  meetingPlace,
   labels,
 }: Props) {
   // Quantos campos do lado direito já foram "escritos".
@@ -109,15 +117,24 @@ export default function SoulmateLetter({
                 }`}
               >
                 {f}:{" "}
-                {i < written && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="tracking-[0.3em] text-[#2f3350]"
-                  >
-                    ···
-                  </motion.span>
-                )}
+                {i < written &&
+                  (i === 3 && meetingPlace ? (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="font-semibold text-[#2f3350]"
+                    >
+                      {meetingPlace}
+                    </motion.span>
+                  ) : (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="tracking-[0.3em] text-[#2f3350]"
+                    >
+                      ···
+                    </motion.span>
+                  ))}
               </li>
             ))}
           </ul>
