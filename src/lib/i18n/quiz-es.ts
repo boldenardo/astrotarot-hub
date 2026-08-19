@@ -236,6 +236,7 @@ export const UI_ES = {
   continue: "Continuar",
   showAllMessages: "Ver todos los mensajes",
   typing: "Escribiendo",
+  recordingAudio: "Master Aura está grabando un audio...",
   yourFirstName: "Tu nombre",
   nameError: "Dime tu nombre para poder leer tu carta.",
   birthdateIntro:

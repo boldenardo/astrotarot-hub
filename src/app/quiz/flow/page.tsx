@@ -1034,6 +1034,10 @@ function ProofStep({
  */
 // Depois que o áudio começa. Era 7s — tempo de a pessoa achar que
 // travou e sair antes de ver o que veio depois.
+// Quanto tempo "Master Aura está gravando um áudio..." fica na tela
+// antes de o voice note aparecer. Curto: é tempero, não espera.
+const RECORDING_MS = 2600;
+
 const VOICE_NOTE_VIDEO_DELAY_MS = 2500;
 
 /**
@@ -1173,6 +1177,15 @@ function MediaStep({
   const hasAudio = Boolean(step.audio);
   // Sem áudio (passo da revelação) nada muda: o vídeo entra junto com a fala.
   const [videoReady, setVideoReady] = useState(!hasAudio);
+  // "Gravando áudio…" entre a mensagem digitada e o voice note: o áudio
+  // não pode simplesmente EXISTIR na tela — alguém precisa estar gravando.
+  const [recDone, setRecDone] = useState(!hasAudio);
+
+  useEffect(() => {
+    if (!done || !hasAudio || recDone) return;
+    const id = window.setTimeout(() => setRecDone(true), RECORDING_MS);
+    return () => window.clearTimeout(id);
+  }, [done, hasAudio, recDone]);
 
   // Sem autoplay. Só a limpeza: sair do passo para o áudio.
   useEffect(() => {
@@ -1258,7 +1271,19 @@ function MediaStep({
         typeFirst
       />
 
-      {done && hasAudio && step.audio && (
+      {done && hasAudio && !recDone && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0.45, 1, 0.45] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          className="mt-3 text-sm italic text-[#b7abdd]"
+          role="status"
+        >
+          {ui.recordingAudio}
+        </motion.p>
+      )}
+
+      {done && recDone && hasAudio && step.audio && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <VoiceNote
             ui={ui}
@@ -1276,7 +1301,7 @@ function MediaStep({
       {/* Enquanto a voz corre, a guia "ainda está desenhando". */}
       {/* Bolha de "digitando" só faz sentido enquanto algo ainda vem.
           Com a carta na tela, ela ficava piscando ao lado do conteúdo. */}
-      {done && !videoReady && !step.letter && (
+      {done && recDone && !videoReady && !step.letter && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

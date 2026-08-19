@@ -39,6 +39,7 @@ export const UI_EN = {
   continue: "Continue",
   showAllMessages: "Show all messages",
   typing: "Typing",
+  recordingAudio: "Master Aura is recording an audio...",
   yourFirstName: "Your first name",
   nameError: "Please tell me your name so I can read your chart.",
   birthdateIntro:
