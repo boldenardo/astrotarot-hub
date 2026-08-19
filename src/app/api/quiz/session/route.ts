@@ -25,8 +25,21 @@ export async function GET(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ["line_items"],
+    });
+    // O retrato veio como order bump nesta compra? A thank-you usa isto
+    // para NÃO oferecer de novo o que a pessoa acabou de levar — o risco
+    // real era o one-click cobrar $24.99 em cima do bump na janela em que
+    // o webhook ainda não gravou o entitlement.
+    const portraitIncluded = Boolean(
+      process.env.STRIPE_PRICE_SOULMATE_PORTRAIT &&
+        session.line_items?.data?.some(
+          (li) => li.price?.id === process.env.STRIPE_PRICE_SOULMATE_PORTRAIT
+        )
+    );
     return NextResponse.json({
+      portraitIncluded,
       paid: session.payment_status === "paid",
       amount:
         typeof session.amount_total === "number"

@@ -350,6 +350,29 @@ export async function POST(req: NextRequest) {
               if (error) {
                 console.error("[stripe/webhook] grant_readings falhou:", error);
               }
+              // Order bump: o retrato pode ter vindo como optional_item na
+              // MESMA sessão. O metadata não sabe disso — só os line items
+              // dizem o que de fato foi comprado.
+              try {
+                const portraitPrice = process.env.STRIPE_PRICE_SOULMATE_PORTRAIT;
+                if (portraitPrice) {
+                  const items = await stripe.checkout.sessions.listLineItems(
+                    session.id,
+                    { limit: 10 }
+                  );
+                  if (items.data.some((li) => li.price?.id === portraitPrice)) {
+                    await setEntitlement({
+                      userId,
+                      feature: "soulmate_portrait",
+                      active: true,
+                      source: "stripe_one_time",
+                      reference: session.id,
+                    });
+                  }
+                }
+              } catch (e) {
+                console.error("[stripe/webhook] line items do bump:", e);
+              }
             }
           } else if (session.mode === "subscription") {
             const now = new Date();

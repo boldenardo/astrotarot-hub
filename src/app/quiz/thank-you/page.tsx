@@ -26,6 +26,8 @@ const STORE_KEY = "astro_quiz_v1";
 
 interface SessionInfo {
   paid: boolean;
+  /** O retrato veio junto no checkout (order bump). */
+  portraitIncluded?: boolean;
   amount: number | null;
   currency: string;
   plan: string | null;
@@ -91,6 +93,10 @@ function ThankYouContent() {
         }
         if (data.plan) setPlan(data.plan);
         if (data.email) setEmail((prev) => prev ?? data.email);
+        // Já levou o retrato no bump: mostra "desbloqueado" em vez de
+        // oferecer — e elimina a chance de cobrar duas vezes na janela em
+        // que o webhook ainda não escreveu o entitlement.
+        if (data.portraitIncluded) setPortrait("done");
       })
       .catch(() => {
         // Endpoint indisponível: evento aproximado é melhor que nenhum.

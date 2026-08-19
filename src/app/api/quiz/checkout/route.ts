@@ -223,6 +223,17 @@ export async function POST(req: NextRequest) {
       // estamos reaproveitando um existente (os dois campos são
       // mutuamente exclusivos na API).
       if (!existing?.stripe_customer_id) params.customer_creation = "always";
+
+      // ORDER BUMP: o retrato de $24.99 como item opcional DENTRO do
+      // formulário de pagamento — a Stripe renderiza o toggle sozinha, na
+      // moeda da sessão (o price tem as mesmas 8 moedas do funil). Quem
+      // marca compra os dois numa cobrança só; quem não marca ainda
+      // encontra o one-click na thank-you.
+      if (plan === "PACK5" && process.env.STRIPE_PRICE_SOULMATE_PORTRAIT) {
+        params.optional_items = [
+          { price: process.env.STRIPE_PRICE_SOULMATE_PORTRAIT, quantity: 1 },
+        ];
+      }
     }
 
     if (embedded) {
