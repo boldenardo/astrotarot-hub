@@ -176,9 +176,9 @@ export const STEPS_ES: QuizStep[] = [
     messages: [
       "Con tu carta astral, estoy preparando el retrato de tu alma gemela. Empiezo ahora mismo 👇🔮",
     ],
-    src: "/funnel/portrait-drawing.mp4",
-    poster: "/funnel/portrait-drawing-poster.webp",
-    aspect: "16 / 9",
+    // Mesma carta da versão EN: o vídeo do casal no parque contradizia
+    // a narração nos dois idiomas.
+    letter: true,
     audio: "/funnel/soulmate-narration.mp3",
     caption: "Inicial · Fecha de nacimiento · Signo · Lugar del encuentro · Fecha",
     cta: "Continuar",

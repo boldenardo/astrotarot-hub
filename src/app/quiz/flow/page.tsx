@@ -1032,7 +1032,9 @@ function ProofStep({
  * conteúdo, e o retrato chegando depois soa como a guia terminando de
  * desenhar enquanto fala. Mesma promessa, na ordem em que ela convence.
  */
-const VOICE_NOTE_VIDEO_DELAY_MS = 7000;
+// Depois que o áudio começa. Era 7s — tempo de a pessoa achar que
+// travou e sair antes de ver o que veio depois.
+const VOICE_NOTE_VIDEO_DELAY_MS = 2500;
 
 /**
  * O áudio NÃO toca sozinho: a pessoa aperta o play.
@@ -1047,7 +1049,9 @@ const VOICE_NOTE_VIDEO_DELAY_MS = 7000;
  * ali vai tocar antes; ele existe só para que ninguém fique preso num passo
  * sem saída.
  */
-const VOICE_NOTE_IDLE_MS = 20000;
+// Saída para quem NUNCA toca no play. Eram 20s encarando três
+// pontinhos — uma eternidade em funil de tráfego frio.
+const VOICE_NOTE_IDLE_MS = 6000;
 
 /**
  * Alturas fixas da onda. Constante, e não aleatória: Math.random aqui daria
@@ -1270,7 +1274,9 @@ function MediaStep({
       )}
 
       {/* Enquanto a voz corre, a guia "ainda está desenhando". */}
-      {done && !videoReady && (
+      {/* Bolha de "digitando" só faz sentido enquanto algo ainda vem.
+          Com a carta na tela, ela ficava piscando ao lado do conteúdo. */}
+      {done && !videoReady && !step.letter && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
