@@ -335,6 +335,16 @@ export default function QuizVslV2Page() {
   const [store, setStore] = useState<QuizStore>({});
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * URL da Checkout Session quando o redirect NAO tirou a pessoa da pagina.
+   *
+   * 84% do trafego chega pela webview do Facebook, que nao e um navegador
+   * completo: la o `location.href` pode ser engolido sem lancar erro. O
+   * sintoma bate com os dados — 34 pessoas criaram sessao no Stripe e so 1
+   * digitou cartao, e 5 delas clicaram varias vezes achando que travou.
+   * Com a URL guardada, a falha silenciosa vira um link tocavel.
+   */
+  const [manualUrl, setManualUrl] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [city, setCity] = useState<string | null>(null);
   const [returned, setReturned] = useState(false);
@@ -519,7 +529,23 @@ export default function QuizVslV2Page() {
           ...baseParams(),
           label: plan,
         });
-        window.location.href = data.url;
+        // Watchdog: se em 2,5s a pagina continuar visivel, a navegacao nao
+        // aconteceu. Mostra o link para a pessoa ir no toque dela.
+        const url = data.url;
+        window.setTimeout(() => {
+          if (!document.hidden) {
+            setManualUrl(url);
+            setLoadingPlan(null);
+            submittingRef.current = false;
+            trackEvent("checkout_error", {
+              category: "quiz",
+              label: plan,
+              offer: OFFER_ID,
+              reason: "redirect_blocked",
+            });
+          }
+        }, 2500);
+        window.location.href = url;
       } catch (e) {
         trackEvent("checkout_error", {
           ...baseParams(),
@@ -638,6 +664,18 @@ export default function QuizVslV2Page() {
         No subscription &middot; Instant access &middot; Secure checkout by
         Stripe
       </p>
+      {/* Resgate: o redirect nao levou a pessoa embora (webview do
+          Facebook). Link explicito, que funciona no toque dela. */}
+      {manualUrl && (
+        <a
+          href={manualUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-gold mt-3 flex w-full min-h-[54px] items-center justify-center rounded-full px-6 text-sm font-bold uppercase tracking-wide"
+        >
+          Open secure checkout &rarr;
+        </a>
+      )}
       {error && (
         <p className="mt-3 text-center text-sm text-red-400" role="alert">
           {error}
