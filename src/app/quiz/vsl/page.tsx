@@ -26,7 +26,15 @@ import {
   Star,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import VSLPlayer from "@/components/VSLPlayer";
+
+// Só baixa quando alguém abre o checkout — carregar sempre custaria ~40KB
+// a toda visita, inclusive de quem nunca clica em comprar.
+const EmbeddedCheckoutPanel = dynamic(
+  () => import("@/components/EmbeddedCheckoutPanel"),
+  { ssr: false }
+);
 import { trackEvent, trackPaymentInitiated } from "@/lib/analytics";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import { computeScore } from "@/lib/quiz-data";
@@ -306,6 +314,8 @@ export default function QuizVslPage() {
    * Guardando a URL, a falha silenciosa vira um link que ela pode tocar.
    */
   const [manualUrl, setManualUrl] = useState<string | null>(null);
+  /** Segredo da sessão embutida — presente = painel de pagamento aberto. */
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const [emailModalPlan, setEmailModalPlan] = useState<PlanKey | null>(null);
@@ -400,15 +410,17 @@ export default function QuizVslPage() {
             offer: plan === "PACK5" ? OFFER_ID : "premium_1499_monthly",
             variant: VARIANT_CONTROL,
             cancelPath: "/quiz/vsl",
+            embedded: true,
             utm: getUtmParams(),
           }),
         });
         const data = (await res.json().catch(() => ({}))) as {
           url?: string;
+          clientSecret?: string;
           sessionId?: string;
           error?: string;
         };
-        if (!res.ok || !data.url) {
+        if (!res.ok || !(data.clientSecret || data.url)) {
           trackEvent("checkout_error", {
             category: "quiz",
             label: plan,
@@ -436,15 +448,21 @@ export default function QuizVslPage() {
           session_id: data.sessionId,
           funnel_session_id: getFunnelSessionId(),
         });
+        // Caminho normal: o formulário abre AQUI, sem sair da página.
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          setLoadingPlan(null);
+          submittingRef.current = false;
+          return;
+        }
+
+        // Sem client_secret (modo embutido indisponível): volta ao redirect.
         trackEvent("checkout_redirect_started", {
           category: "quiz",
           label: plan,
           offer: OFFER_ID,
-          variant: VARIANT_CONTROL,
         });
-        // Watchdog do redirect: se em 2,5s a pagina ainda estiver aqui, a
-        // navegacao nao aconteceu (webview bloqueou). Oferece o link.
-        const url = data.url;
+        const url = data.url!;
         window.setTimeout(() => {
           if (!document.hidden) {
             setManualUrl(url);
@@ -961,6 +979,15 @@ export default function QuizVslPage() {
           </div>
         </div>
       )}
+      {/* Checkout embutido: cobre a tela, mas a pessoa continua no
+          nosso domínio e volta para a oferta se fechar. */}
+      {clientSecret && (
+        <EmbeddedCheckoutPanel
+          clientSecret={clientSecret}
+          onClose={() => setClientSecret(null)}
+        />
+      )}
+
     </main>
   );
 }

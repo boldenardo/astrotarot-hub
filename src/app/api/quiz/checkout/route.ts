@@ -74,6 +74,8 @@ export async function POST(req: NextRequest) {
     variant?: string;
     /** Página que iniciou o checkout — para o cancel voltar ao MESMO braço. */
     cancelPath?: string;
+    /** true = formulário DENTRO da nossa página (ui_mode embedded). */
+    embedded?: boolean;
     utm?: Record<string, string>;
   } = {};
   try {
@@ -165,6 +167,7 @@ export async function POST(req: NextRequest) {
     typeof body.cancelPath === "string" && CANCEL_PATHS.has(body.cancelPath)
       ? body.cancelPath
       : DEFAULT_CANCEL_PATH;
+  const embedded = body.embedded === true;
   const utm = body.utm && typeof body.utm === "object" ? body.utm : {};
   const utmMeta: Record<string, string> = {};
   for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
@@ -221,6 +224,19 @@ export async function POST(req: NextRequest) {
     // NOTE: no payments row is inserted here — the guest has no user row
     // yet. The webhook (checkout.session.completed) creates the user by
     // email and inserts the COMPLETED payment idempotently.
+
+    if (embedded) {
+      if (!session.client_secret) {
+        return NextResponse.json(
+          { error: "Could not start checkout. Please try again." },
+          { status: 500 }
+        );
+      }
+      return NextResponse.json({
+        clientSecret: session.client_secret,
+        sessionId: session.id,
+      });
+    }
 
     if (!session.url) {
       return NextResponse.json(
