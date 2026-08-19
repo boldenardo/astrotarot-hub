@@ -316,6 +316,8 @@ export default function QuizVslPage() {
   const [manualUrl, setManualUrl] = useState<string | null>(null);
   /** Segredo da sessão embutida — presente = painel de pagamento aberto. */
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  /** Expiração real da sessão embutida — alimenta o cronômetro do painel. */
+  const [checkoutExpiresAt, setCheckoutExpiresAt] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const [emailModalPlan, setEmailModalPlan] = useState<PlanKey | null>(null);
@@ -418,6 +420,7 @@ export default function QuizVslPage() {
           url?: string;
           clientSecret?: string;
           sessionId?: string;
+          expiresAt?: number;
           error?: string;
         };
         if (!res.ok || !(data.clientSecret || data.url)) {
@@ -451,6 +454,7 @@ export default function QuizVslPage() {
         // Caminho normal: o formulário abre AQUI, sem sair da página.
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
+          setCheckoutExpiresAt(data.expiresAt ?? null);
           setLoadingPlan(null);
           submittingRef.current = false;
           return;
@@ -984,6 +988,7 @@ export default function QuizVslPage() {
       {clientSecret && (
         <EmbeddedCheckoutPanel
           clientSecret={clientSecret}
+          expiresAt={checkoutExpiresAt}
           onClose={() => setClientSecret(null)}
         />
       )}

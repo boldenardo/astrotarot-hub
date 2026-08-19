@@ -154,3 +154,30 @@
     transition: none;
   }
 }
+
+/* ===== Céu do modo cinema (V2): estrelas e arcanos flutuando ===== */
+@keyframes galaxy-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.7; }
+}
+.galaxy-star {
+  animation: galaxy-twinkle 3.6s ease-in-out infinite;
+}
+/* margin-top em vez de transform: o transform inline já carrega o rotate
+   de cada carta e a animação não pode atropelá-lo. */
+@keyframes galaxy-float {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -14px; }
+}
+.galaxy-card {
+  filter: grayscale(55%) brightness(0.8);
+  opacity: 0.15;
+  animation: galaxy-float 16s ease-in-out infinite;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .galaxy-star,
+  .galaxy-card {
+    animation: none;
+  }
+}

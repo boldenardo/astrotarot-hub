@@ -1378,7 +1378,9 @@ function LocationStep({
       .then((r) => r.json())
       .then((d: { city?: string | null; region?: string | null }) => {
         if (!alive) return;
-        const label = [d.city, d.region].filter(Boolean).join(", ");
+        // "Rio de Janeiro, Rio de Janeiro": capital com nome do estado
+        // duplicava o rótulo. Um Set resolve sem caso especial.
+        const label = [...new Set([d.city, d.region].filter(Boolean))].join(", ");
         setPlace(label || null);
         setLoaded(true);
       })

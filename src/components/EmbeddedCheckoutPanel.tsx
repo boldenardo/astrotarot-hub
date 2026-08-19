@@ -41,12 +41,29 @@ function getStripe(): Promise<Stripe | null> {
 interface Props {
   /** Segredo da Checkout Session (ui_mode: embedded). */
   clientSecret: string;
+  /**
+   * Epoch (segundos) em que a sessão EXPIRA de verdade na Stripe.
+   * O cronômetro conta até ela — zero = sessão morta, painel fecha e a
+   * pessoa recomeça. Honesto por construção: não há urgência encenada.
+   */
+  expiresAt?: number | null;
   /** Fechar o painel — a pessoa desistiu e volta para a oferta. */
   onClose: () => void;
 }
 
-export default function EmbeddedCheckoutPanel({ clientSecret, onClose }: Props) {
+function mmss(total: number): string {
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+export default function EmbeddedCheckoutPanel({
+  clientSecret,
+  expiresAt,
+  onClose,
+}: Props) {
   const [ready, setReady] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
@@ -72,6 +89,20 @@ export default function EmbeddedCheckoutPanel({ clientSecret, onClose }: Props) 
     return () => window.clearTimeout(id);
   }, []);
 
+  // Conta até a expiração REAL da sessão. Zerou → a sessão morreu na
+  // Stripe; fechar devolve a pessoa à oferta para recomeçar com uma nova.
+  useEffect(() => {
+    if (!expiresAt) return;
+    const tick = () => {
+      const left = Math.max(0, expiresAt - Math.floor(Date.now() / 1000));
+      setSecondsLeft(left);
+      if (left <= 0) closeRef.current();
+    };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [expiresAt]);
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#0e0a1a]">
       {/* Cabeçalho: identidade nossa em cima do formulário deles, para a
@@ -80,6 +111,14 @@ export default function EmbeddedCheckoutPanel({ clientSecret, onClose }: Props) 
         <span className="font-display text-base font-semibold tracking-tight text-ink-50">
           Astro<span className="text-gold">Tarot</span>
         </span>
+        {secondsLeft != null && secondsLeft > 0 && (
+          <span className="flex items-center gap-1.5 text-xs text-white/70">
+            Your session expires in
+            <span className="rounded-full bg-[#7c5cff] px-2.5 py-0.5 font-mono text-[13px] font-semibold text-white">
+              {mmss(secondsLeft)}
+            </span>
+          </span>
+        )}
         <button
           type="button"
           onClick={onClose}

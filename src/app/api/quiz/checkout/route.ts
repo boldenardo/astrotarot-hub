@@ -230,6 +230,11 @@ export async function POST(req: NextRequest) {
       params.cancel_url = `${appUrl}${cancelPath}?canceled=1`;
     }
 
+    // Expiração REAL: a sessão morre em 30 minutos (mínimo da Stripe).
+    // É o que permite mostrar um cronômetro honesto no checkout — quando
+    // ele zera, a sessão de fato expirou, não é encenação.
+    params.expires_at = Math.floor(Date.now() / 1000) + 30 * 60;
+
     const session = await stripe.checkout.sessions.create(params);
 
     // NOTE: no payments row is inserted here — the guest has no user row
@@ -246,6 +251,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         clientSecret: session.client_secret,
         sessionId: session.id,
+        // Epoch da expiração real — o cronômetro do painel conta até aqui.
+        expiresAt: session.expires_at,
       });
     }
 

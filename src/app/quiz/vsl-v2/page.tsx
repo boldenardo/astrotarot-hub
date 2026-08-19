@@ -339,6 +339,78 @@ function Rule({ label }: { label: string }) {
   );
 }
 
+/**
+ * MODO CINEMA — só o vídeo sobre a galáxia até 3:30 assistidos.
+ *
+ * A oferta e o resto da página entram no DOM quando o gate abre. O gate
+ * NÃO é uma jaula: abre também quando o vídeo termina, quando o vídeo
+ * FALHA (fail-open do VSLPlayer — a lição do dia em que a página inteira
+ * ficou sem preço), quando a pessoa volta do Stripe (?canceled=1), e fica
+ * aberto pela sessão inteira depois da primeira vez.
+ */
+const GATE_SECONDS = 210;
+const GATE_KEY = "astro_vsl2_open";
+
+/* Céu do modo cinema. Coordenadas ESTÁTICAS: Math.random() no render
+   divergiria entre servidor e browser e quebraria a hidratação. */
+const GALAXY_STARS: Array<[number, number, number]> = [
+  [4, 12, 1], [11, 34, 2], [18, 7, 1], [24, 58, 2], [31, 22, 1],
+  [38, 80, 2], [44, 15, 1], [51, 47, 2], [57, 68, 1], [63, 9, 2],
+  [69, 38, 1], [74, 83, 2], [81, 25, 1], [87, 55, 2], [93, 14, 1],
+  [8, 72, 2], [27, 90, 1], [47, 88, 2], [66, 76, 1], [90, 66, 2],
+  [15, 50, 1], [55, 30, 2], [78, 45, 1], [96, 35, 2],
+];
+
+/* Arcanos do baralho local (public/cards/egyptian) flutuando ao fundo —
+   nada de hotlink: o snippet de referência puxava do Blogspot, que pode
+   sumir a qualquer momento e vaza referer. */
+const GALAXY_CARDS: Array<{
+  n: number; left: string; top: string; rot: number; w: number; delay: number;
+}> = [
+  { n: 3, left: "4%", top: "10%", rot: -14, w: 82, delay: 0 },
+  { n: 7, left: "78%", top: "7%", rot: 12, w: 70, delay: 2.2 },
+  { n: 12, left: "10%", top: "64%", rot: 8, w: 90, delay: 4.1 },
+  { n: 17, left: "74%", top: "58%", rot: -10, w: 86, delay: 1.3 },
+  { n: 19, left: "42%", top: "80%", rot: 15, w: 74, delay: 3.2 },
+  { n: 21, left: "38%", top: "3%", rot: -6, w: 66, delay: 5 },
+];
+
+function GalaxyBackdrop() {
+  return (
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(60% 40% at 20% 10%, rgba(124,92,255,0.22), transparent 60%), radial-gradient(50% 35% at 85% 25%, rgba(212,175,55,0.10), transparent 55%), radial-gradient(70% 50% at 50% 95%, rgba(124,92,255,0.14), transparent 60%)",
+        }}
+      />
+      {GALAXY_STARS.map(([l, t, s], i) => (
+        <span
+          key={i}
+          className="galaxy-star absolute rounded-full bg-white"
+          style={{ left: `${l}%`, top: `${t}%`, width: s, height: s, animationDelay: `${(i % 7) * 0.5}s` }}
+        />
+      ))}
+      {GALAXY_CARDS.map((c) => (
+        <Image
+          key={c.n}
+          src={`/cards/egyptian/${c.n}.jpg`}
+          alt=""
+          width={120}
+          height={200}
+          loading="lazy"
+          className="galaxy-card absolute rounded-lg"
+          style={{
+            left: c.left, top: c.top, width: c.w, height: "auto",
+            transform: `rotate(${c.rot}deg)`, animationDelay: `${c.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function QuizVslV2Page() {
   const [store, setStore] = useState<QuizStore>({});
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
@@ -355,6 +427,8 @@ export default function QuizVslV2Page() {
   const [manualUrl, setManualUrl] = useState<string | null>(null);
   /** Segredo da sessão embutida — presente = painel de pagamento aberto. */
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  /** Expiração real da sessão embutida — alimenta o cronômetro do painel. */
+  const [checkoutExpiresAt, setCheckoutExpiresAt] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [city, setCity] = useState<string | null>(null);
   const [returned, setReturned] = useState(false);
@@ -366,6 +440,27 @@ export default function QuizVslV2Page() {
   const offerRef = useRef<HTMLDivElement | null>(null);
   const ctaRef = useRef<HTMLDivElement | null>(null);
   const [showSticky, setShowSticky] = useState(false);
+
+  // Modo cinema (ver GATE_SECONDS). Começa fechado; abre por tempo
+  // assistido, fim de vídeo, falha do vídeo, volta do Stripe ou sessão.
+  const [gateOpen, setGateOpen] = useState(false);
+  const openGate = useCallback(() => {
+    setGateOpen((prev) => {
+      if (!prev) {
+        trackEvent("offer_unlocked", {
+          category: "quiz",
+          label: `after_${GATE_SECONDS}s`,
+          variant: VARIANT_IGNITE,
+        });
+      }
+      return true;
+    });
+    try {
+      sessionStorage.setItem(GATE_KEY, "1");
+    } catch {
+      // sem storage: o gate vive só em memória nesta visita
+    }
+  }, []);
 
   const viewFiredRef = useRef(false);
   const offerViewedRef = useRef(false);
@@ -405,8 +500,13 @@ export default function QuizVslV2Page() {
         new URLSearchParams(window.location.search).get("canceled") === "1";
       if (canceled) sessionStorage.setItem(RETURNED_KEY, "1");
       if (sessionStorage.getItem(RETURNED_KEY) === "1") setReturned(true);
+      // Quem volta do Stripe já viu tudo; quem destravou não re-tranca.
+      if (canceled || sessionStorage.getItem(GATE_KEY) === "1") setGateOpen(true);
     } catch {
-      if (canceled) setReturned(true);
+      if (canceled) {
+        setReturned(true);
+        setGateOpen(true);
+      }
     }
   }, []);
 
@@ -419,7 +519,9 @@ export default function QuizVslV2Page() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { city?: string | null; region?: string | null } | null) => {
         if (!alive || !d) return;
-        const label = [d.city, d.region].filter(Boolean).join(", ");
+        // "Rio de Janeiro, Rio de Janeiro": capital com nome do estado
+        // duplicava o rótulo. Um Set resolve sem caso especial.
+        const label = [...new Set([d.city, d.region].filter(Boolean))].join(", ");
         if (label) setCity(label);
       })
       .catch(() => {});
@@ -511,6 +613,7 @@ export default function QuizVslV2Page() {
           url?: string;
           clientSecret?: string;
           sessionId?: string;
+          expiresAt?: number;
           error?: string;
         };
         if (!res.ok || !(data.clientSecret || data.url)) {
@@ -540,6 +643,7 @@ export default function QuizVslV2Page() {
         // Caminho normal: o formulário abre AQUI, sem sair da página.
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
+          setCheckoutExpiresAt(data.expiresAt ?? null);
           setLoadingPlan(null);
           submittingRef.current = false;
           return;
@@ -708,6 +812,7 @@ export default function QuizVslV2Page() {
 
   return (
     <div className="w-full pb-40">
+      {!gateOpen && <GalaxyBackdrop />}
       {/* ===================================================================
           ACIMA DA DOBRA — continuidade com o fim do quiz.
           Ordem deliberada: (1) isso é sobre você, (2) suas respostas foram
@@ -764,13 +869,27 @@ export default function QuizVslV2Page() {
           320px cada linha de texto aqui empurra o vídeo para fora da dobra,
           e o vídeo é o ativo de retenção da página. */}
       <section className="mt-5">
-        <VSLPlayer placement="quiz_result" variant={VARIANT_IGNITE} />
+        <VSLPlayer
+          placement="quiz_result"
+          variant={VARIANT_IGNITE}
+          ctaRevealSeconds={GATE_SECONDS}
+          onCtaReveal={openGate}
+        />
         <p className="mt-3 text-[15px] leading-relaxed text-white/70">
           Master Aura goes through what your answers turned up — and the one
           part she can only show you inside the reading.
         </p>
+        {!gateOpen && (
+          <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-sm text-white/60">
+            <Lock className="h-3.5 w-3.5 shrink-0 text-gold" aria-hidden />
+            Your full reading unlocks as the video plays
+          </p>
+        )}
       </section>
 
+      {/* MODO CINEMA: tudo daqui para baixo só entra quando o gate abre. */}
+      {gateOpen && (
+        <>
       {/* Voltou do Stripe sem concluir. Sem desconto falso, sem contagem
           regressiva — só retoma de onde parou. */}
       {returned && (
@@ -1061,7 +1180,10 @@ export default function QuizVslV2Page() {
       </p>
 
       {/* Barra fixa — só depois que a oferta já apareceu uma vez. */}
-      {showSticky && (
+        </>
+      )}
+
+      {gateOpen && showSticky && (
         <div
           className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/85 px-3 pt-3 backdrop-blur-md"
           style={{
@@ -1141,6 +1263,7 @@ export default function QuizVslV2Page() {
       {clientSecret && (
         <EmbeddedCheckoutPanel
           clientSecret={clientSecret}
+          expiresAt={checkoutExpiresAt}
           onClose={() => setClientSecret(null)}
         />
       )}
