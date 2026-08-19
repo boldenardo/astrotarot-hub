@@ -51,6 +51,14 @@ interface Props {
   onClose: () => void;
 }
 
+/**
+ * Janela do painel em minutos. A Stripe não aceita expires_at abaixo de
+ * 30 min, então os 10 minutos são cumpridos AQUI: no zero o painel fecha
+ * de verdade e esta instância de checkout deixa de existir — reabrir cria
+ * outra sessão. O relógio promete exatamente o que executa.
+ */
+const PANEL_MINUTES = 10;
+
 function mmss(total: number): string {
   const m = Math.floor(total / 60);
   const s = total % 60;
@@ -89,12 +97,14 @@ export default function EmbeddedCheckoutPanel({
     return () => window.clearTimeout(id);
   }, []);
 
-  // Conta até a expiração REAL da sessão. Zerou → a sessão morreu na
-  // Stripe; fechar devolve a pessoa à oferta para recomeçar com uma nova.
+  // Conta até o que vencer primeiro: os PANEL_MINUTES ou a expiração
+  // real da sessão na Stripe. Zerou → fecha; a oferta continua lá e o
+  // próximo clique cria uma sessão nova.
   useEffect(() => {
-    if (!expiresAt) return;
+    const cap = Math.floor(Date.now() / 1000) + PANEL_MINUTES * 60;
+    const deadline = expiresAt ? Math.min(expiresAt, cap) : cap;
     const tick = () => {
-      const left = Math.max(0, expiresAt - Math.floor(Date.now() / 1000));
+      const left = Math.max(0, deadline - Math.floor(Date.now() / 1000));
       setSecondsLeft(left);
       if (left <= 0) closeRef.current();
     };
