@@ -20,7 +20,14 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * redirect assinada pelo Stripe. Aceitar string livre aqui seria um open
  * redirect com o checkout como trampolim. Fora da lista → cai na V1.
  */
-const CANCEL_PATHS = new Set(["/quiz/vsl", "/quiz/vsl-v2"]);
+const CANCEL_PATHS = new Set([
+  "/quiz/vsl",
+  "/quiz/vsl-v2",
+  // Funis de dor: quem desiste no Stripe volta para o MESMO experimento.
+  "/quiz/intimacy",
+  "/quiz/body",
+  "/quiz/money",
+]);
 const DEFAULT_CANCEL_PATH = "/quiz/vsl";
 
 /**

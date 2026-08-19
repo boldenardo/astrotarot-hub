@@ -40,6 +40,18 @@ export type AnalyticsEvent =
   // diferença entre "clicou" e "sessão criada" é a diferença entre um
   // problema de oferta e um problema de backend, e sem os dois eventos as
   // duas falhas parecem a mesma coisa.
+  // Laboratório de funis de dor (/quiz/intimacy|body|money). Prefixo
+  // próprio para os relatórios nunca se misturarem com o Control.
+  | "pain_funnel_view"
+  | "pain_quiz_started"
+  | "pain_quiz_answered"
+  | "pain_quiz_completed"
+  | "pain_tarot_started"
+  | "pain_card_selected"
+  | "pain_card_revealed"
+  | "pain_lp_viewed"
+  | "pain_offer_viewed"
+  | "pain_checkout_clicked"
   | "quiz_vsl_view"
   | "vsl_video_started"
   | "vsl_video_25"
