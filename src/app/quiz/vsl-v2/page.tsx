@@ -375,10 +375,7 @@ const GALAXY_CARDS: Array<{
 
 function GalaxyBackdrop() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-y-0 left-1/2 -z-10 w-screen -translate-x-1/2 overflow-hidden"
-    >
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div
         className="absolute inset-0"
         style={{
@@ -789,9 +786,8 @@ export default function QuizVslV2Page() {
 
   return (
     <div className="w-full pb-40">
-      {/* HERO CINEMA — galáxia, estrelas, arcanos e poeira atrás do
-          resultado e do vídeo. Daqui para baixo, a página normal. */}
-      <div className="relative">
+      {/* Céu do cinema, exatamente como no modo aprovado — só que a
+          página inteira fica visível desde o primeiro paint. */}
       <GalaxyBackdrop />
       {/* ===================================================================
           ACIMA DA DOBRA — continuidade com o fim do quiz.
@@ -855,7 +851,6 @@ export default function QuizVslV2Page() {
           part she can only show you inside the reading.
         </p>
       </section>
-      </div>
 
       {/* Voltou do Stripe sem concluir. Sem desconto falso, sem contagem
           regressiva — só retoma de onde parou. */}

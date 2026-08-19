@@ -51,23 +51,24 @@ export default function GalaxyParticles() {
     let h = 0;
     let cx = 0;
     let cy = 0;
-    // O canvas mede o PRÓPRIO contêiner (o hero), não a viewport: o céu
-    // deixou de ser fixed na página inteira e passou a viver só atrás do
-    // resultado + vídeo.
     const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      w = Math.max(1, Math.round(rect.width));
-      h = Math.max(1, Math.round(rect.height));
+      w = window.innerWidth;
+      h = window.innerHeight;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
+      // Canvas é elemento "replaced": sem width/height explícitos no CSS,
+      // inset-0 NÃO o estica — ele fica no tamanho do bitmap, e a poeira
+      // inteira desaba para o canto superior esquerdo. Foi exatamente o
+      // defeito visto em produção quando estas duas linhas saíram.
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       cx = w / 2;
-      // Centro de gravidade no meio do hero — atrás do vídeo.
-      cy = h * 0.5;
+      // Centro de gravidade um pouco acima do meio — atrás do vídeo.
+      cy = h * 0.42;
     };
     resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(canvas);
+    window.addEventListener("resize", resize);
 
     // Sprites: os círculos concêntricos do motor original ("fills"),
     // desenhados uma única vez por cor. Por frame, só drawImage.
@@ -156,7 +157,7 @@ export default function GalaxyParticles() {
     return () => {
       running = false;
       cancelAnimationFrame(raf);
-      ro.disconnect();
+      window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
