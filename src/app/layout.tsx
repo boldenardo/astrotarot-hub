@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Cormorant_Garamond, Inter, Caveat } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 import Script from "next/script";
@@ -24,6 +24,15 @@ const display = Cormorant_Garamond({
 const sans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  display: "swap",
+});
+
+// Manuscrita da carta que Master Aura preenche no funil. Peso unico e
+// subset latino: a fonte so existe para tres linhas de texto.
+const hand = Caveat({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-hand",
   display: "swap",
 });
 
@@ -123,7 +132,7 @@ export default function RootLayout({
       signUpUrl="/auth/register"
       afterSignOutUrl="/"
     >
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
+    <html lang="en" className={`${display.variable} ${hand.variable} ${sans.variable}`}>
       <head>
         {/* Structured data global: Organization + WebSite + WebApplication */}
         <JsonLd data={organizationJsonLd()} />

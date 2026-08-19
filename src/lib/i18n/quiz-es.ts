@@ -218,6 +218,19 @@ export const ANALYZING_STAGES_ES = [
 
 /** Textos de interface do funil (botões, rótulos, avisos). */
 export const UI_ES = {
+  letter: {
+    name: "Nombre",
+    birthDate: "Fecha de nacimiento",
+    zodiac: "Signo",
+    title: "Tu Alma Gemela",
+    fields: [
+      "Inicial del nombre",
+      "Fecha de nacimiento",
+      "Signo",
+      "Lugar del encuentro",
+      "Fecha del encuentro",
+    ],
+  },
   back: "Volver",
   progress: "Progreso del quiz",
   continue: "Continuar",

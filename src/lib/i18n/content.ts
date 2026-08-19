@@ -20,6 +20,20 @@ import {
 } from "@/lib/i18n/quiz-es";
 
 export const UI_EN = {
+  /** Rótulos da carta que Master Aura preenche com os dados dela. */
+  letter: {
+    name: "Name",
+    birthDate: "Birth date",
+    zodiac: "Zodiac sign",
+    title: "Your Soulmate",
+    fields: [
+      "Name initial",
+      "Birth date",
+      "Zodiac sign",
+      "Meeting location",
+      "Meeting date",
+    ] as string[],
+  },
   back: "Go back",
   progress: "Quiz progress",
   continue: "Continue",

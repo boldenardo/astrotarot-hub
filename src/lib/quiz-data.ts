@@ -71,10 +71,16 @@ export type QuizStep = { id: string } & (
       /** Vídeo/animação em tela cheia com mensagem da guia. */
       kind: "media";
       messages: string[];
-      src: string;
+      /** Vídeo do passo. Ausente quando `letter` assume a tela. */
+      src?: string;
       poster?: string;
-      /** Proporção CSS do arquivo (ex.: "16 / 9"). */
-      aspect: string;
+      /** Proporção CSS do arquivo (ex.: "16 / 9"). Só com `src`. */
+      aspect?: string;
+      /**
+       * Carta preenchida ao vivo com o nome, a data e o signo DELA, no
+       * lugar de um vídeo. Personalizada de verdade e sem download.
+       */
+      letter?: boolean;
       caption?: string;
       cta?: string;
       /** Narração da Master Aura tocada junto com o vídeo (opcional). */
@@ -353,9 +359,10 @@ export const STEPS: QuizStep[] = [
     messages: [
       "Based on your birth chart, I am preparing a portrait of your soulmate. I'm starting right now 👇🔮",
     ],
-    src: "/funnel/portrait-drawing.mp4",
-    poster: "/funnel/portrait-drawing-poster.webp",
-    aspect: "16 / 9",
+    // O vídeo aqui mostrava um casal num parque enquanto a narração
+    // dizia "estou preparando o retrato" — a incoerência aparecia no
+    // ponto mais caro do funil. A carta mostra os dados DELA.
+    letter: true,
     audio: "/funnel/soulmate-narration.mp3",
     caption: "Name initial · Birth date · Zodiac sign · Meeting place · Meeting date",
     cta: "Continue",

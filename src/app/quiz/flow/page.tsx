@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import SoulmateLetter from "@/components/SoulmateLetter";
 import {
   ArrowLeft,
   BadgeCheck,
@@ -222,7 +223,7 @@ export default function QuizFlowPage() {
   }, [router]);
 
   const vars = useMemo(
-    () => ({ name: firstName, sign: state.sign }),
+    () => ({ name: firstName, sign: state.sign, birthDate: state.birthDate }),
     [firstName, state.sign]
   );
 
@@ -677,7 +678,7 @@ function QuestionStep({
   ui: QuizUI;
   step: Extract<QuizStep, { kind: "question" }>;
   selected?: string;
-  vars: { name?: string; sign?: string };
+  vars: { name?: string; sign?: string; birthDate?: string };
   onAnswer: (questionId: string, value: string) => void;
 }) {
   const intro = step.intro?.map((m) => resolveReactionText(m, vars));
@@ -1122,7 +1123,7 @@ function MediaStep({
 }: {
   ui: QuizUI;
   step: Extract<QuizStep, { kind: "media" }>;
-  vars: { name?: string; sign?: string };
+  vars: { name?: string; sign?: string; birthDate?: string };
   onContinue: () => void;
 }) {
   const messages = step.messages.map((m) => resolveReactionText(m, vars));
@@ -1248,24 +1249,35 @@ function MediaStep({
         </motion.div>
       )}
 
-      {done && videoReady && (
+      {done && (videoReady || step.letter) && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <div
-            className="relative mt-3 overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.25)] bg-black"
-            style={{ aspectRatio: step.aspect }}
-          >
-            <video
-              src={step.src}
-              poster={step.poster}
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="metadata"
-              aria-hidden
-              className="h-full w-full object-cover"
-            />
-          </div>
+          {step.letter ? (
+            <div className="mt-3">
+              <SoulmateLetter
+                name={vars.name}
+                birthDate={vars.birthDate}
+                sign={vars.sign}
+                labels={ui.letter}
+              />
+            </div>
+          ) : (
+            <div
+              className="relative mt-3 overflow-hidden rounded-2xl border border-[rgba(212,175,55,0.25)] bg-black"
+              style={{ aspectRatio: step.aspect }}
+            >
+              <video
+                src={step.src}
+                poster={step.poster}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                aria-hidden
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
           {step.caption && (
             <p className="mt-2 text-center text-xs text-[#b9b2d0]">
               {step.caption}
