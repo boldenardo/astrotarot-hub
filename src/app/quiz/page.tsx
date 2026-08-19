@@ -224,7 +224,7 @@ export default function QuizLandingPage() {
         className="mt-6 flex items-center gap-2.5 text-sm text-[#b9b2d0]"
       >
         <Image
-          src="/luna.jpg"
+          src="/brand/master-aura.webp"
           alt="Master Aura"
           width={56}
           height={56}

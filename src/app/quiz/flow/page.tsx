@@ -52,7 +52,7 @@ import { captureSource, getStoredSource } from "@/lib/source";
 import { suggestEmailFix } from "@/lib/email-hint";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const GUIDE_PHOTO = "/luna.jpg";
+const GUIDE_PHOTO = "/brand/master-aura.webp";
 
 const slideVariants = {
   enter: (direction: number) => ({ opacity: 0, x: direction >= 0 ? 40 : -40 }),

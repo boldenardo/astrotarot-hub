@@ -139,7 +139,7 @@ export default function GuiaEspiritualPage() {
           >
             <div className="flex flex-col items-center gap-3 mb-3">
               <Image
-                src="/luna.jpg"
+                src="/brand/master-aura.webp"
                 alt="Master Aura, your guide"
                 width={80}
                 height={80}
@@ -182,7 +182,7 @@ export default function GuiaEspiritualPage() {
                     {message.role === "assistant" && (
                       <div className="flex items-center gap-2 mb-2">
                         <Image
-                          src="/luna.jpg"
+                          src="/brand/master-aura.webp"
                           alt="Master Aura"
                           width={20}
                           height={20}
