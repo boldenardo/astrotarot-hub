@@ -360,8 +360,37 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
     void checkout(v);
   }, [answers, cardIndex, checkout, emailInput, seg]);
 
-  const Cta = ({ id, label }: { id: string; label?: string }) => (
+  // O LP-Copywriter entrega o CTA como "frase de reforço [RÓTULO] microcopy".
+  // O botão recebe só o rótulo; frase vira linha acima e microcopy linha
+  // abaixo — um parágrafo inteiro dentro de um botão parece quebrado.
+  const Cta = ({ id, label }: { id: string; label?: string }) => {
+    const raw = (label ?? config.lp.ctaB).trim();
+    let lead = "";
+    let btn = raw;
+    let tail = "";
+    const bracket = raw.match(/^(.*?)\[(.+?)\](.*)$/s);
+    if (bracket) {
+      lead = bracket[1].trim();
+      btn = bracket[2].trim();
+      tail = bracket[3].trim();
+    } else {
+      const parts = raw.split(/(?<=[.!?])\s+/);
+      const last = parts[parts.length - 1] ?? "";
+      if (parts.length > 1 && last.length <= 48) {
+        btn = last.replace(/\.$/, "");
+        lead = parts.slice(0, -1).join(" ");
+      } else if (raw.length > 60) {
+        lead = raw;
+        btn = `Get my 5 readings — ${PRICE_LABEL}`;
+      }
+    }
+    return (
     <div className="mt-6">
+      {lead && (
+        <p className="mb-3 text-center text-[15px] leading-relaxed text-white/85">
+          {lead}
+        </p>
+      )}
       <button
         type="button"
         onClick={() => buy(id)}
@@ -376,11 +405,14 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
           </>
         ) : (
           <>
-            {label ?? config.lp.ctaB}
+            {btn}
             <span aria-hidden>&rarr;</span>
           </>
         )}
       </button>
+      {tail && (
+        <p className="mt-2.5 text-center text-sm text-white/70">{tail}</p>
+      )}
       <p className="mt-2.5 text-center text-sm text-white/75">
         5 personalized readings &middot;{" "}
         <span className="text-gold">{PRICE_LABEL}</span> one-time &middot; no
@@ -396,7 +428,8 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         </p>
       )}
     </div>
-  );
+    );
+  };
 
   /* ============================== RENDER ============================== */
 

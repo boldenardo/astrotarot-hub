@@ -366,6 +366,6 @@ export const MONEY_CONFIG: PainFunnelConfig = {
         "a": "Because it's one payment, not a subscription hiding behind a cheap first month. Five full readings for $9.99 means you can genuinely test the work — and we're comfortable being judged on it."
       }
     ],
-    "ctaB": "Your reading starts being written the moment you complete payment. 5 full readings — $9.99, one time, 7-day money-back guarantee. Start your first reading now."
+    "ctaB": "Your reading starts being written the moment you complete payment. [Start my first reading — $9.99] 5 full readings, one time, 7-day money-back guarantee."
   }
 };
