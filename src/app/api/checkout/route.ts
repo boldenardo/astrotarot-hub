@@ -8,15 +8,10 @@ import { requireUser } from "@/lib/server/plan-gate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
 import { normalizeCode } from "@/lib/affiliate";
-import { stripeEnabled, STRIPE_DISABLED_RESPONSE } from "@/lib/payments/provider";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  // Stripe desligada do runtime (migração Hotmart): nenhuma sessão nova.
-  if (!stripeEnabled()) {
-    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
-  }
   const gate = await requireUser();
   if (!gate.ok) return gate.response;
   const { profile } = gate;

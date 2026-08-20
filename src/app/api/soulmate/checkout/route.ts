@@ -6,15 +6,10 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { requireUser, hasEntitlement } from "@/lib/server/plan-gate";
-import { stripeEnabled, STRIPE_DISABLED_RESPONSE } from "@/lib/payments/provider";
 
 export const runtime = "nodejs";
 
 export async function POST() {
-  // Stripe desligada do runtime (migração Hotmart): sem compra do retrato.
-  if (!stripeEnabled()) {
-    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
-  }
   const gate = await requireUser();
   if (!gate.ok) return gate.response;
   const { profile } = gate;
