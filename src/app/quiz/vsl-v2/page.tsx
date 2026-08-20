@@ -90,6 +90,11 @@ const OFFER = {
 
 const RETURNED_KEY = "astro_vsl_returned";
 
+// Teste 20/08: página SEM o vídeo — a hipótese é que a VSL adiciona
+// informação demais entre a manchete e a oferta. O player fica guardado,
+// não deletado: para trazer a VSL de volta, é só voltar isto para true.
+const SHOW_VSL = false;
+
 interface QuizStore {
   answers?: Record<string, string>;
   email?: string;
@@ -844,13 +849,15 @@ export default function QuizVslV2Page() {
       {/* VÍDEO — encostado no H1. Nada entre a manchete e o player: em
           320px cada linha de texto aqui empurra o vídeo para fora da dobra,
           e o vídeo é o ativo de retenção da página. */}
-      <section className="mt-5">
-        <VSLPlayer placement="quiz_result" variant={VARIANT_IGNITE} />
-        <p className="mt-3 text-[15px] leading-relaxed text-white/70">
-          Master Aura goes through what your answers turned up — and the one
-          part she can only show you inside the reading.
-        </p>
-      </section>
+      {SHOW_VSL && (
+        <section className="mt-5">
+          <VSLPlayer placement="quiz_result" variant={VARIANT_IGNITE} />
+          <p className="mt-3 text-[15px] leading-relaxed text-white/70">
+            Master Aura goes through what your answers turned up — and the one
+            part she can only show you inside the reading.
+          </p>
+        </section>
+      )}
 
       {/* Voltou do Stripe sem concluir. Sem desconto falso, sem contagem
           regressiva — só retoma de onde parou. */}
