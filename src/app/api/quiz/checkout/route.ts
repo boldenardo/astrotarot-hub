@@ -8,6 +8,11 @@ import { normalizeCode } from "@/lib/affiliate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
 import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
+import {
+  activeProvider,
+  stripeEnabled,
+  STRIPE_DISABLED_RESPONSE,
+} from "@/lib/payments/provider";
 
 export const runtime = "nodejs";
 
@@ -105,6 +110,57 @@ export async function POST(req: NextRequest) {
       { error: "Please enter a valid email address." },
       { status: 400 }
     );
+  }
+
+  // ── PROVIDER ATIVO ──────────────────────────────────────────────────
+  // Hotmart: checkout hospedado por OFERTA criada no painel (a API não
+  // cria sessões dinâmicas como a Stripe). O funil já sabe redirecionar
+  // quando a resposta traz `url` em vez de `clientSecret`.
+  //
+  // SEM FALLBACK, por regra: se a Hotmart não puder atender, o erro é
+  // explícito — a Stripe NUNCA entra em cena por baixo dos panos.
+  if (activeProvider() === "hotmart") {
+    if (plan !== "PACK5") {
+      // Assinaturas exigem produto de assinatura na Hotmart — ainda não há.
+      return NextResponse.json(
+        {
+          error: "This plan is temporarily unavailable.",
+          code: "HOTMART_OPERATION_UNAVAILABLE",
+        },
+        { status: 503 }
+      );
+    }
+    const base = process.env.HOTMART_CHECKOUT_URL_PACK5;
+    if (!base) {
+      return NextResponse.json(
+        {
+          error: "Payments are not configured. Please try again later.",
+          code: "HOTMART_OPERATION_UNAVAILABLE",
+        },
+        { status: 503 }
+      );
+    }
+    try {
+      const url = new URL(base);
+      // Pré-preenche o e-mail do lead no checkout e leva a variante no
+      // parâmetro de rastreio nativo (sck) — ele volta nos relatórios de
+      // venda, mantendo a atribuição por braço do funil.
+      url.searchParams.set("email", email);
+      const hotmartVariant = meta(body.variant, 40);
+      if (hotmartVariant) url.searchParams.set("sck", hotmartVariant);
+      return NextResponse.json({ url: url.toString(), provider: "hotmart" });
+    } catch {
+      return NextResponse.json(
+        {
+          error: "Payments are misconfigured. Please try again later.",
+          code: "HOTMART_OPERATION_UNAVAILABLE",
+        },
+        { status: 503 }
+      );
+    }
+  }
+  if (!stripeEnabled()) {
+    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
   }
 
   const isSubscription = plan === "PREMIUM" || plan === "PREMIUM_YEARLY";

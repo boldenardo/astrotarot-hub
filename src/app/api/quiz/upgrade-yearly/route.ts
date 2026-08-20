@@ -14,10 +14,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import { stripeEnabled, STRIPE_DISABLED_RESPONSE } from "@/lib/payments/provider";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
+  // Stripe desligada do runtime (migração Hotmart): sem upgrade one-click.
+  if (!stripeEnabled()) {
+    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
+  }
   let body: { session_id?: string } = {};
   try {
     body = await req.json();
