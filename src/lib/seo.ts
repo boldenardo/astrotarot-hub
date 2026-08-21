@@ -59,18 +59,19 @@ export function softwareAppJsonLd() {
       },
       {
         "@type": "Offer",
-        name: "5-Reading Pack",
+        name: "Unlimited Readings — Monthly",
         price: "9.99",
         priceCurrency: "USD",
-        description: "5 Egyptian Tarot readings with a personalized interpretation. One-time payment.",
+        description:
+          "Unlimited personalized Egyptian Tarot readings and Spiritual Guide 24/7. Monthly subscription, cancel anytime.",
       },
       {
         "@type": "Offer",
-        name: "Unlimited Premium",
-        price: "14.99",
+        name: "Unlimited Readings — Annual",
+        price: "59.99",
         priceCurrency: "USD",
         description:
-          "Unlimited tarot readings, daily horoscope, soulmate reading, birth chart and lucky numbers. Monthly subscription.",
+          "Unlimited personalized Egyptian Tarot readings for a full year — about $4.99 a month.",
       },
     ],
   };
