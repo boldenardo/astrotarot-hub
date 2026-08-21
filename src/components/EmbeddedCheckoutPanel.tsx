@@ -23,6 +23,11 @@ import {
   EmbeddedCheckout,
 } from "@stripe/react-stripe-js";
 import { Loader2, X } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
+
+/** Marcos de carregamento do iframe da Stripe (ms desde a abertura). */
+const SLOW_MS = 8_000;
+const TIMEOUT_MS = 20_000;
 
 /**
  * O SDK do Stripe só é baixado quando alguém abre o checkout — carregar no
@@ -75,13 +80,105 @@ export default function EmbeddedCheckoutPanel({
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
 
+  // ---- telemetria do formulário ----
+  // O que se quer saber de cada abertura: o iframe da Stripe CHEGOU a
+  // carregar? Em quanto tempo? E a pessoa saiu antes ou depois de vê-lo?
+  const openedAtRef = useRef<number>(Date.now());
+  const loadedRef = useRef(false);
+  const closedTrackedRef = useRef(false);
+  const hostRef = useRef<HTMLDivElement | null>(null);
+
+  const trackClose = (reason: "user" | "expired" | "unmount") => {
+    if (closedTrackedRef.current) return;
+    closedTrackedRef.current = true;
+    trackEvent("checkout_form_closed", {
+      category: "checkout",
+      label: reason,
+      loaded: loadedRef.current,
+      seconds_open: Math.round((Date.now() - openedAtRef.current) / 1000),
+    });
+  };
+
+  useEffect(() => {
+    openedAtRef.current = Date.now();
+    trackEvent("checkout_form_opened", { category: "checkout" });
+
+    // Stripe.js não carregou (bloqueador, rede, chave ausente) — sem isto a
+    // pessoa ficaria olhando um spinner eterno sem a gente saber.
+    getStripe().then((stripe) => {
+      if (!stripe) {
+        trackEvent("checkout_form_error", {
+          category: "checkout",
+          label: "stripe_js_unavailable",
+        });
+      }
+    });
+
+    // O <EmbeddedCheckout> não expõe "montei": observamos o iframe que a
+    // Stripe injeta e escutamos o load dele. Cross-origin, então só o load
+    // e a altura visível são observáveis — e é exatamente o que precisamos.
+    const host = hostRef.current;
+    const onLoaded = (via: string) => {
+      if (loadedRef.current) return;
+      loadedRef.current = true;
+      setReady(true);
+      trackEvent("checkout_form_loaded", {
+        category: "checkout",
+        label: via,
+        ms: Date.now() - openedAtRef.current,
+      });
+    };
+    const attach = (iframe: HTMLIFrameElement) => {
+      iframe.addEventListener("load", () => onLoaded("iframe_load"), { once: true });
+    };
+    host?.querySelectorAll("iframe").forEach(attach);
+    const mo = new MutationObserver((muts) => {
+      for (const m of muts) {
+        m.addedNodes.forEach((n) => {
+          if (n instanceof HTMLIFrameElement) attach(n);
+          else if (n instanceof HTMLElement) n.querySelectorAll("iframe").forEach(attach);
+        });
+      }
+    });
+    if (host) mo.observe(host, { childList: true, subtree: true });
+
+    // Rede de segurança: iframe visível com altura real também conta.
+    const poll = window.setInterval(() => {
+      const f = host?.querySelector("iframe");
+      if (f && f.getBoundingClientRect().height > 200) onLoaded("iframe_visible");
+    }, 500);
+
+    const slow = window.setTimeout(() => {
+      if (!loadedRef.current) {
+        trackEvent("checkout_form_slow", { category: "checkout", ms: SLOW_MS });
+      }
+    }, SLOW_MS);
+    const timeout = window.setTimeout(() => {
+      if (!loadedRef.current) {
+        trackEvent("checkout_form_timeout", { category: "checkout", ms: TIMEOUT_MS });
+      }
+    }, TIMEOUT_MS);
+
+    return () => {
+      mo.disconnect();
+      window.clearInterval(poll);
+      window.clearTimeout(slow);
+      window.clearTimeout(timeout);
+      trackClose("unmount");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Trava o scroll do fundo enquanto o painel está aberto: no mobile, a
   // página rolando atrás do formulário faz o campo do cartão fugir do dedo.
   useEffect(() => {
     const anterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeRef.current();
+      if (e.key === "Escape") {
+        trackClose("user");
+        closeRef.current();
+      }
     };
     window.addEventListener("keydown", onEsc);
     return () => {
@@ -106,7 +203,10 @@ export default function EmbeddedCheckoutPanel({
     const tick = () => {
       const left = Math.max(0, deadline - Math.floor(Date.now() / 1000));
       setSecondsLeft(left);
-      if (left <= 0) closeRef.current();
+      if (left <= 0) {
+        trackClose("expired");
+        closeRef.current();
+      }
     };
     tick();
     const id = window.setInterval(tick, 1000);
@@ -131,7 +231,10 @@ export default function EmbeddedCheckoutPanel({
         )}
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => {
+            trackClose("user");
+            onClose();
+          }}
           aria-label="Close checkout"
           className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"
         >
@@ -139,7 +242,7 @@ export default function EmbeddedCheckoutPanel({
         </button>
       </div>
 
-      <div className="relative flex-1 overflow-y-auto">
+      <div ref={hostRef} className="relative flex-1 overflow-y-auto">
         {!ready && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
             <Loader2 className="h-7 w-7 animate-spin text-gold" aria-hidden />

@@ -5,6 +5,7 @@
 // no quiz morre no localStorage de quem não compra na hora.
 
 import { NextRequest, NextResponse } from "next/server";
+import { normalizeEmail } from "@/lib/email-normalize";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { normalizeCode } from "@/lib/affiliate";
 import { sendEmail } from "@/lib/server/email";
@@ -13,7 +14,6 @@ import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 
 export const runtime = "nodejs";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SCORES = new Set(["LOW", "MEDIUM", "HIGH"]);
 const MAX_ANSWERS_BYTES = 2048;
@@ -55,8 +55,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const email = (body.email ?? "").toLowerCase().trim().slice(0, 254);
-  if (!email || !EMAIL_RE.test(email)) {
+  const email = normalizeEmail(String(body.email ?? "").slice(0, 254));
+  if (!email) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 

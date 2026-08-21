@@ -8,10 +8,9 @@ import { normalizeCode } from "@/lib/affiliate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
 import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
+import { normalizeEmail } from "@/lib/email-normalize";
 
 export const runtime = "nodejs";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
  * Páginas comerciais para onde o Stripe pode devolver quem cancela.
@@ -107,8 +106,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
   }
 
-  const email = (body.email ?? "").toLowerCase().trim();
-  if (!email || !EMAIL_RE.test(email)) {
+  // Saneia antes de validar: sufixo de autocomplete do webview e typos de
+  // TLD em provedores conhecidos viram o endereço real (ver email-normalize).
+  const email = normalizeEmail(body.email);
+  if (!email) {
     return NextResponse.json(
       { error: "Please enter a valid email address." },
       { status: 400 }
