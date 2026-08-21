@@ -48,3 +48,6 @@ supabase/.temp/
 # Original pesado do avatar (1,8 MB). A versao servida e
 # public/brand/master-aura.webp, recortada no rosto e com 6 KB.
 avatar conversas.png
+
+# journal local de QA/mutacoes (nunca em git)
+mcp/hotmart/journal.jsonl
