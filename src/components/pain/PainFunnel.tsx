@@ -28,8 +28,13 @@ import { getStoredSource } from "@/lib/source";
 import { getFunnelSessionId, getUtmParams } from "@/lib/funnel-session";
 import { PROOF_STATS } from "@/lib/proof-stats";
 import {
+  activeQuiz,
   dominantPattern,
+  genderOf,
+  genderizeDeep,
+  genderizeText,
   type PainFunnelConfig,
+  type PainImage,
   type PainSession,
 } from "@/lib/pain-funnels/types";
 import PlanPicker, {
@@ -55,7 +60,8 @@ type Stage = "hook" | "quiz" | "transition" | "pick" | "reveal";
 
 type ThreadItem =
   | { kind: "aura"; text: string }
-  | { kind: "me"; text: string };
+  | { kind: "me"; text: string }
+  | { kind: "image"; image: PainImage };
 
 function storageKey(segment: string) {
   return `astro_pain_${segment}`;
@@ -80,12 +86,19 @@ function saveSession(segment: string, s: PainSession) {
   }
 }
 
-export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
-  const seg = config.segment;
+export default function PainFunnel({ config: rawConfig }: { config: PainFunnelConfig }) {
+  const seg = rawConfig.segment;
 
   const [stage, setStage] = useState<Stage>("hook");
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Pronomes do ex seguem o gênero respondido na primeira pergunta; antes
+  // disso a copy usa o default (feminino, maioria do tráfego) — o hook é
+  // neutro de qualquer forma. `config` abaixo é a versão já traduzida.
+  const gender = genderOf(rawConfig, answers);
+  const config = useMemo(() => genderizeDeep(rawConfig, gender), [rawConfig, gender]);
+  const genderRef = useRef(gender);
+  genderRef.current = gender;
   const [thread, setThread] = useState<ThreadItem[]>([]);
   const [typing, setTyping] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
@@ -167,7 +180,8 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
   const auraSays = useCallback(
     (messages: string[], then?: () => void) => {
       let delay = 250;
-      for (const msg of messages) {
+      for (const raw of messages) {
+        const msg = genderizeText(raw, genderRef.current);
         const typeFor = Math.min(
           TYPE_MAX_MS,
           Math.max(TYPE_MIN_MS, msg.length * TYPE_MS_PER_CHAR)
@@ -185,22 +199,45 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
     [later]
   );
 
+  /** A Aura "manda uma foto": entra no thread como bolha dela, sem digitação. */
+  const auraSends = useCallback((image: PainImage) => {
+    setThread((t) => [...t, { kind: "image", image }]);
+  }, []);
+
+  /** Mensagens → (foto) → pergunta → opções. A foto fica entre o contexto e a pergunta. */
+  const askQuestion = useCallback(
+    (q: { aura: string[]; question: string; image?: PainImage }) => {
+      if (q.image) {
+        const img = q.image;
+        auraSays(q.aura, () => {
+          auraSends(img);
+          later(() => auraSays([q.question], () => setShowOptions(true)), 900);
+        });
+      } else {
+        auraSays([...q.aura, q.question], () => setShowOptions(true));
+      }
+    },
+    [auraSays, auraSends, later]
+  );
+
   const startQuiz = useCallback(() => {
     setStage("quiz");
     trackEvent("pain_quiz_started", base());
-    const q = config.quiz[0];
-    auraSays([...q.aura, q.question], () => setShowOptions(true));
-  }, [auraSays, base, config.quiz]);
+    const q = activeQuiz(rawConfig, {})[0];
+    askQuestion(q);
+  }, [askQuestion, base, rawConfig]);
 
   const advance = useCallback(
     (nextIndex: number, nextAnswers: Record<string, string>) => {
-      if (nextIndex >= config.quiz.length) {
+      const list = activeQuiz(rawConfig, nextAnswers);
+      if (nextIndex >= list.length) {
         trackEvent("pain_quiz_completed", base({
-          pattern: dominantPattern(config, nextAnswers).id,
+          pattern: dominantPattern(rawConfig, nextAnswers).id,
         }));
         saveSession(seg, { answers: nextAnswers, stage: "transition" });
         setStage("transition");
-        auraSays(config.transition, () => {
+        if (rawConfig.transitionImage) auraSends(rawConfig.transitionImage);
+        auraSays(rawConfig.transition, () => {
           setStage("pick");
           saveSession(seg, { answers: nextAnswers, stage: "pick" });
           trackEvent("pain_tarot_started", base());
@@ -208,17 +245,16 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         return;
       }
       setQIndex(nextIndex);
-      const q = config.quiz[nextIndex];
-      auraSays([...q.aura, q.question], () => setShowOptions(true));
+      askQuestion(list[nextIndex]);
     },
-    [auraSays, base, config, seg]
+    [askQuestion, auraSays, auraSends, base, rawConfig, seg]
   );
 
   const answer = useCallback(
     (optionId: string, label: string) => {
       if (!showOptions) return;
       setShowOptions(false);
-      const q = config.quiz[qIndex];
+      const q = activeQuiz(rawConfig, answers)[qIndex];
       const nextAnswers = { ...answers, [q.id]: optionId };
       setAnswers(nextAnswers);
       setThread((t) => [...t, { kind: "me", text: label }]);
@@ -230,13 +266,15 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
       saveSession(seg, { answers: nextAnswers, stage: "quiz", qIndex: qIndex + 1 });
 
       // A reação é o que faz parecer conversa: ela responde ANTES de seguir.
-      if (q.reaction) {
-        auraSays([q.reaction], () => advance(qIndex + 1, nextAnswers));
+      // A opção pode trazer a própria (ex.: pergunta de gênero).
+      const reaction = q.options.find((o) => o.id === optionId)?.reaction ?? q.reaction;
+      if (reaction) {
+        auraSays([reaction], () => advance(qIndex + 1, nextAnswers));
       } else {
         later(() => advance(qIndex + 1, nextAnswers), 650);
       }
     },
-    [advance, answers, auraSays, base, config.quiz, later, qIndex, seg, showOptions]
+    [advance, answers, auraSays, base, rawConfig, later, qIndex, seg, showOptions]
   );
 
   const pickCard = useCallback(
@@ -455,6 +493,19 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
           animate={{ opacity: 1, y: 0 }}
           className="flex min-h-[70vh] flex-col items-center justify-center text-center"
         >
+          {config.hook.image && (
+            <div className="relative mb-6 w-full max-w-[260px] overflow-hidden rounded-3xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+              <Image
+                src={config.hook.image.src}
+                alt={config.hook.image.alt}
+                width={960}
+                height={1280}
+                priority
+                className="aspect-[3/4] w-full object-cover"
+              />
+              <span aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0e0a1a] via-transparent to-transparent" />
+            </div>
+          )}
           <h1 className="text-balance text-[1.9rem] font-semibold leading-[1.15] text-[#e8e4f5] sm:text-4xl">
             {config.hook.line}
           </h1>
@@ -480,7 +531,31 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         <section className="mx-auto w-full max-w-lg">
           <div className="space-y-3 pb-4">
             {thread.map((item, i) =>
-              item.kind === "aura" ? (
+              item.kind === "image" ? (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  className="flex items-end gap-2"
+                >
+                  <Image
+                    src={AURA_PHOTO}
+                    alt=""
+                    width={56}
+                    height={56}
+                    className="h-7 w-7 shrink-0 rounded-full object-cover ring-1 ring-[rgba(212,175,55,0.5)]"
+                  />
+                  <div className="w-[70%] max-w-[260px] overflow-hidden rounded-2xl rounded-bl-sm border border-white/10 bg-white/[0.04]">
+                    <Image
+                      src={item.image.src}
+                      alt={item.image.alt}
+                      width={960}
+                      height={1280}
+                      className="aspect-[3/4] w-full object-cover"
+                    />
+                  </div>
+                </motion.div>
+              ) : item.kind === "aura" ? (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 8 }}
@@ -543,7 +618,7 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
                 exit={{ opacity: 0 }}
                 className="grid grid-cols-1 gap-2.5 pb-6"
               >
-                {config.quiz[qIndex].options.map((opt) => (
+                {activeQuiz(config, answers)[qIndex]?.options.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"

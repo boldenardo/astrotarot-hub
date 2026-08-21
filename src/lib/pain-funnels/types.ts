@@ -15,14 +15,32 @@ export interface PainOption {
   /** id curto e enumerado — é o que vai para analytics, nunca texto livre. */
   id: string;
   label: string;
-  /** Para qual padrão dominante esta resposta soma. */
+  /** Para qual padrão dominante esta resposta soma ("none" = não soma). */
   pattern: string;
+  /** Reação da Aura específica desta opção (vence a reaction da pergunta). */
+  reaction?: string;
+}
+
+/** Gênero da pessoa — decide o ramo do quiz e os pronomes do ex. */
+export type PainGender = "woman" | "man";
+
+export interface PainImage {
+  /** Caminho em /public — ex.: /funnel/ex/w-awake.webp (3:4). */
+  src: string;
+  alt: string;
 }
 
 export interface PainQuestion {
   id: string;
   /** Etapa psicológica (reconhecimento, pensamento, medo…) — só telemetria. */
   stage: string;
+  /**
+   * Ramo: a pergunta só aparece para este gênero. Sem o campo = pergunta
+   * compartilhada (a de gênero, por exemplo).
+   */
+  gender?: PainGender;
+  /** Foto que a Aura "manda" junto desta pergunta (depois das mensagens). */
+  image?: PainImage;
   /** Mensagens da Master Aura antes da pergunta, no estilo DM do Control. */
   aura: string[];
   question: string;
@@ -77,7 +95,17 @@ export interface PainFunnelConfig {
     line: string;
     sub: string;
     cta: string;
+    /** Foto de abertura, acima da manchete (substitui o verso de carta). */
+    image?: PainImage;
   };
+  /**
+   * Id da pergunta de gênero (opções com ids "woman"/"man"). Quando
+   * presente, o engine filtra o quiz por ramo e troca os tokens de pronome
+   * ({he} {him} {his} {He} {Him} {His} {himself}) em toda a copy.
+   */
+  genderQuestionId?: string;
+  /** Foto enviada pela Aura junto da transição para as cartas. */
+  transitionImage?: PainImage;
   quiz: PainQuestion[];
   /** 3 mensagens da Aura fechando o quiz e justificando a carta. */
   transition: string[];
@@ -127,7 +155,7 @@ export function dominantPattern(
     const picked = answers[q.id];
     if (!picked) continue;
     const opt = q.options.find((o) => o.id === picked);
-    if (opt) tally[opt.pattern] = (tally[opt.pattern] ?? 0) + 1;
+    if (opt && opt.pattern !== "none") tally[opt.pattern] = (tally[opt.pattern] ?? 0) + 1;
   }
   let best = config.patterns[0];
   let bestN = -1;
@@ -139,4 +167,46 @@ export function dominantPattern(
     }
   }
   return best;
+}
+
+/** Perguntas visíveis para o gênero respondido (ou todas as compartilhadas). */
+export function activeQuiz(
+  config: PainFunnelConfig,
+  answers: Record<string, string>
+): PainQuestion[] {
+  const gid = config.genderQuestionId;
+  if (!gid) return config.quiz;
+  const g = answers[gid] as PainGender | undefined;
+  return config.quiz.filter((q) => !q.gender || (g !== undefined && q.gender === g));
+}
+
+export function genderOf(
+  config: PainFunnelConfig,
+  answers: Record<string, string>
+): PainGender {
+  const gid = config.genderQuestionId;
+  const g = gid ? answers[gid] : undefined;
+  return g === "man" ? "man" : "woman";
+}
+
+const PRONOUNS: Record<PainGender, Record<string, string>> = {
+  woman: { he: "he", He: "He", him: "him", Him: "Him", his: "his", His: "His", himself: "himself" },
+  man: { he: "she", He: "She", him: "her", Him: "Her", his: "her", His: "Her", himself: "herself" },
+};
+
+/** Troca os tokens de pronome do ex em qualquer string. */
+export function genderizeText(text: string, g: PainGender): string {
+  return text.replace(/{(He|he|Him|him|His|his|himself)}/g, (_, k: string) => PRONOUNS[g][k] ?? k);
+}
+
+/** Aplica genderizeText em TODAS as strings de um objeto (config inteira). */
+export function genderizeDeep<T>(value: T, g: PainGender): T {
+  if (typeof value === "string") return genderizeText(value, g) as unknown as T;
+  if (Array.isArray(value)) return value.map((v) => genderizeDeep(v, g)) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = genderizeDeep(v, g);
+    return out as T;
+  }
+  return value;
 }

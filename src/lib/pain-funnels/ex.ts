@@ -1,383 +1,680 @@
-// Funil de dor — segmento EX, ângulo "see what your ex says about you".
-// A leitura lê A CONEXÃO DO LADO DELE (linguagem interpretativa das cartas,
-// nunca fato sobre ele — a transição declara isso com todas as letras).
-// Copy: agentes Ignite + revisão adversarial (16 correções aplicadas:
-// fatos sobre o ex reformulados em moldura de carta, quantificadores
-// removidos, "her" universal removido, rastreio temporal dele removido).
-// Oferta: assinatura Unlimited ($9.99/mês · $39.99/6m · $59.99/ano).
-//   - Proof claims used are exactly and only the two permitted: '120,000+ readings delivered' and the 4.9 rating. Zero testimonials, zero segment statistics
-//   - Every statement about the ex uses interpretive language ('the cards suggest', 'often marks', 'can speak to', 'tends to read as'). No sentence asserts 
-//   - No reconciliation promises: FAQ 2 explicitly refuses 'he will come back' and warns against anyone who promises it. No 'he still loves you' as fact any
-//   - The 'how could you know' objection is confronted head-on in FAQ 1 with the honest mechanism: two-sided bond, interpretation not surveillance, recognit
-//   - Open loop refers to hidden LAYERS of the one complete reading ('His Unspoken Testimony', 'The Version He Protects'), never a literal second or third c
-//   - Comparison table contains no percentages. Guarantee is the real 7-day policy. No scarcity, no countdown, no fake urgency — ctaB urgency derives only f
-//   - Price line lists all three real cycles ($9.99/mo, $39.99/6mo, $59.99/yr); '$1.16 a week' is arithmetic on the real annual price ($59.99/52).
-//   - All quiz options are enumerated (no free text) and pass the 'how do they know I do this' test: each names a concrete private behavior (rereading a vag
+// Funil de dor — segmento EX v3: "see what your ex says about you".
+// Primeira pergunta = gênero → ramo feminino (ela deixou o marido/companheiro)
+// ou masculino (a ex dele); a Aura reage depois de TODA pergunta; fotos da
+// Aura no chat (public/funnel/ex). Pronomes do ex por token ({he} {him}
+// {his}...) na copy compartilhada — o engine traduz pelo gênero.
+// Copy: agentes Ignite + revisão adversarial (11 correções aplicadas).
+//   - ICP (woman branch): the woman who LEFT her husband/partner — guilt at night despite the right decision, 'did I make a mistake?', his version (she aban
+//   - ICP (man branch): his ex-wife/girlfriend moved on too fast; what she tells her friends; 'was I not enough?'; checking her profile and hating it; pride
+//   - Idea validation: pain is urgent (nightly), evidenced by the existing ex funnel and ex-reading demand; differentiation = reading the bond from the OTHE
+//   - Hook writer: 3 candidate angles were drafted (acute pain: 'You already know what your ex says about you. You just haven't let yourself hear it.'; coun
+//   - LP headlines considered: (1) 'Read the Story {He} Tells About You — From {His} Side of the Bond' (chosen); (2) 'What {He} Says About You Now That You'
+//   - Proof used only: '120,000+ readings delivered' and 4.9 rating. Zero testimonials, zero 'most women/men/people/members', no percentages in the comparis
+//   - Honest framing: all ex-side statements use interpretive language (can speak to / often marks / suggests / tends to). No '{he} says X' or '{he} misses 
+//   - Pronoun tokens used in all shared text (transition, patterns, cards, openLoop, lp): {he} {He} {him} {his} {His}. quizWoman uses he/him/his directly; q
+//   - Every question in both branches carries a 'reaction' that works for any selected option (references 'that question/that sentence/that' generically). Q
+//   - Egyptian arcana used: 18 The Twilight, 8 Themis, 9 The Veiled Lamp, 20 The Awakening (all within 1-22).
 
 import type { PainFunnelConfig } from "./types";
 
 export const EX_CONFIG: PainFunnelConfig = {
   "segment": "ex",
-  "pageTitle": "See What Your Ex Says About You — AstroTarot",
+  "pageTitle": "See What Your Ex Says About You",
   "hook": {
-    "line": "You weren't in the room. But were you the conversation?",
-    "sub": "What does your ex say about you when you're not there? An Egyptian tarot reading of the connection — from HIS side of the story. We don't spy. We read.",
-    "cta": "Reveal my place in his story"
+    "line": "You already know what your ex says about you. You just haven't let yourself hear it.",
+    "sub": "An Egyptian tarot reading of the bond from the other side — how you live in the story your ex tells now that you're gone.",
+    "cta": "Hear it",
+    "image": {
+      "src": "/funnel/ex/hook-phone-2am.webp",
+      "alt": "A phone glowing on a nightstand at 2 AM"
+    }
+  },
+  "genderQuestionId": "gender",
+  "transitionImage": {
+    "src": "/funnel/ex/cards-velvet.webp",
+    "alt": "Four Egyptian tarot cards face down on velvet"
   },
   "quiz": [
     {
-      "id": "q1",
+      "id": "gender",
+      "stage": "gender",
+      "aura": [
+        "Before we open anything, I want to get the voice right. The cards speak differently to the one who left and the one who was left.",
+        "Tell me who I'm sitting with tonight."
+      ],
+      "question": "Am I speaking with a woman or a man?",
+      "options": [
+        {
+          "id": "woman",
+          "label": "A woman",
+          "pattern": "none",
+          "reaction": "Then I already suspect there's a version of you he tells — and you've never been allowed to hear it in full. Let's go slowly."
+        },
+        {
+          "id": "man",
+          "label": "A man",
+          "pattern": "none",
+          "reaction": "Then I already suspect there's a version of you she tells her friends — and you've been guessing at it for a while. Let's go slowly."
+        }
+      ]
+    },
+    {
+      "id": "w1",
+      "gender": "woman",
       "stage": "recognition",
       "aura": [
-        "I'm going to ask you the kind of thing you only admit to yourself at 2am.",
-        "No one else sees your answers. So be honest with me."
+        "Women who leave rarely come to me for him. They come because of a question that shows up at night.",
+        "Which one shows up for you?"
       ],
-      "question": "When his name comes up — a song, a street, a mutual friend — where does your mind go first?",
+      "question": "It's 2 a.m. and your mind goes to him. What's the question?",
       "options": [
         {
-          "id": "q1a",
-          "label": "To what he tells people about why we ended",
-          "pattern": "rewritten_story"
-        },
-        {
-          "id": "q1b",
-          "label": "To whether he talks about me at all — or if I just... vanished",
-          "pattern": "avoided_name"
-        },
-        {
-          "id": "q1c",
-          "label": "To how he describes me to whoever came after me",
-          "pattern": "quiet_comparison"
-        },
-        {
-          "id": "q1d",
-          "label": "To whether he replays us the way I still do",
+          "id": "w1a",
+          "label": "Does he regret it now?",
           "pattern": "unfinished_chapter"
+        },
+        {
+          "id": "w1b",
+          "label": "What does he say about me now that I'm gone?",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "w1c",
+          "label": "Does he even say my name anymore?",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "w1d",
+          "label": "Is she getting the version of him I never got?",
+          "pattern": "quiet_comparison"
         }
       ],
-      "reaction": "Notice something: you didn't have to think. That question has been living in you for a while, hasn't it."
+      "reaction": "That question isn't weakness. It's the part of you that still wants the story told fairly — and nobody has told it fairly yet."
     },
     {
-      "id": "q2",
+      "id": "w2",
+      "gender": "woman",
       "stage": "situation",
       "aura": [
-        "The mind doesn't circle without material. Life keeps handing you moments you can't stop reading."
+        "You were the one who left. People assume that makes it simpler. It doesn't.",
+        "Tell me how it sits now."
       ],
-      "question": "Which of these has actually happened to you?",
+      "question": "When you think about leaving, what's closest to the truth?",
       "options": [
         {
-          "id": "q2a",
-          "label": "A mutual friend went quiet mid-sentence — like they knew something I don't",
-          "pattern": "avoided_name"
-        },
-        {
-          "id": "q2b",
-          "label": "He posted something vague and I read it fourteen times",
+          "id": "w2a",
+          "label": "It was right — and I still feel guilty at night",
           "pattern": "unfinished_chapter"
         },
         {
-          "id": "q2c",
-          "label": "I heard a version of our breakup that was NOT what happened",
-          "pattern": "rewritten_story"
+          "id": "w2b",
+          "label": "I'm relieved, and the relief makes me feel like a bad person",
+          "pattern": "story_rewrote"
         },
         {
-          "id": "q2d",
-          "label": "He watches my stories. Says nothing. Every single time.",
+          "id": "w2c",
+          "label": "Some days I still ask myself if I made a mistake",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "w2d",
+          "label": "I'm rebuilding alone and pretending it's easy",
           "pattern": "quiet_comparison"
         }
-      ]
+      ],
+      "reaction": "Relief and guilt in the same body — that's not a contradiction. It's what it feels like to be right and still grieve.",
+      "image": {
+        "src": "/funnel/ex/w-doorway.webp",
+        "alt": "A woman in a doorway with a suitcase at dusk"
+      }
     },
     {
-      "id": "q3",
-      "stage": "thought",
+      "id": "w3",
+      "gender": "woman",
+      "stage": "rehearsed thought",
       "aura": [
-        "Now the part nobody sees — what happens inside your head when the door is closed."
+        "There's a version of the breakup he tells. You've heard pieces of it — through a friend, a cousin, a message that wasn't meant for you.",
+        "Which line do you keep replaying?"
       ],
-      "question": "Which conversation do you catch yourself rehearsing?",
+      "question": "In his version, who were you?",
       "options": [
         {
-          "id": "q3a",
-          "label": "Defending myself against a version of me I've never even been allowed to hear",
-          "pattern": "rewritten_story"
+          "id": "w3a",
+          "label": "The one who abandoned him",
+          "pattern": "story_rewrote"
         },
         {
-          "id": "q3b",
-          "label": "The exact speech I'd give if he ever asked to talk",
+          "id": "w3b",
+          "label": "The one who 'changed'",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "w3c",
+          "label": "The difficult one — too much, too demanding",
           "pattern": "unfinished_chapter"
         },
         {
-          "id": "q3c",
-          "label": "Asking him, just once: 'what am I to you now?'",
-          "pattern": "avoided_name"
-        },
-        {
-          "id": "q3d",
-          "label": "Imagining how he explains me to her",
+          "id": "w3d",
+          "label": "I honestly don't know — and that's worse",
           "pattern": "quiet_comparison"
         }
       ],
-      "reaction": "You rehearse your defense for a trial you're never allowed to attend. Do you feel how heavy that is?"
+      "reaction": "Notice how much room his version takes up in you — and how little room yours has ever been given. The cards tend to flip that."
     },
     {
-      "id": "q4",
+      "id": "w4",
+      "gender": "woman",
       "stage": "behavior",
       "aura": [
-        "Let's turn and look at him for a moment. Men leave a trail — even in silence."
+        "Now something you don't say out loud.",
+        "What do you actually do with all this?"
       ],
-      "question": "What has his pattern been since the breakup?",
+      "question": "Which one is you, more often than you'd admit?",
       "options": [
         {
-          "id": "q4a",
-          "label": "Total silence — like I never existed",
-          "pattern": "avoided_name"
+          "id": "w4a",
+          "label": "I check whether he's seen my stories — then hate that I checked",
+          "pattern": "quiet_comparison"
         },
         {
-          "id": "q4b",
-          "label": "Indirect posts, songs, quotes... never my name",
+          "id": "w4b",
+          "label": "I defend myself in my head to people who never asked",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "w4c",
+          "label": "I draft a message explaining everything, then delete it",
           "pattern": "unfinished_chapter"
         },
         {
-          "id": "q4c",
-          "label": "He's told people HIS version — I keep hearing echoes of it",
-          "pattern": "rewritten_story"
-        },
-        {
-          "id": "q4d",
-          "label": "He moved on fast. Too fast. Almost like a performance.",
-          "pattern": "quiet_comparison"
+          "id": "w4d",
+          "label": "I act completely fine in front of everyone",
+          "pattern": "name_avoids"
         }
-      ]
+      ],
+      "reaction": "That isn't obsession. It's a woman still trying to close a door she's afraid is being described as if she slammed it.",
+      "image": {
+        "src": "/funnel/ex/w-awake.webp",
+        "alt": "A woman awake at night, phone light on her face"
+      }
     },
     {
-      "id": "q5",
-      "stage": "fear",
+      "id": "w5",
+      "gender": "woman",
+      "stage": "double fear",
       "aura": [
-        "This next one costs something to answer.",
-        "Take a breath. Then tell me the truth."
+        "Two fears usually sit together here, and they contradict each other.",
+        "Which one is louder?"
       ],
-      "question": "Which would actually hurt more?",
+      "question": "What frightens you more?",
       "options": [
         {
-          "id": "q5a",
-          "label": "Being the crazy one in his story — the villain he warns people about",
-          "pattern": "rewritten_story"
+          "id": "w5a",
+          "label": "That I'm the villain in every story he tells",
+          "pattern": "story_rewrote"
         },
         {
-          "id": "q5b",
-          "label": "Not being in his story at all. Erased. Never mentioned.",
-          "pattern": "avoided_name"
+          "id": "w5b",
+          "label": "That I've been erased — he doesn't speak of me at all",
+          "pattern": "name_avoids"
         },
         {
-          "id": "q5c",
-          "label": "Being the 'almost' he quietly measures her against — and never admits",
-          "pattern": "quiet_comparison"
-        },
-        {
-          "id": "q5d",
-          "label": "Being the chapter he can't finish but refuses to reread",
+          "id": "w5c",
+          "label": "That he's quietly fine, and I'm the one still carrying it",
           "pattern": "unfinished_chapter"
+        },
+        {
+          "id": "w5d",
+          "label": "That he tells her I was the lesson, not the love",
+          "pattern": "quiet_comparison"
         }
       ],
-      "reaction": "You knew your answer instantly. That's not a preference — that's the wound. And that's what we're reading tonight."
+      "reaction": "Being hated and being forgotten feel like opposites. They're the same wound — not being seen as you were."
     },
     {
-      "id": "q6",
-      "stage": "longing",
+      "id": "w6",
+      "gender": "woman",
+      "stage": "what you'd need to hear",
       "aura": [
-        "Imagine the veil lifted for sixty seconds. You could hear one thing from his side. Only one."
+        "Imagine his silence broke for one honest sentence.",
+        "Don't choose the nice one. Choose the true one."
       ],
-      "question": "What would you give almost anything to hear?",
+      "question": "What would you most need that sentence to be?",
       "options": [
         {
-          "id": "q6a",
-          "label": "The exact words he uses when someone asks about me",
-          "pattern": "rewritten_story"
+          "id": "w6a",
+          "label": "'She didn't leave for nothing. I know what I did.'",
+          "pattern": "story_rewrote"
         },
         {
-          "id": "q6b",
-          "label": "What he admits to himself at 2am about what he lost",
+          "id": "w6b",
+          "label": "'I still think about her more than I'll admit.'",
           "pattern": "unfinished_chapter"
         },
         {
-          "id": "q6c",
-          "label": "Whether my name still costs him something to say",
-          "pattern": "avoided_name"
+          "id": "w6c",
+          "label": "'She was never difficult. She was just done.'",
+          "pattern": "name_avoids"
         },
         {
-          "id": "q6d",
-          "label": "What he compares her to when no one is watching",
+          "id": "w6d",
+          "label": "'Nobody since has felt like her.'",
           "pattern": "quiet_comparison"
         }
-      ]
+      ],
+      "reaction": "Read that sentence again. You didn't need him to come back. You needed him to tell the truth. Those are very different hungers."
     },
     {
-      "id": "q7",
+      "id": "w7",
+      "gender": "woman",
       "stage": "identity",
       "aura": [
-        "Last one. This one isn't about him. It's about the woman who has been carrying all of this."
+        "Last one. Not about him.",
+        "About who you're becoming on the other side of him."
       ],
-      "question": "Who have you been in this waiting?",
+      "question": "Which is closest to who you are right now?",
       "options": [
         {
-          "id": "q7a",
-          "label": "The strong one — I perform 'over it' beautifully",
-          "pattern": "quiet_comparison"
-        },
-        {
-          "id": "q7b",
-          "label": "The detective — I read every sign twice",
+          "id": "w7a",
+          "label": "The woman who left and is still waiting to feel free",
           "pattern": "unfinished_chapter"
         },
         {
-          "id": "q7c",
-          "label": "The silenced one — my side of the story never got told",
-          "pattern": "rewritten_story"
+          "id": "w7b",
+          "label": "The woman who refuses to be the villain of someone else's story",
+          "pattern": "story_rewrote"
         },
         {
-          "id": "q7d",
-          "label": "The ghost — present in his life only as an absence",
-          "pattern": "avoided_name"
+          "id": "w7c",
+          "label": "The woman who wants to stop flinching at his name",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "w7d",
+          "label": "The woman who wants to stop measuring herself against who came next",
+          "pattern": "quiet_comparison"
         }
-      ]
+      ],
+      "reaction": "That's the woman the cards will read for — not the one he describes. Let me lay them out.",
+      "image": {
+        "src": "/funnel/ex/w-mirror.webp",
+        "alt": "A woman alone in front of a mirror"
+      }
+    },
+    {
+      "id": "m1",
+      "gender": "man",
+      "stage": "recognition",
+      "aura": [
+        "Men rarely admit they come to me about her. They say it's curiosity.",
+        "It's never curiosity at 2 a.m. Which question is it?"
+      ],
+      "question": "It's late, and your mind goes to her. What's the question?",
+      "options": [
+        {
+          "id": "m1a",
+          "label": "Does she still think about me?",
+          "pattern": "unfinished_chapter"
+        },
+        {
+          "id": "m1b",
+          "label": "What does she tell her friends about me?",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m1c",
+          "label": "Was I just not enough?",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m1d",
+          "label": "Does she ever say my name, or am I just 'my ex' now?",
+          "pattern": "name_avoids"
+        }
+      ],
+      "reaction": "That question doesn't make you weak. It makes you a man who hasn't been given the ending — only the silence after it.",
+      "image": {
+        "src": "/funnel/ex/m-bedside.webp",
+        "alt": "A man sitting on the edge of a bed at night, phone in hand"
+      }
+    },
+    {
+      "id": "m2",
+      "gender": "man",
+      "stage": "situation",
+      "aura": [
+        "Tell me where it stands. No pride in this room — it doesn't help the cards."
+      ],
+      "question": "What's closest to the truth right now?",
+      "options": [
+        {
+          "id": "m2a",
+          "label": "She moved on fast — too fast for it to have been real",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m2b",
+          "label": "She's gone quiet and I don't know what that silence means",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "m2c",
+          "label": "I hear fragments of how she talks about me, and none of it sounds like me",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m2d",
+          "label": "It never got a real ending. It just stopped.",
+          "pattern": "unfinished_chapter"
+        }
+      ],
+      "reaction": "However it stands, the part that hurts isn't her pace or her silence. It's how much of yourself you left in it — and how little of it seems to have come back."
+    },
+    {
+      "id": "m3",
+      "gender": "man",
+      "stage": "rehearsed thought",
+      "aura": [
+        "There's a version of you that lives in her conversations. You've pieced it together from scraps.",
+        "Which line stings the most?"
+      ],
+      "question": "In her version, what were you?",
+      "options": [
+        {
+          "id": "m3a",
+          "label": "The one who never really showed up",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m3b",
+          "label": "The mistake she grew out of",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m3c",
+          "label": "The villain — cold, selfish, the reason it broke",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "m3d",
+          "label": "I don't know, and the not knowing is eating me",
+          "pattern": "unfinished_chapter"
+        }
+      ],
+      "reaction": "Here's what nobody tells men: the version she tells is also a story about her. The cards read that side too.",
+      "image": {
+        "src": "/funnel/ex/m-bar.webp",
+        "alt": "Two men talking at a dim bar"
+      }
+    },
+    {
+      "id": "m4",
+      "gender": "man",
+      "stage": "behavior",
+      "aura": [
+        "Now the thing you'd never say to your friends."
+      ],
+      "question": "Which one is you, more often than you'd admit?",
+      "options": [
+        {
+          "id": "m4a",
+          "label": "I check her profile, then hate myself for checking",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m4b",
+          "label": "I argue my side to her in my head, constantly",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m4c",
+          "label": "I type a message, then delete it so I don't look weak",
+          "pattern": "unfinished_chapter"
+        },
+        {
+          "id": "m4d",
+          "label": "I act like I've forgotten her and it costs me every day",
+          "pattern": "name_avoids"
+        }
+      ],
+      "reaction": "Pride and missing her aren't enemies. Pride is just missing her with the door locked."
+    },
+    {
+      "id": "m5",
+      "gender": "man",
+      "stage": "double fear",
+      "aura": [
+        "Two fears sit here, and they fight each other.",
+        "Which one wins at night?"
+      ],
+      "question": "What frightens you more?",
+      "options": [
+        {
+          "id": "m5a",
+          "label": "That I'm the villain in every story she tells",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m5b",
+          "label": "That I've been erased — she doesn't mention me at all",
+          "pattern": "name_avoids"
+        },
+        {
+          "id": "m5c",
+          "label": "That the new one is getting a version of her I never got",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m5d",
+          "label": "That I'm still in it and she finished it months ago",
+          "pattern": "unfinished_chapter"
+        }
+      ],
+      "reaction": "Being hated and being forgotten feel opposite. Both are the same thing — not being seen as you actually were."
+    },
+    {
+      "id": "m6",
+      "gender": "man",
+      "stage": "what you'd need to hear",
+      "aura": [
+        "Imagine she broke the silence with one honest sentence.",
+        "Don't pick the one that flatters you. Pick the one you need."
+      ],
+      "question": "What would you most need that sentence to be?",
+      "options": [
+        {
+          "id": "m6a",
+          "label": "'He wasn't the villain. It was more complicated than I let people think.'",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m6b",
+          "label": "'I still think about him. I just can't say it.'",
+          "pattern": "unfinished_chapter"
+        },
+        {
+          "id": "m6c",
+          "label": "'He was enough. I just wasn't ready.'",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m6d",
+          "label": "'I don't talk about him because it still hurts to.'",
+          "pattern": "name_avoids"
+        }
+      ],
+      "reaction": "Read it again. You didn't ask for her back. You asked for the record set straight. That's a different hunger — and a more honest one."
+    },
+    {
+      "id": "m7",
+      "gender": "man",
+      "stage": "identity",
+      "aura": [
+        "Last one. Not about her. About who you are on the other side of this."
+      ],
+      "question": "Which is closest to who you are right now?",
+      "options": [
+        {
+          "id": "m7a",
+          "label": "The man who never got an ending and can't write one alone",
+          "pattern": "unfinished_chapter"
+        },
+        {
+          "id": "m7b",
+          "label": "The man who refuses to be the villain in someone else's story",
+          "pattern": "story_rewrote"
+        },
+        {
+          "id": "m7c",
+          "label": "The man who wants to stop checking and start living",
+          "pattern": "quiet_comparison"
+        },
+        {
+          "id": "m7d",
+          "label": "The man who wants to hear his name without flinching",
+          "pattern": "name_avoids"
+        }
+      ],
+      "reaction": "That's the man the cards will read for — not the one in her version. Let me lay them out."
     }
   ],
   "transition": [
-    "Here's what just happened: your seven answers drew a shape. Not his shape — yours. The exact way you live inside the story he carries. I've seen this shape before, and it has a name.",
-    "Now let me be straight with you, because I don't do tricks. I cannot read his messages, and I won't pretend to. But the Egyptian tarot doesn't deal in surveillance — it reads the connection. And a connection always has two sides. The cards can speak to his.",
-    "Four cards. Face down. One of them holds the mirror of his side — how you live in the story he tells, and the one he doesn't. Don't think. Your hand already knows which one."
+    "Thank you for not lying to me. It's easy to answer these for the person you wish you were.",
+    "What you've described isn't about {him}. It's about how you live inside the story {he} tells — and how long you've been reading it from the outside.",
+    "Four cards. One pattern. Let me show you what they're already saying."
   ],
   "patterns": [
     {
       "id": "unfinished_chapter",
       "label": "The Unfinished Chapter",
-      "description": "The cards read your place in his story as the chapter never closed. The cards often mark this pattern as a bond a person circles back to in private — precisely because they never wrote its ending."
+      "description": "You live in {his} story as a sentence that never got its full stop. Your answers suggest the bond didn't end so much as go quiet — and quiet, on {his} side, often marks something still being turned over, not something put down. The cards read what may be keeping that chapter open from {his} end."
     },
     {
-      "id": "rewritten_story",
-      "label": "The Story He Rewrote",
-      "description": "The cards read your place in his story as a character who was edited — a version retold until it protected the teller. The cards tend to read this pattern as guilt wearing the costume of blame."
+      "id": "story_rewrote",
+      "label": "The Story {He} Rewrote",
+      "description": "You live in {his} story as a character {he} edited after the fact. Your answers carry the weight of a version you've heard second-hand and never been allowed to answer. The cards don't confirm or deny {his} version — they read what that rewriting is protecting in {him}."
     },
     {
-      "id": "avoided_name",
-      "label": "The Name He Avoids",
-      "description": "The cards read your place in his story as a silence — the name that doesn't get said. The cards rarely read that kind of silence as absence. They usually read it as weight."
+      "id": "name_avoids",
+      "label": "The Name {He} Avoids",
+      "description": "You live in {his} story as a silence. Your answers suggest {he} goes around you rather than through you — and avoidance, in the cards, often marks weight, not absence. The cards read what {his} silence is carrying."
     },
     {
       "id": "quiet_comparison",
       "label": "The Quiet Comparison",
-      "description": "The cards read your place in his story as the measuring stick — the standard held up, quietly, against whatever came after. The cards read this pattern in everything he never says out loud."
+      "description": "You live in {his} story as a measure. Your answers suggest you've become the thing someone new is quietly held against — in {his} mind, or in yours. The cards read which of you is actually doing the comparing, and what it protects."
     }
   ],
   "cards": [
     {
-      "number": 2,
-      "name": "The Veiled Priestess",
-      "interpretation": "When this arcanum answers a question about him, it often marks a silence that protects a feeling — not the absence of one. The cards suggest that what he doesn't say about you may be the loudest thing in any room he enters.",
-      "patternLine": "Held against your seven answers, she names it: you are {pattern} — and this card speaks to why that part of the story stays behind the veil."
+      "number": 18,
+      "name": "The Twilight",
+      "interpretation": "The Twilight speaks to what is felt but not said — the version of events that lives under the version that gets told. Drawn here, it often marks a bond where {his} public story and {his} private one don't match.",
+      "patternLine": "For {pattern}, this card suggests the story you've heard is the daylight version. The reading goes into the twilight one."
     },
     {
-      "number": 6,
-      "name": "The Two Paths",
-      "interpretation": "This arcanum often marks a choice retold as certainty — someone who narrates his decision confidently in daylight, and re-walks the road not taken at night. The cards suggest the version he performs and the version he carries are not the same story.",
-      "patternLine": "Crossed with your answers, the paths reveal it: you are {pattern} — and this card reads the gap between the story he tells and the one he walks back through."
+      "number": 8,
+      "name": "Themis",
+      "interpretation": "Themis is the arcanum of the scale — of accounts being settled and versions being weighed. It rarely speaks to who was right. It speaks to who is still weighing.",
+      "patternLine": "For {pattern}, Themis suggests the case isn't closed on {his} side either. Someone is still holding the scale, and it may not be you."
     },
     {
       "number": 9,
       "name": "The Veiled Lamp",
-      "interpretation": "The hermit's lamp is carried alone, shown to no one. When it answers a question about him, the cards can speak to what gets reviewed in private — the scene he returns to when there is no audience left to perform for.",
-      "patternLine": "By this lamp's light, your answers take their true shape: you are {pattern} — and this card reads what that means on the side of the story you've never been shown."
+      "interpretation": "The Veiled Lamp is light carried but hidden — the card of withdrawal, of turning inward, of a person who goes quiet because looking directly would cost too much. Silence, under this card, is rarely emptiness.",
+      "patternLine": "For {pattern}, this card can speak to what {his} silence is protecting — and why {he} might go around your name rather than through it."
     },
     {
-      "number": 18,
-      "name": "The Twilight",
-      "interpretation": "This arcanum rules the half-light — where stories change shape in the retelling and a face looks different depending on who's describing it. The cards suggest the version of you moving through his world is a reflection, not a portrait. Reflections say more about the water than the moon.",
-      "patternLine": "Under this twilight, your answers align: you are {pattern} — and this card reads how that version of you was made, and what it protects him from."
+      "number": 20,
+      "name": "The Awakening",
+      "interpretation": "The Awakening is the arcanum of what rises again when it was supposed to stay buried — a name, a memory, a comparison that surfaces uninvited. It suggests something in the bond hasn't finished stirring.",
+      "patternLine": "For {pattern}, The Awakening suggests you surface in {his} story more than {he} would choose — and the reading names what calls you back up."
     }
   ],
   "openLoop": {
-    "surfaceLine": "What you just read is the doorway of your reading — the surface layer. The Egyptian spread reads a bond in layers, and the deeper ones are still face down.",
-    "card2": "Beneath the surface sits the layer I call His Unspoken Testimony — what the cards suggest he would never admit out loud about you. Not to his friends. Not to anyone else. Maybe not even to himself.",
-    "card3": "And under that, the deepest layer: The Version He Protects — the reading's interpretation of the role you actually hold in the story he tells... and in the one he hides — which the cards rarely read as the same story.",
-    "cta": "Unlock my full reading"
+    "surfaceLine": "That's the surface of your pattern — the part the cards show anyone who sits down. It is not the part that answers your 2 a.m. question.",
+    "card2": "Underneath it sits a layer the cards only open in a full reading: what your role in {his} story is protecting in {him} — the reason the version {he} tells is shaped the way it is.",
+    "card3": "And beneath that, the layer people actually come for: what the bond looks like from {his} side right now, read in the cards' own language — not as fact, not as surveillance, but as the shape of how you still live in {his} story.",
+    "cta": "Open the full reading"
   },
   "lp": {
-    "headline": "Stop Guessing What He Says About You. Read His Side of the Connection Instead.",
-    "subheadline": "A personalized, written Egyptian tarot reading of how you live in the story he carries — and because this question comes back every week, your readings are unlimited.",
+    "headline": "Read the Story {He} Tells About You — From {His} Side of the Bond",
+    "subheadline": "A personalized Egyptian tarot reading of how you live in {his} story now. Written for you, ready in minutes, no guessing required.",
     "connection": [
-      "Let's kill the ugly word first: you are not obsessed. You are unheard. If a version of you is being told out there — at dinners, in group chats, in his own head — you've never once been in the room for it. Wondering about it isn't crazy. It's human.",
-      "Think about who may have gotten a version of the story: his friends, his family, maybe her. You're the only person involved who was never told how it goes — what name you carry in it, whether you're the villain, the regret, or worse: not in it at all.",
-      "So you've done what anyone would do. Decoded the vague post. Read the silence twice. Fished, gently, with the mutual friend who suddenly changed the subject. And every clue just opened three more questions — because clues aren't a reading. They're bait."
+      "You've built {his} version of you out of scraps — a friend's comment, a mutual's silence, a message that wasn't meant for your eyes. You probably know that version better than {he} has ever heard yours. And you've never once been allowed to answer it.",
+      "Everyone around you has moved on from your breakup faster than you have. They don't want to hear the 2 a.m. question again. So you stopped asking it out loud and started asking it to your ceiling.",
+      "You've tried the obvious things. Checking. Not checking. Blocking. Unblocking. A friend who says 'forget {him}.' None of it answered the actual question: how do you live in the story {he} tells, now that you're gone?"
     ],
     "comparison": [
       {
-        "criterion": "The 2am spiral about what he says",
-        "without": "You replay clues alone until you exhaust yourself",
-        "with": "A written reading of his side you can return to, as many times as you need"
+        "criterion": "The 2 a.m. question",
+        "without": "Asked to the ceiling, unanswered",
+        "with": "Read in the cards, in writing, tonight"
       },
       {
-        "criterion": "His silence",
-        "without": "Reads as rejection one night, erasure the next",
-        "with": "Interpreted as a pattern with a name — and a meaning"
+        "criterion": "{His} version of you",
+        "without": "Pieced together from scraps",
+        "with": "Read from the bond's other side, in the cards' language"
       },
       {
-        "criterion": "Mutual friends who seem to know something",
-        "without": "Careful fishing, half-answers, quiet humiliation",
-        "with": "You stop needing scraps from people who might be protecting him"
+        "criterion": "The story you tell yourself",
+        "without": "Rewritten every night, worse each time",
+        "with": "Named as a pattern you can finally see"
       },
       {
-        "criterion": "That vague post he made",
-        "without": "Read fourteen times, still no answer",
-        "with": "Placed inside your pattern, where it finally makes sense"
+        "criterion": "Who you talk to about it",
+        "without": "Friends who are tired of hearing it",
+        "with": "A Spiritual Guide available 24/7, never tired"
       },
       {
-        "criterion": "Next week, when the question returns",
-        "without": "The whole spiral starts over from zero",
-        "with": "You ask again. Unlimited means unlimited."
+        "criterion": "Where you live in this",
+        "without": "Inside {his} story, on {his} terms",
+        "with": "Outside it, with your own reading in hand"
       }
     ],
-    "authority": "AstroTarot has delivered over 120,000 personalized written readings, rated 4.9 by the people who received them. Every reading is interpretive and honest about what it is: we read the connection between two people — never his phone, never his messages, never 'facts' about him. Your reading is written from your answers, your pattern, and your question. Nothing recycled, nothing generic.",
+    "authority": "AstroTarot has delivered 120,000+ personalized written readings, rated 4.9 by the people who received them. Every reading is built from your own answers and drawn from the Egyptian major arcana — written for you, not pulled from a template. We don't read {his} messages and we don't claim to know facts about {him}. We read the bond, from both sides, in the language the cards have always used.",
     "value": [
       {
-        "benefit": "Ask about him every single time the question comes back",
-        "feature": "Unlimited personalized written readings — no credits, no counting"
+        "benefit": "Finally read the story {he} tells — from {his} side of the bond",
+        "feature": "Your full 'See What Your Ex Says About You' reading, written and personalized to your pattern"
       },
       {
-        "benefit": "Answers shaped by YOUR seven answers, not horoscope filler",
-        "feature": "Every reading written against your named pattern"
+        "benefit": "Ask the next question the moment it surfaces — and the one after that",
+        "feature": "Unlimited personalized readings on any bond, any question, any time"
       },
       {
-        "benefit": "Someone to hold the 2am spiral with you",
-        "feature": "Spiritual Guide available 24/7"
+        "benefit": "Never sit alone with the 2 a.m. question again",
+        "feature": "Spiritual Guide available 24/7 to talk through what the cards opened"
       },
       {
-        "benefit": "Watch how the readings of his side of the bond shift over the weeks",
-        "feature": "Complete reading history saved to your account"
+        "benefit": "Stop rereading {his} version — keep yours",
+        "feature": "Every reading saved to your account, to return to on the hard nights"
       },
       {
-        "benefit": "Walk away whole if it isn't for you",
-        "feature": "7-day money-back guarantee, no questions asked"
+        "benefit": "Read the bond again as it changes — because it will",
+        "feature": "Re-draw on the same connection whenever something shifts"
       }
     ],
-    "priceLine": "Unlimited access: $9.99/month — or $39.99 for 6 months — or $59.99 for a full year (less than $1.16 a week).",
-    "guarantee": "Read your full reading. Sit with it for a week. If you don't recognize something true in it — something that lands — email us within 7 days and we refund every cent. No forms, no interrogation, no guilt. The risk of this decision is ours, not yours.",
+    "priceLine": "Unlimited: $9.99/month · $39.99 for 6 months · $59.99 for a full year — every reading, every question, the Guide included.",
+    "guarantee": "7 days, no conditions. Open the reading, sit with it, talk to the Guide. If it didn't give you something the ceiling couldn't, email us inside 7 days and we refund it. You don't have to explain.",
     "faq": [
       {
-        "q": "How could you possibly know what he says about me?",
-        "a": "We can't — and anyone who claims they can is lying to you. We don't read his messages, we don't track his phone, and we don't know a single fact about him. Here's what we actually do: the Egyptian tarot reads the connection, and a connection has two sides. Your reading interprets his side of the bond — how you live in the story he carries — in the cards' own language: what an arcanum suggests, what a pattern often marks. We'll never tell you 'he said this.' We'll show you the shape of his side, and you'll recognize what's true the moment you read it. That recognition is the whole point."
+        "q": "How could you possibly know what {he} says about me?",
+        "a": "We can't — and anyone who tells you they can is lying to you. We don't read {his} messages, we don't watch {his} profile, and we don't know facts about {him}. What the cards do is read the bond from both sides: the pattern of how you live in {his} story, what that story protects, what {his} silence tends to carry. It's interpretive, it's honest about being interpretive, and for the questions you're actually carrying, that's what tends to help."
       },
       {
-        "q": "Will the reading tell me if he's coming back?",
-        "a": "No — and please be suspicious of anyone who promises that. No card can guarantee another person's next move, and we won't pretend otherwise. What the reading gives you is something you've never had: an interpretation of his side of the story as it stands now. What you do with that clarity is yours."
+        "q": "Will this tell me if {he}'s coming back?",
+        "a": "No, and we won't pretend to. The reading doesn't promise reconciliation, predict {his} next move, or tell you to wait. It reads the bond as it stands — including the parts of it that live on {his} side — so you can stop living inside {his} version and decide from your own."
       },
       {
-        "q": "Is this actually personalized, or the same text everyone gets?",
-        "a": "Your reading is written from your seven quiz answers, the pattern they revealed, and the card your own hand chose. Two women with different answers receive different readings — because they're living in different stories. Over 120,000 readings delivered, rated 4.9 by the people who received them."
+        "q": "I've already had a reading somewhere else. How is this different?",
+        "a": "The usual 'ex' reading reads you and your feelings. This one is built around the other side of the bond — how you exist in the story {he} tells — and it's written personally from your own answers, not generated from a generic spread. And you don't get one reading; you get unlimited, plus a Guide to talk them through."
       },
       {
-        "q": "What if next week I'm spiraling about something new?",
-        "a": "That's exactly why this is unlimited. This question doesn't get answered once — it comes back after every story view, every mutual-friend silence, every vague post. Ask again that night. Ask about something else entirely. Your subscription never counts, never meters, never makes you ration your own peace."
+        "q": "Why a subscription instead of one reading?",
+        "a": "Because the 2 a.m. question never comes alone. Tonight it's what {he} says. Next week it's why {he} went quiet. After that, it's someone new. Unlimited means you ask each one as it arrives, for one flat monthly price — and you can cancel any time, with 7 days to change your mind."
       }
     ],
-    "ctaB": "His version of the story exists whether you've heard it or not — tonight you finally read it. [READ HIS SIDE NOW] Unlimited readings · from $9.99/mo · 7-day money-back guarantee"
+    "ctaB": "Stop reading {his} version from the outside. [Open my full reading — $9.99/mo] Unlimited readings · Spiritual Guide 24/7 · 7-day money-back guarantee"
   }
 };
