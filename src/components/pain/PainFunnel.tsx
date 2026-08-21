@@ -500,6 +500,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
                 alt={config.hook.image.alt}
                 width={960}
                 height={1280}
+                sizes="260px"
                 priority
                 className="aspect-[3/4] w-full object-cover"
               />
@@ -551,6 +552,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
                       alt={item.image.alt}
                       width={960}
                       height={1280}
+                      sizes="260px"
                       className="aspect-[3/4] w-full object-cover"
                     />
                   </div>
