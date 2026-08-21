@@ -381,21 +381,51 @@ export async function POST(req: NextRequest) {
                 ? session.subscription
                 : session.subscription?.id ?? null;
 
-            // Plano/duração vêm do metadata (PREMIUM_YEARLY = 365 dias);
-            // default mensal preserva o comportamento das sessões antigas.
-            const yearly = session.metadata?.plan === "PREMIUM_YEARLY";
+            // Plano/duração vêm do metadata. A oferta Unlimited do funil tem
+            // 3 ciclos (SUB_*); os nomes antigos seguem funcionando para as
+            // sessões criadas antes da troca.
+            const metaPlan = session.metadata?.plan ?? "";
+            const cycle =
+              metaPlan === "SUB_ANNUAL" || metaPlan === "PREMIUM_YEARLY"
+                ? { plan: "PREMIUM_YEARLY", days: 365 }
+                : metaPlan === "SUB_SEMIANNUAL"
+                  ? { plan: "PREMIUM_SEMIANNUAL", days: 183 }
+                  : { plan: "PREMIUM_MONTHLY", days: 30 };
             await admin
               .from("users")
               .update({
-                subscription_plan: yearly ? "PREMIUM_YEARLY" : "PREMIUM_MONTHLY",
+                subscription_plan: cycle.plan,
                 subscription_status: "active",
                 subscription_start_date: now.toISOString(),
                 subscription_end_date: new Date(
-                  now.getTime() + (yearly ? 365 * ONE_DAY_MS : THIRTY_DAYS_MS)
+                  now.getTime() + cycle.days * ONE_DAY_MS
                 ).toISOString(),
                 stripe_subscription_id: subscriptionId,
               })
               .eq("id", userId);
+
+            // Order bump do retrato também existe na assinatura (item avulso
+            // opcional na primeira fatura) — só os line items contam a verdade.
+            try {
+              const portraitPrice = process.env.STRIPE_PRICE_SOULMATE_PORTRAIT;
+              if (portraitPrice) {
+                const items = await stripe.checkout.sessions.listLineItems(
+                  session.id,
+                  { limit: 10 }
+                );
+                if (items.data.some((li) => li.price?.id === portraitPrice)) {
+                  await setEntitlement({
+                    userId,
+                    feature: "soulmate_portrait",
+                    active: true,
+                    source: "stripe_one_time",
+                    reference: session.id,
+                  });
+                }
+              }
+            } catch (e) {
+              console.error("[stripe/webhook] bump da assinatura:", e);
+            }
           }
 
           // Lead do quiz convertido: carimba converted_at (best-effort;

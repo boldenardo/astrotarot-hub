@@ -21,16 +21,13 @@
 // VARIÁVEL PRIMÁRIA: apresentação (narrativa, ordem, revelação parcial,
 // identidade visual, microcopy do CTA).
 //
-// PRESERVADO: produto (PACK5), preço ($9.99 AVULSO), endpoint
+// OFERTA (20/08): assinatura Unlimited — $9.99/mês, $39.99/6m, $59.99/ano
 // (/api/quiz/checkout), metadata do Stripe, webhook, estado do quiz
 // (astro_quiz_v1), vídeo, assets de prova, política de noindex.
 //
-// SOBRE "$9.99/mês": o price da Stripe live (price_1Tvg2V…9Tqm) é
-// `type: one_time`, `recurring: null`, `unit_amount: 999` — verificado na
-// conta live. Escrever "/month" aqui seria assinatura inventada, e
-// pagamento único é a oferta MAIS forte pelo mesmo preço. O texto segue o
-// price, não o contrário. A assinatura de verdade ($14.99/mês) aparece no
-// fim, identificada, como segunda opção.
+// Os 3 prices recorrentes vivem em STRIPE_PRICE_SUB_* (9 moedas cada) e o
+// texto segue SUB_PLANS — nunca o contrário. A assinatura é declarada com
+// todas as letras na objeção "Is this a subscription?".
 //
 // NENHUMA prova social fabricada: só as fotos que já existem no projeto.
 // Sem número de usuários, sem nota média, sem depoimento sem consentimento,
@@ -69,24 +66,19 @@ import {
   getDeviceClass,
   setFunnelVariant,
 } from "@/lib/funnel-variant";
+import PlanPicker, {
+  DEFAULT_SUB_PLAN,
+  SUB_PLANS,
+  type SubPlanKey,
+} from "@/components/PlanPicker";
 
-type PlanKey = "PREMIUM" | "PACK5";
+// Oferta atual: assinatura Unlimited em 3 ciclos (mensal âncora $9.99).
+// Preços/rótulos vivem em SUB_PLANS (PlanPicker) — um lugar só, para o
+// texto nunca divergir dos prices da Stripe.
+type PlanKey = SubPlanKey;
 
-const PLAN_PRICES: Record<PlanKey, number> = { PREMIUM: 14.99, PACK5: 9.99 };
-
-/** Mesmos rótulos da V1: os dois braços precisam bater no Stripe. */
-const OFFER_ID = "five_readings_999_onetime";
-const PREMIUM_OFFER_ID = "premium_1499_monthly";
-
-/** Oferta, num lugar só — o texto não pode divergir do price da Stripe. */
-const OFFER = {
-  plan: "PACK5" as PlanKey,
-  readings: 5,
-  price: "$9.99",
-  terms: "one-time",
-  /** $9.99 / 5 = $1.998. A conta fecha; se o preço mudar, revise. */
-  perReading: "under $2 a reading",
-} as const;
+/** Rótulo agregado do funil nos eventos (o ciclo vai em label/offer). */
+const OFFER_ID = "unlimited_sub";
 
 const RETURNED_KEY = "astro_vsl_returned";
 
@@ -174,13 +166,13 @@ const SEALED: Array<{ n: string; text: string }> = [
   { n: "V", text: "What the cards suggest doing next" },
 ];
 
-/** As 5 leituras — exatamente o que o PACK5 credita (readings_left +5). */
+/** O que a assinatura Unlimited abre — leituras sem contador. */
 const PASS: Array<{ n: string; title: string }> = [
   { n: "01", title: "Your complete Soulmate Reading" },
   { n: "02", title: "Ask what may be standing between you" },
   { n: "03", title: "Ask when your paths are most likely to cross" },
   { n: "04", title: "Ask what the cards suggest doing next" },
-  { n: "05", title: "Ask the question you cannot stop thinking about" },
+  { n: "05", title: "Then keep asking — every reading is included" },
 ];
 
 /** Fotos reais do projeto. Sem frase atribuída — nenhuma delas tem uma. */
@@ -195,7 +187,7 @@ const PROOF_PHOTOS = [
 const OBJECTIONS: Array<{ q: string; a: string }> = [
   {
     q: "Is this a subscription?",
-    a: "No. One payment of $9.99 for 5 readings. Nothing recurring, nothing to cancel.",
+    a: "Yes — and you stay in control. $9.99 a month for unlimited readings, cancel anytime in two taps. Prefer a single payment? The 6-month and annual options cover the whole period upfront.",
   },
   {
     q: "Do I need an account first?",
@@ -210,11 +202,11 @@ const OBJECTIONS: Array<{ q: string; a: string }> = [
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly do I unlock?",
-    a: "Five personalized Egyptian Tarot readings, starting with your complete Soulmate Reading — who the cards point toward, the traits that make them recognizable, what may be standing between you, and when your paths are most likely to cross. The remaining four are yours to spend on any question you want to ask.",
+    a: "Unlimited personalized Egyptian Tarot readings, starting with your complete Soulmate Reading — who the cards point toward, the traits that make them recognizable, what may be standing between you, and when your paths are most likely to cross. After that, every question you want to ask is included.",
   },
   {
     q: "When do I get access?",
-    a: "Immediately after a successful payment. Create your account with the same email you used at checkout and your 5 readings are already there.",
+    a: "Immediately after a successful payment. Create your account with the same email you used at checkout and your readings are already there.",
   },
   {
     q: "Is my payment secure?",
@@ -418,6 +410,8 @@ function GalaxyBackdrop() {
 export default function QuizVslV2Page() {
   const [store, setStore] = useState<QuizStore>({});
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
+  // Ciclo selecionado no PlanPicker — mensal (o preço prometido) por padrão.
+  const [selectedPlan, setSelectedPlan] = useState<SubPlanKey>(DEFAULT_SUB_PLAN);
   const [error, setError] = useState<string | null>(null);
   /**
    * URL da Checkout Session quando o redirect NAO tirou a pessoa da pagina.
@@ -580,7 +574,7 @@ export default function QuizVslV2Page() {
             src: getStoredSource(),
             funnelSessionId: getFunnelSessionId(),
             signal: score,
-            offer: plan === "PACK5" ? OFFER_ID : PREMIUM_OFFER_ID,
+            offer: SUB_PLANS[plan].offerId,
             variant: VARIANT_IGNITE,
             // Quem desiste no Stripe volta para ESTA página, não para a V1.
             cancelPath: "/quiz/vsl-v2",
@@ -677,7 +671,7 @@ export default function QuizVslV2Page() {
       trackEvent("checkout_cta_clicked", {
         ...baseParams(),
         label: plan,
-        offer: plan === "PACK5" ? OFFER_ID : PREMIUM_OFFER_ID,
+        offer: SUB_PLANS[plan].offerId,
         cta_position: ctaPosition,
       });
       trackEvent("offer_clicked", {
@@ -685,7 +679,7 @@ export default function QuizVslV2Page() {
         label: plan,
         cta_position: ctaPosition,
       });
-      trackPaymentInitiated(plan, PLAN_PRICES[plan]);
+      trackPaymentInitiated(plan, SUB_PLANS[plan].amount);
 
       const email = store.email?.trim();
       if (!email) {
@@ -742,12 +736,12 @@ export default function QuizVslV2Page() {
     <div className="mt-7">
       <button
         type="button"
-        onClick={() => startGuestCheckout(OFFER.plan, id)}
+        onClick={() => startGuestCheckout(selectedPlan, id)}
         disabled={loadingPlan !== null}
         data-cta={id}
         className="btn-gold flex w-full min-h-[60px] items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold uppercase tracking-[0.06em] disabled:opacity-60"
       >
-        {loadingPlan === OFFER.plan ? (
+        {loadingPlan === selectedPlan ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
             Opening your reading...
@@ -760,11 +754,12 @@ export default function QuizVslV2Page() {
         )}
       </button>
       <p className="mt-3 text-center text-sm font-medium text-white/80">
-        {OFFER.readings} personalized readings &middot;{" "}
-        <span className="text-gold">{OFFER.price}</span> {OFFER.terms}
+        Unlimited readings &middot;{" "}
+        <span className="text-gold">{SUB_PLANS[selectedPlan].price}</span>
+        {SUB_PLANS[selectedPlan].per}
       </p>
       <p className="mt-1 text-center text-xs text-white/45">
-        No subscription &middot; Instant access &middot; Secure checkout by
+        Cancel anytime &middot; Instant access &middot; Secure checkout by
         Stripe
       </p>
       {/* Redirect engolido pela webview: uma linha, sem berrar. */}
@@ -1001,22 +996,28 @@ export default function QuizVslV2Page() {
             </ol>
 
             <p className="mt-5 text-sm text-white/55">
-              Five personalized Egyptian Tarot readings. They do not expire, and
-              they are yours to spend whenever a new question shows up.
+              Unlimited personalized Egyptian Tarot readings — plus the
+              Spiritual Guide, open 24/7 for the question that shows up at 2am.
             </p>
 
             {/* Formato e preço — depois do resultado, nunca antes. */}
             <div className="mt-7 border-t border-white/10 pt-6 text-center">
               <p className="text-sm text-white/65">
-                {OFFER.readings} personalized readings
+                Unlimited Egyptian Tarot readings
               </p>
               <p className="mt-1 text-[2.75rem] font-bold leading-none text-gold">
-                {OFFER.price}
+                {SUB_PLANS[selectedPlan].price}
+                <span className="ml-1 align-baseline text-lg font-medium text-white/50">
+                  {SUB_PLANS[selectedPlan].per}
+                </span>
               </p>
-              <p className="mt-2 text-sm text-white/60">
-                One-time payment &middot; {OFFER.perReading} &middot; no
-                subscription
-              </p>
+              <div className="mt-5 text-left">
+                <PlanPicker
+                  value={selectedPlan}
+                  onChange={setSelectedPlan}
+                  disabled={loadingPlan !== null}
+                />
+              </div>
             </div>
 
             <div ref={ctaRef}>
@@ -1131,22 +1132,9 @@ export default function QuizVslV2Page() {
         <Cta id="after_faq" />
       </Reveal>
 
-      {/* Segunda opção, deliberadamente discreta e identificada como
-          assinatura: quem quer tudo encontra, quem está frio não é obrigado
-          a decidir sobre recorrência agora. */}
-      <p className="mt-10 text-center text-xs leading-relaxed text-white/40">
-        Want unlimited readings, your daily horoscope, birth chart and
-        compatibility tools?{" "}
-        <button
-          type="button"
-          onClick={() => startGuestCheckout("PREMIUM", "secondary_premium")}
-          disabled={loadingPlan !== null}
-          className="underline underline-offset-4 hover:text-white/70 disabled:opacity-60"
-        >
-          Unlimited Premium is $14.99/month
-        </button>
-        , cancel anytime.
-      </p>
+      {/* A antiga "segunda opção" Premium $14.99 saiu: a oferta principal
+          agora É a assinatura ilimitada, por menos. Duas assinaturas na
+          mesma página só disputariam entre si. */}
 
       {/* Barra fixa — só depois que a oferta já apareceu uma vez. */}
       {showSticky && (
@@ -1158,11 +1146,11 @@ export default function QuizVslV2Page() {
         >
           <button
             type="button"
-            onClick={() => startGuestCheckout(OFFER.plan, "sticky")}
+            onClick={() => startGuestCheckout(selectedPlan, "sticky")}
             disabled={loadingPlan !== null}
             className="btn-gold mx-auto flex w-full max-w-lg min-h-[54px] items-center justify-center gap-2 rounded-full px-6 text-sm font-bold uppercase tracking-[0.06em] disabled:opacity-60"
           >
-            {loadingPlan === OFFER.plan ? (
+            {loadingPlan === selectedPlan ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Opening your reading...
@@ -1175,7 +1163,8 @@ export default function QuizVslV2Page() {
             )}
           </button>
           <p className="mt-1.5 text-center text-[11px] text-white/55">
-            {OFFER.readings} readings &middot; {OFFER.price} {OFFER.terms}
+            Unlimited readings &middot; {SUB_PLANS[selectedPlan].price}
+            {SUB_PLANS[selectedPlan].per} &middot; cancel anytime
           </p>
         </div>
       )}

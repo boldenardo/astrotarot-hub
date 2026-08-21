@@ -292,7 +292,7 @@ export const BODY_CONFIG: PainFunnelConfig = {
     "surfaceLine": "That's the surface of your card — the free layer, the part I can read for anyone. Your answers deserve the rest of it.",
     "card2": "Your full reading goes where I can't go for free. The next layer names when this loop actually started — and you may recognize the exact chapter of your life the moment you see it.",
     "card3": "The deepest layer is the one I never give away for free: what the pattern has been protecting you from all this time. That one changes how you read every restart you've ever made.",
-    "cta": "Unlock your full reading now — 5 personal readings for one $9.99 payment, in your hands within minutes."
+    "cta": "Unlock your full reading now — unlimited personal readings from $9.99 a month, the first in your hands within minutes."
   },
   "lp": {
     "headline": "Put a name to the pattern that keeps pulling you back to square one — in the next 10 minutes with the Pattern Mirror Method — even if you're sure you've already tried everything.",
@@ -326,7 +326,7 @@ export const BODY_CONFIG: PainFunnelConfig = {
       {
         "criterion": "What it costs you",
         "without": "One more program that blames your body and bills you monthly",
-        "with": "One $9.99 payment, no subscription, 7-day refund"
+        "with": "From $9.99/month, unlimited readings, cancel anytime, 7-day refund"
       }
     ],
     "authority": "Over 120,000 readings delivered, rated 4.9 by the people who received them.\nEvery reading uses the Egyptian tarot — 22 major arcana — interpreted through your own quiz answers, not a recycled script.\nNo two readings are alike, because no two patterns are.\nMaster Aura writes for one person at a time: you.",
@@ -352,7 +352,7 @@ export const BODY_CONFIG: PainFunnelConfig = {
         "feature": "7-day full money-back guarantee, handled by a simple email"
       }
     ],
-    "priceLine": "All of this for just $9.99 — one payment. No subscription. Nothing renews.",
+    "priceLine": "All of this from just $9.99 a month — unlimited readings, cancel anytime. Or one payment: $39.99 for 6 months, $59.99 for a year.",
     "guarantee": "Read everything. Sit with it for a full week. If your reading doesn't show you something true about your pattern, email us within 7 days and we'll refund every cent. No forms, no phone calls, no guilt trip. You risk nothing — the only thing that can't be undone is finally seeing the loop.",
     "faq": [
       {
@@ -369,9 +369,9 @@ export const BODY_CONFIG: PainFunnelConfig = {
       },
       {
         "q": "Why is it only $9.99?",
-        "a": "Because it's one payment, not a subscription. There's no trial that quietly renews and no upsell hiding behind the button. Five readings, $9.99, and a 7-day refund if it isn't for you."
+        "a": "Because $9.99 a month should be easy to say yes to — and easy to leave. Unlimited readings, cancel anytime in two taps, and a 7-day refund if it isn't for you."
       }
     ],
-    "ctaB": "Your pattern already has a name. Read it in the next 10 minutes. [Get My 5 Readings — $9.99] One-time payment · Instant access · 7-day money-back guarantee"
+    "ctaB": "Your pattern already has a name. Read it in the next 10 minutes. [Start unlimited readings — $9.99/mo] Cancel anytime · Instant access · 7-day money-back guarantee"
   }
 };

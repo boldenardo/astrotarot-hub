@@ -32,6 +32,11 @@ import {
   type PainFunnelConfig,
   type PainSession,
 } from "@/lib/pain-funnels/types";
+import PlanPicker, {
+  DEFAULT_SUB_PLAN,
+  SUB_PLANS,
+  type SubPlanKey,
+} from "@/components/PlanPicker";
 
 const EmbeddedCheckoutPanel = dynamic(
   () => import("@/components/EmbeddedCheckoutPanel"),
@@ -39,7 +44,6 @@ const EmbeddedCheckoutPanel = dynamic(
 );
 
 const AURA_PHOTO = "/brand/master-aura.webp";
-const OFFER_ID = "five_readings_999_onetime";
 const PRICE_LABEL = "$9.99";
 
 /** Cadência da conversa — mesma família de tempos do Control. */
@@ -86,6 +90,8 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
   const [typing, setTyping] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [cardIndex, setCardIndex] = useState<number | null>(null);
+  // Ciclo da assinatura Unlimited escolhido no LP (mensal por padrão).
+  const [selectedPlan, setSelectedPlan] = useState<SubPlanKey>(DEFAULT_SUB_PLAN);
   const [flipped, setFlipped] = useState(false);
   const [lpVisible, setLpVisible] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -121,7 +127,7 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
       ...getUtmParams(),
       ...extra,
     }),
-    [seg]
+    [seg, selectedPlan]
   );
 
   // ---- montagem: view + retomada de sessão ----
@@ -286,12 +292,12 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            plan: "PACK5",
+            plan: selectedPlan,
             email: buyerEmail,
             ref: getStoredRef(),
             src: getStoredSource(),
             funnelSessionId: getFunnelSessionId(),
-            offer: OFFER_ID,
+            offer: SUB_PLANS[selectedPlan].offerId,
             variant: `pain_${seg}`,
             cancelPath: `/quiz/${seg}`,
             embedded: true,
@@ -324,7 +330,7 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         submittingRef.current = false;
       }
     },
-    [seg]
+    [seg, selectedPlan]
   );
 
   const buy = useCallback(
@@ -335,7 +341,7 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         pattern: pattern.id,
         cta_position: position,
       }));
-      trackPaymentInitiated("PACK5", 9.99);
+      trackPaymentInitiated(selectedPlan, SUB_PLANS[selectedPlan].amount);
       if (!email) {
         setEmailInput("");
         setEmailError(null);
@@ -345,7 +351,7 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
       }
       void checkout(email);
     },
-    [base, checkout, email, loadingPay, pattern.id]
+    [base, checkout, email, loadingPay, pattern.id, selectedPlan]
   );
 
   const submitEmail = useCallback(() => {
@@ -381,7 +387,7 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         lead = parts.slice(0, -1).join(" ");
       } else if (raw.length > 60) {
         lead = raw;
-        btn = `Get my 5 readings — ${PRICE_LABEL}`;
+        btn = `Start unlimited readings — ${PRICE_LABEL}/mo`;
       }
     }
     return (
@@ -391,6 +397,13 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
           {lead}
         </p>
       )}
+      <div className="mb-4">
+        <PlanPicker
+          value={selectedPlan}
+          onChange={setSelectedPlan}
+          disabled={loadingPay}
+        />
+      </div>
       <button
         type="button"
         onClick={() => buy(id)}
@@ -414,9 +427,9 @@ export default function PainFunnel({ config }: { config: PainFunnelConfig }) {
         <p className="mt-2.5 text-center text-sm text-white/70">{tail}</p>
       )}
       <p className="mt-2.5 text-center text-sm text-white/75">
-        5 personalized readings &middot;{" "}
-        <span className="text-gold">{PRICE_LABEL}</span> one-time &middot; no
-        subscription
+        Unlimited readings &middot;{" "}
+        <span className="text-gold">{SUB_PLANS[selectedPlan].price}</span>
+        {SUB_PLANS[selectedPlan].per} &middot; cancel anytime
       </p>
       <p className="mt-1 text-center text-xs text-white/45">
         Instant access &middot; 7-day money-back guarantee &middot; Secure

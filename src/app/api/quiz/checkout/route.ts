@@ -27,6 +27,7 @@ const CANCEL_PATHS = new Set([
   "/quiz/intimacy",
   "/quiz/body",
   "/quiz/money",
+  "/quiz/ex",
 ]);
 const DEFAULT_CANCEL_PATH = "/quiz/vsl";
 
@@ -92,11 +93,18 @@ export async function POST(req: NextRequest) {
   }
 
   const plan = body.plan;
-  if (plan !== "PACK5" && plan !== "PREMIUM" && plan !== "PREMIUM_YEARLY") {
-    return NextResponse.json(
-      { error: "Invalid plan. Choose 'PACK5', 'PREMIUM' or 'PREMIUM_YEARLY'." },
-      { status: 400 }
-    );
+  const VALID_PLANS = new Set([
+    // Oferta atual do funil: assinatura Unlimited em 3 ciclos.
+    "SUB_MONTHLY",
+    "SUB_SEMIANNUAL",
+    "SUB_ANNUAL",
+    // Legado (páginas antigas em cache / e-mails de recuperação já enviados).
+    "PACK5",
+    "PREMIUM",
+    "PREMIUM_YEARLY",
+  ]);
+  if (!plan || !VALID_PLANS.has(plan)) {
+    return NextResponse.json({ error: "Invalid plan." }, { status: 400 });
   }
 
   const email = (body.email ?? "").toLowerCase().trim();
@@ -107,13 +115,22 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const isSubscription = plan === "PREMIUM" || plan === "PREMIUM_YEARLY";
+  const isSubscription = plan !== "PACK5";
+  // Fallback hardcoded nos planos novos: price id não é segredo (aparece no
+  // client em qualquer integração Stripe.js) e garante deploy atômico — o
+  // funil novo não pode 503ar enquanto a env não chega na Vercel.
   const price =
-    plan === "PREMIUM_YEARLY"
-      ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
-      : plan === "PREMIUM"
-        ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
-        : process.env.STRIPE_PRICE_READINGS_PACK;
+    plan === "SUB_MONTHLY"
+      ? process.env.STRIPE_PRICE_SUB_MONTHLY || "price_1U6hIO07YF1LaBzhrHFJ1lzW"
+      : plan === "SUB_SEMIANNUAL"
+        ? process.env.STRIPE_PRICE_SUB_SEMIANNUAL || "price_1U6hIO07YF1LaBzhwruCm40B"
+        : plan === "SUB_ANNUAL"
+          ? process.env.STRIPE_PRICE_SUB_ANNUAL || "price_1U6hIO07YF1LaBzhwWgoBSOw"
+          : plan === "PREMIUM_YEARLY"
+            ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
+            : plan === "PREMIUM"
+              ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
+              : process.env.STRIPE_PRICE_READINGS_PACK;
 
   if (!process.env.STRIPE_SECRET_KEY || !price) {
     return NextResponse.json(
@@ -215,6 +232,13 @@ export async function POST(req: NextRequest) {
 
     if (isSubscription) {
       params.subscription_data = { metadata };
+      // ORDER BUMP também na assinatura: o retrato entra como item avulso
+      // opcional cobrado junto da primeira fatura, na moeda da sessão.
+      if (plan.startsWith("SUB_") && process.env.STRIPE_PRICE_SOULMATE_PORTRAIT) {
+        params.optional_items = [
+          { price: process.env.STRIPE_PRICE_SOULMATE_PORTRAIT, quantity: 1 },
+        ];
+      }
     } else {
       params.payment_intent_data = {
         // Marca do PRODUTO na fatura: "<empresa>* ASTROTAROT". Reconhecer

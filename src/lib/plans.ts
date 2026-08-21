@@ -4,6 +4,8 @@
 export const PLANS = {
   FREE: "FREE",
   PREMIUM_MONTHLY: "PREMIUM_MONTHLY",
+  // Ciclo de 6 meses da oferta Unlimited do funil ($39.99/semestre).
+  PREMIUM_SEMIANNUAL: "PREMIUM_SEMIANNUAL",
   PREMIUM_YEARLY: "PREMIUM_YEARLY",
 } as const;
 
@@ -106,6 +108,7 @@ export function isPremium(profile: PlanProfile | null | undefined): boolean {
   if (!profile) return false;
   return (
     (profile.subscription_plan === PLANS.PREMIUM_MONTHLY ||
+      profile.subscription_plan === PLANS.PREMIUM_SEMIANNUAL ||
       profile.subscription_plan === PLANS.PREMIUM_YEARLY) &&
     profile.subscription_status === "active"
   );

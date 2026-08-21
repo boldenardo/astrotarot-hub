@@ -290,7 +290,7 @@ export const MONEY_CONFIG: PainFunnelConfig = {
     "surfaceLine": "That's the surface of your card — the part I can hand you in a free pull. It's true, but it's the thinnest layer.",
     "card2": "The second layer reads this same card against your dominant loop: where it started, what triggers it, and the exact point in the cycle where you keep making the same move without ever noticing you're making it.",
     "card3": "The third layer is the one I would read first if this loop were mine: what this loop has been quietly costing you beyond money — and the one thread that, pulled first, loosens all the others.",
-    "cta": "Your full reading is already taking shape from your answers. Unlock it now — plus 4 more readings for any question you've been carrying alone. $9.99, one time. It starts the moment you do."
+    "cta": "Your full reading is already taking shape from your answers. Unlock it now — then unlimited readings for every question you've been carrying alone. From $9.99 a month. It starts the moment you do."
   },
   "lp": {
     "headline": "See the exact pattern behind your money cycle in the next 10 minutes — with one card and seven honest answers — even if you've already tried every budget app.",
@@ -343,10 +343,10 @@ export const MONEY_CONFIG: PainFunnelConfig = {
       },
       {
         "benefit": "Never lose a single insight",
-        "feature": "All 5 readings saved to your account — they never expire"
+        "feature": "Every reading saved to your account — your full history, always there"
       }
     ],
-    "priceLine": "All of this for just $9.99. One payment. No subscription.",
+    "priceLine": "All of this from just $9.99 a month — unlimited readings, cancel anytime. Or one payment: $39.99/6 months, $59.99/year.",
     "guarantee": "Read your first reading in full. Sit with it for a week. If it doesn't show you something true about your pattern, email us within 7 days and we refund every cent — no forms, no questions, no convincing us. You're risking seven days of curiosity. That's all.",
     "faq": [
       {
@@ -363,9 +363,9 @@ export const MONEY_CONFIG: PainFunnelConfig = {
       },
       {
         "q": "Why is it only $9.99?",
-        "a": "Because it's one payment, not a subscription hiding behind a cheap first month. Five full readings for $9.99 means you can genuinely test the work — and we're comfortable being judged on it."
+        "a": "Because $9.99 a month with unlimited readings means you can genuinely test the work — and cancel in two taps if it doesn't hold up. We're comfortable being judged month by month."
       }
     ],
-    "ctaB": "Your reading starts being written the moment you complete payment. [Start my first reading — $9.99] 5 full readings, one time, 7-day money-back guarantee."
+    "ctaB": "Your reading starts being written the moment you complete payment. [Start my first reading — $9.99/mo] Unlimited readings, cancel anytime, 7-day money-back guarantee."
   }
 };

@@ -9,7 +9,7 @@
 // O Control não importa NADA daqui; daqui só se importam primitives que
 // já existiam (checkout embutido, analytics, cartas egípcias, avatar).
 
-export type PainSegment = "intimacy" | "body" | "money";
+export type PainSegment = "intimacy" | "body" | "money" | "ex";
 
 export interface PainOption {
   /** id curto e enumerado — é o que vai para analytics, nunca texto livre. */

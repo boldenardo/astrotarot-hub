@@ -296,7 +296,7 @@ export const INTIMACY_CONFIG: PainFunnelConfig = {
     "surfaceLine": "What you just read is the surface — the part of the pattern that shows in daylight. The part that runs your nights sits underneath it.",
     "card2": "The next layer of your full reading looks at where the pattern took root: the moment your mind decided that bracing was safer than being present.",
     "card3": "The deepest layer goes where a free preview can't: what the pattern is protecting you from — and what it's quietly costing you with her.",
-    "cta": "Your full Quiet Pattern reading is ready the moment you are. One payment of $9.99 — the complete reading in minutes, plus four more readings for any question you'd never ask out loud. Begin now."
+    "cta": "Your full Quiet Pattern reading is ready the moment you are. $9.99 a month — the complete reading in minutes, then unlimited readings for every question you'd never ask out loud. Begin now."
   },
   "lp": {
     "headline": "Your full reading of the pattern behind 'what if it happens again?' — in the next 10 minutes with the Quiet Pattern Method, even if you've never touched a tarot card.",
@@ -337,7 +337,7 @@ export const INTIMACY_CONFIG: PainFunnelConfig = {
     "value": [
       {
         "benefit": "Finally have words for the thing you've never said out loud",
-        "feature": "Your full personalized reading of the dominant pattern from your quiz — the first of your five readings"
+        "feature": "Your full personalized reading of the dominant pattern from your quiz — then unlimited readings, whenever the question returns"
       },
       {
         "benefit": "Understand what your mind does before, during, and after — not just that it does it",
@@ -356,7 +356,7 @@ export const INTIMACY_CONFIG: PainFunnelConfig = {
         "feature": "Spiritual Guide available 24/7 inside your account"
       }
     ],
-    "priceLine": "All of this for just $9.99 — one payment. No subscription. Nothing recurring on your statement.",
+    "priceLine": "All of this from just $9.99 a month — unlimited readings, cancel anytime in two taps. Prefer one payment? 6 months for $39.99 or a year for $59.99.",
     "guarantee": "Read your full reading. Sit with it for a full week. If it doesn't give you words for what you've been carrying, email us within 7 days and we refund every cent — no questions, no forms, no convincing us. You risk nothing but ten minutes.",
     "faq": [
       {
@@ -373,9 +373,9 @@ export const INTIMACY_CONFIG: PainFunnelConfig = {
       },
       {
         "q": "Why is it only $9.99?",
-        "a": "Because the first reading is how you decide whether this deserves your trust. One honest payment, five readings, no subscription hiding behind it. We'd rather earn your next reading than trap you into it."
+        "a": "Because the first reading is how you decide whether this deserves your trust. $9.99 a month, unlimited readings, cancel anytime in two taps — we'd rather earn every month than trap you into one."
       }
     ],
-    "ctaB": "Your reading starts now — not someday. [Get my full reading — $9.99] One payment. Delivered in minutes. 7-day full refund if it doesn't land. The pattern has run your nights long enough. Read it."
+    "ctaB": "Your reading starts now — not someday. [Get my full reading — $9.99/mo] Unlimited readings. Delivered in minutes. Cancel anytime; 7-day full refund if it doesn't land. The pattern has run your nights long enough. Read it."
   }
 };
