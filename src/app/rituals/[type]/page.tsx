@@ -48,6 +48,15 @@ export default async function RitualTypePage({ params }: { params: Params }) {
         <p className="mt-4 text-xs font-medium uppercase tracking-[0.2em] text-[#d4af37]">{meta.title}</p>
         <h1 className="mt-2 font-display text-[1.9rem] font-semibold leading-[1.15] text-ink-50 sm:text-4xl">{opener.line}</h1>
         <p className="mt-3 text-[15px] leading-relaxed text-ink-300">{opener.sub}</p>
+        {type === "luck" && (
+          <p className="mt-4 rounded-2xl border border-gold-400/25 bg-gold-400/[0.05] px-4 py-3 text-sm text-white/75">
+            Prefer a whole week?{" "}
+            <Link href="/rituals/luck-7" className="font-semibold text-gold underline underline-offset-4">
+              The 7-Day Luck Ritual
+            </Link>{" "}
+            — five minutes a night, opened and sealed by Master Aura.
+          </p>
+        )}
         <div className="mt-8">
           <RitualExperience type={type} title={meta.title} />
         </div>

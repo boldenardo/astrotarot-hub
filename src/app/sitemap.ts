@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   "/tarot",
   "/rituals",
   "/rituals/luck",
+  "/rituals/luck-7",
   "/rituals/cord-cutting",
   "/dreams",
   "/past-lives",

@@ -57,7 +57,28 @@ export default function RitualsHub() {
           Three questions, then a ritual made for you — a candle, a card, an intention in your own words, and tonight&apos;s real moon. Something to actually do, not just read.
         </p>
 
-        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* O infoproduto do pilar: destaque acima dos rituais avulsos. */}
+        <Link
+          href="/rituals/luck-7"
+          className="glass glass-gold group mt-10 block rounded-3xl border-gold-400/30 p-6 transition-all hover:border-gold-400/60"
+        >
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#d4af37]">
+            7-day guided program
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-semibold text-ink-50">
+            The 7-Day Luck Ritual
+          </h2>
+          <p className="mt-1 max-w-xl text-sm text-ink-300">
+            One week, one door, five minutes a night — opened and sealed by Master
+            Aura, with your card and the real moon.
+          </p>
+          <span className="mt-4 inline-flex items-center text-sm font-semibold text-gold">
+            Start the week
+            <span aria-hidden className="ml-1 transition-transform group-hover:translate-x-0.5">→</span>
+          </span>
+        </Link>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {featured.map((t) => (
             <Link
               key={t}

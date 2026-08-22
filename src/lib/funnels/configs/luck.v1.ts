@@ -347,6 +347,10 @@ export const LUCK_V1: PainFunnelConfig = {
         "feature": "Your full guided Luck Ritual — candle, card, intention, moon phase, and the step that depends on your pattern"
       },
       {
+        "benefit": "Turn one week into a practice instead of a single night",
+        "feature": "The 7-Day Luck Ritual — a guided program: name the door, clear the ground, break the \"almost\" pattern, sealed by Master Aura with your card"
+      },
+      {
         "benefit": "Come back every time \"almost\" happens again, in any area",
         "feature": "Unlimited rituals: Money, Love, Protection, New Beginning, and Moon"
       },
