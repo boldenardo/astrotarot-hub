@@ -37,6 +37,7 @@ import {
   type PainImage,
   type PainSession,
 } from "@/lib/pain-funnels/types";
+import { moonLine } from "@/lib/experiences/moon";
 import PlanPicker, {
   DEFAULT_SUB_PLAN,
   SUB_PLANS,
@@ -103,6 +104,12 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
   const [typing, setTyping] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [cardIndex, setCardIndex] = useState<number | null>(null);
+  // Pergunta de texto livre (sonho): o texto fica SÓ aqui e na sessão do
+  // browser — nunca em analytics. O preview da IA alimenta os tokens
+  // {dreamTheme}/{dreamSymbols} do bloco de preview.
+  const [textInput, setTextInput] = useState("");
+  const [textBusy, setTextBusy] = useState(false);
+  const [aiPreview, setAiPreview] = useState<{ theme: string; symbols: string[] } | null>(null);
   // Ciclo da assinatura Unlimited escolhido no LP (mensal por padrão).
   const [selectedPlan, setSelectedPlan] = useState<SubPlanKey>(DEFAULT_SUB_PLAN);
   const [flipped, setFlipped] = useState(false);
@@ -136,11 +143,13 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     (extra?: Record<string, unknown>) => ({
       category: "pain_funnel",
       segment: seg,
+      ...(rawConfig.funnelId ? { funnel_id: rawConfig.funnelId } : {}),
+      ...(rawConfig.variantId ? { variant_id: rawConfig.variantId } : {}),
       funnel_session_id: getFunnelSessionId(),
       ...getUtmParams(),
       ...extra,
     }),
-    [seg, selectedPlan]
+    [seg, selectedPlan, rawConfig.funnelId, rawConfig.variantId]
   );
 
   // ---- montagem: view + retomada de sessão ----
@@ -151,6 +160,10 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     }
     const s = readSession(seg);
     if (s.email) setEmail(s.email);
+    try {
+      const ai = sessionStorage.getItem(`astro_pain_${seg}_ai`);
+      if (ai) setAiPreview(JSON.parse(ai));
+    } catch {}
     if (s.stage && s.stage !== "quiz" && Object.keys(s.answers).length) {
       // Retomada pós-quiz: reconstrói o essencial sem reanimar a conversa.
       setAnswers(s.answers);
@@ -227,6 +240,18 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     askQuestion(q);
   }, [askQuestion, base, rawConfig]);
 
+  // Variante "direto na conversa": sem landing, a Aura já está falando.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (!rawConfig.skipHook || autoStartedRef.current || stage !== "hook") return;
+    const s = readSession(seg);
+    if (s.stage && s.stage !== "quiz" && Object.keys(s.answers).length) return;
+    autoStartedRef.current = true;
+    startQuiz();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage]);
+
+
   const advance = useCallback(
     (nextIndex: number, nextAnswers: Record<string, string>) => {
       const list = activeQuiz(rawConfig, nextAnswers);
@@ -276,6 +301,45 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     },
     [advance, answers, auraSays, base, rawConfig, later, qIndex, seg, showOptions]
   );
+
+  /** Pergunta de texto livre → endpoint de preview → reação da Aura → segue. */
+  const submitText = useCallback(async () => {
+    const q = activeQuiz(rawConfig, answers)[qIndex];
+    const text = textInput.trim();
+    if (!q || text.length < 12 || textBusy) return;
+    setTextBusy(true);
+    setShowOptions(false);
+    setThread((t) => [...t, { kind: "me", text }]);
+    let reaction = "Thank you for telling me. I can see it.";
+    try {
+      if (q.aiEndpoint) {
+        const res = await fetch(q.aiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dream: text }),
+        });
+        const data = (await res.json().catch(() => ({}))) as { theme?: string; symbols?: string[]; reaction?: string };
+        if (res.ok && data.reaction) {
+          reaction = data.reaction;
+          const preview = { theme: data.theme ?? "", symbols: data.symbols ?? [] };
+          setAiPreview(preview);
+          try { sessionStorage.setItem(`astro_pain_${seg}_ai`, JSON.stringify(preview)); } catch {}
+          if (preview.symbols.length) {
+            reaction = `${reaction} What I see in it: ${preview.symbols.join(", ")}.`;
+          }
+        }
+      }
+    } catch {
+      // sem IA, a conversa segue — a pessoa nunca fica presa num spinner
+    }
+    const nextAnswers = { ...answers, [q.id]: "told" };
+    setAnswers(nextAnswers);
+    trackEvent("pain_quiz_answered", base({ question_id: q.id, answer_id: "text", q_index: qIndex + 1 }));
+    saveSession(seg, { answers: nextAnswers, stage: "quiz", qIndex: qIndex + 1 });
+    setTextInput("");
+    setTextBusy(false);
+    auraSays([reaction], () => advance(qIndex + 1, nextAnswers));
+  }, [advance, answers, auraSays, base, qIndex, rawConfig, seg, textBusy, textInput]);
 
   const pickCard = useCallback(
     (i: number) => {
@@ -336,8 +400,8 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
             src: getStoredSource(),
             funnelSessionId: getFunnelSessionId(),
             offer: SUB_PLANS[selectedPlan].offerId,
-            variant: `pain_${seg}`,
-            cancelPath: `/quiz/${seg}`,
+            variant: rawConfig.funnelId ? `${rawConfig.funnelId}_${rawConfig.variantId ?? "v1"}` : `pain_${seg}`,
+            cancelPath: rawConfig.funnelId && rawConfig.variantId ? `/f/${rawConfig.funnelId}/${rawConfig.variantId}` : `/quiz/${seg}`,
             embedded: true,
             utm: getUtmParams(),
           }),
@@ -368,7 +432,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
         submittingRef.current = false;
       }
     },
-    [seg, selectedPlan]
+    [seg, selectedPlan, rawConfig.funnelId, rawConfig.variantId]
   );
 
   const buy = useCallback(
@@ -620,7 +684,27 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
                 exit={{ opacity: 0 }}
                 className="grid grid-cols-1 gap-2.5 pb-6"
               >
-                {activeQuiz(config, answers)[qIndex]?.options.map((opt) => (
+                {activeQuiz(config, answers)[qIndex]?.kind === "text" ? (
+                  <div className="glass rounded-2xl p-3">
+                    <textarea
+                      value={textInput}
+                      onChange={(e) => setTextInput(e.target.value.slice(0, 600))}
+                      placeholder={activeQuiz(config, answers)[qIndex]?.placeholder ?? "Tell me what you dreamed…"}
+                      rows={4}
+                      className="w-full resize-none rounded-xl bg-transparent px-2 py-1.5 text-[15px] leading-snug text-[#e8e4f5] placeholder:text-white/35 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={submitText}
+                      disabled={textBusy || textInput.trim().length < 12}
+                      className="btn-gold mt-2 flex min-h-[48px] w-full items-center justify-center rounded-xl text-sm font-semibold disabled:opacity-50"
+                    >
+                      {textBusy ? "Master Aura is reading it…" : "Send to Master Aura"}
+                    </button>
+                    <p className="mt-2 text-center text-[11px] text-white/40">Private — your words stay on this device.</p>
+                  </div>
+                ) : null}
+                {activeQuiz(config, answers)[qIndex]?.kind !== "text" && activeQuiz(config, answers)[qIndex]?.options.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
@@ -712,6 +796,33 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
               {pattern.description}
             </p>
           </motion.div>
+
+          {/* PREVIEW — valor real antes do paywall (tokens resolvidos aqui) */}
+          {config.preview && lpVisible && (
+            <motion.div
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass mt-6 rounded-2xl border border-amber-300/20 p-5"
+            >
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-[#d4af37]">
+                {config.preview.title}
+              </p>
+              <dl className="mt-4 space-y-3.5">
+                {config.preview.items.map((it) => (
+                  <div key={it.label}>
+                    <dt className="text-[11px] font-semibold uppercase tracking-wider text-white/45">{it.label}</dt>
+                    <dd className="mt-0.5 text-[15px] leading-relaxed text-white/85">
+                      {it.text
+                        .replace(/{pattern}/g, pattern.label)
+                        .replace(/{moon}/g, moonLine())
+                        .replace(/{dreamTheme}/g, aiPreview?.theme || "the thread your dream keeps pulling")
+                        .replace(/{dreamSymbols}/g, aiPreview?.symbols?.length ? aiPreview.symbols.join(", ") : "the images that stayed with you")}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </motion.div>
+          )}
 
           {/* OPEN LOOP: 1 revelada, 2 selada, 3 selada */}
           {lpVisible && (

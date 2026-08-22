@@ -9,7 +9,16 @@
 // O Control não importa NADA daqui; daqui só se importam primitives que
 // já existiam (checkout embutido, analytics, cartas egípcias, avatar).
 
-export type PainSegment = "intimacy" | "body" | "money" | "ex";
+export type PainSegment =
+  | "intimacy"
+  | "body"
+  | "money"
+  | "ex"
+  // AstroTarot 2.0 — funis novos (registro em src/lib/funnels/registry.ts)
+  | "cord"
+  | "luck"
+  | "pastlife"
+  | "dreams";
 
 export interface PainOption {
   /** id curto e enumerado — é o que vai para analytics, nunca texto livre. */
@@ -41,6 +50,14 @@ export interface PainQuestion {
   gender?: PainGender;
   /** Foto que a Aura "manda" junto desta pergunta (depois das mensagens). */
   image?: PainImage;
+  /**
+   * "text": campo livre curto (ex.: o sonho). O texto NUNCA vai para
+   * analytics; vai só ao endpoint de preview (aiEndpoint) e fica na sessão.
+   */
+  kind?: "options" | "text";
+  placeholder?: string;
+  /** Endpoint público que devolve { theme, symbols[], reaction } para o texto. */
+  aiEndpoint?: string;
   /** Mensagens da Master Aura antes da pergunta, no estilo DM do Control. */
   aura: string[];
   question: string;
@@ -106,6 +123,17 @@ export interface PainFunnelConfig {
   genderQuestionId?: string;
   /** Foto enviada pela Aura junto da transição para as cartas. */
   transitionImage?: PainImage;
+  /** Variante B: pula a landing e abre direto na conversa. */
+  skipHook?: boolean;
+  /** Identificação do experimento nos eventos (funnel_id / variant_id). */
+  funnelId?: string;
+  variantId?: string;
+  /**
+   * Valor REAL entregue antes do paywall, logo após a carta. Tokens:
+   * {pattern} (label do padrão), {moon} (fase real da lua), {dreamTheme},
+   * {dreamSymbols} (quando houve pergunta de texto com IA).
+   */
+  preview?: { title: string; items: Array<{ label: string; text: string }> };
   quiz: PainQuestion[];
   /** 3 mensagens da Aura fechando o quiz e justificando a carta. */
   transition: string[];

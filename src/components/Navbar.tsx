@@ -9,14 +9,17 @@ import { useState, useEffect } from "react";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 const LINKS = [
-  { href: "/challenge", label: "Free Reading" },
+  // AstroTarot 2.0: experiências no lugar das calculadoras. Compatibility
+  // e Fortune saem do destaque (a rota /compatibility segue viva para SEO;
+  // /abundance redireciona para /rituals/luck).
   { href: "/tarot", label: "Tarot" },
-  { href: "/soulmate", label: "Draw My Soulmate" },
-  { href: "/compatibility", label: "Compatibility" },
-  { href: "/guia", label: "Guide" },
+  { href: "/soulmate", label: "Soulmate" },
+  { href: "/rituals", label: "Rituals" },
+  { href: "/dreams", label: "Dreams" },
+  { href: "/past-lives", label: "Past Lives" },
   { href: "/predictions", label: "Horoscope" },
   { href: "/numerology", label: "Lucky Numbers" },
-  { href: "/abundance", label: "Fortune" },
+  { href: "/guia", label: "Guide" },
   { href: "/cart", label: "Plans" },
 ];
 

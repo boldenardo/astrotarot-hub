@@ -30,6 +30,11 @@ const nextConfig = {
     optimizePackageImports: ["lucide-react", "framer-motion"],
   },
   // Headers de cache
+  async redirects() {
+    // Fortune/Prosperity aposentado: a URL antiga aponta para o sucessor
+    // semântico (Luck Ritual). 301 preserva o que houver de SEO/backlinks.
+    return [{ source: "/abundance", destination: "/rituals/luck", permanent: true }];
+  },
   async headers() {
     return [
       {

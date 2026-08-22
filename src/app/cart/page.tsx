@@ -19,7 +19,7 @@ import { trackPageView, trackPaymentInitiated } from "@/lib/analytics";
 
 const PLAN_PRICES: Record<CheckoutPlanKey, number> = {
   PACK5: 9.99,
-  PREMIUM: 14.99,
+  PREMIUM: 9.99,
   PREMIUM_YEARLY: 79,
 };
 
@@ -220,7 +220,7 @@ function PlansContent() {
                   Redirecting...
                 </>
               ) : (
-                <>Or pay yearly — $79/yr (save $100)</>
+                <>Or pay yearly — $59.99/yr (about $4.99 a month)</>
               )}
             </button>
           </motion.div>

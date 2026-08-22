@@ -30,29 +30,29 @@ export const CHECKOUT_PLANS = {
   PREMIUM: {
     key: "PREMIUM",
     name: "Unlimited Premium",
-    priceLabel: "$14.99",
+    priceLabel: "$9.99",
     period: "per month",
     readings: Infinity,
     features: [
       "Unlimited tarot readings",
+      "Personal rituals — luck, money, love, cord cutting",
+      "Dream interpretation, every night",
+      "Past life readings & connections",
       "Your daily horoscope",
-      "Find your soulmate reading",
-      "Your fortune & money map",
-      "Complete birth chart",
-      "Your lucky numbers",
+      "Complete birth chart & lucky numbers",
     ],
   },
   /** Yearly subscription: same access, one payment per year (67% off). */
   PREMIUM_YEARLY: {
     key: "PREMIUM_YEARLY",
     name: "Unlimited Premium — Yearly",
-    priceLabel: "$79",
+    priceLabel: "$59.99",
     period: "per year",
     readings: Infinity,
     features: [
       "Everything in Unlimited Premium",
       "One payment covers 12 months",
-      "Save $100 vs paying monthly",
+      "About $4.99 a month — 50% off",
     ],
   },
 } as const;

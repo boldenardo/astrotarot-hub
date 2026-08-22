@@ -188,8 +188,11 @@ export async function POST(req: NextRequest) {
   // Variante também no metadata: o relatório de receita por braço passa a
   // existir do lado do servidor, sem depender do localStorage do browser.
   const variant = meta(body.variant, 40);
+  // Funis experimentais (/f/<funnel>/<variant>) entram por padrão fechado:
+  // só slug + versão, nada de query/fragmento.
   const cancelPath =
-    typeof body.cancelPath === "string" && CANCEL_PATHS.has(body.cancelPath)
+    typeof body.cancelPath === "string" &&
+    (CANCEL_PATHS.has(body.cancelPath) || /^\/f\/[a-z-]{2,30}\/v\d{1,2}$/.test(body.cancelPath))
       ? body.cancelPath
       : DEFAULT_CANCEL_PATH;
   const embedded = body.embedded === true;

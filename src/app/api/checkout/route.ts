@@ -1,6 +1,6 @@
 // POST /api/checkout — cria uma sessão de Checkout do Stripe.
 // PACK5 → pagamento único (5 leituras). PREMIUM → assinatura mensal.
-// PREMIUM_YEARLY → assinatura anual ($79/ano).
+// PREMIUM_YEARLY → assinatura anual ($59.99/ano). Preços = oferta Unlimited.
 
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -52,11 +52,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Assinatura Unlimited — MESMOS prices do funil ($9.99/mês · $59.99/ano),
+  // para o produto inteiro vender uma oferta só. Fallback hardcoded = deploy
+  // atômico (price id não é segredo).
   const price =
     plan === "PREMIUM_YEARLY"
-      ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
+      ? process.env.STRIPE_PRICE_SUB_ANNUAL || "price_1U6hIO07YF1LaBzhwWgoBSOw"
       : plan === "PREMIUM"
-        ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
+        ? process.env.STRIPE_PRICE_SUB_MONTHLY || "price_1U6hIO07YF1LaBzhrHFJ1lzW"
         : process.env.STRIPE_PRICE_READINGS_PACK;
 
   if (!process.env.STRIPE_SECRET_KEY || !price) {
@@ -101,7 +104,7 @@ export async function POST(req: NextRequest) {
     const admin = getSupabaseAdmin();
     const { error: insertError } = await admin.from("payments").insert({
       user_id: profile.id,
-      amount: plan === "PREMIUM_YEARLY" ? 79 : isSubscription ? 14.99 : 9.99,
+      amount: plan === "PREMIUM_YEARLY" ? 59.99 : 9.99,
       currency: "usd",
       status: "PENDING",
       payment_type: isSubscription ? "SUBSCRIPTION" : "READINGS_PACK",

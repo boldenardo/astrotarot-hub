@@ -21,6 +21,11 @@ const BASE_URL = "https://astrotarot.shop";
 const PUBLIC_ROUTES = [
   "",
   "/tarot",
+  "/rituals",
+  "/rituals/luck",
+  "/rituals/cord-cutting",
+  "/dreams",
+  "/past-lives",
   "/compatibility",
   "/numerology",
   "/predictions",

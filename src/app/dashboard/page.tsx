@@ -2,23 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Crown,
-  Sparkles,
-  Calendar,
-  TrendingUp,
-  Heart,
-  Gift,
-  Zap,
-  Star,
-  Sun,
-  Moon,
-  ArrowUp,
-  ChevronDown,
-  ChevronUp,
-  LogOut,
-  Lock,
-} from "lucide-react";
+import { Crown, Sparkles, Calendar, TrendingUp, Heart, Gift, Zap, Star, Sun, Moon, ArrowUp, ChevronDown, ChevronUp, LogOut, Lock, Flame, Hourglass } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -335,12 +319,28 @@ export default function DashboardPage() {
       premiumOnly: true,
     },
     {
-      href: "/compatibility",
-      icon: Heart,
-      title: "Compatibility",
-      description: "Is he or she the one?",
-      cta: "Find out",
-      premiumOnly: true,
+      href: "/rituals",
+      icon: Flame,
+      title: "Rituals",
+      description: "Luck, money, love, cord cutting",
+      cta: "Begin",
+      premiumOnly: false,
+    },
+    {
+      href: "/dreams",
+      icon: Moon,
+      title: "Dreams",
+      description: "Tell Master Aura what you dreamed",
+      cta: "Decode it",
+      premiumOnly: false,
+    },
+    {
+      href: "/past-lives",
+      icon: Hourglass,
+      title: "Past Lives",
+      description: "Why they felt familiar",
+      cta: "Read it",
+      premiumOnly: false,
     },
     {
       href: "/predictions",
@@ -348,14 +348,6 @@ export default function DashboardPage() {
       title: "Horoscope",
       description: "Your day in the stars",
       cta: "Read it",
-      premiumOnly: true,
-    },
-    {
-      href: "/abundance",
-      icon: Zap,
-      title: "Fortune",
-      description: "When money is coming to you",
-      cta: "See it",
       premiumOnly: true,
     },
   ];
@@ -474,7 +466,7 @@ export default function DashboardPage() {
                   }
                   className="btn-gold flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  Unlock everything — $14.99/mo
+                  Unlock everything — $9.99/mo
                 </Link>
               </div>
             )}
@@ -646,7 +638,7 @@ export default function DashboardPage() {
                 className="btn-gold inline-flex w-full sm:w-auto items-center justify-center rounded-full px-6 sm:px-8 py-4 text-base sm:text-lg font-semibold"
               >
                 <span className="break-words">
-                  Unlock everything — $14.99/mo
+                  Unlock everything — $9.99/mo
                 </span>
               </Link>
             </div>
@@ -827,7 +819,7 @@ export default function DashboardPage() {
               </h3>
               <p className="text-xl text-ink-300 mb-6">
                 Soulmate, fortune, horoscope and unlimited tarot — for just{" "}
-                <span className="text-gold font-bold">$14.99/month</span>
+                <span className="text-gold font-bold">$9.99/month</span>
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link

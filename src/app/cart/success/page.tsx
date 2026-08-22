@@ -28,7 +28,7 @@ function SuccessContent() {
       })
       .catch(() => {
         // Endpoint indisponível: melhor um evento aproximado que nenhum.
-        trackPurchase({ sessionId, value: 14.99, currency: "usd" });
+        trackPurchase({ sessionId, value: 9.99, currency: "usd" });
       });
   }, [sessionId]);
 

@@ -10,15 +10,15 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Heart, Sun, Orbit, Hash, Coins, Sparkles } from "lucide-react";
+import { Sun, Orbit, Hash, Sparkles, Moon, Hourglass } from "lucide-react";
 
 const EXTRAS = [
-  { icon: Heart, label: "Compatibility", href: "/compatibility" },
+  { icon: Sparkles, label: "Personal rituals", href: "/rituals" },
+  { icon: Moon, label: "Dream interpretation", href: "/dreams" },
+  { icon: Hourglass, label: "Past lives", href: "/past-lives" },
   { icon: Sun, label: "Daily horoscope", href: "/predictions" },
   { icon: Orbit, label: "Birth chart", href: "/personality" },
   { icon: Hash, label: "Lucky numbers", href: "/numerology" },
-  { icon: Coins, label: "Fortune reading", href: "/abundance" },
-  { icon: Sparkles, label: "Spiritual guide", href: "/guia" },
 ];
 
 export default function AlsoIncluded() {

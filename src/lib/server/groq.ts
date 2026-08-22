@@ -4,7 +4,10 @@
 
 import Groq from "groq-sdk";
 
-export const GROQ_MODEL = "llama-3.3-70b-versatile";
+// O modelo é configurável: em 22/08/2026 a Groq aposentou o
+// llama-3.3-70b-versatile (model_not_found) e TODAS as leituras pararam.
+// Nunca mais um nome fixo sem saída de emergência por env.
+export const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 let cached: Groq | null = null;
 
@@ -36,6 +39,9 @@ export async function groqChat({
   temperature = 0.7,
 }: GroqChatOptions): Promise<string> {
   const groq = getGroq();
+  // Modelos de raciocínio (gpt-oss) consomem o orçamento pensando: sem
+  // esforço baixo + piso de tokens, respostas curtas voltam VAZIAS.
+  const reasoning = /gpt-oss|qwen3|compound/i.test(GROQ_MODEL);
   const completion = await groq.chat.completions.create({
     model: GROQ_MODEL,
     messages: [
@@ -43,8 +49,9 @@ export async function groqChat({
       { role: "user", content: user },
     ],
     temperature,
-    max_tokens: maxTokens,
+    max_tokens: reasoning ? Math.max(maxTokens, 1200) : maxTokens,
     ...(json ? { response_format: { type: "json_object" as const } } : {}),
+    ...(reasoning ? ({ reasoning_effort: "low" } as Record<string, unknown>) : {}),
   });
 
   const content = completion.choices[0]?.message?.content;
