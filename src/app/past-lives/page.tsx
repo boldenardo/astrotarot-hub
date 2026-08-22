@@ -5,7 +5,7 @@ import { breadcrumbJsonLd } from "@/lib/seo";
 import PastLifeExperience from "@/components/experiences/PastLifeExperience";
 
 export const metadata: Metadata = {
-  title: "Past Life Reading & Past Life Connection | AstroTarot",
+  title: "Past Life Reading & Past Life Connection",
   description:
     "Why did this person feel familiar before you even knew them? A symbolic past-life archetype reading with Master Aura — your era, role, central lesson and the pattern you carry forward.",
   alternates: { canonical: "https://astrotarot.shop/past-lives" },

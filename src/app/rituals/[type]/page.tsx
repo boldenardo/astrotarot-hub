@@ -14,10 +14,10 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { type } = await params;
-  if (!isRitualType(type)) return { title: "Rituals | AstroTarot" };
+  if (!isRitualType(type)) return { title: "Rituals" };
   const meta = RITUAL_LABELS[type];
   return {
-    title: `${meta.title} — written for you by Master Aura | AstroTarot`,
+    title: `${meta.title} — written for you by Master Aura`,
     description: `${meta.tagline} A short conversation, then a personal ritual: candle, card, intention and tonight's moon.`,
     alternates: { canonical: `https://astrotarot.shop/rituals/${type}` },
   };

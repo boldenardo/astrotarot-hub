@@ -12,12 +12,12 @@ import { RITUAL_LABELS } from "@/lib/experiences/prompts";
 import { RITUAL_TYPES, type RitualType } from "@/lib/experiences/types";
 
 export const metadata: Metadata = {
-  title: "Personal Rituals — Luck, Money, Love, Cord Cutting & More | AstroTarot",
+  title: "Personal Rituals — Luck, Money, Love, Cord Cutting & More",
   description:
     "A short conversation with Master Aura, then a ritual written for you: candle, card, intention and tonight's moon. Luck, money, love, cord cutting, protection, energy cleanse, new beginnings.",
   alternates: { canonical: "https://astrotarot.shop/rituals" },
   openGraph: {
-    title: "Personal Rituals | AstroTarot",
+    title: "Personal Rituals",
     description: "Tell Master Aura what you want to invite in. She writes the ritual.",
     url: "https://astrotarot.shop/rituals",
   },

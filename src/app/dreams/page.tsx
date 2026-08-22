@@ -5,7 +5,7 @@ import { breadcrumbJsonLd } from "@/lib/seo";
 import DreamDecoder from "@/components/experiences/DreamDecoder";
 
 export const metadata: Metadata = {
-  title: "Dream Interpretation — Tell Master Aura What You Dreamed | AstroTarot",
+  title: "Dream Interpretation — Tell Master Aura What You Dreamed",
   description:
     "Describe your dream in your own words. Master Aura finds the symbols, the emotional theme and what your mind may be processing — with an optional 3-card pull.",
   alternates: { canonical: "https://astrotarot.shop/dreams" },
