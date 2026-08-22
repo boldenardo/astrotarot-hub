@@ -372,6 +372,6 @@ export const BODY_CONFIG: PainFunnelConfig = {
         "a": "Because $9.99 a month should be easy to say yes to — and easy to leave. Unlimited readings, cancel anytime in two taps, and a 7-day refund if it isn't for you."
       }
     ],
-    "ctaB": "Your pattern already has a name. Read it in the next 10 minutes. [Start unlimited readings — $9.99/mo] Cancel anytime · Instant access · 7-day money-back guarantee"
+    "ctaB": "Your pattern already has a name. Read it in the next 10 minutes. [Open my full reading] Cancel anytime · Instant access · 7-day money-back guarantee"
   }
 };

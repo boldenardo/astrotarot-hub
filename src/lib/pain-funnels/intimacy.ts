@@ -376,6 +376,6 @@ export const INTIMACY_CONFIG: PainFunnelConfig = {
         "a": "Because the first reading is how you decide whether this deserves your trust. $9.99 a month, unlimited readings, cancel anytime in two taps — we'd rather earn every month than trap you into one."
       }
     ],
-    "ctaB": "Your reading starts now — not someday. [Get my full reading — $9.99/mo] Unlimited readings. Delivered in minutes. Cancel anytime; 7-day full refund if it doesn't land. The pattern has run your nights long enough. Read it."
+    "ctaB": "Your reading starts now — not someday. [Get my full reading] Unlimited readings. Delivered in minutes. Cancel anytime; 7-day full refund if it doesn't land. The pattern has run your nights long enough. Read it."
   }
 };

@@ -66,7 +66,9 @@ import {
   getDeviceClass,
   setFunnelVariant,
 } from "@/lib/funnel-variant";
-import PlanPicker, {
+import {
+  PlanFinePrint,
+  OFFER_LAYOUT,
   DEFAULT_SUB_PLAN,
   SUB_PLANS,
   type SubPlanKey,
@@ -242,6 +244,7 @@ function buildParams(store: QuizStore) {
     device: getDeviceClass(),
     src: getStoredSource() ?? undefined,
     funnel_session_id: getFunnelSessionId(),
+    offer_layout: OFFER_LAYOUT,
     ...getUtmParams(),
   };
 }
@@ -753,14 +756,17 @@ export default function QuizVslV2Page() {
           </>
         )}
       </button>
-      <p className="mt-3 text-center text-sm font-medium text-white/80">
-        Unlimited readings &middot;{" "}
-        <span className="text-gold">{SUB_PLANS[selectedPlan].price}</span>
-        {SUB_PLANS[selectedPlan].per}
-      </p>
+      <PlanFinePrint
+        value={selectedPlan}
+        onChange={setSelectedPlan}
+        disabled={loadingPlan !== null}
+        onOpenOptions={() =>
+          trackEvent("plan_options_opened", { ...baseParams(), cta_position: id })
+        }
+      />
       <p className="mt-1 text-center text-xs text-white/45">
-        Cancel anytime &middot; Instant access &middot; Secure checkout by
-        Stripe
+        Instant access &middot; 7-day money-back guarantee &middot; Secure
+        checkout by Stripe
       </p>
       {/* Redirect engolido pela webview: uma linha, sem berrar. */}
       {manualUrl && (
@@ -1001,23 +1007,16 @@ export default function QuizVslV2Page() {
             </p>
 
             {/* Formato e preço — depois do resultado, nunca antes. */}
-            <div className="mt-7 border-t border-white/10 pt-6 text-center">
+            {/* Preço pequeno, uma vez, depois do resultado. O motivo do
+                botão é a leitura; o ciclo é letra miúda sob o CTA. */}
+            <div className="mt-7 border-t border-white/10 pt-5 text-center">
               <p className="text-sm text-white/65">
-                Unlimited Egyptian Tarot readings
-              </p>
-              <p className="mt-1 text-[2.75rem] font-bold leading-none text-gold">
-                {SUB_PLANS[selectedPlan].price}
-                <span className="ml-1 align-baseline text-lg font-medium text-white/50">
-                  {SUB_PLANS[selectedPlan].per}
+                Unlimited Egyptian Tarot readings &middot;{" "}
+                <span className="font-semibold text-gold">
+                  {SUB_PLANS[selectedPlan].price}
                 </span>
+                <span className="text-white/45">{SUB_PLANS[selectedPlan].per}</span>
               </p>
-              <div className="mt-5 text-left">
-                <PlanPicker
-                  value={selectedPlan}
-                  onChange={setSelectedPlan}
-                  disabled={loadingPlan !== null}
-                />
-              </div>
             </div>
 
             <div ref={ctaRef}>

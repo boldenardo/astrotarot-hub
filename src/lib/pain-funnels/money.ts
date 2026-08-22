@@ -366,6 +366,6 @@ export const MONEY_CONFIG: PainFunnelConfig = {
         "a": "Because $9.99 a month with unlimited readings means you can genuinely test the work — and cancel in two taps if it doesn't hold up. We're comfortable being judged month by month."
       }
     ],
-    "ctaB": "Your reading starts being written the moment you complete payment. [Start my first reading — $9.99/mo] Unlimited readings, cancel anytime, 7-day money-back guarantee."
+    "ctaB": "Your reading starts being written the moment you complete payment. [Start my first reading] Unlimited readings, cancel anytime, 7-day money-back guarantee."
   }
 };

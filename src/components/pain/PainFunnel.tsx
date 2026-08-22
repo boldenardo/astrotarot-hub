@@ -39,7 +39,9 @@ import {
   type PainSession,
 } from "@/lib/pain-funnels/types";
 import { moonLine } from "@/lib/experiences/moon";
-import PlanPicker, {
+import {
+  PlanFinePrint,
+  OFFER_LAYOUT,
   DEFAULT_SUB_PLAN,
   SUB_PLANS,
   type SubPlanKey,
@@ -51,7 +53,6 @@ const EmbeddedCheckoutPanel = dynamic(
 );
 
 const AURA_PHOTO = "/brand/master-aura.webp";
-const PRICE_LABEL = "$9.99";
 
 /** Cadência da conversa — mesma família de tempos do Control. */
 const TYPE_MS_PER_CHAR = 26;
@@ -154,6 +155,8 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
       ...(rawConfig.funnelId ? { funnel_id: rawConfig.funnelId } : {}),
       ...(rawConfig.variantId ? { variant_id: rawConfig.variantId } : {}),
       funnel_session_id: getFunnelSessionId(),
+      offer_layout: OFFER_LAYOUT,
+      plan: selectedPlan,
       ...getUtmParams(),
       ...extra,
     }),
@@ -489,18 +492,17 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
   }, [answers, cardIndex, checkout, emailInput, seg]);
 
   // O LP-Copywriter entrega o CTA como "frase de reforço [RÓTULO] microcopy".
-  // O botão recebe só o rótulo; frase vira linha acima e microcopy linha
-  // abaixo — um parágrafo inteiro dentro de um botão parece quebrado.
+  // O botão recebe só o rótulo; a frase vira linha acima. A microcopy
+  // depois do colchete (preço, garantia) é descartada: a recorrência já
+  // aparece em letra pequena sob o botão, uma vez só.
   const Cta = ({ id, label }: { id: string; label?: string }) => {
     const raw = (label ?? config.lp.ctaB).trim();
     let lead = "";
     let btn = raw;
-    let tail = "";
     const bracket = raw.match(/^(.*?)\[(.+?)\](.*)$/s);
     if (bracket) {
       lead = bracket[1].trim();
       btn = bracket[2].trim();
-      tail = bracket[3].trim();
     } else {
       const parts = raw.split(/(?<=[.!?])\s+/);
       const last = parts[parts.length - 1] ?? "";
@@ -509,7 +511,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
         lead = parts.slice(0, -1).join(" ");
       } else if (raw.length > 60) {
         lead = raw;
-        btn = `Start unlimited readings — ${PRICE_LABEL}/mo`;
+        btn = "Open my full reading";
       }
     }
     return (
@@ -519,13 +521,6 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
           {lead}
         </p>
       )}
-      <div className="mb-4">
-        <PlanPicker
-          value={selectedPlan}
-          onChange={setSelectedPlan}
-          disabled={loadingPay}
-        />
-      </div>
       <button
         type="button"
         onClick={() => buy(id)}
@@ -545,15 +540,15 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
           </>
         )}
       </button>
-      {tail && (
-        <p className="mt-2.5 text-center text-sm text-white/70">{tail}</p>
-      )}
-      <p className="mt-2.5 text-center text-sm text-white/75">
-        Unlimited readings &middot;{" "}
-        <span className="text-gold">{SUB_PLANS[selectedPlan].price}</span>
-        {SUB_PLANS[selectedPlan].per} &middot; cancel anytime
-      </p>
-      <p className="mt-1 text-center text-xs text-white/45">
+      <PlanFinePrint
+        value={selectedPlan}
+        onChange={setSelectedPlan}
+        disabled={loadingPay}
+        onOpenOptions={() =>
+          trackEvent("pain_plan_options_opened", base({ pattern: pattern.id }))
+        }
+      />
+      <p className="mt-2 text-center text-xs text-white/45">
         Instant access &middot; 7-day money-back guarantee &middot; Secure
         checkout by Stripe
       </p>

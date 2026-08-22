@@ -8,6 +8,7 @@
 // página inteira — trocar a seleção para cima é escolha da pessoa, nunca
 // surpresa no checkout.
 
+import { useState } from "react";
 import { CircleCheck } from "lucide-react";
 
 export type SubPlanKey = "SUB_MONTHLY" | "SUB_SEMIANNUAL" | "SUB_ANNUAL";
@@ -111,6 +112,59 @@ export default function PlanPicker({
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Layout "um botão só": o CTA principal fala do MOTIVO (a leitura); a
+ * recorrência fica numa linha pequena logo abaixo, e os ciclos mais longos
+ * só aparecem se a pessoa pedir. Mede-se com `offer_layout: "single_cta"`.
+ *
+ * Por que: com 3 cards iguais acima do botão, a tela pedia uma decisão de
+ * ciclo antes da decisão que importa — e 38 checkouts abertos seguidos sem
+ * uma tentativa de cartão disseram que a decisão travava ali.
+ */
+export const OFFER_LAYOUT = "single_cta";
+
+export function PlanFinePrint({
+  value,
+  onChange,
+  disabled,
+  onOpenOptions,
+}: {
+  value: SubPlanKey;
+  onChange: (plan: SubPlanKey) => void;
+  disabled?: boolean;
+  /** Disparado uma vez quando a pessoa abre os ciclos longos. */
+  onOpenOptions?: () => void;
+}) {
+  const [open, setOpen] = useState(value !== DEFAULT_SUB_PLAN);
+  const p = SUB_PLANS[value];
+  return (
+    <div className="mt-2.5 text-center">
+      <p className="text-[13px] text-white/60">
+        <span className="text-gold">{p.price}</span>
+        {p.per} &middot; unlimited readings &middot; cancel anytime
+      </p>
+      {!open ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            setOpen(true);
+            onOpenOptions?.();
+          }}
+          className="mt-1.5 text-[12px] text-white/40 underline decoration-white/20 underline-offset-2 hover:text-white/70 disabled:opacity-60"
+        >
+          Prefer to pay less per month? 6 months {SUB_PLANS.SUB_SEMIANNUAL.price}{" "}
+          &middot; 1 year {SUB_PLANS.SUB_ANNUAL.price}
+        </button>
+      ) : (
+        <div className="mt-3 text-left">
+          <PlanPicker value={value} onChange={onChange} disabled={disabled} />
+        </div>
+      )}
     </div>
   );
 }

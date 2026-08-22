@@ -52,6 +52,9 @@ export type AnalyticsEvent =
   | "pain_lp_viewed"
   | "pain_offer_viewed"
   | "pain_checkout_clicked"
+  // Abriu os ciclos longos escondidos sob o CTA único (layout single_cta).
+  | "pain_plan_options_opened"
+  | "plan_options_opened"
   | "quiz_vsl_view"
   | "vsl_video_started"
   | "vsl_video_25"

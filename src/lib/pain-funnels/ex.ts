@@ -675,6 +675,6 @@ export const EX_CONFIG: PainFunnelConfig = {
         "a": "Because the 2 a.m. question never comes alone. Tonight it's what {he} says. Next week it's why {he} went quiet. After that, it's someone new. Unlimited means you ask each one as it arrives, for one flat monthly price — and you can cancel any time, with 7 days to change your mind."
       }
     ],
-    "ctaB": "Stop reading {his} version from the outside. [Open my full reading — $9.99/mo] Unlimited readings · Spiritual Guide 24/7 · 7-day money-back guarantee"
+    "ctaB": "Stop reading {his} version from the outside. [Open my full reading] Unlimited readings · Spiritual Guide 24/7 · 7-day money-back guarantee"
   }
 };
