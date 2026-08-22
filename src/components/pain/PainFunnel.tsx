@@ -248,23 +248,23 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     askQuestion(q);
   }, [askQuestion, base, rawConfig]);
 
-  // Variante "direto na conversa" (skipHook): sem landing. Auto-reparável:
-  // enquanto a conversa estiver vazia e a Aura calada, reagenda a primeira
-  // pergunta — se qualquer cleanup (hidratação, StrictMode) limpar os
-  // timers, o próximo render tenta de novo. Nunca dispara duas vezes com
-  // mensagens já na tela.
-  const startedTrackedRef = useRef(false);
+  // Variante "direto na conversa" (skipHook): sem landing. Só dispara
+  // depois da hidratação (o SSR renderiza a landing invisível, igual ao v1,
+  // porque nascer já em "quiz" quebrava a hidratação desta rota).
+  // O guard é marcado no DISPARO (não no agendamento): o setStage("quiz")
+  // re-executa este efeito antes de a Aura começar a digitar e, sem ele,
+  // a primeira pergunta entrava duas vezes (visto em produção).
+  const autoStartedRef = useRef(false);
   useEffect(() => {
-    if (!rawConfig.skipHook) return;
+    if (!rawConfig.skipHook || autoStartedRef.current) return;
     if (thread.length > 0 || typing || showOptions) return;
     const s = readSession(seg);
     if (s.stage && s.stage !== "quiz" && Object.keys(s.answers).length) return;
     const t = window.setTimeout(() => {
+      if (autoStartedRef.current) return;
+      autoStartedRef.current = true;
       if (stage === "hook") setStage("quiz");
-      if (!startedTrackedRef.current) {
-        startedTrackedRef.current = true;
-        trackEvent("pain_quiz_started", base());
-      }
+      trackEvent("pain_quiz_started", base());
       askQuestion(activeQuiz(rawConfig, {})[0]);
     }, 60);
     return () => window.clearTimeout(t);
