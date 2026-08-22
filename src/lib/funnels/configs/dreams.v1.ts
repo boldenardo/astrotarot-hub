@@ -19,8 +19,8 @@ export const DREAMS_V1: PainFunnelConfig = {
       "id": "q1",
       "stage": "dream_type",
       "aura": [
-        "Hey. I'm Aura. Before any cards, I want the dream the way you actually remember it — not the version you'd say out loud.",
-        "Don't clean it up for me. Just pick the closest one."
+        "Thank you for not cleaning it up. Now I need the shape of it.",
+        "Just pick the closest one."
       ],
       "question": "What kind of dream was it?",
       "options": [

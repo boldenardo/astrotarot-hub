@@ -238,3 +238,19 @@ export function genderizeDeep<T>(value: T, g: PainGender): T {
   }
   return value;
 }
+
+/** Substitui tokens de copy ({pattern}, {moon}, …) em todas as strings. */
+export function fillTokensDeep<T>(value: T, tokens: Record<string, string>): T {
+  if (typeof value === "string") {
+    let out: string = value;
+    for (const [k, v] of Object.entries(tokens)) out = out.split(`{${k}}`).join(v);
+    return out as unknown as T;
+  }
+  if (Array.isArray(value)) return value.map((v) => fillTokensDeep(v, tokens)) as unknown as T;
+  if (value && typeof value === "object") {
+    const o: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) o[k] = fillTokensDeep(v, tokens);
+    return o as T;
+  }
+  return value;
+}

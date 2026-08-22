@@ -1,7 +1,7 @@
 // Funil luck — variante v1 (AstroTarot 2.0). Gerado pelos agentes Ignite
 // (ICP → benchmark → validação 7.5/10 → SLO → buying agenda → hooks →
 // 08-lp-copywriter) + revisão adversarial (7 correções aplicadas).
-// Hook escolhido: Things don't go wrong for you. They go *almost* right. — What area of your life needs luck the most right now?
+// Hook escolhido: Things don't go wrong for you. They go almost right. — What area of your life needs luck the most right now?
 // Oferta: assinatura Unlimited ($9.99/mês · $39.99/6m · $59.99/ano).
 
 import type { PainFunnelConfig } from "@/lib/pain-funnels/types";
@@ -10,7 +10,7 @@ export const LUCK_V1: PainFunnelConfig = {
   "segment": "luck",
   "pageTitle": "Your Personal Luck Ritual",
   "hook": {
-    "line": "Things don't go wrong for you. They go *almost* right.",
+    "line": "Things don't go wrong for you. They go almost right.",
     "sub": "What area of your life needs luck the most right now?",
     "cta": "Tell me which area"
   },

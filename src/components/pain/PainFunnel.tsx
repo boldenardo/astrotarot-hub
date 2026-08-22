@@ -31,6 +31,7 @@ import {
   activeQuiz,
   dominantPattern,
   genderOf,
+  fillTokensDeep,
   genderizeDeep,
   genderizeText,
   type PainFunnelConfig,
@@ -90,6 +91,7 @@ function saveSession(segment: string, s: PainSession) {
 export default function PainFunnel({ config: rawConfig }: { config: PainFunnelConfig }) {
   const seg = rawConfig.segment;
 
+  // Variante B (skipHook): nasce direto na conversa — sem landing.
   const [stage, setStage] = useState<Stage>("hook");
   const [qIndex, setQIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -97,7 +99,13 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
   // disso a copy usa o default (feminino, maioria do tráfego) — o hook é
   // neutro de qualquer forma. `config` abaixo é a versão já traduzida.
   const gender = genderOf(rawConfig, answers);
-  const config = useMemo(() => genderizeDeep(rawConfig, gender), [rawConfig, gender]);
+  // Pronomes + tokens de copy ({pattern} = padrão dominante, {moon} = lua
+  // real) resolvidos UMA vez para a config inteira — LP, open loop, tudo.
+  const config = useMemo(() => {
+    const g = genderizeDeep(rawConfig, gender);
+    const pat = dominantPattern(rawConfig, answers);
+    return fillTokensDeep(g, { pattern: pat.label, moon: moonLine() });
+  }, [rawConfig, gender, answers]);
   const genderRef = useRef(gender);
   genderRef.current = gender;
   const [thread, setThread] = useState<ThreadItem[]>([]);
@@ -240,16 +248,28 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     askQuestion(q);
   }, [askQuestion, base, rawConfig]);
 
-  // Variante "direto na conversa": sem landing, a Aura já está falando.
-  const autoStartedRef = useRef(false);
+  // Variante "direto na conversa" (skipHook): sem landing. Auto-reparável:
+  // enquanto a conversa estiver vazia e a Aura calada, reagenda a primeira
+  // pergunta — se qualquer cleanup (hidratação, StrictMode) limpar os
+  // timers, o próximo render tenta de novo. Nunca dispara duas vezes com
+  // mensagens já na tela.
+  const startedTrackedRef = useRef(false);
   useEffect(() => {
-    if (!rawConfig.skipHook || autoStartedRef.current || stage !== "hook") return;
+    if (!rawConfig.skipHook) return;
+    if (thread.length > 0 || typing || showOptions) return;
     const s = readSession(seg);
     if (s.stage && s.stage !== "quiz" && Object.keys(s.answers).length) return;
-    autoStartedRef.current = true;
-    startQuiz();
+    const t = window.setTimeout(() => {
+      if (stage === "hook") setStage("quiz");
+      if (!startedTrackedRef.current) {
+        startedTrackedRef.current = true;
+        trackEvent("pain_quiz_started", base());
+      }
+      askQuestion(activeQuiz(rawConfig, {})[0]);
+    }, 60);
+    return () => window.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage]);
+  }, [stage, thread.length, typing, showOptions]);
 
 
   const advance = useCallback(
@@ -554,8 +574,10 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
       {stage === "hook" && (
         <motion.section
           initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex min-h-[70vh] flex-col items-center justify-center text-center"
+          animate={{ opacity: rawConfig.skipHook ? 0 : 1, y: 0 }}
+          className={`flex min-h-[70vh] flex-col items-center justify-center text-center ${
+            rawConfig.skipHook ? "invisible" : ""
+          }`}
         >
           {config.hook.image && (
             <div className="relative mb-6 w-full max-w-[260px] overflow-hidden rounded-3xl border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">

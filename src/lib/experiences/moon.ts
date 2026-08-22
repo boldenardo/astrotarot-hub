@@ -62,5 +62,5 @@ export function moonContext(at: Date = new Date()): MoonContext {
 /** Frase curta pronta para copy: "Tonight the moon is waxing crescent — first steps, building momentum…" */
 export function moonLine(at: Date = new Date()): string {
   const m = moonContext(at);
-  return `Tonight the moon is ${m.label.toLowerCase()} ${m.emoji} — ${m.guidance}.`;
+  return `Tonight the moon is ${m.label.toLowerCase()} ${m.emoji} — ${m.guidance}`;
 }
