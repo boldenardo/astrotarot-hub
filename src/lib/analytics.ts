@@ -76,6 +76,9 @@ export type AnalyticsEvent =
   | "checkout_form_timeout"
   | "checkout_form_error"
   | "checkout_form_closed"
+  // O iframe não carregou a tempo e a pessoa foi para checkout.stripe.com
+  // (label = slow_click | timeout | stripe_js_unavailable).
+  | "checkout_fallback_hosted"
   // AstroTarot 2.0 — experiências guiadas (feature em params.feature)
   | "experience_view"
   | "experience_start"
@@ -136,6 +139,53 @@ export function trackPageView(path: string, title?: string) {
   getFbq()?.("track", "PageView");
 }
 
+// Eventos de checkout também vão para o NOSSO banco (/api/telemetry →
+// funnel_events), porque o GA4 não é legível pela operação. Só checkout:
+// nada do quiz, nada de e-mail.
+const MIRRORED =
+  /^(pain_offer_viewed|pain_checkout_clicked|offer_viewed|checkout_|purchase_completed)/;
+
+function mirror(eventName: string, params?: AnalyticsEventParams) {
+  if (!MIRRORED.test(eventName)) return;
+  try {
+    const p = params ?? {};
+    const variant =
+      p.variant ??
+      (p.funnel_id
+        ? `${p.funnel_id}_${p.variant_id ?? "v1"}`
+        : p.segment
+          ? `pain_${p.segment}`
+          : undefined);
+    const payload = JSON.stringify({
+      event: eventName,
+      params: p,
+      funnelSessionId:
+        p.funnel_session_id ??
+        window.localStorage.getItem("astro_funnel_sid") ??
+        undefined,
+      variant,
+      path: window.location.pathname,
+      vw: window.innerWidth,
+      vh: window.innerHeight,
+    });
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(
+        "/api/telemetry",
+        new Blob([payload], { type: "application/json" })
+      );
+    } else {
+      void fetch("/api/telemetry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true,
+      });
+    }
+  } catch {
+    // telemetria nunca pode quebrar a compra
+  }
+}
+
 /**
  * Tracks a custom event
  */
@@ -144,6 +194,7 @@ export function trackEvent(
   params?: AnalyticsEventParams
 ) {
   if (typeof window === "undefined") return;
+  mirror(eventName, params);
 
   // Google Analytics (GA4 event; params extras viram event params)
   getGtag()?.("event", eventName, {

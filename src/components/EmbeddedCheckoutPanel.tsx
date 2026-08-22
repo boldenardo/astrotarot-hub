@@ -54,6 +54,13 @@ interface Props {
   expiresAt?: number | null;
   /** Fechar o painel — a pessoa desistiu e volta para a oferta. */
   onClose: () => void;
+  /**
+   * Rede de segurança: cria a MESMA compra como Checkout hospedado e
+   * devolve a URL. Usado quando o iframe não carrega (webview do Facebook,
+   * Stripe.js bloqueado): aos 8s aparece o botão, aos 20s vai sozinho.
+   * checkout.stripe.com abre em qualquer webview; o iframe, não.
+   */
+  requestHostedUrl?: () => Promise<string | null>;
 }
 
 /**
@@ -74,8 +81,38 @@ export default function EmbeddedCheckoutPanel({
   clientSecret,
   expiresAt,
   onClose,
+  requestHostedUrl,
 }: Props) {
   const [ready, setReady] = useState(false);
+  // Iframe ainda não carregou passado SLOW_MS: oferece a saída hospedada.
+  const [slow, setSlow] = useState(false);
+  const [falling, setFalling] = useState(false);
+  const fallbackRef = useRef(false);
+  const hostedRef = useRef(requestHostedUrl);
+  hostedRef.current = requestHostedUrl;
+
+  const goHosted = async (reason: "slow_click" | "timeout" | "stripe_js_unavailable") => {
+    if (fallbackRef.current || !hostedRef.current) return;
+    fallbackRef.current = true;
+    setFalling(true);
+    trackEvent("checkout_fallback_hosted", {
+      category: "checkout",
+      label: reason,
+      seconds_open: Math.round((Date.now() - openedAtRef.current) / 1000),
+    });
+    try {
+      const url = await hostedRef.current();
+      if (url) {
+        window.location.href = url;
+        return;
+      }
+    } catch {
+      // cai no erro abaixo
+    }
+    fallbackRef.current = false;
+    setFalling(false);
+    trackEvent("checkout_form_error", { category: "checkout", label: "hosted_fallback_failed" });
+  };
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -111,6 +148,7 @@ export default function EmbeddedCheckoutPanel({
           category: "checkout",
           label: "stripe_js_unavailable",
         });
+        void goHosted("stripe_js_unavailable");
       }
     });
 
@@ -148,21 +186,23 @@ export default function EmbeddedCheckoutPanel({
       if (f && f.getBoundingClientRect().height > 200) onLoaded("iframe_visible");
     }, 500);
 
-    const slow = window.setTimeout(() => {
+    const slowTimer = window.setTimeout(() => {
       if (!loadedRef.current) {
         trackEvent("checkout_form_slow", { category: "checkout", ms: SLOW_MS });
+        setSlow(true);
       }
     }, SLOW_MS);
     const timeout = window.setTimeout(() => {
       if (!loadedRef.current) {
         trackEvent("checkout_form_timeout", { category: "checkout", ms: TIMEOUT_MS });
+        void goHosted("timeout");
       }
     }, TIMEOUT_MS);
 
     return () => {
       mo.disconnect();
       window.clearInterval(poll);
-      window.clearTimeout(slow);
+      window.clearTimeout(slowTimer);
       window.clearTimeout(timeout);
       trackClose("unmount");
     };
@@ -242,6 +282,24 @@ export default function EmbeddedCheckoutPanel({
         </button>
       </div>
 
+      {/* Iframe demorando: saída honesta para o checkout hospedado, que
+          abre em qualquer webview. Some sozinho assim que o iframe carrega. */}
+      {(slow || falling) && !loadedRef.current && requestHostedUrl && (
+        <div className="shrink-0 border-b border-white/10 bg-[#15102a] px-4 py-3 text-center">
+          <p className="text-sm text-white/75">
+            {falling ? "Opening the secure checkout..." : "Taking longer than usual?"}
+          </p>
+          {!falling && (
+            <button
+              type="button"
+              onClick={() => void goHosted("slow_click")}
+              className="mt-2 inline-flex min-h-[44px] items-center justify-center rounded-full bg-gold-400 px-5 text-sm font-bold text-[#1a1233]"
+            >
+              Open secure checkout
+            </button>
+          )}
+        </div>
+      )}
       <div ref={hostRef} className="relative flex-1 overflow-y-auto">
         {!ready && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">

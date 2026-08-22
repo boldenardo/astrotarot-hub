@@ -562,6 +562,37 @@ export default function QuizVslV2Page() {
     };
   }, [baseParams]);
 
+  // Rede de segurança do painel embutido: MESMA compra como Checkout
+  // hospedado (embedded:false). checkout.stripe.com abre em qualquer
+  // webview; o iframe não. Usa o ciclo selecionado e o e-mail já salvo.
+  const requestHostedUrl = useCallback(async (): Promise<string | null> => {
+    const email = store.email?.trim();
+    if (!email) return null;
+    try {
+      const res = await fetch("/api/quiz/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          email,
+          ref: getStoredRef(),
+          src: getStoredSource(),
+          funnelSessionId: getFunnelSessionId(),
+          signal: store.score,
+          offer: SUB_PLANS[selectedPlan].offerId,
+          variant: VARIANT_IGNITE,
+          cancelPath: "/quiz/vsl-v2",
+          embedded: false,
+          utm: getUtmParams(),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      return data.url ?? null;
+    } catch {
+      return null;
+    }
+  }, [store.email, store.score, selectedPlan]);
+
   const checkout = useCallback(
     async (plan: PlanKey, email: string, ctaPosition: string) => {
       setLoadingPlan(plan);
@@ -1219,6 +1250,7 @@ export default function QuizVslV2Page() {
           clientSecret={clientSecret}
           expiresAt={checkoutExpiresAt}
           onClose={() => setClientSecret(null)}
+          requestHostedUrl={requestHostedUrl}
         />
       )}
 

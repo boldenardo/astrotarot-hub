@@ -407,6 +407,35 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
     return () => obs.disconnect();
   }, [lpVisible, base, pattern.id]);
 
+  // Rede de segurança do painel: cria a MESMA compra como Checkout
+  // HOSPEDADO (embedded:false) e devolve a URL — usada quando o iframe
+  // não carrega. Mesmo endpoint, mesmos preços, mesma metadata.
+  const requestHostedUrl = useCallback(async (): Promise<string | null> => {
+    if (!email) return null;
+    try {
+      const res = await fetch("/api/quiz/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: selectedPlan,
+          email,
+          ref: getStoredRef(),
+          src: getStoredSource(),
+          funnelSessionId: getFunnelSessionId(),
+          offer: SUB_PLANS[selectedPlan].offerId,
+          variant: rawConfig.funnelId ? `${rawConfig.funnelId}_${rawConfig.variantId ?? "v1"}` : `pain_${seg}`,
+          cancelPath: rawConfig.funnelId && rawConfig.variantId ? `/f/${rawConfig.funnelId}/${rawConfig.variantId}` : `/quiz/${seg}`,
+          embedded: false,
+          utm: getUtmParams(),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      return data.url ?? null;
+    } catch {
+      return null;
+    }
+  }, [email, selectedPlan, seg, rawConfig.funnelId, rawConfig.variantId]);
+
   // ---- checkout (mesmo backend do Control; nada novo de pagamento) ----
   const checkout = useCallback(
     async (buyerEmail: string) => {
@@ -1071,6 +1100,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
           clientSecret={clientSecret}
           expiresAt={checkoutExpiresAt}
           onClose={() => setClientSecret(null)}
+          requestHostedUrl={requestHostedUrl}
         />
       )}
     </div>
