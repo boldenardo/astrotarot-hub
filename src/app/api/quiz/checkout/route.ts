@@ -223,6 +223,15 @@ export async function POST(req: NextRequest) {
     const params: Stripe.Checkout.SessionCreateParams = {
       mode: isSubscription ? "subscription" : "payment",
       locale: "en",
+      // MOEDA TRAVADA EM USD (23/08). O price tem 9 moedas e a Stripe
+      // escolhia pela localização: a página prometia "$9.99" e o
+      // formulário abria "R$49,90", "179 ZAR", "179 MXN". O valor
+      // convertido está certo; o NÚMERO parece 5x a 18x maior no exato
+      // momento do cartão. Todo o site é escrito em USD — o checkout tem
+      // de confirmar a promessa, não surpreender. Para voltar a moeda
+      // local, o preço na página precisa virar local junto (geo), nunca
+      // só aqui.
+      currency: "usd",
       line_items: [{ price, quantity: 1 }],
       metadata,
       allow_promotion_codes: true,
@@ -236,13 +245,12 @@ export async function POST(req: NextRequest) {
 
     if (isSubscription) {
       params.subscription_data = { metadata };
-      // ORDER BUMP também na assinatura: o retrato entra como item avulso
-      // opcional cobrado junto da primeira fatura, na moeda da sessão.
-      if (plan.startsWith("SUB_") && process.env.STRIPE_PRICE_SOULMATE_PORTRAIT) {
-        params.optional_items = [
-          { price: process.env.STRIPE_PRICE_SOULMATE_PORTRAIT, quantity: 1 },
-        ];
-      }
+      // SEM order bump na assinatura (23/08). A Stripe renderiza
+      // optional_items no resumo, ACIMA do campo de e-mail: quem vinha
+      // comprar uma leitura de $9.99 via "$24.99" (R$129 / 449 ZAR) antes
+      // de digitar qualquer coisa. O retrato continua à venda no
+      // one-click da thank-you, onde o cartão já está salvo e o
+      // compromisso já foi assumido — mesma receita, momento melhor.
     } else {
       params.payment_intent_data = {
         // Marca do PRODUTO na fatura: "<empresa>* ASTROTAROT". Reconhecer

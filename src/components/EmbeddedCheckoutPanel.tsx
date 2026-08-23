@@ -2,6 +2,20 @@
 
 // Checkout DENTRO da nossa página.
 //
+// 23/08 — POR QUE ISTO NÃO É MAIS UM OVERLAY COM ROLAGEM INTERNA:
+// medido em produção a 375x812, o iframe da Stripe pede 983px de altura
+// numa área visível de 751px — o botão "Subscribe" nasce 232px abaixo da
+// dobra. O painel antigo era `fixed inset-0` com `body{overflow:hidden}` e
+// um `overflow-y-auto` interno; no celular, o toque dentro de um iframe de
+// outro domínio NÃO rola o container do pai (no desktop a roda do mouse
+// rola, por isso passava em todo teste manual). Resultado: 73 sessões de
+// assinatura, 5 formulários carregados, ZERO tentativas de cartão e zero
+// eventos de fechamento — as pessoas viam o formulário e não alcançavam o
+// botão. Agora o painel vive no fluxo normal do documento (o padrão que a
+// Stripe documenta): quem rola é a PÁGINA, e o toque dentro do iframe
+// propaga para o scroll do documento. O conteúdo do funil é escondido
+// enquanto isto está montado, então esta é a página.
+//
 // Por que isso existe: com o checkout hospedado, 34 pessoas criaram sessão
 // no Stripe e apenas 1 digitou um cartão. Entre o clique e a tela de
 // pagamento havia um `window.location.href`, e 84% do tráfego chega pela
@@ -160,10 +174,17 @@ export default function EmbeddedCheckoutPanel({
       if (loadedRef.current) return;
       loadedRef.current = true;
       setReady(true);
+      const f = host?.querySelector("iframe");
       trackEvent("checkout_form_loaded", {
         category: "checkout",
         label: via,
         ms: Date.now() - openedAtRef.current,
+        // Geometria: se iframe_h > view_h e a página não rolar, o botão
+        // de pagar fica fora do alcance. Foi o bug de 20–23/08.
+        iframe_h: f ? Math.round(f.getBoundingClientRect().height) : 0,
+        view_h: window.innerHeight,
+        doc_scrollable:
+          document.documentElement.scrollHeight > window.innerHeight + 8,
       });
     };
     const attach = (iframe: HTMLIFrameElement) => {
@@ -209,11 +230,10 @@ export default function EmbeddedCheckoutPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Trava o scroll do fundo enquanto o painel está aberto: no mobile, a
-  // página rolando atrás do formulário faz o campo do cartão fugir do dedo.
+  // O documento PRECISA rolar (ver cabeçalho): nada de travar o body.
+  // Só garantimos que o formulário começa do topo.
   useEffect(() => {
-    const anterior = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    window.scrollTo(0, 0);
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         trackClose("user");
@@ -221,10 +241,7 @@ export default function EmbeddedCheckoutPanel({
       }
     };
     window.addEventListener("keydown", onEsc);
-    return () => {
-      document.body.style.overflow = anterior;
-      window.removeEventListener("keydown", onEsc);
-    };
+    return () => window.removeEventListener("keydown", onEsc);
   }, []);
 
   // O <EmbeddedCheckout> não expõe evento de "montei". Um atraso curto
@@ -254,10 +271,11 @@ export default function EmbeddedCheckoutPanel({
   }, [expiresAt]);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0e0a1a]">
+    <div className="relative z-50 min-h-screen w-full bg-[#0e0a1a]">
       {/* Cabeçalho: identidade nossa em cima do formulário deles, para a
-          compra continuar parecendo a mesma jornada. */}
-      <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-4 py-3">
+          compra continuar parecendo a mesma jornada. Sticky (não fixed):
+          acompanha a rolagem do documento sem tirá-lo do fluxo. */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/10 bg-[#0e0a1a] px-4 py-3">
         <span className="font-display text-base font-semibold tracking-tight text-ink-50">
           Astro<span className="text-gold">Tarot</span>
         </span>
@@ -285,7 +303,7 @@ export default function EmbeddedCheckoutPanel({
       {/* Iframe demorando: saída honesta para o checkout hospedado, que
           abre em qualquer webview. Some sozinho assim que o iframe carrega. */}
       {(slow || falling) && !loadedRef.current && requestHostedUrl && (
-        <div className="shrink-0 border-b border-white/10 bg-[#15102a] px-4 py-3 text-center">
+        <div className="border-b border-white/10 bg-[#15102a] px-4 py-3 text-center">
           <p className="text-sm text-white/75">
             {falling ? "Opening the secure checkout..." : "Taking longer than usual?"}
           </p>
@@ -300,15 +318,18 @@ export default function EmbeddedCheckoutPanel({
           )}
         </div>
       )}
-      <div ref={hostRef} className="relative flex-1 overflow-y-auto">
+      {/* SEM overflow interno de propósito: quem rola é o documento. */}
+      <div ref={hostRef} className="relative w-full">
         {!ready && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+          <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
             <Loader2 className="h-7 w-7 animate-spin text-gold" aria-hidden />
             <p className="text-sm text-white/70">Preparing your reading...</p>
           </div>
         )}
         <EmbeddedCheckoutProvider stripe={getStripe()} options={{ clientSecret }}>
-          <EmbeddedCheckout className="min-h-full" />
+          {/* Sem min-h-full: o iframe se dimensiona sozinho pelo conteúdo e
+              a página cresce junto — é assim que o botão fica alcançável. */}
+          <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>
       </div>
     </div>

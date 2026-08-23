@@ -822,7 +822,10 @@ export default function QuizVslV2Page() {
   );
 
   return (
-    <div className="w-full pb-40">
+    <>
+    {/* Some da tela enquanto o checkout está aberto — o formulário da
+        Stripe tem de ser a página para o documento rolar (ver painel). */}
+    <div className={clientSecret ? "hidden" : "w-full pb-40"}>
       {/* Céu do cinema, exatamente como no modo aprovado — só que a
           página inteira fica visível desde o primeiro paint. */}
       <GalaxyBackdrop />
@@ -1243,17 +1246,18 @@ export default function QuizVslV2Page() {
           </div>
         </div>
       )}
-      {/* Checkout embutido: cobre a tela, mas a pessoa continua no
-          nosso domínio e volta para a oferta se fechar. */}
-      {clientSecret && (
-        <EmbeddedCheckoutPanel
-          clientSecret={clientSecret}
-          expiresAt={checkoutExpiresAt}
-          onClose={() => setClientSecret(null)}
-          requestHostedUrl={requestHostedUrl}
-        />
-      )}
-
     </div>
+
+    {/* Checkout embutido: a pessoa continua no nosso domínio e volta para
+        a oferta se fechar. Irmão do conteúdo, não filho. */}
+    {clientSecret && (
+      <EmbeddedCheckoutPanel
+        clientSecret={clientSecret}
+        expiresAt={checkoutExpiresAt}
+        onClose={() => setClientSecret(null)}
+        requestHostedUrl={requestHostedUrl}
+      />
+    )}
+    </>
   );
 }

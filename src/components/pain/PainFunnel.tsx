@@ -593,7 +593,12 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
   /* ============================== RENDER ============================== */
 
   return (
-    <div className="w-full pb-24">
+    <>
+    {/* Conteúdo do funil. Enquanto o checkout está aberto ele sai da tela
+        POR COMPLETO (não fica atrás de um overlay): o formulário da Stripe
+        precisa ser a página, para o documento — e não um container
+        interno — ser quem rola. Ver EmbeddedCheckoutPanel. */}
+    <div className={clientSecret ? "hidden" : "w-full pb-24"}>
       {/* ---------- HOOK ---------- */}
       {stage === "hook" && (
         <motion.section
@@ -1094,15 +1099,17 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
         </div>
       )}
 
-      {/* ---------- checkout embutido ---------- */}
-      {clientSecret && (
-        <EmbeddedCheckoutPanel
-          clientSecret={clientSecret}
-          expiresAt={checkoutExpiresAt}
-          onClose={() => setClientSecret(null)}
-          requestHostedUrl={requestHostedUrl}
-        />
-      )}
     </div>
+
+    {/* ---------- checkout embutido (irmão do conteúdo, não filho) ---------- */}
+    {clientSecret && (
+      <EmbeddedCheckoutPanel
+        clientSecret={clientSecret}
+        expiresAt={checkoutExpiresAt}
+        onClose={() => setClientSecret(null)}
+        requestHostedUrl={requestHostedUrl}
+      />
+    )}
+    </>
   );
 }
