@@ -18,7 +18,10 @@ export type PainSegment =
   | "cord"
   | "luck"
   | "pastlife"
-  | "dreams";
+  | "dreams"
+  // Reconquista: o baralho prescreve movimentos (possibilidade, nunca
+  // promessa). Segmento próprio para a sessão não colidir com /quiz/ex.
+  | "exback";
 
 export interface PainOption {
   /** id curto e enumerado — é o que vai para analytics, nunca texto livre. */

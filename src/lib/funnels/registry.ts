@@ -15,6 +15,7 @@ import { CORDCUTTING_V1 as CORD_CUTTING_V1 } from "./configs/cord-cutting.v1";
 import { LUCK_V1 } from "./configs/luck.v1";
 import { PASTLIFE_V1 as PAST_LIFE_V1 } from "./configs/past-life.v1";
 import { DREAMS_V1 } from "./configs/dreams.v1";
+import { EXBACK_V1 } from "./configs/ex-back.v1";
 
 const EX = (file: string, alt: string): PainImage => ({ src: `/funnel/ex/${file}.webp`, alt });
 
@@ -59,6 +60,22 @@ const CORD_BASE = withImages(
   }
 );
 
+// ── F5 — Ex-Back (reconquista): mesmos momentos emocionais do segmento ex,
+// então as mesmas fotos servem — o telefone às 2h É o hook deste funil.
+const EXBACK_BASE = withImages(
+  EXBACK_V1,
+  {
+    w_wire: EX("w-awake", "A woman awake at night, phone light on her face"),
+    w_confession: EX("w-mirror", "A woman alone in front of a mirror"),
+    m_clock: EX("m-bedside", "A man on the edge of a bed at night, phone in hand"),
+    m_ember: EX("m-bar", "Two men talking at a dim bar"),
+  },
+  {
+    hook: EX("hook-phone-2am", "A phone glowing on a nightstand at 2 AM"),
+    transition: EX("cards-velvet", "Four Egyptian tarot cards face down on velvet"),
+  }
+);
+
 // ── F4 — Dreams: a primeira interação é o relato livre (IA lê os símbolos) ──
 const DREAMS_BASE: PainFunnelConfig = {
   ...DREAMS_V1,
@@ -94,6 +111,9 @@ export const FUNNELS: Record<string, Record<string, PainFunnelConfig>> = {
   },
   dreams: {
     v1: variant(DREAMS_BASE, "dreams", "v1"),
+  },
+  "ex-back": {
+    v1: variant(EXBACK_BASE, "ex-back", "v1"),
   },
 };
 
