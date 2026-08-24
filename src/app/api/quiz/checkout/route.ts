@@ -5,6 +5,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { normalizeCode } from "@/lib/affiliate";
+import {
+  createDownsellGrant,
+  markDownsellUsed,
+  resolveDownsell,
+} from "@/lib/server/downsell";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
 import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
@@ -83,6 +88,8 @@ export async function POST(req: NextRequest) {
     cancelPath?: string;
     /** true = formulário DENTRO da nossa página (ui_mode embedded). */
     embedded?: boolean;
+    /** Token do downsell de abandono (validado no servidor). */
+    downsellToken?: string;
     utm?: Record<string, string>;
   } = {};
   try {
@@ -101,6 +108,9 @@ export async function POST(req: NextRequest) {
     "DOWNSELL_PORTRAIT",
     // OTO pós-compra.
     "OTO_PASTLIFE",
+    // Downsell de abandono. O preço REAL é decidido no servidor: pedir
+    // este plano não garante $19.99 (ver resolveDownsell).
+    "DOWNSELL_19",
     // Continuidade — vendida só no pós-compra, nunca na VSL.
     "SUB_MONTHLY",
     "SUB_SEMIANNUAL",
@@ -129,6 +139,7 @@ export async function POST(req: NextRequest) {
     "FRONT_READING",
     "DOWNSELL_PORTRAIT",
     "OTO_PASTLIFE",
+    "DOWNSELL_19",
   ]);
   const isSubscription = !ONE_OFF.has(plan);
   // Fallback hardcoded nos planos novos: price id não é segredo (aparece no
@@ -142,16 +153,32 @@ export async function POST(req: NextRequest) {
       ? process.env.STRIPE_PRICE_FRONT_37 || "price_1U7yhi07YF1LaBzhpXKyziUx"
       : process.env.STRIPE_PRICE_FRONT_29 || "price_1U7yhh07YF1LaBzh5SloB0fx";
 
+  // DOWNSELL_19: o cliente pede $19.99, o SERVIDOR decide. Token inválido,
+  // já exibido para outro abandono do mesmo e-mail, já usado, ou banco
+  // fora do ar → preço cheio. Nunca o contrário.
+  const downsellToken =
+    typeof body.downsellToken === "string" ? body.downsellToken : "";
+  let downsellGranted = false;
+  if (plan === "DOWNSELL_19") {
+    const decision = await resolveDownsell(downsellToken, false);
+    downsellGranted = decision.eligible && decision.email === email;
+  }
+
   const price =
-    plan === "FRONT_READING"
-      ? frontPrice
-      : plan === "OTO_PASTLIFE"
-        ? process.env.STRIPE_PRICE_OTO_PASTLIFE ||
-          "price_1U7yhj07YF1LaBzhKHhpPOeB"
-        : plan === "DOWNSELL_PORTRAIT"
-        ? process.env.STRIPE_PRICE_DOWNSELL_PORTRAIT ||
-          "price_1U7yhk07YF1LaBzhtTSDnCqk"
-        : plan === "SUB_MONTHLY"
+    plan === "DOWNSELL_19"
+      ? downsellGranted
+        ? process.env.STRIPE_PRICE_FRONT_1999 ||
+          "price_1U7z9g07YF1LaBzhS5vLC1o2"
+        : frontPrice
+      : plan === "FRONT_READING"
+        ? frontPrice
+        : plan === "OTO_PASTLIFE"
+          ? process.env.STRIPE_PRICE_OTO_PASTLIFE ||
+            "price_1U7yhj07YF1LaBzhKHhpPOeB"
+          : plan === "DOWNSELL_PORTRAIT"
+            ? process.env.STRIPE_PRICE_DOWNSELL_PORTRAIT ||
+              "price_1U7yhk07YF1LaBzhtTSDnCqk"
+            : plan === "SUB_MONTHLY"
           ? process.env.STRIPE_PRICE_SUB_MONTHLY || "price_1U6hIO07YF1LaBzhrHFJ1lzW"
           : plan === "SUB_SEMIANNUAL"
             ? process.env.STRIPE_PRICE_SUB_SEMIANNUAL || "price_1U6hIO07YF1LaBzhwruCm40B"
@@ -341,7 +368,21 @@ export async function POST(req: NextRequest) {
       params.success_url = `${appUrl}/quiz/thank-you?session_id={CHECKOUT_SESSION_ID}`;
       // Volta para a MESMA página que abriu o checkout: mandar quem estava
       // na V2 de volta para a V1 contaminaria o experimento inteiro.
-      params.cancel_url = `${appUrl}${cancelPath}?canceled=1`;
+      // ABANDONO DE CHECKOUT: quem toca na seta de voltar dentro do Stripe
+      // sumia. Agora cai numa oferta de $19.99 amarrada a este e-mail. O
+      // token é opaco de propósito — e-mail não vai para query string. Sem
+      // grant (banco fora do ar, migration não rodada) a volta é a de
+      // sempre, sem desconto: falha fechada.
+      let cancel = `${appUrl}${cancelPath}?canceled=1`;
+      if (plan === "FRONT_READING") {
+        const token = await createDownsellGrant({
+          email,
+          quizSessionId: funnelSessionId,
+          checkoutSessionId: null,
+        });
+        if (token) cancel = `${appUrl}/quiz/offer-19?t=${token}`;
+      }
+      params.cancel_url = cancel;
     }
 
     // Expiração REAL: a sessão morre em 30 minutos (mínimo da Stripe).
@@ -368,6 +409,13 @@ export async function POST(req: NextRequest) {
         // Epoch da expiração real — o cronômetro do painel conta até aqui.
         expiresAt: session.expires_at,
       });
+    }
+
+    // Permissão gasta no instante em que a sessão de $19.99 nasce: se a
+    // pessoa não concluir, ela não ganha uma segunda chance de desconto —
+    // é isso que a página promete.
+    if (plan === "DOWNSELL_19" && downsellGranted) {
+      await markDownsellUsed(downsellToken);
     }
 
     if (!session.url) {

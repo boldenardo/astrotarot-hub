@@ -146,7 +146,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Free */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -182,45 +182,13 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            {/* 5-Reading Pack */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="glass rounded-4xl border-white/8 p-6 sm:p-8"
-            >
-              <div className="mb-6 flex items-center gap-3">
-                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border border-gold-400/25 bg-gold-400/10">
-                  <Star className="h-6 w-6 text-gold-300" />
-                </span>
-                <div>
-                  <h3 className="font-display text-2xl font-semibold text-ink-50">
-                    {CHECKOUT_PLANS.PACK5.name}
-                  </h3>
-                  <p className="text-sm text-ink-400">
-                    <span className="text-gold">
-                      {CHECKOUT_PLANS.PACK5.priceLabel}
-                    </span>{" "}
-                    &bull; {CHECKOUT_PLANS.PACK5.period}
-                  </p>
-                </div>
-              </div>
-              <ul className="mb-8 space-y-4">
-                {CHECKOUT_PLANS.PACK5.features.map((perk) => (
-                  <li key={perk} className="flex items-start gap-3">
-                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold-400" />
-                    <span className="text-ink-200">{perk}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/cart?plan=pack5"
-                className="btn-ghost block rounded-full py-4 text-center font-semibold"
-              >
-                Buy Pack
-              </Link>
-            </motion.div>
+            {/* 5-Reading Pack SAIU DA VITRINE (24/08): ficava ao lado do
+                Unlimited com o MESMO número — "$9.99 pagamento único" e
+                "$9.99/mês" — e o visitante parava para entender a diferença
+                em vez de escolher. A escada agora é Free → Soulmate Reading
+                $29 → Unlimited $9.99/mês. Quem já comprou o pacote continua
+                com o acesso: só o cartão da home saiu, o plano segue válido
+                em /cart?plan=pack5 e no gating. */}
 
             {/* Unlimited Premium */}
             <motion.div

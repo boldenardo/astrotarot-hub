@@ -5,8 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { sendEmail } from "@/lib/server/email";
-import { welcomeEmail, paymentFailedEmail } from "@/lib/server/email-templates";
+import {
+  welcomeEmail,
+  paymentFailedEmail,
+  abandonedPortraitEmail,
+} from "@/lib/server/email-templates";
 import { DEFAULT_LOCALE } from "@/lib/i18n";
+import { unsubscribeUrl } from "@/lib/server/email-unsubscribe";
 
 export const runtime = "nodejs";
 
@@ -469,6 +474,67 @@ export async function POST(req: NextRequest) {
             kind: "initial",
             sessionId: session.id,
           });
+        }
+        break;
+      }
+
+      // Fechou a aba em vez de clicar em voltar: a cancel_url nunca correu,
+      // então a oferta de $19.99 não chegou a aparecer. A sessão expira em
+      // 30 minutos e cai aqui — é o único sinal que temos desse abandono.
+      // Último degrau da escada: $29 → $19.99 → só o retrato, $17.
+      case "checkout.session.expired": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.plan !== "FRONT_READING") break;
+
+        const email = (
+          session.metadata?.quiz_email ||
+          session.customer_details?.email ||
+          session.customer_email ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+        if (!email) break;
+
+        const admin = getSupabaseAdmin();
+
+        // Descadastrado ou já convertido entre o abandono e a expiração:
+        // não recebe. Um e-mail de recuperação para quem já comprou é a
+        // forma mais rápida de queimar a marca.
+        const { data: lead0 } = await admin
+          .from("leads")
+          .select("unsubscribed_at, converted_at")
+          .eq("email", email)
+          .maybeSingle();
+        if (lead0?.unsubscribed_at || lead0?.converted_at) break;
+
+        // Um e-mail por sessão: reenvio dispara na cara de quem já recebeu.
+        const { data: already } = await admin
+          .from("stripe_events")
+          .select("event_id")
+          .eq("event_id", `expired_${session.id}`)
+          .maybeSingle();
+        if (already) break;
+
+        const { data: lead } = await admin
+          .from("leads")
+          .select("name")
+          .eq("email", email)
+          .maybeSingle();
+
+        const mail = abandonedPortraitEmail({ name: lead?.name ?? null });
+        const sent = await sendEmail({
+          to: email,
+          ...mail,
+          unsubscribeUrl: unsubscribeUrl(email),
+        });
+        console.log(
+          `[webhook] checkout expirado ${session.id} → downsell $17 para ${email}: ${sent ? "enviado" : "NAO enviado"}`
+        );
+        if (sent) {
+          await admin
+            .from("stripe_events")
+            .insert({ event_id: `expired_${session.id}`, type: "checkout.session.expired" });
         }
         break;
       }

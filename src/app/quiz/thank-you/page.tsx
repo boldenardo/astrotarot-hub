@@ -175,6 +175,45 @@ function ThankYouContent() {
   // ela competia com a promessa que trouxe a pessoa até o botão.
   const isFront = plan === "FRONT_READING" || plan === "DOWNSELL_PORTRAIT";
 
+  // OTO em UM clique: cobra o cartão que a compra de segundos atrás
+  // deixou salvo. Só cai para o checkout normal se o cartão pedir 3DS ou
+  // for recusado — nunca por padrão, porque um segundo formulário mata a
+  // compra por impulso que sustenta o OTO.
+  const [oto, setOto] = useState<"idle" | "loading" | "done" | "hidden">("idle");
+  const buyOtoOneClick = async () => {
+    if (!sessionId || oto === "loading") return;
+    setOto("loading");
+    trackEvent("offer_clicked", { category: "post_purchase", label: "oto_pastlife" });
+    try {
+      const res = await fetch("/api/quiz/oto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, oto: "OTO_PASTLIFE" }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        fallback?: boolean;
+      };
+      if (data.ok) {
+        setOto("done");
+        trackEvent("purchase_completed", {
+          category: "post_purchase",
+          label: "oto_pastlife",
+          value: 27,
+        });
+        return;
+      }
+      // Cartão pediu autenticação: o checkout hospedado sabe tratar.
+      if (data.fallback) {
+        await goCheckout("OTO_PASTLIFE", "oto_pastlife_fallback");
+        return;
+      }
+      setOto("hidden");
+    } catch {
+      setOto("hidden");
+    }
+  };
+
   const goCheckout = async (nextPlan: string, label: string) => {
     if (!email) return;
     trackEvent("offer_clicked", { category: "post_purchase", label });
@@ -253,21 +292,39 @@ function ThankYouContent() {
             </button>
           </div>
 
-          <div className="glass mt-4 w-full rounded-2xl border border-white/12 p-5 text-left">
-            <h2 className="text-lg font-semibold leading-snug">
-              Past Life Connection — <span className="text-gold">$27</span>
-            </h2>
-            <p className="mt-1.5 text-sm text-white/75">
-              Why this person felt familiar before you knew them.
-            </p>
-            <button
-              type="button"
-              onClick={() => void goCheckout("OTO_PASTLIFE", "oto_pastlife")}
-              className="mt-4 flex w-full min-h-[48px] items-center justify-center rounded-full border border-gold-400/50 px-6 text-sm font-semibold text-gold-300 hover:bg-gold-400/10"
-            >
-              Add the Past Life Connection
-            </button>
-          </div>
+          {oto !== "hidden" && (
+            <div className="glass mt-4 w-full rounded-2xl border border-white/12 p-5 text-left">
+              {oto === "done" ? (
+                <p className="flex items-center gap-2 text-sm font-medium text-emerald-300">
+                  <CircleCheck className="h-5 w-5 shrink-0" aria-hidden />
+                  Past Life Connection added — it&apos;s in your account.
+                </p>
+              ) : (
+                <>
+                  <h2 className="text-lg font-semibold leading-snug">
+                    Past Life Connection — <span className="text-gold">$27</span>
+                  </h2>
+                  <p className="mt-1.5 text-sm text-white/75">
+                    Why this person felt familiar before you knew them.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void buyOtoOneClick()}
+                    disabled={oto === "loading"}
+                    className="mt-4 flex w-full min-h-[48px] items-center justify-center gap-2 rounded-full border border-gold-400/50 px-6 text-sm font-semibold text-gold-300 hover:bg-gold-400/10 disabled:opacity-60"
+                  >
+                    {oto === "loading" && (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    )}
+                    Add the Past Life Connection
+                  </button>
+                  <p className="mt-2 text-center text-[11px] text-white/50">
+                    Your card on file will be charged now.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
         </>
       )}
 

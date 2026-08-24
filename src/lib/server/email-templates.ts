@@ -320,3 +320,39 @@ export function welcomeEmail(input: {
     text: `Create your account with this same email: ${link}`,
   };
 }
+
+/**
+ * Última etapa da escada: quem abandonou o checkout E não voltou pela
+ * oferta de $19.99. Dispara no `checkout.session.expired`, ou seja, só
+ * para quem fechou a aba sem clicar em nada — a cancel_url nunca correu.
+ *
+ * Oferece o retrato sozinho por $17, que é o degrau mais barato que
+ * existe. Nada aqui promete o que a leitura completa entrega.
+ */
+export function abandonedPortraitEmail(input: {
+  name?: string | null;
+}): { subject: string; html: string; text: string } {
+  const name = input.name?.trim().split(/\s+/)[0];
+  const link = `${APP_URL}/cart?plan=downsell_portrait`;
+  const subject = name
+    ? `${name}, your portrait is still drawn`
+    : "Your portrait is still drawn";
+  const html = shell(
+    [
+      h1(name ? `${name}, it is still here.` : "It is still here."),
+      p(
+        "You did not finish, and the portrait did not go anywhere. It is drawn and it is yours to look at."
+      ),
+      p(
+        "If the full reading is more than you wanted right now, you can take the portrait on its own for $17."
+      ),
+      button("See the portrait — $17", link),
+      p(
+        `<span style="color:${MUTED};font-size:13px;">Master Aura</span>`
+      ),
+    ].join(""),
+    { preheader: "The portrait is drawn and waiting.", locale: "en" }
+  );
+  const text = `${name ? name + ", it" : "It"} is still here. The portrait is drawn. Take it on its own for $17: ${link}`;
+  return { subject, html, text };
+}
