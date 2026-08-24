@@ -54,6 +54,14 @@ import { suggestEmailFix } from "@/lib/email-hint";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GUIDE_PHOTO = "/brand/master-aura.webp";
 
+// Tempo máximo para uma troca de passo se resolver sozinha. A entrada leva
+// 280ms e a saída outros 280ms; 1500ms dá folga em aparelho lento sem
+// deixar ninguém olhando uma tela morta.
+const STEP_SETTLE_MS = 1500;
+
+/** Marca de "já recarreguei por chunk faltando" — evita loop de reload. */
+const CHUNK_RELOAD_KEY = "astro_quiz_chunk_reload";
+
 const slideVariants = {
   enter: (direction: number) => ({ opacity: 0, x: direction >= 0 ? 40 : -40 }),
   center: { opacity: 1, x: 0 },
@@ -73,6 +81,42 @@ export default function QuizFlowPage() {
   const [hydrated, setHydrated] = useState(false);
   const advancingRef = useRef(false);
   const startedRef = useRef(false);
+  // Watchdog da transição (ver efeito abaixo).
+  const [presenceKey, setPresenceKey] = useState(0);
+  const [degraded, setDegraded] = useState(false);
+  const settledRef = useRef<string | null>(null);
+
+  // Depois de um deploy, uma aba aberta (ou uma navegação com HTML em
+  // cache) ainda aponta para chunks que não existem mais no servidor. O
+  // JS que falta nunca carrega, a tela para de responder e — como se vê
+  // num ChunkLoadError — nada disso vira erro visível para quem está do
+  // outro lado. Recarregar uma vez resolve, e o progresso está no
+  // localStorage, então a pessoa volta ao mesmo passo.
+  useEffect(() => {
+    const onChunkError = (e: Event) => {
+      const msg = String(
+        (e as PromiseRejectionEvent).reason?.message ??
+          (e as ErrorEvent).message ??
+          ""
+      );
+      if (!/ChunkLoadError|Loading chunk \S+ failed/i.test(msg)) return;
+      try {
+        if (window.sessionStorage.getItem(CHUNK_RELOAD_KEY)) return;
+        window.sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+      } catch {
+        return; // sem sessionStorage não dá para evitar loop de reload
+      }
+      console.warn("[quiz] chunk faltando (deploy novo?). Recarregando uma vez.");
+      trackEvent("quiz_chunk_reload", { category: "quiz", label: msg.slice(0, 80) });
+      window.location.reload();
+    };
+    window.addEventListener("error", onChunkError);
+    window.addEventListener("unhandledrejection", onChunkError);
+    return () => {
+      window.removeEventListener("error", onChunkError);
+      window.removeEventListener("unhandledrejection", onChunkError);
+    };
+  }, []);
 
   // Restaura o estado e retoma exatamente onde a pessoa parou.
   useEffect(() => {
@@ -108,6 +152,39 @@ export default function QuizFlowPage() {
   }, [stepIndex, hydrated]);
 
   const step: QuizStep = LOCALIZED_STEPS[Math.min(stepIndex, LOCALIZED_STEPS.length - 1)];
+
+  // WATCHDOG DA TRANSIÇÃO.
+  //
+  // `AnimatePresence mode="wait"` só monta o próximo passo depois que a
+  // ANIMAÇÃO DE SAÍDA do anterior avisa que terminou. Quando esse aviso não
+  // chega — aba em segundo plano, rAF estrangulado no celular, tela
+  // bloqueada no meio do gesto, animação interrompida — o passo velho fica
+  // na tela para sempre enquanto o estado já avançou. É uma falha muda: o
+  // console não acusa nada e o monitoramento não vê. Aqui a troca se
+  // resolve na marra: remontamos o bloco (descartando a saída pendente) e
+  // desligamos a animação pelo resto da sessão, para não cair de novo.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (settledRef.current === step.id) return;
+    const t = window.setTimeout(() => {
+      if (settledRef.current === step.id) return;
+      settledRef.current = step.id;
+      // Também no console: a falha original não gerava erro nenhum, então
+      // não aparecia em nenhum monitoramento nem num F12 aberto na hora.
+      console.warn(
+        `[quiz] transição não assentou em ${STEP_SETTLE_MS}ms (passo "${step.id}", índice ${stepIndex}). Forçando a troca e desligando a animação.`
+      );
+      trackEvent("quiz_transition_stuck", {
+        category: "quiz",
+        label: step.id,
+        step_id: step.id,
+        step_index: stepIndex,
+      });
+      setDegraded(true);
+      setPresenceKey((k) => k + 1);
+    }, STEP_SETTLE_MS);
+    return () => window.clearTimeout(t);
+  }, [step.id, stepIndex, hydrated]);
   const progress = Math.round(((stepIndex + 1) / LOCALIZED_STEPS.length) * 100);
   const isAnalyzing = step.id === "analyzing";
   const firstName = state.name?.trim().split(/\s+/)[0];
@@ -270,15 +347,18 @@ export default function QuizFlowPage() {
           telas curtas (nome, boas-vindas) começavam quase na metade da tela
           e empurravam o botão para o fim do polegar. */}
       <div className="relative flex flex-1 flex-col justify-start pt-1">
-        <AnimatePresence mode="wait" custom={direction}>
+        <AnimatePresence key={presenceKey} mode="wait" custom={direction}>
           <motion.div
             key={step.id}
             custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{ duration: 0.28, ease: "easeOut" }}
+            variants={degraded ? undefined : slideVariants}
+            initial={degraded ? false : "enter"}
+            animate={degraded ? { opacity: 1, x: 0 } : "center"}
+            exit={degraded ? { opacity: 1 } : "exit"}
+            transition={degraded ? { duration: 0 } : { duration: 0.28, ease: "easeOut" }}
+            onAnimationComplete={() => {
+              settledRef.current = step.id;
+            }}
             className="w-full"
           >
             {step.kind === "name" && (
@@ -594,6 +674,15 @@ function NameStep({
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [done, setDone] = useState(false);
+
+  // Se esta tela continuar montada depois do submit, a troca de passo não
+  // aconteceu — e sem isto o botão ficava desabilitado para sempre, sem
+  // nenhuma forma de tentar de novo a não ser recarregar.
+  useEffect(() => {
+    if (!submitted) return;
+    const t = window.setTimeout(() => setSubmitted(false), STEP_SETTLE_MS + 500);
+    return () => window.clearTimeout(t);
+  }, [submitted]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -26,6 +26,11 @@ export type AnalyticsEvent =
   | "quiz_completed"
   | "quiz_result_viewed"
   | "quiz_step_viewed"
+  // Troca de passo que não se resolveu sozinha e precisou do watchdog.
+  // Falha muda por natureza (não gera erro no console) — por isso vira evento.
+  | "quiz_transition_stuck"
+  // Chunk do deploy anterior sumiu e a tela recarregou sozinha para se salvar.
+  | "quiz_chunk_reload"
   | "lead_captured"
   | "vsl_play"
   | "vsl_25"
