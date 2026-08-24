@@ -21,13 +21,14 @@
 // VARIÁVEL PRIMÁRIA: apresentação (narrativa, ordem, revelação parcial,
 // identidade visual, microcopy do CTA).
 //
-// OFERTA (20/08): assinatura Unlimited — $9.99/mês, $39.99/6m, $59.99/ano
-// (/api/quiz/checkout), metadata do Stripe, webhook, estado do quiz
-// (astro_quiz_v1), vídeo, assets de prova, política de noindex.
+// OFERTA (24/08): pagamento ÚNICO do que a página promete — a leitura
+// completa com o retrato ($29, ou $37 no teste), com The Cord Reading como
+// order bump no checkout. A assinatura saiu daqui: o funil inteiro constrói
+// desejo por um retrato, e cobrar por acesso a um app no fim era vender
+// outra coisa. Continuidade só depois da compra (/quiz/thank-you).
 //
-// Os 3 prices recorrentes vivem em STRIPE_PRICE_SUB_* (9 moedas cada) e o
-// texto segue SUB_PLANS — nunca o contrário. A assinatura é declarada com
-// todas as letras na objeção "Is this a subscription?".
+// Preço e garantia vivem em src/lib/offer.ts, atrás de env (o mesmo número
+// escolhe o price id no servidor), para o teste 29 vs 37 rodar sem deploy.
 //
 // NENHUMA prova social fabricada: só as fotos que já existem no projeto.
 // Sem número de usuários, sem nota média, sem depoimento sem consentimento,
@@ -36,7 +37,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, Loader2, Lock, ShieldCheck, X } from "lucide-react";
+import { Check, ChevronDown, Loader2, Lock, ShieldCheck, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import VSLPlayer from "@/components/VSLPlayer";
 
@@ -67,17 +68,19 @@ import {
   setFunnelVariant,
 } from "@/lib/funnel-variant";
 import {
-  PlanFinePrint,
-  OFFER_LAYOUT,
-  DEFAULT_SUB_PLAN,
-  SUB_PLANS,
-  type SubPlanKey,
-} from "@/components/PlanPicker";
+  FRONT_PRICE_LABEL,
+  FRONT_PRICE_USD,
+  FRONT_OFFER_ID,
+  FRONT_INCLUDES,
+  GUARANTEE_DAYS,
+} from "@/lib/offer";
+import { OFFER_LAYOUT } from "@/components/PlanPicker";
 
-// Oferta atual: assinatura Unlimited em 3 ciclos (mensal âncora $9.99).
-// Preços/rótulos vivem em SUB_PLANS (PlanPicker) — um lugar só, para o
-// texto nunca divergir dos prices da Stripe.
-type PlanKey = SubPlanKey;
+// Oferta atual: front de pagamento único (ver src/lib/offer.ts).
+// O front é UM produto de pagamento único. A assinatura saiu daqui e vive
+// no pós-compra, então esta página não tem mais seletor de ciclo.
+type PlanKey = "FRONT_READING";
+const FRONT_PLAN: PlanKey = "FRONT_READING";
 
 /** Rótulo agregado do funil nos eventos (o ciclo vai em label/offer). */
 const OFFER_ID = "unlimited_sub";
@@ -189,26 +192,30 @@ const PROOF_PHOTOS = [
   "/social-proof/couple-3.webp",
 ];
 
-/** As três objeções que aparecem ANTES da prova, na ordem em que surgem. */
+/**
+ * Objeções que aparecem ANTES da prova.
+ *
+ * "Is this a subscription?" saiu daqui em 24/08: a resposta era "Yes —
+ * $9.99 a month", e o front passou a ser pagamento único. Manter a
+ * pergunta seria afirmar na própria página o contrário do que o botão
+ * cobra — a incongruência que esta mudança existe para acabar. Removida,
+ * não reescrita.
+ */
 const OBJECTIONS: Array<{ q: string; a: string }> = [
-  {
-    q: "Is this a subscription?",
-    a: "Yes — and you stay in control. $9.99 a month for unlimited readings, cancel anytime in two taps. Prefer a single payment? The 6-month and annual options cover the whole period upfront.",
-  },
   {
     q: "Do I need an account first?",
     a: "No. Checkout is guest. You create the account afterwards with the same email, and your readings are already there.",
   },
   {
     q: "What if the reading does not land?",
-    a: "You have 7 days. Email us and we refund every cent.",
+    a: `You have ${GUARANTEE_DAYS} days. Email us and we refund every cent.`,
   },
 ];
 
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly do I unlock?",
-    a: "Unlimited personalized Egyptian Tarot readings, starting with your complete Soulmate Reading — who the cards point toward, the traits that make them recognizable, what may be standing between you, and when your paths are most likely to cross. After that, every question you want to ask is included.",
+    a: "Your complete Soulmate Reading with the portrait — who the cards point toward, the traits that make them recognizable, what may be standing between you, and when your paths are most likely to cross.",
   },
   {
     q: "When do I get access?",
@@ -418,7 +425,7 @@ export default function QuizVslV2Page() {
   const [store, setStore] = useState<QuizStore>({});
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
   // Ciclo selecionado no PlanPicker — mensal (o preço prometido) por padrão.
-  const [selectedPlan, setSelectedPlan] = useState<SubPlanKey>(DEFAULT_SUB_PLAN);
+  const selectedPlan = FRONT_PLAN;
   const [error, setError] = useState<string | null>(null);
   /**
    * URL da Checkout Session quando o redirect NAO tirou a pessoa da pagina.
@@ -490,20 +497,35 @@ export default function QuizVslV2Page() {
     }
   }, []);
 
-  // Cidade: MESMA fonte que o quiz usou na tela de "onde vocês se
-  // encontram" (/api/geo, headers da borda). Continuidade, não invenção —
-  // e se falhar, o bloco simplesmente não existe.
+  // Cidade: /api/geo (headers de borda da Vercel, geo por IP).
+  //
+  // Só entra no texto quando o visitante está nos EUA E veio cidade + sigla
+  // de estado. O funil é escrito em en-US e cita Miami, Austin e Portland;
+  // um IP brasileiro, uma VPN ou um IP de operadora fazia a própria leitura
+  // dizer "São Paulo, SP" no ponto de maior confiança da página — sem erro
+  // nenhum para avisar. Em qualquer outro caso o texto usa a versão sem
+  // cidade, que continua fazendo sentido sozinha.
   useEffect(() => {
     let alive = true;
     fetch("/api/geo")
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { city?: string | null; region?: string | null } | null) => {
-        if (!alive || !d) return;
-        // "Rio de Janeiro, Rio de Janeiro": capital com nome do estado
-        // duplicava o rótulo. Um Set resolve sem caso especial.
-        const label = [...new Set([d.city, d.region].filter(Boolean))].join(", ");
-        if (label) setCity(label);
-      })
+      .then(
+        (
+          d: {
+            city?: string | null;
+            region?: string | null;
+            country?: string | null;
+          } | null
+        ) => {
+          if (!alive || !d || d.country !== "US") return;
+          const town = d.city?.trim();
+          if (!town) return;
+          // Convenção dos EUA: "Austin, TX". A Vercel manda a sigla ISO do
+          // estado; se vier qualquer outra coisa, fica só a cidade.
+          const st = d.region?.trim();
+          setCity(st && /^[A-Z]{2}$/.test(st) ? `${town}, ${st}` : town);
+        }
+      )
       .catch(() => {});
     return () => {
       alive = false;
@@ -583,7 +605,7 @@ export default function QuizVslV2Page() {
           src: getStoredSource(),
           funnelSessionId: getFunnelSessionId(),
           signal: store.score,
-          offer: SUB_PLANS[selectedPlan].offerId,
+          offer: FRONT_OFFER_ID,
           variant: VARIANT_IGNITE,
           cancelPath: "/quiz/vsl-v2",
           embedded: false,
@@ -612,7 +634,7 @@ export default function QuizVslV2Page() {
             src: getStoredSource(),
             funnelSessionId: getFunnelSessionId(),
             signal: score,
-            offer: SUB_PLANS[plan].offerId,
+            offer: FRONT_OFFER_ID,
             variant: VARIANT_IGNITE,
             // Quem desiste no Stripe volta para ESTA página, não para a V1.
             cancelPath: "/quiz/vsl-v2",
@@ -709,7 +731,7 @@ export default function QuizVslV2Page() {
       trackEvent("checkout_cta_clicked", {
         ...baseParams(),
         label: plan,
-        offer: SUB_PLANS[plan].offerId,
+        offer: FRONT_OFFER_ID,
         cta_position: ctaPosition,
       });
       trackEvent("offer_clicked", {
@@ -717,7 +739,7 @@ export default function QuizVslV2Page() {
         label: plan,
         cta_position: ctaPosition,
       });
-      trackPaymentInitiated(plan, SUB_PLANS[plan].amount);
+      trackPaymentInitiated(plan, FRONT_PRICE_USD);
 
       const email = store.email?.trim();
       if (!email) {
@@ -791,17 +813,9 @@ export default function QuizVslV2Page() {
           </>
         )}
       </button>
-      <PlanFinePrint
-        value={selectedPlan}
-        onChange={setSelectedPlan}
-        disabled={loadingPlan !== null}
-        onOpenOptions={() =>
-          trackEvent("plan_options_opened", { ...baseParams(), cta_position: id })
-        }
-      />
-      <p className="mt-1 text-center text-xs text-white/45">
-        Instant access &middot; 7-day money-back guarantee &middot; Secure
-        checkout by Stripe
+      <p className="mt-3 text-center text-xs leading-relaxed text-white/55">
+        One payment of {FRONT_PRICE_LABEL} &middot; Instant access &middot;{" "}
+        {GUARANTEE_DAYS}-day money back &middot; Secure checkout by Stripe
       </p>
       {/* Redirect engolido pela webview: uma linha, sem berrar. */}
       {manualUrl && (
@@ -948,13 +962,17 @@ export default function QuizVslV2Page() {
                 {FRICTION_MIRROR[score]}
               </p>
 
-              {city && (
-                <p className="text-[15px] leading-relaxed text-white/80">
-                  And your chart placed the meeting near{" "}
-                  <span className="font-medium text-white">{city}</span> — the
-                  nearest place your paths are drawn to cross.
-                </p>
-              )}
+              <p className="text-[15px] leading-relaxed text-white/80">
+                {city ? (
+                  <>
+                    And your chart placed the meeting near{" "}
+                    <span className="font-medium text-white">{city}</span> — the
+                    nearest place your paths are drawn to cross.
+                  </>
+                ) : (
+                  "And your chart placed the meeting closer than you would guess."
+                )}
+              </p>
             </div>
           </Reveal>
         </>
@@ -1004,7 +1022,10 @@ export default function QuizVslV2Page() {
           A signal you never read is a signal you act on anyway. It is why
           people stay a year too long in the wrong thing, and walk past the
           right one without a second look
-          {city ? ` — sometimes on the same street in ${city}` : ""}.
+          {city
+            ? ` — sometimes on the same street in ${city}`
+            : " — sometimes on the same street you already walk"}
+          .
         </p>
         <p className="mt-4 text-[15px] leading-relaxed text-white/75">
           The reading is not a promise about your future. It is the description
@@ -1022,40 +1043,43 @@ export default function QuizVslV2Page() {
         <Reveal className="mt-6">
           <div className="rounded-3xl border border-gold-400/25 bg-gradient-to-b from-gold-400/[0.07] to-transparent p-6">
             <h2 className="text-[1.55rem] leading-tight">
-              Everything the cards had to say about this connection
-              {firstName ? `, ${firstName}` : ""}.
+              {firstName ? `${firstName}, their` : "Their"} face is already
+              drawn.
             </h2>
 
-            <ol className="mt-6 space-y-3.5">
-              {PASS.map((r) => (
-                <li key={r.n} className="flex items-start gap-3.5">
-                  <span className="mt-px w-6 shrink-0 font-mono text-[11px] font-semibold text-gold-400/70">
-                    {r.n}
-                  </span>
-                  <span className="text-sm leading-snug text-white/85">
-                    {r.title}
+            <p className="mt-5 text-[15px] leading-relaxed text-white/85">
+              Here is what comes with it:
+            </p>
+
+            <ul className="mt-4 space-y-2.5">
+              {FRONT_INCLUDES.map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <Check
+                    className="mt-0.5 h-4 w-4 shrink-0 text-gold-400"
+                    aria-hidden
+                  />
+                  <span className="text-[15px] leading-snug text-white/85">
+                    {item}
                   </span>
                 </li>
               ))}
-            </ol>
+            </ul>
 
-            <p className="mt-5 text-sm text-white/55">
-              Unlimited personalized Egyptian Tarot readings — plus the
-              Spiritual Guide, open 24/7 for the question that shows up at 2am.
+            <p className="mt-6 text-[15px] font-semibold leading-relaxed text-white">
+              One payment of {FRONT_PRICE_LABEL}. Yours to keep.
             </p>
 
-            {/* Formato e preço — depois do resultado, nunca antes. */}
-            {/* Preço pequeno, uma vez, depois do resultado. O motivo do
-                botão é a leitura; o ciclo é letra miúda sob o CTA. */}
-            <div className="mt-7 border-t border-white/10 pt-5 text-center">
-              <p className="text-sm text-white/65">
-                Unlimited Egyptian Tarot readings &middot;{" "}
-                <span className="font-semibold text-gold">
-                  {SUB_PLANS[selectedPlan].price}
-                </span>
-                <span className="text-white/45">{SUB_PLANS[selectedPlan].per}</span>
-              </p>
-            </div>
+            <p className="mt-4 text-[15px] leading-relaxed text-white/75">
+              A single reading with a psychic runs $30 to $150, and ends when
+              the call ends. This one you keep, and you can hold it next to the
+              person you cannot stop thinking about.
+            </p>
+
+            <p className="mt-4 text-[15px] leading-relaxed text-white/75">
+              {GUARANTEE_DAYS} days. Read it, sit with it, compare it. If it
+              does not describe someone you recognize, write to us and we refund
+              it — and the portrait stays yours.
+            </p>
 
             <div ref={ctaRef}>
               <Cta id="offer_card" />
@@ -1082,8 +1106,8 @@ export default function QuizVslV2Page() {
             aria-hidden
           />
           <p className="text-sm leading-relaxed text-white/70">
-            7 days to decide. If AstroTarot is not for you, email us and we
-            refund every cent.
+            {GUARANTEE_DAYS} days to decide. If AstroTarot is not for you,
+            email us and we refund every cent.
           </p>
         </div>
       </Reveal>
@@ -1200,8 +1224,8 @@ export default function QuizVslV2Page() {
             )}
           </button>
           <p className="mt-1.5 text-center text-[11px] text-white/55">
-            Unlimited readings &middot; {SUB_PLANS[selectedPlan].price}
-            {SUB_PLANS[selectedPlan].per} &middot; cancel anytime
+            One payment of {FRONT_PRICE_LABEL} &middot; {GUARANTEE_DAYS}-day
+            money back
           </p>
         </div>
       )}

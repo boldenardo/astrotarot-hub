@@ -12,6 +12,7 @@
 // quem assina precisa receber algo real, não um paywall seco.
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { FRONT_PRICE_LABEL, FRONT_PRICE_USD } from "@/lib/offer";
 import Image from "next/image";
 import Link from "next/link";
 import { Loader2, Lock, Sparkles, Download } from "lucide-react";
@@ -84,7 +85,10 @@ function SoulmateContent() {
     if (buying) return;
     setBuying(true);
     setError(null);
-    trackEvent("soulmate_unlock_clicked", { category: "soulmate", value: 24.99 });
+    trackEvent("soulmate_unlock_clicked", {
+      category: "soulmate",
+      value: FRONT_PRICE_USD,
+    });
     try {
       const res = await fetch("/api/soulmate/checkout", { method: "POST" });
       const data = await res.json();
@@ -293,7 +297,7 @@ function SoulmateContent() {
                     {buying && (
                       <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
                     )}
-                    Reveal their face — $24.99 once
+                    Reveal their face — {FRONT_PRICE_LABEL} once
                   </button>
                   <p className="mt-2 text-center text-xs text-ink-400">
                     One payment. Yours forever, even if you cancel.

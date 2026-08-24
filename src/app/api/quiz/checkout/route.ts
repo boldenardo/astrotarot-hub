@@ -93,7 +93,15 @@ export async function POST(req: NextRequest) {
 
   const plan = body.plan;
   const VALID_PLANS = new Set([
-    // Oferta atual do funil: assinatura Unlimited em 3 ciclos.
+    // OFERTA ATUAL DO FUNIL (24/08): pagamento único do que foi prometido —
+    // a leitura completa com o retrato. A assinatura saiu do front e só é
+    // oferecida depois da compra (ver /quiz/thank-you).
+    "FRONT_READING",
+    // Downsell de quem recusou o front: só o retrato, sem a leitura.
+    "DOWNSELL_PORTRAIT",
+    // OTO pós-compra.
+    "OTO_PASTLIFE",
+    // Continuidade — vendida só no pós-compra, nunca na VSL.
     "SUB_MONTHLY",
     "SUB_SEMIANNUAL",
     "SUB_ANNUAL",
@@ -116,22 +124,44 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const isSubscription = plan !== "PACK5";
+  const ONE_OFF = new Set([
+    "PACK5",
+    "FRONT_READING",
+    "DOWNSELL_PORTRAIT",
+    "OTO_PASTLIFE",
+  ]);
+  const isSubscription = !ONE_OFF.has(plan);
   // Fallback hardcoded nos planos novos: price id não é segredo (aparece no
   // client em qualquer integração Stripe.js) e garante deploy atômico — o
   // funil novo não pode 503ar enquanto a env não chega na Vercel.
+  // O número no texto e o price cobrado saem da MESMA env: trocar
+  // NEXT_PUBLIC_FRONT_PRICE_USD para 37 sem trocar isto faria a página
+  // prometer um valor e o cartão receber outro.
+  const frontPrice =
+    String(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 29) === "37"
+      ? process.env.STRIPE_PRICE_FRONT_37 || "price_1U7yhi07YF1LaBzhpXKyziUx"
+      : process.env.STRIPE_PRICE_FRONT_29 || "price_1U7yhh07YF1LaBzh5SloB0fx";
+
   const price =
-    plan === "SUB_MONTHLY"
-      ? process.env.STRIPE_PRICE_SUB_MONTHLY || "price_1U6hIO07YF1LaBzhrHFJ1lzW"
-      : plan === "SUB_SEMIANNUAL"
-        ? process.env.STRIPE_PRICE_SUB_SEMIANNUAL || "price_1U6hIO07YF1LaBzhwruCm40B"
-        : plan === "SUB_ANNUAL"
-          ? process.env.STRIPE_PRICE_SUB_ANNUAL || "price_1U6hIO07YF1LaBzhwWgoBSOw"
-          : plan === "PREMIUM_YEARLY"
-            ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
-            : plan === "PREMIUM"
-              ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
-              : process.env.STRIPE_PRICE_READINGS_PACK;
+    plan === "FRONT_READING"
+      ? frontPrice
+      : plan === "OTO_PASTLIFE"
+        ? process.env.STRIPE_PRICE_OTO_PASTLIFE ||
+          "price_1U7yhj07YF1LaBzhKHhpPOeB"
+        : plan === "DOWNSELL_PORTRAIT"
+        ? process.env.STRIPE_PRICE_DOWNSELL_PORTRAIT ||
+          "price_1U7yhk07YF1LaBzhtTSDnCqk"
+        : plan === "SUB_MONTHLY"
+          ? process.env.STRIPE_PRICE_SUB_MONTHLY || "price_1U6hIO07YF1LaBzhrHFJ1lzW"
+          : plan === "SUB_SEMIANNUAL"
+            ? process.env.STRIPE_PRICE_SUB_SEMIANNUAL || "price_1U6hIO07YF1LaBzhwruCm40B"
+            : plan === "SUB_ANNUAL"
+              ? process.env.STRIPE_PRICE_SUB_ANNUAL || "price_1U6hIO07YF1LaBzhwWgoBSOw"
+              : plan === "PREMIUM_YEARLY"
+                ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
+                : plan === "PREMIUM"
+                  ? process.env.STRIPE_PRICE_PREMIUM_MONTHLY
+                  : process.env.STRIPE_PRICE_READINGS_PACK;
 
   if (!process.env.STRIPE_SECRET_KEY || !price) {
     return NextResponse.json(
@@ -267,14 +297,17 @@ export async function POST(req: NextRequest) {
       // mutuamente exclusivos na API).
       if (!existing?.stripe_customer_id) params.customer_creation = "always";
 
-      // ORDER BUMP: o retrato de $24.99 como item opcional DENTRO do
-      // formulário de pagamento — a Stripe renderiza o toggle sozinha, na
-      // moeda da sessão (o price tem as mesmas 8 moedas do funil). Quem
-      // marca compra os dois numa cobrança só; quem não marca ainda
-      // encontra o one-click na thank-you.
-      if (plan === "PACK5" && process.env.STRIPE_PRICE_SOULMATE_PORTRAIT) {
+      // ORDER BUMP do front: The Cord Reading, +$9. A Stripe renderiza o
+      // checkbox "adicionar ao pedido" com o nome e a descrição que estão
+      // no produto — por isso a copy do bump vive lá, não aqui.
+      if (plan === "FRONT_READING") {
         params.optional_items = [
-          { price: process.env.STRIPE_PRICE_SOULMATE_PORTRAIT, quantity: 1 },
+          {
+            price:
+              process.env.STRIPE_PRICE_BUMP_CORD ||
+              "price_1U7yhi07YF1LaBzh4ConA7Ic",
+            quantity: 1,
+          },
         ];
       }
     }

@@ -1,6 +1,8 @@
 // Fonte única de verdade para planos, preços e matriz de features.
 // Usado tanto no client (exibição) quanto no server (gating).
 
+import { FRONT_PRICE_LABEL } from "./offer";
+
 export const PLANS = {
   FREE: "FREE",
   PREMIUM_MONTHLY: "PREMIUM_MONTHLY",
@@ -69,7 +71,10 @@ export type CheckoutPlanKey = keyof typeof CHECKOUT_PLANS;
 export const SOULMATE_PORTRAIT = {
   key: "SOULMATE_PORTRAIT",
   name: "Draw My Soulmate",
-  priceLabel: "$24.99",
+  // MESMO preço e MESMO produto do front do funil (24/08): o site mostrava
+  // $24.99 aqui e $9.99/mês na VSL — dois modelos de receita para o mesmo
+  // visitante, na mesma visita.
+  priceLabel: FRONT_PRICE_LABEL,
   period: "one-time payment",
   features: [
     "Your soulmate's portrait, unblurred",

@@ -12,6 +12,7 @@
 // - pré-preenche o email no registro (menos fricção de ativação)
 
 import { Suspense, useEffect, useState } from "react";
+import { FRONT_PRICE_USD } from "@/lib/offer";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -99,8 +100,10 @@ function ThankYouContent() {
         if (data.portraitIncluded) setPortrait("done");
       })
       .catch(() => {
-        // Endpoint indisponível: evento aproximado é melhor que nenhum.
-        trackPurchase({ sessionId, value: 14.99, currency: "usd" });
+        // Endpoint indisponível: evento aproximado é melhor que nenhum. O
+        // valor segue o preço do front (o $14.99 fixo que ficou aqui era de
+        // uma oferta que não existe mais e reportava receita errada).
+        trackPurchase({ sessionId, value: FRONT_PRICE_USD, currency: "usd" });
       });
   }, [sessionId]);
 
@@ -167,6 +170,31 @@ function ThankYouContent() {
   };
 
   const isPack = plan === "PACK5";
+  // Compra do front (leitura + retrato). É AQUI — e só aqui, depois de a
+  // compra estar concluída — que a assinatura pode ser oferecida: na VSL
+  // ela competia com a promessa que trouxe a pessoa até o botão.
+  const isFront = plan === "FRONT_READING" || plan === "DOWNSELL_PORTRAIT";
+
+  const goCheckout = async (nextPlan: string, label: string) => {
+    if (!email) return;
+    trackEvent("offer_clicked", { category: "post_purchase", label });
+    try {
+      const res = await fetch("/api/quiz/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: nextPlan,
+          email,
+          variant: "post_purchase",
+          cancelPath: "/quiz/thank-you",
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      if (data.url) window.location.href = data.url;
+    } catch {
+      // sem rede: a oferta continua na tela para tentar de novo
+    }
+  };
   const registerHref = email
     ? `/auth/register?email=${encodeURIComponent(email)}`
     : "/auth/register";
@@ -197,6 +225,51 @@ function ThankYouContent() {
         and your {isPack ? "readings unlock" : "Premium access unlocks"}{" "}
         instantly.
       </p>
+
+      {/* PÓS-COMPRA do front: primeiro a continuidade (o que a pessoa passa
+          a receber depois desta leitura), depois a Past Life Connection.
+          Nenhuma das duas aparece antes da compra estar concluída. */}
+      {isFront && (
+        <>
+          <div className="glass glass-gold mt-6 w-full rounded-2xl border border-amber-300/40 p-5 text-left">
+            <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-amber-200">
+              <Crown className="h-4 w-4" aria-hidden />
+              Keep reading
+            </p>
+            <h2 className="mt-2 text-lg font-semibold leading-snug">
+              Unlimited readings — <span className="text-gold">$9.99</span>
+              <span className="text-white/60">/month</span>
+            </h2>
+            <p className="mt-1.5 text-sm text-white/75">
+              Your first month is included with what you just bought. Cancel
+              anytime.
+            </p>
+            <button
+              type="button"
+              onClick={() => void goCheckout("SUB_MONTHLY", "continuity")}
+              className="btn-gold mt-4 flex w-full min-h-[48px] items-center justify-center rounded-full px-6 text-sm font-semibold"
+            >
+              Start unlimited readings
+            </button>
+          </div>
+
+          <div className="glass mt-4 w-full rounded-2xl border border-white/12 p-5 text-left">
+            <h2 className="text-lg font-semibold leading-snug">
+              Past Life Connection — <span className="text-gold">$27</span>
+            </h2>
+            <p className="mt-1.5 text-sm text-white/75">
+              Why this person felt familiar before you knew them.
+            </p>
+            <button
+              type="button"
+              onClick={() => void goCheckout("OTO_PASTLIFE", "oto_pastlife")}
+              className="mt-4 flex w-full min-h-[48px] items-center justify-center rounded-full border border-gold-400/50 px-6 text-sm font-semibold text-gold-300 hover:bg-gold-400/10"
+            >
+              Add the Past Life Connection
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Upsell anual — só para assinatura mensal do quiz, one-click no
           cartão salvo. Disclosure explícita: cobrança acontece na hora. */}

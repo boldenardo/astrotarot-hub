@@ -1666,6 +1666,13 @@ function EmailStep({
           setError(null);
           setSuggestion(null);
         }}
+        // O erro aparece só depois de sair do campo com algo inválido
+        // escrito — nunca com o campo vazio, e nunca antes de a pessoa
+        // ter escrito qualquer coisa. O submit continua validando também.
+        onBlur={() => {
+          const trimmed = email.trim();
+          if (trimmed && !EMAIL_RE.test(trimmed)) setError(ui.emailError);
+        }}
         className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 rounded-2xl px-4 text-center text-base text-[#e8e4f5] placeholder:text-[rgba(185,178,208,0.6)] outline-none focus:border-[#d4af37]"
       />
       {error && (

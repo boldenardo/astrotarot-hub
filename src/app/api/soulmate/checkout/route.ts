@@ -14,7 +14,13 @@ export async function POST() {
   if (!gate.ok) return gate.response;
   const { profile } = gate;
 
-  const price = process.env.STRIPE_PRICE_SOULMATE_PORTRAIT;
+  // MESMO produto do front do funil (24/08): a home e a VSL não podem
+  // cobrar valores diferentes pela mesma coisa. O número segue
+  // NEXT_PUBLIC_FRONT_PRICE_USD, igual ao texto.
+  const price =
+    String(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 29) === "37"
+      ? process.env.STRIPE_PRICE_FRONT_37 || "price_1U7yhi07YF1LaBzhpXKyziUx"
+      : process.env.STRIPE_PRICE_FRONT_29 || "price_1U7yhh07YF1LaBzh5SloB0fx";
   if (!process.env.STRIPE_SECRET_KEY || !price) {
     return NextResponse.json(
       { error: "This unlock isn't available right now.", code: "NOT_CONFIGURED" },
