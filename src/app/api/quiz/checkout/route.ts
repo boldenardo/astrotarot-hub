@@ -322,7 +322,7 @@ export async function POST(req: NextRequest) {
     // yet. The webhook (checkout.session.completed) creates the user by
     // email and inserts the COMPLETED payment idempotently.
 
-    if (embedded) {
+    if (useEmbedded) {
       if (!session.client_secret) {
         return NextResponse.json(
           { error: "Could not start checkout. Please try again." },
