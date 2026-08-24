@@ -84,10 +84,14 @@ const OFFER_ID = "unlimited_sub";
 
 const RETURNED_KEY = "astro_vsl_returned";
 
-// Teste 20/08: página SEM o vídeo — a hipótese é que a VSL adiciona
-// informação demais entre a manchete e a oferta. O player fica guardado,
-// não deletado: para trazer a VSL de volta, é só voltar isto para true.
-const SHOW_VSL = false;
+// 23/08: VSL DE VOLTA por decisão do dono — a página convertia melhor com
+// o vídeo. O teste sem vídeo (20/08) rodou justamente na janela em que o
+// checkout estava com o botão de pagar fora do alcance no celular (ver
+// EmbeddedCheckoutPanel), então ele nunca mediu de verdade a hipótese
+// "VSL atrapalha": nenhuma das duas versões conseguia receber um cartão.
+// A oferta NÃO é gateada pelo vídeo — o player entra como ativo de
+// retenção e o CTA continua visível desde o primeiro scroll.
+const SHOW_VSL = true;
 
 interface QuizStore {
   answers?: Record<string, string>;
