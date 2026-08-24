@@ -48,22 +48,52 @@ export function getFunnelSessionId(): string {
 }
 
 /** UTMs da URL atual, quando houver. Só as cinco padrão. */
+const UTM_KEY = "astro_utm";
+const UTM_FIELDS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "utm_term",
+] as const;
+
+/**
+ * UTMs de PRIMEIRA visita, guardadas no browser.
+ *
+ * Antes isto lia só a URL do momento — e como a pessoa entra por /quiz e
+ * só chega à página de venda depois de navegar, todo evento de checkout
+ * saía sem origem: 114 eventos seguidos com utm_source vazio, ou seja,
+ * nenhuma forma de saber qual anúncio traz quem compra. Agora a primeira
+ * URL com UTM manda, e ela sobrevive à navegação inteira do funil.
+ */
 export function getUtmParams(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
     const q = new URLSearchParams(window.location.search);
-    const out: Record<string, string> = {};
-    for (const k of [
-      "utm_source",
-      "utm_medium",
-      "utm_campaign",
-      "utm_content",
-      "utm_term",
-    ]) {
+    const fresh: Record<string, string> = {};
+    for (const k of UTM_FIELDS) {
       const v = q.get(k)?.trim().slice(0, 80);
-      if (v) out[k] = v;
+      if (v) fresh[k] = v;
     }
-    return out;
+    // fbclid/gclid sozinhos já dizem a plataforma quando a campanha não
+    // está etiquetada — melhor que origem nenhuma.
+    if (!fresh.utm_source) {
+      if (q.get("fbclid")) fresh.utm_source = "facebook";
+      else if (q.get("gclid")) fresh.utm_source = "google";
+      else if (q.get("ttclid")) fresh.utm_source = "tiktok";
+    }
+    if (Object.keys(fresh).length) {
+      try {
+        if (!window.localStorage.getItem(UTM_KEY)) {
+          window.localStorage.setItem(UTM_KEY, JSON.stringify(fresh));
+        }
+      } catch {
+        // modo privado: segue com os valores desta navegação
+      }
+      return fresh;
+    }
+    const saved = window.localStorage.getItem(UTM_KEY);
+    return saved ? (JSON.parse(saved) as Record<string, string>) : {};
   } catch {
     return {};
   }

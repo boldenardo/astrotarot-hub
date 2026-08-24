@@ -279,7 +279,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (embedded) {
+    // ── SUPERFÍCIE DO CHECKOUT (24/08) ────────────────────────────────
+    // O painel embutido acumulou 53 sessões e ZERO tentativas de cartão,
+    // enquanto o hospedado somou as 4 únicas tentativas que este projeto
+    // já teve. Depois do conserto de rolagem (23/08) o formulário passou a
+    // carregar inteiro e a caber na tela — e mesmo assim ninguém digitou
+    // cartão, em Chrome normal E na webview do Facebook. O iframe é a
+    // última variável mecânica de pé: ele roda em contexto de TERCEIRO
+    // (checkout.stripe.com dentro de astrotarot.shop) e depende de
+    // armazenamento que navegadores in-app e Chrome restringem.
+    //
+    // Então o padrão volta a ser o hospedado, que é primeira-parte e onde
+    // Apple Pay/Google Pay funcionam sem depender do nosso domínio.
+    // Para voltar ao embutido: CHECKOUT_SURFACE=embedded na Vercel.
+    const surface = process.env.CHECKOUT_SURFACE || "hosted";
+    const useEmbedded = embedded && surface === "embedded";
+
+    if (useEmbedded) {
       // O formulário roda dentro da nossa página. O Stripe não redireciona,
       // então exige return_url e REJEITA success_url/cancel_url — mandar os
       // três juntos foi o que derrubou o checkout: a sessão nascia hospedada,

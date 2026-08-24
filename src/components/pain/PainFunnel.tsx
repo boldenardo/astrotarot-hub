@@ -132,6 +132,10 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
   const [emailError, setEmailError] = useState<string | null>(null);
   const [loadingPay, setLoadingPay] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  // Redirecionamento engolido (webview do Facebook/Instagram): guardamos a
+  // URL para oferecer um link tocável em vez de deixar a pessoa olhando um
+  // botão girando. Metade do tráfego chega por navegador in-app.
+  const [manualUrl, setManualUrl] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [checkoutExpiresAt, setCheckoutExpiresAt] = useState<number | null>(null);
   const submittingRef = useRef(false);
@@ -477,7 +481,19 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
           submittingRef.current = false;
           return;
         }
-        window.location.href = data.url!;
+        // Caminho hospedado: redireciona. Se em 2,5s a página ainda estiver
+        // aqui e visível, a navegação foi bloqueada — mostramos o link.
+        const url = data.url!;
+        trackEvent("checkout_redirect_started", base({ pattern: pattern.id }));
+        window.setTimeout(() => {
+          if (!document.hidden) {
+            setManualUrl(url);
+            setLoadingPay(false);
+            submittingRef.current = false;
+            trackEvent("checkout_error", base({ reason: "redirect_blocked" }));
+          }
+        }, 2500);
+        window.location.href = url;
       } catch {
         setPayError("We couldn't open the secure checkout. Please try again.");
         setLoadingPay(false);
@@ -581,6 +597,19 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
         Instant access &middot; 7-day money-back guarantee &middot; Secure
         checkout by Stripe
       </p>
+      {manualUrl && (
+        <p className="mt-3 text-center text-sm text-white/75">
+          Taking too long?{" "}
+          <a
+            href={manualUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-gold underline underline-offset-4"
+          >
+            Open the secure checkout
+          </a>
+        </p>
+      )}
       {payError && (
         <p className="mt-2 text-center text-sm text-red-400" role="alert">
           {payError}
