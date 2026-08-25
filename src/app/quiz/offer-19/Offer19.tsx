@@ -13,6 +13,7 @@ import { getStoredRef } from "@/lib/affiliate";
 import { getStoredSource } from "@/lib/source";
 import { trackEvent } from "@/lib/analytics";
 import { GUARANTEE_DAYS } from "@/lib/offer";
+import { openCheckout } from "@/lib/webview";
 
 export default function Offer19({ token }: { token: string }) {
   const [name, setName] = useState<string | null>(null);
@@ -56,6 +57,7 @@ export default function Offer19({ token }: { token: string }) {
       });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
+        sessionId?: string;
         error?: string;
       };
       if (!data.url) {
@@ -70,7 +72,7 @@ export default function Offer19({ token }: { token: string }) {
           setLoading(false);
         }
       }, 2500);
-      window.location.href = url;
+      openCheckout({ url, sessionId: data.sessionId });
     } catch {
       setError("We couldn't open the secure checkout. Please try again.");
       setLoading(false);

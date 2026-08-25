@@ -12,6 +12,7 @@
 // - pré-preenche o email no registro (menos fricção de ativação)
 
 import { Suspense, useEffect, useState } from "react";
+import { openCheckout } from "@/lib/webview";
 import { FRONT_PRICE_USD } from "@/lib/offer";
 import Link from "next/link";
 import Image from "next/image";
@@ -228,8 +229,11 @@ function ThankYouContent() {
           cancelPath: "/quiz/thank-you",
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { url?: string };
-      if (data.url) window.location.href = data.url;
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        sessionId?: string;
+      };
+      if (data.url) openCheckout({ url: data.url, sessionId: data.sessionId });
     } catch {
       // sem rede: a oferta continua na tela para tentar de novo
     }

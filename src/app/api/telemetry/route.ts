@@ -29,6 +29,8 @@ const ALLOWED = new Set([
   "checkout_form_closed",
   "checkout_fallback_hosted",
   "checkout_redirect_started",
+  "checkout_escape_attempted",
+  "checkout_escape_failed",
   "purchase_completed",
 ]);
 

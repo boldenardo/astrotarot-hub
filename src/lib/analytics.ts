@@ -72,6 +72,10 @@ export type AnalyticsEvent =
   | "checkout_cta_clicked"
   | "checkout_session_created"
   | "checkout_redirect_started"
+  // Teste do escape de webview (25/08): tentou pular para o navegador
+  // real antes do Stripe; failed = o app segurou e seguimos na webview.
+  | "checkout_escape_attempted"
+  | "checkout_escape_failed"
   | "checkout_error"
   // Painel de checkout embutido — separa "não viu o formulário" de
   // "viu e desistiu" (sem isto, 8 sessões sem cartão eram um mistério).

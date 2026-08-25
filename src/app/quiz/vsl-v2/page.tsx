@@ -53,6 +53,7 @@ const GalaxyParticles = dynamic(() => import("@/components/GalaxyParticles"), {
   ssr: false,
 });
 import { trackEvent, trackPaymentInitiated } from "@/lib/analytics";
+import { openCheckout } from "@/lib/webview";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import {
   QUIZ_STORAGE_KEY,
@@ -702,7 +703,7 @@ export default function QuizVslV2Page() {
             });
           }
         }, 2500);
-        window.location.href = url;
+        openCheckout({ url, sessionId: data.sessionId });
       } catch (e) {
         trackEvent("checkout_error", {
           ...baseParams(),

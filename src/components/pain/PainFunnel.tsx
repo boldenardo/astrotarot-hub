@@ -17,6 +17,7 @@
 // já existia — checkout embutido, analytics, cartas, avatar, CardBack.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { openCheckout } from "@/lib/webview";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
@@ -465,6 +466,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
         const data = (await res.json().catch(() => ({}))) as {
           clientSecret?: string;
           url?: string;
+          sessionId?: string;
           expiresAt?: number;
           error?: string;
         };
@@ -493,7 +495,7 @@ export default function PainFunnel({ config: rawConfig }: { config: PainFunnelCo
             trackEvent("checkout_error", base({ reason: "redirect_blocked" }));
           }
         }, 2500);
-        window.location.href = url;
+        openCheckout({ url, sessionId: data.sessionId });
       } catch {
         setPayError("We couldn't open the secure checkout. Please try again.");
         setLoadingPay(false);
