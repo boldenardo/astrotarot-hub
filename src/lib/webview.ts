@@ -43,18 +43,22 @@ export function openCheckout(opts: { url: string; sessionId?: string | null }): 
   const { url, sessionId } = opts;
   const platform = os();
 
-  if (!inAppBrowser() || !sessionId || platform === "other") {
+  // iOS FICA DE FORA do escape (25/08, testado pelo dono no FB real):
+  // a Meta remendou o x-safari-https — o Safari abre com a URL mutilada
+  // (404) — e, pior, o fallback por timer perde o "user activation" e a
+  // webview bloqueia até o redirect normal. No iOS, redirect direto no
+  // clique, como sempre foi. O teste do escape roda só no Android, onde
+  // intent:// segue sendo o padrão da indústria.
+  if (!inAppBrowser() || !sessionId || platform !== "android") {
     window.location.href = url;
     return;
   }
 
   const bridge = `${window.location.origin}/pay/${sessionId}`;
   const target =
-    platform === "android"
-      ? // package fixa o Chrome; sem ele instalado, o fallback_url abre o
-        // navegador padrão do aparelho — qualquer um deles tem carteira.
-        `intent://${window.location.host}/pay/${sessionId}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(bridge)};end`
-      : `x-safari-https://${window.location.host}/pay/${sessionId}`;
+    // package fixa o Chrome; sem ele instalado, o fallback_url abre o
+    // navegador padrão do aparelho — qualquer um deles tem carteira.
+    `intent://${window.location.host}/pay/${sessionId}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(bridge)};end`;
 
   trackEvent("checkout_escape_attempted", {
     category: "checkout",
