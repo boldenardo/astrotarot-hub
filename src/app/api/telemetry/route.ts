@@ -14,25 +14,11 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
-const ALLOWED = new Set([
-  "pain_offer_viewed",
-  "pain_checkout_clicked",
-  "offer_viewed",
-  "checkout_cta_clicked",
-  "checkout_session_created",
-  "checkout_error",
-  "checkout_form_opened",
-  "checkout_form_loaded",
-  "checkout_form_slow",
-  "checkout_form_timeout",
-  "checkout_form_error",
-  "checkout_form_closed",
-  "checkout_fallback_hosted",
-  "checkout_redirect_started",
-  "checkout_escape_attempted",
-  "checkout_escape_failed",
-  "purchase_completed",
-]);
+// Mesma família do espelho do cliente (ver src/lib/analytics.ts). Prefixo
+// em vez de lista: cada evento novo do funil entra sozinho, e o que não é
+// de funil continua barrado.
+const ALLOWED =
+  /^(quiz_|vsl_|pain_|checkout_|offer_|downsell_|cta_viewed$|lead_captured$|purchase_completed$|plan_options|experience_|ritual_|dream_|soulmate_)/;
 
 const MAX_PARAMS_BYTES = 1500;
 const SENSITIVE = /email|name|birth|answer|phone|card/i;
@@ -75,7 +61,9 @@ export async function POST(req: NextRequest) {
   }
 
   const event = typeof body.event === "string" ? body.event : "";
-  if (!ALLOWED.has(event)) return NextResponse.json({ ok: false }, { status: 400 });
+  if (!ALLOWED.test(event) || event.length > 48) {
+    return NextResponse.json({ ok: false }, { status: 400 });
+  }
 
   const ua = (req.headers.get("user-agent") || "").slice(0, 400);
   const row = {

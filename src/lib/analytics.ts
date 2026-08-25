@@ -4,6 +4,8 @@
 // é quem inicializa o GA4; react-ga4 nunca era inicializado e descartava
 // silenciosamente todos os eventos. Tudo passa por window.gtag direto.
 
+import { getFunnelSessionId } from "@/lib/funnel-session";
+
 // Custom event types
 export type AnalyticsEvent =
   | "page_view"
@@ -41,6 +43,12 @@ export type AnalyticsEvent =
   // Vídeo não carregou (404, rede, codec). Alerta de receita: quando
   // dispara, o portão da oferta abriu por falha, não por audiência.
   | "vsl_error"
+  // Profundidade de rolagem da PÁGINA de vendas (não do vídeo): diz em
+  // qual bloco da carta as pessoas param de descer.
+  | "vsl_scroll_25"
+  | "vsl_scroll_50"
+  | "vsl_scroll_75"
+  | "vsl_scroll_90"
   // Etapas explícitas do handoff VSL → Stripe. Separadas de propósito: a
   // diferença entre "clicou" e "sessão criada" é a diferença entre um
   // problema de oferta e um problema de backend, e sem os dois eventos as
@@ -148,11 +156,14 @@ export function trackPageView(path: string, title?: string) {
   getFbq()?.("track", "PageView");
 }
 
-// Eventos de checkout também vão para o NOSSO banco (/api/telemetry →
-// funnel_events), porque o GA4 não é legível pela operação. Só checkout:
-// nada do quiz, nada de e-mail.
+// TRACKEAMENTO FULL (26/08, pedido do dono): TODO evento de funil vai
+// para o NOSSO banco (/api/telemetry → funnel_events), porque o GA4 não é
+// legível pela operação e a pergunta "em qual tela o lead morreu" precisa
+// virar um SELECT. Vai o NOME do evento e params enumerados — o servidor
+// descarta qualquer chave sensível (email/name/birth/answer) antes de
+// gravar; respostas do quiz nunca saem do aparelho.
 const MIRRORED =
-  /^(pain_offer_viewed|pain_checkout_clicked|offer_viewed|checkout_|purchase_completed)/;
+  /^(quiz_|vsl_|pain_|checkout_|offer_|downsell_|cta_viewed|lead_captured|purchase_completed|plan_options|experience_|ritual_|dream_|soulmate_)/;
 
 function mirror(eventName: string, params?: AnalyticsEventParams) {
   if (!MIRRORED.test(eventName)) return;
@@ -168,10 +179,10 @@ function mirror(eventName: string, params?: AnalyticsEventParams) {
     const payload = JSON.stringify({
       event: eventName,
       params: p,
-      funnelSessionId:
-        p.funnel_session_id ??
-        window.localStorage.getItem("astro_funnel_sid") ??
-        undefined,
+      // getFunnelSessionId CRIA o id se ainda não existir — sem isso os
+      // passos do quiz chegavam sem sessão e a escada não tinha como
+      // juntar "onde a MESMA pessoa parou".
+      funnelSessionId: p.funnel_session_id ?? getFunnelSessionId(),
       variant,
       path: window.location.pathname,
       vw: window.innerWidth,

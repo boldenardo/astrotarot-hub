@@ -474,6 +474,34 @@ export default function QuizVslV2Page() {
 
   const baseParams = useCallback(() => buildParams(store), [store]);
 
+  // Profundidade de rolagem da página (25/50/75/90%): com o passo do quiz
+  // e os marcos do vídeo já medidos, este era o único buraco — saber em
+  // qual BLOCO da carta as pessoas param de descer.
+  const scrollFiredRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    const marks: Array<[number, "vsl_scroll_25" | "vsl_scroll_50" | "vsl_scroll_75" | "vsl_scroll_90"]> = [
+      [25, "vsl_scroll_25"],
+      [50, "vsl_scroll_50"],
+      [75, "vsl_scroll_75"],
+      [90, "vsl_scroll_90"],
+    ];
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - window.innerHeight;
+      if (max <= 0) return;
+      const pct = (window.scrollY / max) * 100;
+      for (const [at, ev] of marks) {
+        if (pct >= at && !scrollFiredRef.current.has(at)) {
+          scrollFiredRef.current.add(at);
+          trackEvent(ev, { ...baseParams(), value: at });
+        }
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const initial = readStore();
     setStore(initial);
