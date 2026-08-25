@@ -142,6 +142,59 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // ENTREGA: cobrança off-session não gera checkout.session.completed com
+    // metadata de plano, então o entitlement é concedido AQUI — sem isto o
+    // comprador do OTO pagava $27 e não recebia nada visível na conta.
+    try {
+      const admin = getSupabaseAdmin();
+      let uid: string | null = null;
+      if (email) {
+        const { data: u } = await admin
+          .from("users")
+          .select("id")
+          .eq("email", email)
+          .maybeSingle();
+        uid = u?.id ?? null;
+        if (!uid) {
+          const { data: created } = await admin
+            .from("users")
+            .insert({
+              email,
+              subscription_plan: "FREE",
+              subscription_status: "active",
+              readings_left: 4,
+            })
+            .select("id")
+            .maybeSingle();
+          uid = created?.id ?? null;
+        }
+      }
+      if (uid) {
+        const { data: existing } = await admin
+          .from("user_entitlements")
+          .select("id")
+          .eq("user_id", uid)
+          .eq("feature", "past_life")
+          .maybeSingle();
+        if (existing) {
+          await admin
+            .from("user_entitlements")
+            .update({ active: true, stripe_reference: intent.id })
+            .eq("id", existing.id);
+        } else {
+          await admin.from("user_entitlements").insert({
+            user_id: uid,
+            feature: "past_life",
+            active: true,
+            source: "stripe_one_click",
+            stripe_reference: intent.id,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("[/api/quiz/oto] entitlement não gravado:", e);
+    }
+
     // Registro best-effort: a cobrança já valeu, e o webhook é a fonte de
     // verdade do entitlement.
     try {

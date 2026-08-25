@@ -154,7 +154,7 @@ function SoulmateContent() {
       {/* 2. Assinante sem retrato ainda */}
       {state.hasBirthDate && !portrait?.image_url && (
         <section className="glass glass-gold mt-8 rounded-3xl p-6 text-center">
-          {state.isPremium ? (
+          {state.isPremium || state.hasFullUnlock ? (
             <>
               <p className="text-ink-300">
                 Your chart is ready. Master Aura will draw the person your

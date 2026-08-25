@@ -159,10 +159,17 @@ export async function requirePremium(
  * Diferente de PremiumFeature: aquilo vem junto com a assinatura, isto
  * é comprado separado e o plano sozinho não destrava.
  */
-export type AddonFeature = "soulmate_portrait" | "vibes";
+export type AddonFeature =
+  | "soulmate_portrait"
+  | "vibes"
+  // Compras avulsas da escada (25/08): cada uma destrava sua feature.
+  | "past_life"
+  | "cord_reading";
 
 const ADDON_LABELS: Record<AddonFeature, string> = {
   soulmate_portrait: "The full Soulmate Portrait",
+  past_life: "Past Life Connection",
+  cord_reading: "The Cord Reading",
   vibes: "Vibes & Meditations",
 };
 

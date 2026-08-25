@@ -79,6 +79,11 @@ export default function RitualExperience({ type, title }: { type: RitualType; ti
         <GateNotice
           gate={gate}
           returnTo={`/rituals/${type}`}
+          oneOff={
+            type === "cord-cutting"
+              ? { label: "Just The Cord Reading — $9 once", feature: "cord" }
+              : undefined
+          }
           onRetry={() => {
             reset();
             if (answers) void generate(answers);

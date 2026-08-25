@@ -181,7 +181,7 @@ export default function PastLifeExperience({ initialMode = "self" }: { initialMo
   }
 
   if (phase === "loading" || (busy && !result)) {
-    if (gate) return <GateNotice gate={gate} returnTo="/past-lives" onRetry={() => { reset(); if (answers) void generate(answers); }} />;
+    if (gate) return <GateNotice gate={gate} returnTo="/past-lives" oneOff={{ label: "Just Past Lives — $27 once", feature: "pastlife" }} onRetry={() => { reset(); if (answers) void generate(answers); }} />;
     return <AuraWriting text="Master Aura is finding the archetype…" />;
   }
 

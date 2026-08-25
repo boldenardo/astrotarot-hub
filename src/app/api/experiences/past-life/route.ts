@@ -29,6 +29,8 @@ export async function POST(req: NextRequest) {
 
   return runExperience<PastLifeReading>({
     kind: "past-life",
+    // Past Life Connection ($27, avulso) destrava sem consumir crédito.
+    freeWith: "past_life",
     subtype: mode,
     system: pastLifeSystem(),
     maxTokens: 1400,

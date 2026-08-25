@@ -82,7 +82,50 @@ export function AuraWriting({ text = "Master Aura is writing your reading…" }:
   );
 }
 
-export function GateNotice({ gate, returnTo, onRetry }: { gate: GateState; returnTo: string; onRetry?: () => void }) {
+/**
+ * Compra avulsa da feature no próprio gate: quem esgotou os créditos vê o
+ * preço DESTA experiência ao lado da assinatura — a escada de valores
+ * dentro do produto ($9 cord, $27 past life, $9.99/mo tudo).
+ */
+export interface GateOneOff {
+  label: string;
+  feature: "pastlife" | "cord";
+}
+
+function OneOffButton({ oneOff }: { oneOff: GateOneOff }) {
+  const [busy, setBusy] = useState(false);
+  const buy = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/features/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feature: oneOff.feature }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string };
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+    } catch {
+      // sem rede: o botão volta ao normal e a pessoa tenta de novo
+    }
+    setBusy(false);
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => void buy()}
+      disabled={busy}
+      className="btn-ghost mt-3 flex min-h-[46px] w-full items-center justify-center rounded-2xl text-sm font-semibold disabled:opacity-60"
+    >
+      {oneOff.label}
+    </button>
+  );
+}
+
+export function GateNotice({ gate, returnTo, onRetry, oneOff }: { gate: GateState; returnTo: string; onRetry?: () => void; oneOff?: GateOneOff }) {
   if (!gate) return null;
   if (gate === "auth") {
     return (
@@ -108,6 +151,7 @@ export function GateNotice({ gate, returnTo, onRetry }: { gate: GateState; retur
         <Link href="/cart?plan=premium" className="btn-gold mt-5 flex min-h-[50px] items-center justify-center rounded-2xl text-sm font-semibold">
           Unlock everything — $9.99/mo
         </Link>
+        {oneOff && <OneOffButton oneOff={oneOff} />}
       </div>
     );
   }

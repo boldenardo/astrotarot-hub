@@ -108,6 +108,8 @@ export async function POST(req: NextRequest) {
     "DOWNSELL_PORTRAIT",
     // OTO pós-compra.
     "OTO_PASTLIFE",
+    // Compra avulsa do Cord Reading ($9) dentro da conta.
+    "CORD_READING",
     // Downsell de abandono. O preço REAL é decidido no servidor: pedir
     // este plano não garante $19.99 (ver resolveDownsell).
     "DOWNSELL_19",
@@ -139,6 +141,7 @@ export async function POST(req: NextRequest) {
     "FRONT_READING",
     "DOWNSELL_PORTRAIT",
     "OTO_PASTLIFE",
+    "CORD_READING",
     "DOWNSELL_19",
   ]);
   const isSubscription = !ONE_OFF.has(plan);
@@ -172,6 +175,9 @@ export async function POST(req: NextRequest) {
         : frontPrice
       : plan === "FRONT_READING"
         ? frontPrice
+        : plan === "CORD_READING"
+        ? process.env.STRIPE_PRICE_BUMP_CORD ||
+          "price_1U7yhi07YF1LaBzh4ConA7Ic"
         : plan === "OTO_PASTLIFE"
           ? process.env.STRIPE_PRICE_OTO_PASTLIFE ||
             "price_1U7yhj07YF1LaBzhKHhpPOeB"
@@ -301,7 +307,13 @@ export async function POST(req: NextRequest) {
     else params.customer_email = email;
 
     if (isSubscription) {
-      params.subscription_data = { metadata };
+      // Continuidade pós-compra: a thank-you promete "primeiro mês incluso
+      // com o que você acabou de comprar" — o trial de 30 dias é o que
+      // torna a frase verdadeira. Cartão salvo agora, cobrança em 30 dias.
+      params.subscription_data = {
+        metadata,
+        ...(variant === "post_purchase" ? { trial_period_days: 30 } : {}),
+      };
       // SEM order bump na assinatura (23/08). A Stripe renderiza
       // optional_items no resumo, ACIMA do campo de e-mail: quem vinha
       // comprar uma leitura de $9.99 via "$24.99" (R$129 / 449 ZAR) antes

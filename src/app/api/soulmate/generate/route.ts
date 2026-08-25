@@ -10,7 +10,7 @@
 
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { requireUser } from "@/lib/server/plan-gate";
+import { requireUser, hasEntitlement } from "@/lib/server/plan-gate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { groqChatJson } from "@/lib/server/groq";
 import { getImageProvider } from "@/lib/server/image-gen";
@@ -43,8 +43,12 @@ export async function POST() {
   if (!gate.ok) return gate.response;
   const { profile } = gate;
 
-  // O retrato é benefício de assinante. Sem plano, nem gera prévia.
-  if (!isPremium(profile)) {
+  // Destrava por assinatura OU por compra avulsa do retrato ($29/$19.99/
+  // $17): o entitlement é exatamente "eu paguei por isto". Antes, quem
+  // comprava o front do funil ficava barrado aqui — pagava pelo retrato e
+  // não conseguia gerá-lo.
+  const owns = await hasEntitlement(profile.id, "soulmate_portrait");
+  if (!isPremium(profile) && !owns) {
     return NextResponse.json(
       {
         error: "Your soulmate portrait is part of the membership.",

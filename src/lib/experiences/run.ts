@@ -4,7 +4,13 @@
 // Premium = ilimitado. Falha da IA = ninguém é cobrado (mesma ordem do tarô).
 
 import { NextResponse } from "next/server";
-import { requireUser, consumeReading, type UserProfile } from "@/lib/server/plan-gate";
+import {
+  requireUser,
+  consumeReading,
+  hasEntitlement,
+  type AddonFeature,
+  type UserProfile,
+} from "@/lib/server/plan-gate";
 import { isPremium, hasReadingsLeft } from "@/lib/plans";
 import { groqChatJson } from "@/lib/server/groq";
 import { persistExperience } from "./persist";
@@ -20,12 +26,21 @@ export async function runExperience<T extends ExperienceResult>(params: {
   /** Normaliza o JSON cru da LLM no contrato da UI (defensivo). */
   shape: (raw: Record<string, unknown>, profile: UserProfile) => T;
   input?: Record<string, unknown>;
+  /**
+   * Entitlement que destrava esta experiência sem consumir crédito —
+   * é como uma compra avulsa ($9 cord, $27 past life) vira funcionalidade.
+   */
+  freeWith?: AddonFeature;
 }) {
   const gate = await requireUser();
   if (!gate.ok) return gate.response;
   const profile = gate.profile;
 
-  if (!isPremium(profile) && !hasReadingsLeft(profile)) {
+  const owned = params.freeWith
+    ? await hasEntitlement(profile.id, params.freeWith)
+    : false;
+
+  if (!owned && !isPremium(profile) && !hasReadingsLeft(profile)) {
     return NextResponse.json(
       {
         error: "You have no readings left. Unlimited opens every experience.",
@@ -63,7 +78,10 @@ export async function runExperience<T extends ExperienceResult>(params: {
     );
   }
 
-  const consumed = await consumeReading(profile);
+  // Compra avulsa não desconta crédito: a pessoa já pagou por ESTA feature.
+  const consumed = owned
+    ? ({ ok: true, readingsLeft: "unlimited" } as const)
+    : await consumeReading(profile);
   if (!consumed.ok) return consumed.response;
 
   await persistExperience({

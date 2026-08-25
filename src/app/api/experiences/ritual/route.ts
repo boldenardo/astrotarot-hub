@@ -40,6 +40,9 @@ export async function POST(req: NextRequest) {
 
   return runExperience<RitualResult>({
     kind: "ritual",
+    // The Cord Reading ($9, avulso) destrava o ritual de cord-cutting sem
+    // consumir crédito — a compra vira exatamente esta funcionalidade.
+    ...(type === "cord-cutting" ? { freeWith: "cord_reading" as const } : {}),
     subtype: type,
     system: ritualSystem(type),
     maxTokens: type === "cord-cutting" ? 2000 : 1500,

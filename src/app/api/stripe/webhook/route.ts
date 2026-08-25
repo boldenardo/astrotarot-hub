@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import type { AddonFeature } from "@/lib/server/plan-gate";
 import { sendEmail } from "@/lib/server/email";
 import {
   welcomeEmail,
@@ -102,7 +103,7 @@ async function recordAffiliateSale(params: {
  */
 async function setEntitlement(params: {
   userId: string;
-  feature: "soulmate_portrait" | "vibes";
+  feature: AddonFeature;
   active: boolean;
   source?: string;
   reference?: string | null;
@@ -337,8 +338,55 @@ export async function POST(req: NextRequest) {
 
         if (granted) {
           if (session.mode === "payment") {
-            // Compra única: ou é o add-on do retrato, ou o pacote de leituras.
-            if (session.metadata?.product === "soulmate_portrait") {
+            // ENTREGA POR PLANO (25/08). Antes havia só dois caminhos —
+            // "retrato" ou "senão, credita 5 leituras" — escritos quando o
+            // único one-off era o PACK5. Resultado: quem comprava o front
+            // de $29 (Soulmate Reading + Portrait) ganhava 5 créditos de
+            // tarot e o retrato continuava TRANCADO. A pessoa pagava por
+            // uma coisa e recebia outra.
+            const metaPlan = session.metadata?.plan ?? "";
+            const ENTITLEMENT_BY_PLAN: Record<string, AddonFeature[]> = {
+              FRONT_READING: ["soulmate_portrait"],
+              DOWNSELL_19: ["soulmate_portrait"],
+              DOWNSELL_PORTRAIT: ["soulmate_portrait"],
+              OTO_PASTLIFE: ["past_life"],
+              CORD_READING: ["cord_reading"],
+            };
+            if (ENTITLEMENT_BY_PLAN[metaPlan]) {
+              for (const feature of ENTITLEMENT_BY_PLAN[metaPlan]) {
+                await setEntitlement({
+                  userId,
+                  feature,
+                  active: true,
+                  source: "stripe_one_time",
+                  reference: session.id,
+                });
+              }
+              // Order bump do front: The Cord Reading pode ter vindo como
+              // optional_item na MESMA sessão — só os line items sabem.
+              if (metaPlan === "FRONT_READING" || metaPlan === "DOWNSELL_19") {
+                try {
+                  const cordPrice =
+                    process.env.STRIPE_PRICE_BUMP_CORD ||
+                    "price_1U7yhi07YF1LaBzh4ConA7Ic";
+                  const items = await stripe.checkout.sessions.listLineItems(
+                    session.id,
+                    { limit: 10 }
+                  );
+                  if (items.data.some((li) => li.price?.id === cordPrice)) {
+                    await setEntitlement({
+                      userId,
+                      feature: "cord_reading",
+                      active: true,
+                      source: "stripe_one_time",
+                      reference: session.id,
+                    });
+                  }
+                } catch (e) {
+                  console.error("[stripe/webhook] line items do cord bump:", e);
+                }
+              }
+            } else if (session.metadata?.product === "soulmate_portrait") {
               await setEntitlement({
                 userId,
                 feature: "soulmate_portrait",

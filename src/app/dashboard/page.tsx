@@ -168,6 +168,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { signOut } = useClerk();
   const [user, setUser] = useState<MeProfile | null>(null);
+  const [ownedFeatures, setOwnedFeatures] = useState<string[]>([]);
   const [readings, setReadings] = useState<MeReading[]>([]);
   const [loading, setLoading] = useState(true);
   const [birthChart, setBirthChart] = useState<any>(null);
@@ -186,6 +187,13 @@ export default function DashboardPage() {
 
     async function loadUserData() {
       try {
+        // Features avulsas que a conta possui — decide "Owned" vs preço.
+        void fetch("/api/me/entitlements")
+          .then((r) => (r.ok ? r.json() : null))
+          .then((d: { features?: string[] } | null) => {
+            if (d?.features) setOwnedFeatures(d.features);
+          })
+          .catch(() => {});
         const profile = await getMyProfile();
         if (!profile) {
           router.push("/auth/login");
@@ -284,6 +292,45 @@ export default function DashboardPage() {
       }
     : null;
 
+  // ---- Escada de preços DENTRO do produto (25/08) ----
+  // Recorrência $9.99 = Tarot ilimitado (+ Aura, horóscopo, mapa, números).
+  // As demais features têm preço avulso e viram entitlement ("Owned").
+  // O chip diz, em cada card, o que aquela feature custa OU que já é sua.
+  const owns = (f: string) => ownedFeatures.includes(f);
+  const chipFor = (href: string): { text: string; owned: boolean } | null => {
+    const premium = user ? isPremiumPlan(user) : false;
+    switch (href) {
+      case "/tarot":
+        return premium
+          ? { text: "Unlimited ✓", owned: true }
+          : { text: "Unlimited — $9.99/mo", owned: false };
+      case "/soulmate":
+        return premium || owns("soulmate_portrait")
+          ? { text: "Owned ✓", owned: true }
+          : { text: "$29 one-time", owned: false };
+      case "/past-lives":
+        return premium || owns("past_life")
+          ? { text: owns("past_life") ? "Owned ✓" : "Included ✓", owned: true }
+          : { text: "1 credit · or $27 once", owned: false };
+      case "/rituals":
+        return premium
+          ? { text: "Included ✓", owned: true }
+          : owns("cord_reading")
+            ? { text: "Cord Reading owned ✓", owned: true }
+            : { text: "1 credit each", owned: false };
+      case "/dreams":
+        return premium
+          ? { text: "Included ✓", owned: true }
+          : { text: "1 credit each", owned: false };
+      case "/predictions":
+        return premium
+          ? { text: "Included ✓", owned: true }
+          : { text: "Unlimited — $9.99/mo", owned: false };
+      default:
+        return null;
+    }
+  };
+
   const quickActions = [
     {
       href: "/challenge",
@@ -310,13 +357,14 @@ export default function DashboardPage() {
       premiumOnly: false,
     },
     {
-      // Primeiro card premium: é a promessa que trouxe a pessoa até aqui.
+      // A promessa que trouxe a pessoa até aqui. Não é mais "premium":
+      // tem preço próprio ($29) e vira "Owned" ao comprar.
       href: "/soulmate",
       icon: Sparkles,
       title: "Draw My Soulmate",
       description: "See the face your chart points to",
       cta: "Draw them",
-      premiumOnly: true,
+      premiumOnly: false,
     },
     {
       href: "/rituals",
@@ -678,7 +726,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
-              const showPremiumBadge = action.premiumOnly && isFree;
+              const chip = chipFor(action.href);
+              const showPremiumBadge = action.premiumOnly && isFree && !chip;
               return (
                 <Link
                   key={action.href}
@@ -689,6 +738,17 @@ export default function DashboardPage() {
                     <span className="absolute right-4 top-4 flex items-center gap-1 rounded-full border border-gold-400/30 bg-gold-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold-300">
                       <Lock className="w-3 h-3" />
                       Premium
+                    </span>
+                  )}
+                  {chip && (
+                    <span
+                      className={`absolute right-4 top-4 rounded-full border px-3 py-1 text-[11px] font-semibold ${
+                        chip.owned
+                          ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                          : "border-gold-400/30 bg-gold-400/10 text-gold-300"
+                      }`}
+                    >
+                      {chip.text}
                     </span>
                   )}
                   <Icon className="w-10 h-10 text-gold-300 mb-3" />
