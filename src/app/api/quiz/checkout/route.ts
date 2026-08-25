@@ -387,7 +387,7 @@ export async function POST(req: NextRequest) {
       // sempre, sem desconto: falha fechada.
       let cancel = `${appUrl}${cancelPath}?canceled=1`;
       if (plan === "FRONT_READING") {
-        const token = await createDownsellGrant({
+        const token = createDownsellGrant({
           email,
           quizSessionId: funnelSessionId,
           checkoutSessionId: null,

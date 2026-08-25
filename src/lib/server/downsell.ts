@@ -20,28 +20,29 @@ const TABLE = "downsell_grants";
  * Devolve o token da cancel_url, ou null se não deu para registrar (aí a
  * cancel_url volta para a VSL, sem oferta de desconto).
  */
-export async function createDownsellGrant(params: {
+export function createDownsellGrant(params: {
   email: string;
   quizSessionId?: string | null;
   checkoutSessionId?: string | null;
-}): Promise<string | null> {
+}): string {
   const token = randomUUID().replace(/-/g, "");
-  try {
-    const { error } = await getSupabaseAdmin().from(TABLE).insert({
+  // FORA do caminho crítico (25/08): o clique de compra esperava ~250ms
+  // por este insert antes de falar com a Stripe. O token volta na hora e
+  // o insert corre em paralelo com a criação da sessão (~1s) — se ele
+  // perder a corrida ou falhar, o token não acha grant e resolveDownsell
+  // devolve preço cheio: falha fechada, como sempre.
+  void getSupabaseAdmin()
+    .from(TABLE)
+    .insert({
       token,
       email: params.email.toLowerCase(),
       quiz_session_id: params.quizSessionId ?? null,
       stripe_checkout_session_id: params.checkoutSessionId ?? null,
+    })
+    .then(({ error }) => {
+      if (error) console.warn("[downsell] grant não registrado:", error.message);
     });
-    if (error) {
-      console.warn("[downsell] grant não registrado:", error.message);
-      return null;
-    }
-    return token;
-  } catch (e) {
-    console.warn("[downsell] grant falhou:", e);
-    return null;
-  }
+  return token;
 }
 
 export interface DownsellDecision {
