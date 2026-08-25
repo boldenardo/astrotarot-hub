@@ -22,13 +22,17 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 
 export const runtime = "nodejs";
 
-/** Catálogo dos OTOs cobráveis em um clique. Valores em centavos, USD. */
+/**
+ * Catálogo dos OTOs cobráveis em um clique. Centavos POR MOEDA — o OTO
+ * cobra na moeda em que a pessoa acabou de pagar (cartão ZA em USD é
+ * recusa na certa; ver portrait-upsell, mesma regra).
+ */
 const OTOS: Record<
   string,
-  { amount: number; description: string; plan: string }
+  { amounts: Record<string, number>; description: string; plan: string }
 > = {
   OTO_PASTLIFE: {
-    amount: 2700,
+    amounts: { usd: 2700, zar: 49900 },
     description: "AstroTarot — Past Life Connection",
     plan: "OTO_PASTLIFE",
   },
@@ -132,10 +136,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No card on file." }, { status: 400 });
     }
 
+    // Moeda de origem: PI custom tem price_currency na metadata; sessão
+    // hospedada usa currency da própria sessão. Fallback USD.
+    let originCurrency = "usd";
+    if (sessionId.startsWith("pi_")) {
+      const opi = await stripe.paymentIntents.retrieve(sessionId);
+      originCurrency = opi.currency ?? "usd";
+    } else {
+      const osess = await stripe.checkout.sessions.retrieve(sessionId);
+      originCurrency = osess.currency ?? "usd";
+    }
+    const otoAmount = oto.amounts[originCurrency] ?? oto.amounts.usd;
+
     const intent = await stripe.paymentIntents.create(
       {
-        amount: oto.amount,
-        currency: "usd",
+        amount: otoAmount,
+        currency: oto.amounts[originCurrency] ? originCurrency : "usd",
         customer: customerId,
         payment_method: paymentMethod,
         off_session: true,
@@ -218,8 +234,8 @@ export async function POST(req: NextRequest) {
     // verdade do entitlement.
     try {
       await getSupabaseAdmin().from("payments").insert({
-        amount: oto.amount / 100,
-        currency: "usd",
+        amount: otoAmount / 100,
+        currency: oto.amounts[originCurrency] ? originCurrency : "usd",
         status: "COMPLETED",
         payment_type: "OTO",
         stripe_payment_intent_id: intent.id,
@@ -228,7 +244,7 @@ export async function POST(req: NextRequest) {
       // silêncio proposital
     }
 
-    return NextResponse.json({ ok: true, amount: oto.amount / 100 });
+    return NextResponse.json({ ok: true, amount: otoAmount / 100 });
   } catch (e) {
     console.error("[/api/quiz/oto] falhou:", e);
     return NextResponse.json(

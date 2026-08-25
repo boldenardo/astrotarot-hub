@@ -23,15 +23,11 @@ import { trackEvent } from "@/lib/analytics";
 import { QUIZ_STORAGE_KEY } from "@/lib/quiz-data";
 import { getFunnelSessionId, getUtmParams } from "@/lib/funnel-session";
 import { getStoredRef } from "@/lib/affiliate";
-import {
-  FRONT_PRICE_USD,
-  FRONT_INCLUDES,
-  GUARANTEE_DAYS,
-} from "@/lib/offer";
+import { FRONT_INCLUDES, GUARANTEE_DAYS } from "@/lib/offer";
+import { fmtMoney } from "@/lib/pricing";
+import { useLocalPricing } from "@/lib/pricing-client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const CORD_USD = 9;
-const VIBES_USD = 19;
 
 // Cartas de desconto pré-checkout: 5 cartas reais — 3× 5%, 1× 20%, 1× 30%.
 // O baralho é embaralhado de verdade no client; o 5% cai mais porque há
@@ -48,9 +44,7 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-/** $29 ou $27.55 — sem ".00" pendurado. */
-const fmtUsd = (v: number) =>
-  Number.isInteger(v) ? `$${v}` : `$${v.toFixed(2)}`;
+
 
 let stripePromise: Promise<StripeJs | null> | null = null;
 function getStripe() {
@@ -109,6 +103,10 @@ interface PiState {
 }
 
 export default function CustomCheckout() {
+  // Moeda do visitante (ZA→ZAR; resto USD). Exibição — a cobrança usa o
+  // MESMO país, resolvido no servidor pelo header de IP.
+  const cur = useLocalPricing();
+  const fmt = (v: number) => fmtMoney(cur, v);
   const [email, setEmail] = useState("");
   const [name, setName] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -228,9 +226,9 @@ export default function CustomCheckout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, advanced]);
 
-  const frontFinal = (FRONT_PRICE_USD * (100 - (discount ?? 0))) / 100;
+  const frontFinal = (cur.front * (100 - (discount ?? 0))) / 100;
   const total =
-    frontFinal + (bumps.cord ? CORD_USD : 0) + (bumps.vibes ? VIBES_USD : 0);
+    frontFinal + (bumps.cord ? cur.cord : 0) + (bumps.vibes ? cur.vibes : 0);
 
   const toggleBump = useCallback(
     async (key: "cord" | "vibes") => {
@@ -286,7 +284,7 @@ export default function CustomCheckout() {
         </h1>
         <p className="mx-auto mt-3 max-w-sm text-center text-sm text-ink-300">
           Pick a card. The discount you reveal applies to today&apos;s reading
-          — from 5% to 30% off the {fmtUsd(FRONT_PRICE_USD)}.
+          — from 5% to 30% off the {fmt(cur.front)}.
         </p>
 
         <div className="mt-8 grid grid-cols-5 gap-2 sm:gap-3">
@@ -344,7 +342,7 @@ export default function CustomCheckout() {
             <p className="text-[15px] font-semibold text-white">
               Your card revealed{" "}
               <span className="text-gold">{cards[picked]}% off</span> — your
-              reading comes out at {fmtUsd(frontFinal)}.
+              reading comes out at {fmt(frontFinal)}.
             </p>
             {secondsLeft !== null && secondsLeft > 0 && (
               <p className="mt-2 text-[13px] font-medium text-gold-300" role="status">
@@ -426,21 +424,21 @@ export default function CustomCheckout() {
               {name ? `${name}'s ` : "Your "}Soulmate Reading + Portrait
             </p>
             <p className="text-sm text-white/60">
-              <span className="text-white/40 line-through">$30–$150 per session</span>{" "}
+              <span className="text-white/40 line-through">{fmt(cur.list)}</span>{" "}
               {discount ? (
                 <>
                   <span className="text-white/40 line-through">
-                    {fmtUsd(FRONT_PRICE_USD)}
+                    {fmt(cur.front)}
                   </span>{" "}
                   <span className="text-[15px] font-bold text-gold">
-                    {fmtUsd(frontFinal)}
+                    {fmt(frontFinal)}
                   </span>{" "}
                   once &middot; your card unlocked {discount}% off
                 </>
               ) : (
                 <>
                   <span className="text-[15px] font-bold text-gold">
-                    {fmtUsd(FRONT_PRICE_USD)}
+                    {fmt(cur.front)}
                   </span>{" "}
                   once
                 </>
@@ -479,7 +477,7 @@ export default function CustomCheckout() {
         </span>
         <span className="min-w-0">
           <span className="text-sm font-semibold text-white">
-            Add The Cord Reading — ${CORD_USD}
+            Add The Cord Reading — {fmt(cur.cord)}
           </span>
           <span className="mt-0.5 block text-[13px] leading-snug text-white/65">
             Something in your answers was unsettled. This reads what is still
@@ -515,7 +513,7 @@ export default function CustomCheckout() {
         </span>
         <span className="min-w-0">
           <span className="text-sm font-semibold text-white">
-            Add Vibes &amp; Meditations — ${VIBES_USD}
+            Add Vibes &amp; Meditations — {fmt(cur.vibes)}
           </span>
           <span className="mt-0.5 block text-[13px] leading-snug text-white/65">
             Guided audio sessions tuned to your intention — love, luck and
@@ -698,6 +696,9 @@ function PayBlock({
   piId: string;
   grantToken: string | null;
 }) {
+  // Mesmo grid do pai (o fetch do /api/geo é cacheado pelo browser).
+  const cur = useLocalPricing();
+  const fmt = (v: number) => fmtMoney(cur, v);
   const stripe = useStripe();
   const elements = useElements();
   const [paying, setPaying] = useState(false);
@@ -764,7 +765,7 @@ function PayBlock({
             Confirming...
           </>
         ) : (
-          <>Get my reading — {fmtUsd(total)} · risk-free</>
+          <>Get my reading — {fmt(total)} · risk-free</>
         )}
       </button>
       {error && (

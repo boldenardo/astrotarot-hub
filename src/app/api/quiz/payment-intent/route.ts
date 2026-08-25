@@ -18,13 +18,9 @@ import { normalizeEmail } from "@/lib/email-normalize";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { createDownsellGrant } from "@/lib/server/downsell";
 import { normalizeCode } from "@/lib/affiliate";
+import { gridForCountry, type CurrencyGrid } from "@/lib/pricing";
 
 export const runtime = "nodejs";
-
-const FRONT_CENTS =
-  String(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 29) === "37" ? 3700 : 2900;
-const BUMP_CORD_CENTS = 900;
-const BUMP_VIBES_CENTS = 1900;
 
 // Desconto das cartas pré-checkout: só estes percentuais existem no jogo
 // (3 cartas de 5%, 1 de 20%, 1 de 30%). Qualquer outro valor vira 0.
@@ -35,15 +31,17 @@ function parseDiscount(v: unknown): number {
   return ALLOWED_DISCOUNTS.has(n) ? n : 0;
 }
 
+// Centavos na moeda do grid. ZAR e USD têm 2 casas — *100 vale p/ ambos.
 function amountFor(
+  grid: CurrencyGrid,
   bumps: { cord?: boolean; vibes?: boolean },
   discountPct = 0
 ): number {
-  const front = Math.round((FRONT_CENTS * (100 - discountPct)) / 100);
+  const front = Math.round((grid.front * 100 * (100 - discountPct)) / 100);
   return (
     front +
-    (bumps.cord ? BUMP_CORD_CENTS : 0) +
-    (bumps.vibes ? BUMP_VIBES_CENTS : 0)
+    (bumps.cord ? grid.cord * 100 : 0) +
+    (bumps.vibes ? grid.vibes * 100 : 0)
   );
 }
 
@@ -75,6 +73,13 @@ export async function POST(req: NextRequest) {
     vibes: Boolean(body.bumps?.vibes),
   };
 
+  // MOEDA PELO PAÍS DO IP — mesmo header que alimenta o /api/geo que a
+  // página usa para EXIBIR: cobrança e vitrine nunca divergem. O header
+  // é escrito pela borda da Vercel (não é forjável de fora). Fase 1:
+  // ZA→ZAR (R549 aprovado pelo dono, 26/08); resto do mundo em USD.
+  const country = req.headers.get("x-vercel-ip-country");
+  const grid = gridForCountry(country);
+
   // ── update: bump (des)marcado ─────────────────────────────────────────
   if (body.action === "update") {
     const piId = body.piId ?? "";
@@ -94,8 +99,11 @@ export async function POST(req: NextRequest) {
       // na metadata — o update não aceita um novo, para um POST forjado
       // não baixar o preço depois.
       const discountPct = parseDiscount(pi.metadata?.discount_pct);
+      // A moeda do PI não muda no update: recalcula no MESMO grid em que
+      // ele nasceu (gravado na metadata), nunca no do request atual.
+      const piGrid = gridForCountry(pi.metadata?.price_country);
       const updated = await stripe.paymentIntents.update(piId, {
-        amount: amountFor(bumps, discountPct),
+        amount: amountFor(piGrid, bumps, discountPct),
         metadata: {
           ...pi.metadata,
           bump_cord: bumps.cord ? "1" : "0",
@@ -151,8 +159,8 @@ export async function POST(req: NextRequest) {
     }
 
     const pi = await stripe.paymentIntents.create({
-      amount: amountFor(bumps, discountPct),
-      currency: "usd",
+      amount: amountFor(grid, bumps, discountPct),
+      currency: grid.code,
       customer: customerId,
       // Cartão salvo → OTO da thank-you continua one-click.
       setup_future_usage: "off_session",
@@ -166,6 +174,8 @@ export async function POST(req: NextRequest) {
         bump_cord: bumps.cord ? "1" : "0",
         bump_vibes: bumps.vibes ? "1" : "0",
         discount_pct: String(discountPct),
+        price_country: (country ?? "").toUpperCase(),
+        price_currency: grid.code,
         ...(funnelSessionId ? { funnel_session_id: funnelSessionId } : {}),
         ...(variant ? { page_variant: variant } : {}),
         ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),
@@ -185,6 +195,8 @@ export async function POST(req: NextRequest) {
       clientSecret: pi.client_secret,
       piId: pi.id,
       amount: pi.amount,
+      currency: grid.code,
+      symbol: grid.symbol,
       grantToken,
     });
   } catch (e) {

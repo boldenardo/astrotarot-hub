@@ -78,6 +78,8 @@ import {
   GUARANTEE_DAYS,
 } from "@/lib/offer";
 import { OFFER_LAYOUT } from "@/components/PlanPicker";
+import { fmtMoney } from "@/lib/pricing";
+import { useLocalPricing } from "@/lib/pricing-client";
 
 // Oferta atual: front de pagamento único (ver src/lib/offer.ts).
 // O front é UM produto de pagamento único. A assinatura saiu daqui e vive
@@ -426,6 +428,7 @@ function GalaxyBackdrop() {
 
 export default function QuizVslV2Page() {
   const [store, setStore] = useState<QuizStore>({});
+  const cur = useLocalPricing();
   const [loadingPlan, setLoadingPlan] = useState<PlanKey | null>(null);
   // Ciclo selecionado no PlanPicker — mensal (o preço prometido) por padrão.
   const selectedPlan = FRONT_PLAN;
@@ -864,7 +867,7 @@ export default function QuizVslV2Page() {
         )}
       </button>
       <p className="mt-3 text-center text-xs leading-relaxed text-white/55">
-        One payment of {FRONT_PRICE_LABEL} &middot; Instant access &middot;{" "}
+        One payment of {fmtMoney(cur, cur.front)} &middot; Instant access &middot;{" "}
         {GUARANTEE_DAYS}-day money back &middot; Secure checkout by Stripe
       </p>
       {/* Redirect engolido pela webview: uma linha, sem berrar. */}
@@ -1118,9 +1121,9 @@ export default function QuizVslV2Page() {
             <p className="mt-6 text-[15px] font-semibold leading-relaxed text-white">
               One payment of{" "}
               <span className="text-white/45 line-through">
-                {FRONT_LIST_PRICE_LABEL}
+                {fmtMoney(cur, cur.list)}
               </span>{" "}
-              {FRONT_PRICE_LABEL}. Yours to keep.
+              {fmtMoney(cur, cur.front)}. Yours to keep.
             </p>
             <p className="mt-1 text-[13px] text-white/55">
               {LIST_DISCOUNT_PCT}% off the regular price — for quiz readers
