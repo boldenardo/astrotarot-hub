@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "validate:env": "node scripts/validate-env.js",
-    "seo:audit": "node scripts/seo-audit.mjs"
+    "seo:audit": "node scripts/seo-audit.mjs",
+    "upload:vibes": "node scripts/upload-vibes-audio.mjs"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",

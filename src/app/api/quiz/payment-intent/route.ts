@@ -26,9 +26,22 @@ const FRONT_CENTS =
 const BUMP_CORD_CENTS = 900;
 const BUMP_VIBES_CENTS = 1900;
 
-function amountFor(bumps: { cord?: boolean; vibes?: boolean }): number {
+// Desconto das cartas pré-checkout: só estes percentuais existem no jogo
+// (3 cartas de 5%, 1 de 20%, 1 de 30%). Qualquer outro valor vira 0.
+const ALLOWED_DISCOUNTS = new Set([0, 5, 20, 30]);
+
+function parseDiscount(v: unknown): number {
+  const n = typeof v === "number" ? v : Number(v);
+  return ALLOWED_DISCOUNTS.has(n) ? n : 0;
+}
+
+function amountFor(
+  bumps: { cord?: boolean; vibes?: boolean },
+  discountPct = 0
+): number {
+  const front = Math.round((FRONT_CENTS * (100 - discountPct)) / 100);
   return (
-    FRONT_CENTS +
+    front +
     (bumps.cord ? BUMP_CORD_CENTS : 0) +
     (bumps.vibes ? BUMP_VIBES_CENTS : 0)
   );
@@ -40,6 +53,7 @@ export async function POST(req: NextRequest) {
     email?: string;
     name?: string;
     bumps?: { cord?: boolean; vibes?: boolean };
+    discountPct?: number;
     piId?: string;
     funnelSessionId?: string;
     variant?: string;
@@ -76,8 +90,12 @@ export async function POST(req: NextRequest) {
       ) {
         return NextResponse.json({ error: "Not editable." }, { status: 400 });
       }
+      // O desconto é decidido pelas cartas ANTES de criar o PI e gravado
+      // na metadata — o update não aceita um novo, para um POST forjado
+      // não baixar o preço depois.
+      const discountPct = parseDiscount(pi.metadata?.discount_pct);
       const updated = await stripe.paymentIntents.update(piId, {
-        amount: amountFor(bumps),
+        amount: amountFor(bumps, discountPct),
         metadata: {
           ...pi.metadata,
           bump_cord: bumps.cord ? "1" : "0",
@@ -107,6 +125,8 @@ export async function POST(req: NextRequest) {
   const variant =
     typeof body.variant === "string" ? body.variant.slice(0, 64) : undefined;
   const affiliateCode = normalizeCode(body.ref);
+  // Percentual revelado pelas cartas — validado contra o conjunto do jogo.
+  const discountPct = parseDiscount(body.discountPct);
 
   const utmMeta: Record<string, string> = {};
   for (const k of ["utm_source", "utm_medium", "utm_campaign", "utm_content"]) {
@@ -131,7 +151,7 @@ export async function POST(req: NextRequest) {
     }
 
     const pi = await stripe.paymentIntents.create({
-      amount: amountFor(bumps),
+      amount: amountFor(bumps, discountPct),
       currency: "usd",
       customer: customerId,
       // Cartão salvo → OTO da thank-you continua one-click.
@@ -145,6 +165,7 @@ export async function POST(req: NextRequest) {
         quiz_email: email,
         bump_cord: bumps.cord ? "1" : "0",
         bump_vibes: bumps.vibes ? "1" : "0",
+        discount_pct: String(discountPct),
         ...(funnelSessionId ? { funnel_session_id: funnelSessionId } : {}),
         ...(variant ? { page_variant: variant } : {}),
         ...(affiliateCode ? { affiliate_code: affiliateCode } : {}),

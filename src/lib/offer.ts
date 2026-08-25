@@ -21,6 +21,20 @@ export const FRONT_PRICE_USD = Number(
 
 export const FRONT_PRICE_LABEL = `$${FRONT_PRICE_USD}`;
 
+/**
+ * Preço de TABELA (26/08, decisão do dono): $58 é o preço real das
+ * páginas diretas (home, /soulmate) — o funil vende os mesmos $58 com
+ * 50% de desconto para quem completou o quiz. O desconto riscado é
+ * verdadeiro porque o preço cheio EXISTE e é cobrado fora do funil.
+ */
+export const FRONT_LIST_PRICE_USD = Number(
+  process.env.NEXT_PUBLIC_FRONT_LIST_PRICE_USD || 58
+);
+export const FRONT_LIST_PRICE_LABEL = `$${FRONT_LIST_PRICE_USD}`;
+export const LIST_DISCOUNT_PCT = Math.round(
+  (1 - FRONT_PRICE_USD / FRONT_LIST_PRICE_USD) * 100
+);
+
 /** Janela de garantia, também testável sem deploy (30 ou 60). */
 export const GUARANTEE_DAYS = Number(
   process.env.NEXT_PUBLIC_GUARANTEE_DAYS || 30

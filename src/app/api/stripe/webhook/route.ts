@@ -10,6 +10,7 @@ import {
   welcomeEmail,
   paymentFailedEmail,
   abandonedPortraitEmail,
+  reviewAskHtml,
 } from "@/lib/server/email-templates";
 import { DEFAULT_LOCALE } from "@/lib/i18n";
 import { unsubscribeUrl } from "@/lib/server/email-unsubscribe";
@@ -691,6 +692,7 @@ export async function POST(req: NextRequest) {
           email: piEmail,
           locale: DEFAULT_LOCALE,
         });
+        piMail.html = piMail.html.replace("</body>", reviewAskHtml() + "</body>");
         await sendEmail({ to: piEmail, ...piMail });
 
         console.log(
@@ -908,6 +910,34 @@ export async function POST(req: NextRequest) {
             session?.metadata?.product === "soulmate_portrait" ||
             (!!PORTRAIT_PRICE &&
               session?.metadata?.price_id === PORTRAIT_PRICE);
+
+          // Checkout próprio (Payment Element): não há Session — a
+          // verdade está na metadata do PaymentIntent. Reembolso do
+          // front derruba o retrato e os bumps que vieram junto.
+          if (!session) {
+            const pi = await stripe.paymentIntents.retrieve(intentId);
+            if (pi.metadata?.source === "custom_checkout") {
+              isPortraitCharge = true;
+              if (pi.metadata?.bump_vibes === "1") {
+                await setEntitlement({
+                  userId: user.id,
+                  feature: "vibes",
+                  active: false,
+                  source: "custom_checkout",
+                  reference: charge.id,
+                });
+              }
+              if (pi.metadata?.bump_cord === "1") {
+                await setEntitlement({
+                  userId: user.id,
+                  feature: "cord_reading",
+                  active: false,
+                  source: "custom_checkout",
+                  reference: charge.id,
+                });
+              }
+            }
+          }
         }
 
         if (isPortraitCharge) {

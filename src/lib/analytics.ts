@@ -88,6 +88,7 @@ export type AnalyticsEvent =
   // Painel de checkout embutido — separa "não viu o formulário" de
   // "viu e desistiu" (sem isto, 8 sessões sem cartão eram um mistério).
   | "checkout_form_opened"
+  | "checkout_discount_card_picked"
   | "checkout_form_loaded"
   | "checkout_form_slow"
   | "checkout_form_timeout"

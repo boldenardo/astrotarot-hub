@@ -51,18 +51,35 @@ export default function VibesPage() {
   // Um áudio por vez: tocar outro para o anterior.
   useEffect(() => () => audio?.pause(), [audio]);
 
-  const toggle = (track: VibeTrack) => {
+  const toggle = async (track: VibeTrack) => {
     if (playing === track.id) {
       audio?.pause();
       setPlaying(null);
       return;
     }
     audio?.pause();
-    const next = new Audio(track.src);
-    next.play().catch(() => setError("This track couldn't play."));
-    next.onended = () => setPlaying(null);
-    setAudio(next);
-    setPlaying(track.id);
+    setError(null);
+    // O áudio mora num bucket privado: trocamos o id da faixa por uma
+    // signed URL de curta duração (a rota confere o entitlement).
+    try {
+      const res = await fetch(`/api/vibes/stream?track=${track.id}`);
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.url) {
+        setError(data.error || "This track couldn't play.");
+        setPlaying(null);
+        return;
+      }
+      const next = new Audio(data.url);
+      next.play().catch(() => setError("This track couldn't play."));
+      next.onended = () => setPlaying(null);
+      setAudio(next);
+      setPlaying(track.id);
+    } catch {
+      setError("Network error. Please try again.");
+    }
   };
 
   const subscribe = async () => {

@@ -272,6 +272,18 @@ export function abandonedCartEmail(input: {
 /* 3. Boas-vindas pós-compra — com o passo de ativação (criar conta).   */
 /* ------------------------------------------------------------------ */
 
+/**
+ * P.S. do e-mail de boas-vindas: pede UMA frase de review em resposta.
+ * É a máquina de depoimentos REAIS — cada venda vira prova com nome,
+ * sobre o nosso produto, sem fabricar nada. As respostas caem na caixa
+ * do endereço de envio (EMAIL_FROM).
+ */
+export function reviewAskHtml(): string {
+  return p(
+    `<span style="color:${MUTED};font-size:13px;">P.S. When you have read it — just hit reply and tell me one thing your reading got right. Real answers from real readers are the only reviews we show.</span>`
+  );
+}
+
 export function welcomeEmail(input: {
   name?: string | null;
   email: string;

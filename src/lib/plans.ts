@@ -1,7 +1,7 @@
 // Fonte única de verdade para planos, preços e matriz de features.
 // Usado tanto no client (exibição) quanto no server (gating).
 
-import { FRONT_PRICE_LABEL } from "./offer";
+import { FRONT_LIST_PRICE_LABEL } from "./offer";
 
 export const PLANS = {
   FREE: "FREE",
@@ -74,7 +74,9 @@ export const SOULMATE_PORTRAIT = {
   // MESMO preço e MESMO produto do front do funil (24/08): o site mostrava
   // $24.99 aqui e $9.99/mês na VSL — dois modelos de receita para o mesmo
   // visitante, na mesma visita.
-  priceLabel: FRONT_PRICE_LABEL,
+  // Preço de TABELA: fora do funil o retrato custa o cheio ($58). O
+  // funil vende com 50% off — desconto real porque este preço existe.
+  priceLabel: FRONT_LIST_PRICE_LABEL,
   period: "one-time payment",
   features: [
     "Your soulmate's portrait, unblurred",

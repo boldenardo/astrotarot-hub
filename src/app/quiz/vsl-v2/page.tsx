@@ -70,6 +70,8 @@ import {
 } from "@/lib/funnel-variant";
 import {
   FRONT_PRICE_LABEL,
+  FRONT_LIST_PRICE_LABEL,
+  LIST_DISCOUNT_PCT,
   FRONT_PRICE_USD,
   FRONT_OFFER_ID,
   FRONT_INCLUDES,
@@ -1114,7 +1116,15 @@ export default function QuizVslV2Page() {
             </ul>
 
             <p className="mt-6 text-[15px] font-semibold leading-relaxed text-white">
-              One payment of {FRONT_PRICE_LABEL}. Yours to keep.
+              One payment of{" "}
+              <span className="text-white/45 line-through">
+                {FRONT_LIST_PRICE_LABEL}
+              </span>{" "}
+              {FRONT_PRICE_LABEL}. Yours to keep.
+            </p>
+            <p className="mt-1 text-[13px] text-white/55">
+              {LIST_DISCOUNT_PCT}% off the regular price — for quiz readers
+              only.
             </p>
 
             <p className="mt-4 text-[15px] leading-relaxed text-white/75">

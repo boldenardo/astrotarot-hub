@@ -33,6 +33,25 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const CORD_USD = 9;
 const VIBES_USD = 19;
 
+// Cartas de desconto pré-checkout: 5 cartas reais — 3× 5%, 1× 20%, 1× 30%.
+// O baralho é embaralhado de verdade no client; o 5% cai mais porque há
+// mais cartas dele, não porque o jogo manipula o resultado. O percentual
+// é revalidado no servidor (ALLOWED_DISCOUNTS) — o client nunca manda valor.
+const CARD_DISCOUNTS = [5, 5, 5, 20, 30];
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** $29 ou $27.55 — sem ".00" pendurado. */
+const fmtUsd = (v: number) =>
+  Number.isInteger(v) ? `$${v}` : `$${v.toFixed(2)}`;
+
 let stripePromise: Promise<StripeJs | null> | null = null;
 function getStripe() {
   if (!stripePromise) {
@@ -60,7 +79,27 @@ const PROOF_PHOTOS = [
   "/social-proof/couple-1.webp",
   "/social-proof/couple-4.webp",
   "/social-proof/couple-3.webp",
+  // Casais do funil irmão — fotos de gente sozinha foram descartadas.
+  "/social-proof/marie/extra-05.png",
+  "/social-proof/marie/extra-06.png",
+  "/social-proof/marie/extra-09.png",
 ];
+
+// Mural de reviews: o print de comentários do Facebook, com a faixa de
+// estrelas logo abaixo dele (pedido do dono). Prints de pessoas sozinhas
+// (extra-03, 04, 08, 10, 11) ficaram de fora — o grid é só de casais.
+const REVIEW_SHOTS = [
+  "/social-proof/marie/extra-12.png",
+];
+
+// Urgência REAL: a carta revelada segura o desconto por 15 min nesta
+// sessão. Expirou antes de avançar → escolhe de novo. Depois de avançar,
+// o desconto já está travado na metadata do PaymentIntent ("locked in").
+const DISCOUNT_HOLD_MS = 15 * 60 * 1000;
+const DEADLINE_KEY = "ck_discount_deadline";
+
+const fmtMmSs = (s: number) =>
+  `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 interface PiState {
   clientSecret: string;
@@ -76,7 +115,51 @@ export default function CustomCheckout() {
   const [pi, setPi] = useState<PiState | null>(null);
   const [creating, setCreating] = useState(false);
   const [bumps, setBumps] = useState({ cord: false, vibes: false });
+  // Etapa das cartas: `advanced` vira true depois da escolha (ou do botão
+  // de continuar) e libera o formulário de pagamento.
+  const [cards] = useState(() => shuffle(CARD_DISCOUNTS));
+  const [picked, setPicked] = useState<number | null>(null);
+  const [advanced, setAdvanced] = useState(false);
   const startedRef = useRef(false);
+
+  const discount = picked !== null ? cards[picked] : null;
+
+  // Contador de urgência — persiste na sessão (sobrevive a refresh na aba).
+  const [deadline, setDeadline] = useState<number | null>(null);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DEADLINE_KEY);
+      if (raw) setDeadline(Number(raw));
+    } catch {
+      // sem storage: o contador simplesmente não persiste
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!deadline) return;
+    const t = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [deadline]);
+
+  const secondsLeft = deadline
+    ? Math.max(0, Math.floor((deadline - nowTs) / 1000))
+    : null;
+
+  // Expirou ANTES de avançar: o desconto volta pro baralho e a pessoa
+  // escolhe outra carta. Depois de avançar, o desconto já está no PI.
+  useEffect(() => {
+    if (secondsLeft === 0 && !advanced && picked !== null) {
+      setPicked(null);
+      setDeadline(null);
+      try {
+        sessionStorage.removeItem(DEADLINE_KEY);
+      } catch {
+        // idem
+      }
+    }
+  }, [secondsLeft, advanced, picked]);
 
   useEffect(() => {
     try {
@@ -106,6 +189,7 @@ export default function CustomCheckout() {
             email: mail,
             name,
             bumps,
+            discountPct: discount ?? 0,
             funnelSessionId: getFunnelSessionId(),
             variant: "custom_checkout",
             ref: getStoredRef(),
@@ -132,19 +216,21 @@ export default function CustomCheckout() {
       }
       setCreating(false);
     },
-    [creating, name, bumps]
+    [creating, name, bumps, discount]
   );
 
-  // E-mail já veio do quiz → cria o intent sozinho.
+  // E-mail já veio do quiz → cria o intent sozinho. Só depois das cartas:
+  // o desconto escolhido precisa entrar na criação do PaymentIntent.
   useEffect(() => {
-    if (email && EMAIL_RE.test(email) && !pi && !startedRef.current) {
+    if (advanced && email && EMAIL_RE.test(email) && !pi && !startedRef.current) {
       void createIntent(email);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email]);
+  }, [email, advanced]);
 
+  const frontFinal = (FRONT_PRICE_USD * (100 - (discount ?? 0))) / 100;
   const total =
-    FRONT_PRICE_USD + (bumps.cord ? CORD_USD : 0) + (bumps.vibes ? VIBES_USD : 0);
+    frontFinal + (bumps.cord ? CORD_USD : 0) + (bumps.vibes ? VIBES_USD : 0);
 
   const toggleBump = useCallback(
     async (key: "cord" | "vibes") => {
@@ -177,6 +263,110 @@ export default function CustomCheckout() {
     [pi]
   );
 
+  // ── Etapa 1: as cartas de desconto ─────────────────────────────────────
+  if (!advanced) {
+    return (
+      <div className="mx-auto w-full max-w-lg px-4 pb-20 pt-10">
+        <div className="flex items-center justify-center">
+          <span className="font-display text-lg font-semibold text-ink-50">
+            Astro<span className="text-gold">Tarot</span>
+          </span>
+        </div>
+        <div className="mt-6 flex justify-center">
+          <Image
+            src="/social-proof/marie/badge-50-off.png"
+            alt=""
+            width={120}
+            height={120}
+            className="h-24 w-24 object-contain"
+          />
+        </div>
+        <h1 className="mt-4 text-center font-display text-2xl font-semibold text-ink-50 sm:text-3xl">
+          {name ? `${name}, one` : "One"} of these cards holds your discount
+        </h1>
+        <p className="mx-auto mt-3 max-w-sm text-center text-sm text-ink-300">
+          Pick a card. The discount you reveal applies to today&apos;s reading
+          — from 5% to 30% off the {fmtUsd(FRONT_PRICE_USD)}.
+        </p>
+
+        <div className="mt-8 grid grid-cols-5 gap-2 sm:gap-3">
+          {cards.map((pct, i) => {
+            const isPicked = picked === i;
+            const revealed = picked !== null;
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={revealed}
+                onClick={() => {
+                  setPicked(i);
+                  const dl = Date.now() + DISCOUNT_HOLD_MS;
+                  setDeadline(dl);
+                  try {
+                    sessionStorage.setItem(DEADLINE_KEY, String(dl));
+                  } catch {
+                    // sem storage: segue sem persistir
+                  }
+                  trackEvent("checkout_discount_card_picked", {
+                    category: "checkout",
+                    label: `card_${i}`,
+                    value: pct,
+                  });
+                }}
+                className={`flex aspect-[3/4] items-center justify-center rounded-xl border text-center transition-all duration-500 ${
+                  isPicked
+                    ? "scale-105 border-gold-400 bg-gold-400/20 shadow-[0_0_24px_rgba(212,175,55,0.35)]"
+                    : revealed
+                      ? "border-white/10 bg-white/[0.03] opacity-50"
+                      : "border-gold-400/40 bg-gradient-to-b from-[#2a1f45] to-[#171226] hover:scale-105 hover:border-gold-400"
+                }`}
+              >
+                {revealed ? (
+                  <span
+                    className={`font-display font-bold ${
+                      isPicked ? "text-lg text-gold sm:text-xl" : "text-sm text-white/50"
+                    }`}
+                  >
+                    {pct}%<br />OFF
+                  </span>
+                ) : (
+                  <span className="text-xl text-gold-400/80" aria-hidden>
+                    ✦
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {picked !== null && (
+          <div className="mt-8 text-center">
+            <p className="text-[15px] font-semibold text-white">
+              Your card revealed{" "}
+              <span className="text-gold">{cards[picked]}% off</span> — your
+              reading comes out at {fmtUsd(frontFinal)}.
+            </p>
+            {secondsLeft !== null && secondsLeft > 0 && (
+              <p className="mt-2 text-[13px] font-medium text-gold-300" role="status">
+                Discount held for{" "}
+                <span className="font-bold tabular-nums">{fmtMmSs(secondsLeft)}</span>
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => setAdvanced(true)}
+              className="btn-gold mt-5 flex min-h-[52px] w-full items-center justify-center rounded-full font-semibold"
+            >
+              Continue to my checkout
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Etapa 2: o checkout ────────────────────────────────────────────────
+
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-20 pt-6">
       {/* Cabeçalho de segurança */}
@@ -188,6 +378,26 @@ export default function CustomCheckout() {
           <Lock className="h-3.5 w-3.5" aria-hidden /> Secure checkout
         </span>
       </div>
+
+      {/* Urgência — o desconto da carta é real e tem validade nesta sessão */}
+      {discount !== null && secondsLeft !== null && (
+        <div className="mt-4 rounded-xl border border-gold-400/40 bg-gold-400/10 px-4 py-2.5 text-center text-[13px] text-white">
+          {secondsLeft > 0 ? (
+            <>
+              Your <span className="font-bold text-gold">{discount}% off</span>{" "}
+              is reserved for{" "}
+              <span className="font-bold tabular-nums text-gold">
+                {fmtMmSs(secondsLeft)}
+              </span>
+            </>
+          ) : (
+            <>
+              Your <span className="font-bold text-gold">{discount}% off</span>{" "}
+              is locked in for this order
+            </>
+          )}
+        </div>
+      )}
 
       {/* Risco zero no topo — a manchete do checkout de referência, na
           nossa versão honesta (a garantia é real e já está na LP). */}
@@ -217,8 +427,25 @@ export default function CustomCheckout() {
             </p>
             <p className="text-sm text-white/60">
               <span className="text-white/40 line-through">$30–$150 per session</span>{" "}
-              <span className="text-[15px] font-bold text-gold">${FRONT_PRICE_USD}</span>{" "}
-              once &middot; yours to keep
+              {discount ? (
+                <>
+                  <span className="text-white/40 line-through">
+                    {fmtUsd(FRONT_PRICE_USD)}
+                  </span>{" "}
+                  <span className="text-[15px] font-bold text-gold">
+                    {fmtUsd(frontFinal)}
+                  </span>{" "}
+                  once &middot; your card unlocked {discount}% off
+                </>
+              ) : (
+                <>
+                  <span className="text-[15px] font-bold text-gold">
+                    {fmtUsd(FRONT_PRICE_USD)}
+                  </span>{" "}
+                  once
+                </>
+              )}{" "}
+              &middot; yours to keep
             </p>
             <p className="mt-0.5 text-[11px] text-white/45">
               A private psychic session ends when the call ends. This one you keep.
@@ -276,6 +503,15 @@ export default function CustomCheckout() {
           }`}
         >
           {bumps.vibes && <Check className="h-4 w-4" aria-hidden />}
+        </span>
+        <span className="relative hidden h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-gold-400/25 sm:block">
+          <Image
+            src="/social-proof/marie/vibes-order-bump.png"
+            alt=""
+            width={128}
+            height={128}
+            className="h-full w-full object-cover"
+          />
         </span>
         <span className="min-w-0">
           <span className="text-sm font-semibold text-white">
@@ -340,19 +576,18 @@ export default function CustomCheckout() {
         )}
       </div>
 
-      {/* SELO de garantia — peso visual de carimbo, claim 100% real */}
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-gold-400/40 bg-gold-400/[0.07] p-3.5">
-        <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border-2 border-gold-400 bg-[#1a1233] text-center">
-          <span className="text-[15px] font-black leading-none text-gold">
-            {GUARANTEE_DAYS}
-          </span>
-          <span className="text-[7px] font-bold uppercase leading-tight tracking-wide text-gold-300">
-            day
-            <br />
-            guarantee
-          </span>
+      {/* SELO de garantia — carimbo dourado do funil irmão, claim real */}
+      <div className="mt-5 flex items-center gap-4 rounded-2xl border border-gold-400/40 bg-gold-400/[0.07] p-3.5">
+        <div className="h-16 w-16 shrink-0">
+          <Image
+            src="/social-proof/marie/guarantee-seal.png"
+            alt=""
+            width={128}
+            height={128}
+            className="block h-16 w-16 object-contain"
+          />
         </div>
-        <p className="text-[13px] leading-snug text-white/80">
+        <p className="min-w-0 flex-1 text-[13px] leading-snug text-white/80">
           <span className="font-semibold text-white">
             {GUARANTEE_DAYS}-day money-back guarantee.
           </span>{" "}
@@ -375,8 +610,18 @@ export default function CustomCheckout() {
           <Lock className="h-3 w-3" aria-hidden /> Powered by Stripe
         </span>
       </div>
+      <div className="mt-2 flex justify-center">
+        <Image
+          src="/social-proof/marie/payment-logos.png"
+          alt=""
+          width={300}
+          height={40}
+          loading="lazy"
+          className="h-auto w-56 opacity-80"
+        />
+      </div>
 
-      {/* Prova social — números reais, fotos reais */}
+      {/* Prova social — números reais, fotos de casais */}
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
         <div className="flex items-center justify-center gap-2">
           <span className="text-[15px] tracking-tight text-gold" aria-hidden>
@@ -401,6 +646,34 @@ export default function CustomCheckout() {
               />
             </div>
           ))}
+        </div>
+
+        {/* Mural de reviews — prints com tamanho uniforme */}
+        <div className="mt-4 space-y-2">
+          {REVIEW_SHOTS.map((p) => (
+            <div key={p} className="overflow-hidden rounded-xl border border-white/10 bg-white">
+              <Image
+                src={p}
+                alt=""
+                width={540}
+                height={400}
+                loading="lazy"
+                sizes="(max-width: 640px) 90vw, 440px"
+                className="h-auto w-full object-contain"
+              />
+            </div>
+          ))}
+          {/* Faixa de estrelas logo abaixo dos comentários do Facebook */}
+          <div className="flex justify-center rounded-xl border border-white/10 bg-[#171226] py-3">
+            <Image
+              src="/social-proof/marie/extra-13.png"
+              alt=""
+              width={250}
+              height={48}
+              loading="lazy"
+              className="h-auto w-52"
+            />
+          </div>
         </div>
         <p className="mt-2 text-center text-[11px] text-white/40">
           Already reading. For reflection and entertainment.
@@ -491,7 +764,7 @@ function PayBlock({
             Confirming...
           </>
         ) : (
-          <>Get my reading — ${total} · risk-free</>
+          <>Get my reading — {fmtUsd(total)} · risk-free</>
         )}
       </button>
       {error && (
@@ -499,6 +772,21 @@ function PayBlock({
           {error}
         </p>
       )}
+      {/* Gatilhos de decisão — todos os claims reais e verificáveis */}
+      <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-white/55">
+        <span className="flex items-center gap-1">
+          <ShieldCheck className="h-3.5 w-3.5 text-gold-400" aria-hidden />
+          Instant access
+        </span>
+        <span className="flex items-center gap-1">
+          <Check className="h-3.5 w-3.5 text-gold-400" aria-hidden />
+          {GUARANTEE_DAYS}-day guarantee
+        </span>
+        <span className="flex items-center gap-1">
+          <Lock className="h-3.5 w-3.5 text-gold-400" aria-hidden />
+          Secure payment
+        </span>
+      </div>
       {grantToken && (
         <p className="mt-3 text-center text-xs text-white/40">
           <a

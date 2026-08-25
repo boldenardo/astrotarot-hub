@@ -51,3 +51,6 @@ avatar conversas.png
 
 # journal local de QA/mutacoes (nunca em git)
 mcp/hotmart/journal.jsonl
+
+# deliverables de mídia (upload via scripts/upload-vibes-audio.mjs)
+/deliverables/
