@@ -748,11 +748,30 @@ export default function QuizVslV2Page() {
     [score, baseParams]
   );
 
+  // CHECKOUT PRÓPRIO (26/08): o CTA leva para /quiz/checkout — página
+  // nossa, modelada no checkout de referência do dono, com bumps e
+  // carteiras inline. NEXT_PUBLIC_CHECKOUT_SURFACE=hosted volta o fluxo
+  // antigo (redirect à Stripe) sem deploy de código novo.
+  const CUSTOM_CHECKOUT =
+    (process.env.NEXT_PUBLIC_CHECKOUT_SURFACE || "custom") === "custom";
+
   const startGuestCheckout = useCallback(
     (plan: PlanKey, ctaPosition: string) => {
       // Guarda síncrona: dois toques rápidos criariam duas Checkout
       // Sessions, e a pessoa poderia pagar as duas.
       if (submittingRef.current || loadingPlan) return;
+
+      if (CUSTOM_CHECKOUT) {
+        trackEvent("checkout_cta_clicked", {
+          ...baseParams(),
+          label: plan,
+          offer: FRONT_OFFER_ID,
+          cta_position: ctaPosition,
+          surface: "custom",
+        });
+        window.location.href = "/quiz/checkout";
+        return;
+      }
       submittingRef.current = true;
 
       // Disparado ANTES de falar com o backend: é a intenção do usuário, e

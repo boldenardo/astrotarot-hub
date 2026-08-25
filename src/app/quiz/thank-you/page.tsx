@@ -38,7 +38,10 @@ interface SessionInfo {
 
 function ThankYouContent() {
   const searchParams = useSearchParams();
-  const sessionId = searchParams.get("session_id");
+  // Duas origens: sessão hospedada (session_id=cs_...) ou checkout
+  // próprio (payment_intent=pi_..., que a Stripe põe na return_url).
+  const sessionId =
+    searchParams.get("session_id") ?? searchParams.get("payment_intent");
   const [email, setEmail] = useState<string | null>(null);
   const [plan, setPlan] = useState<string | null>(null);
   // Upsell anual: idle → loading → done | hidden (erro esconde em silêncio)

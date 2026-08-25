@@ -587,6 +587,124 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      // ── CHECKOUT PRÓPRIO (26/08): a compra vem por PaymentIntent, sem
+      // Checkout Session — a entrega inteira acontece AQUI. Só PIs com
+      // metadata.source=custom_checkout; os PIs de sessões hospedadas não
+      // têm esse metadata e seguem pelo checkout.session.completed.
+      case "payment_intent.succeeded": {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.source !== "custom_checkout") break;
+
+        const piEmail = (pi.metadata.quiz_email || "").toLowerCase().trim();
+        if (!piEmail) break;
+
+        let piUserId: string | null = null;
+        {
+          const { data: existing } = await admin
+            .from("users")
+            .select("id")
+            .eq("email", piEmail)
+            .maybeSingle();
+          if (existing) piUserId = (existing as { id: string }).id;
+          else {
+            const { data: created, error: createErr } = await admin
+              .from("users")
+              .insert({
+                email: piEmail,
+                subscription_plan: "FREE",
+                subscription_status: "active",
+                readings_left: 4,
+              })
+              .select("id")
+              .maybeSingle();
+            if (created) piUserId = (created as { id: string }).id;
+            else if ((createErr as { code?: string } | null)?.code === "23505") {
+              const { data: raced } = await admin
+                .from("users")
+                .select("id")
+                .eq("email", piEmail)
+                .maybeSingle();
+              if (raced) piUserId = (raced as { id: string }).id;
+            }
+          }
+        }
+        if (!piUserId) break;
+
+        const piCustomer =
+          typeof pi.customer === "string" ? pi.customer : pi.customer?.id;
+        if (piCustomer) {
+          await admin
+            .from("users")
+            .update({ stripe_customer_id: piCustomer })
+            .eq("id", piUserId);
+        }
+
+        await admin.from("payments").insert({
+          user_id: piUserId,
+          amount: pi.amount / 100,
+          currency: pi.currency ?? "usd",
+          status: "COMPLETED",
+          payment_type: "FRONT_READING",
+          stripe_payment_intent_id: pi.id,
+          paid_at: new Date().toISOString(),
+        });
+
+        // ENTREGA: retrato sempre; bumps conforme as flags do intent.
+        const piFeatures = ["soulmate_portrait"];
+        if (pi.metadata.bump_cord === "1") piFeatures.push("cord_reading");
+        if (pi.metadata.bump_vibes === "1") piFeatures.push("vibes");
+        for (const feature of piFeatures) {
+          const { data: ent } = await admin
+            .from("user_entitlements")
+            .select("id")
+            .eq("user_id", piUserId)
+            .eq("feature", feature)
+            .maybeSingle();
+          if (ent) {
+            await admin
+              .from("user_entitlements")
+              .update({ active: true, stripe_reference: pi.id })
+              .eq("id", (ent as { id: string }).id);
+          } else {
+            await admin.from("user_entitlements").insert({
+              user_id: piUserId,
+              feature,
+              active: true,
+              source: "custom_checkout",
+              stripe_reference: pi.id,
+            });
+          }
+        }
+
+        await admin
+          .from("leads")
+          .update({ converted_at: new Date().toISOString() })
+          .eq("email", piEmail)
+          .is("converted_at", null);
+        const { data: piLead } = await admin
+          .from("leads")
+          .select("name")
+          .eq("email", piEmail)
+          .maybeSingle();
+        const piMail = welcomeEmail({
+          name: (piLead as { name?: string } | null)?.name ?? null,
+          email: piEmail,
+          locale: DEFAULT_LOCALE,
+        });
+        await sendEmail({ to: piEmail, ...piMail });
+
+        console.log(
+          "[stripe/webhook] custom checkout pago " +
+            pi.id +
+            " " +
+            String(pi.amount / 100) +
+            " -> entregue (" +
+            piFeatures.join(",") +
+            ")"
+        );
+        break;
+      }
+
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
         if (invoice.billing_reason !== "subscription_cycle") break;

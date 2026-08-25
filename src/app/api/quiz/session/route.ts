@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
   const sessionId = req.nextUrl.searchParams.get("session_id") ?? "";
-  if (!/^cs_[a-zA-Z0-9_]+$/.test(sessionId)) {
+  if (!/^(cs|pi)_[a-zA-Z0-9_]+$/.test(sessionId)) {
     return NextResponse.json({ error: "Invalid session id." }, { status: 400 });
   }
 
@@ -25,6 +25,22 @@ export async function GET(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
+    // Compra do checkout próprio: veio por PaymentIntent, não por sessão.
+    if (sessionId.startsWith("pi_")) {
+      const pi = await stripe.paymentIntents.retrieve(sessionId);
+      if (pi.metadata?.source !== "custom_checkout") {
+        return NextResponse.json({ error: "Not found." }, { status: 404 });
+      }
+      return NextResponse.json({
+        portraitIncluded: false,
+        paid: pi.status === "succeeded",
+        amount: pi.amount / 100,
+        currency: pi.currency ?? "usd",
+        plan: "FRONT_READING",
+        email: pi.metadata.quiz_email ?? null,
+      });
+    }
+
     const session = await stripe.checkout.sessions.retrieve(sessionId, {
       expand: ["line_items"],
     });

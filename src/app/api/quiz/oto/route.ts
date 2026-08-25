@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sessionId = body.session_id ?? "";
-  if (!/^cs_[a-zA-Z0-9_]+$/.test(sessionId)) {
+  if (!/^(cs|pi)_[a-zA-Z0-9_]+$/.test(sessionId)) {
     return NextResponse.json({ error: "Invalid session id." }, { status: 400 });
   }
   const oto = OTOS[body.oto ?? ""];
@@ -57,57 +57,76 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    if (
-      session.payment_status !== "paid" ||
-      !["quiz", "quiz_vsl"].includes(session.metadata?.source ?? "")
-    ) {
-      return NextResponse.json({ error: "Not eligible." }, { status: 400 });
+    // Duas origens de compra deixam cartão salvo: Checkout Session
+    // (hospedado) e PaymentIntent do checkout próprio (pi_...).
+    let email = "";
+    let customerId: string | undefined;
+    let paymentMethod: string | undefined;
+
+    if (sessionId.startsWith("pi_")) {
+      const originPi = await stripe.paymentIntents.retrieve(sessionId);
+      if (
+        originPi.status !== "succeeded" ||
+        originPi.metadata?.source !== "custom_checkout"
+      ) {
+        return NextResponse.json({ error: "Not eligible." }, { status: 400 });
+      }
+      email = (originPi.metadata.quiz_email || "").trim().toLowerCase();
+      customerId =
+        typeof originPi.customer === "string"
+          ? originPi.customer
+          : originPi.customer?.id;
+      paymentMethod =
+        typeof originPi.payment_method === "string"
+          ? originPi.payment_method
+          : originPi.payment_method?.id;
+    } else {
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      if (
+        session.payment_status !== "paid" ||
+        !["quiz", "quiz_vsl"].includes(session.metadata?.source ?? "")
+      ) {
+        return NextResponse.json({ error: "Not eligible." }, { status: 400 });
+      }
+      email = (
+        session.metadata?.quiz_email ||
+        session.customer_details?.email ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+      customerId =
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id;
+      if (session.mode === "subscription") {
+        const subId =
+          typeof session.subscription === "string"
+            ? session.subscription
+            : session.subscription?.id;
+        if (subId) {
+          const sub = await stripe.subscriptions.retrieve(subId);
+          paymentMethod =
+            typeof sub.default_payment_method === "string"
+              ? sub.default_payment_method
+              : sub.default_payment_method?.id;
+        }
+      } else {
+        const piId =
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : session.payment_intent?.id;
+        if (piId) {
+          const pi = await stripe.paymentIntents.retrieve(piId);
+          paymentMethod =
+            typeof pi.payment_method === "string"
+              ? pi.payment_method
+              : pi.payment_method?.id;
+        }
+      }
     }
-
-    const email = (
-      session.metadata?.quiz_email ||
-      session.customer_details?.email ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-    const customerId =
-      typeof session.customer === "string"
-        ? session.customer
-        : session.customer?.id;
     if (!customerId) {
       return NextResponse.json({ error: "No customer on file." }, { status: 400 });
-    }
-
-    // O cartão salvo vem de onde a compra veio: da subscription, ou do
-    // PaymentIntent com setup_future_usage (caso do front de $29).
-    let paymentMethod: string | undefined;
-    if (session.mode === "subscription") {
-      const subId =
-        typeof session.subscription === "string"
-          ? session.subscription
-          : session.subscription?.id;
-      if (subId) {
-        const sub = await stripe.subscriptions.retrieve(subId);
-        paymentMethod =
-          typeof sub.default_payment_method === "string"
-            ? sub.default_payment_method
-            : sub.default_payment_method?.id;
-      }
-    } else {
-      const piId =
-        typeof session.payment_intent === "string"
-          ? session.payment_intent
-          : session.payment_intent?.id;
-      if (piId) {
-        const pi = await stripe.paymentIntents.retrieve(piId);
-        paymentMethod =
-          typeof pi.payment_method === "string"
-            ? pi.payment_method
-            : pi.payment_method?.id;
-      }
     }
     if (!paymentMethod) {
       return NextResponse.json({ error: "No card on file." }, { status: 400 });
