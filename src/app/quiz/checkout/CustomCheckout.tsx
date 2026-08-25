@@ -216,9 +216,12 @@ export default function CustomCheckout() {
               {name ? `${name}'s ` : "Your "}Soulmate Reading + Portrait
             </p>
             <p className="text-sm text-white/60">
-              One payment &middot;{" "}
-              <span className="font-semibold text-gold">${FRONT_PRICE_USD}</span>{" "}
-              &middot; yours to keep
+              <span className="text-white/40 line-through">$30–$150 per session</span>{" "}
+              <span className="text-[15px] font-bold text-gold">${FRONT_PRICE_USD}</span>{" "}
+              once &middot; yours to keep
+            </p>
+            <p className="mt-0.5 text-[11px] text-white/45">
+              A private psychic session ends when the call ends. This one you keep.
             </p>
           </div>
         </div>
@@ -280,8 +283,10 @@ export default function CustomCheckout() {
           </span>
           <span className="mt-0.5 block text-[13px] leading-snug text-white/65">
             Guided audio sessions tuned to your intention — love, luck and
-            calm — to listen while your connection unfolds. Lifetime access,
-            inside your account.
+            calm — to listen while your connection unfolds.{" "}
+            <span className="text-gold-300">
+              Lifetime access for less than two months of the $9.99/mo plan.
+            </span>
           </span>
         </span>
       </button>
@@ -335,35 +340,76 @@ export default function CustomCheckout() {
         )}
       </div>
 
-      {/* Confiança — tudo real */}
-      <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-white/50">
-        <span className="flex items-center gap-1">
-          <ShieldCheck className="h-3.5 w-3.5 text-gold-400" aria-hidden />
-          {GUARANTEE_DAYS}-day money back
-        </span>
-        <span className="flex items-center gap-1">
-          <Lock className="h-3.5 w-3.5" aria-hidden /> Secure by Stripe
-        </span>
-        <span>120,000+ readings &middot; 4.9</span>
+      {/* SELO de garantia — peso visual de carimbo, claim 100% real */}
+      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-gold-400/40 bg-gold-400/[0.07] p-3.5">
+        <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border-2 border-gold-400 bg-[#1a1233] text-center">
+          <span className="text-[15px] font-black leading-none text-gold">
+            {GUARANTEE_DAYS}
+          </span>
+          <span className="text-[7px] font-bold uppercase leading-tight tracking-wide text-gold-300">
+            day
+            <br />
+            guarantee
+          </span>
+        </div>
+        <p className="text-[13px] leading-snug text-white/80">
+          <span className="font-semibold text-white">
+            {GUARANTEE_DAYS}-day money-back guarantee.
+          </span>{" "}
+          If the reading doesn&apos;t describe someone you recognize, we refund
+          it — and the portrait stays yours.
+        </p>
       </div>
 
-      <div className="mt-5 grid grid-cols-4 gap-2">
-        {PROOF_PHOTOS.map((p) => (
-          <div key={p} className="overflow-hidden rounded-xl border border-white/10">
-            <Image
-              src={p}
-              alt=""
-              width={270}
-              height={270}
-              loading="lazy"
-              sizes="90px"
-              className="aspect-square h-auto w-full object-cover"
-            />
-          </div>
+      {/* Bandeiras e carteiras — os símbolos que o lead procura na dúvida */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        {["VISA", "Mastercard", "AMEX", "G Pay", "Apple Pay"].map((b) => (
+          <span
+            key={b}
+            className="rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[10px] font-bold tracking-wide text-white/70"
+          >
+            {b}
+          </span>
         ))}
+        <span className="flex items-center gap-1 rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold text-white/70">
+          <Lock className="h-3 w-3" aria-hidden /> Powered by Stripe
+        </span>
       </div>
-      <p className="mt-2 text-center text-[11px] text-white/40">
-        Already reading. For reflection and entertainment.
+
+      {/* Prova social — números reais, fotos reais */}
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-[15px] tracking-tight text-gold" aria-hidden>
+            ★★★★★
+          </span>
+          <span className="text-sm font-semibold text-white">4.9</span>
+        </div>
+        <p className="mt-0.5 text-center text-xs text-white/55">
+          120,000+ readings delivered
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          {PROOF_PHOTOS.map((p) => (
+            <div key={p} className="overflow-hidden rounded-xl border border-white/10">
+              <Image
+                src={p}
+                alt=""
+                width={270}
+                height={270}
+                loading="lazy"
+                sizes="(max-width: 640px) 45vw, 200px"
+                className="aspect-square h-auto w-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+        <p className="mt-2 text-center text-[11px] text-white/40">
+          Already reading. For reflection and entertainment.
+        </p>
+      </div>
+
+      <p className="mt-4 text-center text-[13px] text-white/60">
+        Your portrait is already drawn and linked to this email — it&apos;s
+        waiting on the other side of this page.
       </p>
     </div>
   );
