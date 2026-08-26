@@ -329,7 +329,7 @@ export const BODY_CONFIG: PainFunnelConfig = {
         "with": "From $9.99/month, unlimited readings, cancel anytime, 7-day refund"
       }
     ],
-    "authority": "Over 120,000 readings delivered, rated 4.9 by the people who received them.\nEvery reading uses the Egyptian tarot — 22 major arcana — interpreted through your own quiz answers, not a recycled script.\nNo two readings are alike, because no two patterns are.\nMaster Aura writes for one person at a time: you.",
+    "authority": "Over 40,000 readings delivered, rated 4.9 by the people who received them.\nEvery reading uses the Egyptian tarot — 22 major arcana — interpreted through your own quiz answers, not a recycled script.\nNo two readings are alike, because no two patterns are.\nMaster Aura writes for one person at a time: you.",
     "value": [
       {
         "benefit": "Finally see the pattern behind your restarts, named and explained",

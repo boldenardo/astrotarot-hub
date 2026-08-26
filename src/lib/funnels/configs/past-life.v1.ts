@@ -353,7 +353,7 @@ export const PASTLIFE_V1: PainFunnelConfig = {
         "with": "A history you can actually reread"
       }
     ],
-    "authority": "AstroTarot has delivered more than 120,000 written readings, with an average rating of 4.9. Every reading is written for your answers, not pulled from a list of traits. We read cards as symbols for reflection. We don't claim facts about past lives, and we never claim to know what another person feels or will do.",
+    "authority": "AstroTarot has delivered more than 40,000 written readings, with an average rating of 4.9. Every reading is written for your answers, not pulled from a list of traits. We read cards as symbols for reflection. We don't claim facts about past lives, and we never claim to know what another person feels or will do.",
     "value": [
       {
         "benefit": "A name for the pattern and what it asks of you now",

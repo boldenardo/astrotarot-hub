@@ -9,7 +9,7 @@
 //   - Idea validation: pain is urgent (nightly), evidenced by the existing ex funnel and ex-reading demand; differentiation = reading the bond from the OTHE
 //   - Hook writer: 3 candidate angles were drafted (acute pain: 'You already know what your ex says about you. You just haven't let yourself hear it.'; coun
 //   - LP headlines considered: (1) 'Read the Story {He} Tells About You — From {His} Side of the Bond' (chosen); (2) 'What {He} Says About You Now That You'
-//   - Proof used only: '120,000+ readings delivered' and 4.9 rating. Zero testimonials, zero 'most women/men/people/members', no percentages in the comparis
+//   - Proof used only: '40,000+ readings delivered' and 4.9 rating. Zero testimonials, zero 'most women/men/people/members', no percentages in the comparis
 //   - Honest framing: all ex-side statements use interpretive language (can speak to / often marks / suggests / tends to). No '{he} says X' or '{he} misses 
 //   - Pronoun tokens used in all shared text (transition, patterns, cards, openLoop, lp): {he} {He} {him} {his} {His}. quizWoman uses he/him/his directly; q
 //   - Every question in both branches carries a 'reaction' that works for any selected option (references 'that question/that sentence/that' generically). Q
@@ -632,7 +632,7 @@ export const EX_CONFIG: PainFunnelConfig = {
         "with": "Outside it, with your own reading in hand"
       }
     ],
-    "authority": "AstroTarot has delivered 120,000+ personalized written readings, rated 4.9 by the people who received them. Every reading is built from your own answers and drawn from the Egyptian major arcana — written for you, not pulled from a template. We don't read {his} messages and we don't claim to know facts about {him}. We read the bond, from both sides, in the language the cards have always used.",
+    "authority": "AstroTarot has delivered 40,000+ personalized written readings, rated 4.9 by the people who received them. Every reading is built from your own answers and drawn from the Egyptian major arcana — written for you, not pulled from a template. We don't read {his} messages and we don't claim to know facts about {him}. We read the bond, from both sides, in the language the cards have always used.",
     "value": [
       {
         "benefit": "Finally read the story {he} tells — from {his} side of the bond",

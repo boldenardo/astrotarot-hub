@@ -344,7 +344,7 @@ export const DREAMS_V1: PainFunnelConfig = {
         "with": "A reading no one else sees"
       }
     ],
-    "authority": "120,000+ readings delivered. Rated 4.9 by the people who read them. Every reading is written for the person who asked — that is the whole method.",
+    "authority": "40,000+ readings delivered. Rated 4.9 by the people who read them. Every reading is written for the person who asked — that is the whole method.",
     "value": [
       {
         "benefit": "Finally read the dream in daylight",

@@ -327,7 +327,7 @@ export const MONEY_CONFIG: PainFunnelConfig = {
         "with": "'I carry a pattern — and I've finally seen it'"
       }
     ],
-    "authority": "Over 120,000 readings delivered, rated 4.9 by the people who received them. Every reading combines the Egyptian Tarot — 22 major arcana — with your own quiz answers. No scripts, no recycled horoscopes: your reading is written for your pattern, not for your zodiac sign's crowd. And to be clear about what we are: we don't predict windfalls and we don't promise money. We read patterns. That's the work.",
+    "authority": "Over 40,000 readings delivered, rated 4.9 by the people who received them. Every reading combines the Egyptian Tarot — 22 major arcana — with your own quiz answers. No scripts, no recycled horoscopes: your reading is written for your pattern, not for your zodiac sign's crowd. And to be clear about what we are: we don't predict windfalls and we don't promise money. We read patterns. That's the work.",
     "value": [
       {
         "benefit": "Finally hear your loop named out loud",

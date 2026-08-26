@@ -594,7 +594,7 @@ export const EXBACK_V1: PainFunnelConfig = {
         "with": "A plan for tonight — and someone to ask at 2am"
       }
     ],
-    "authority": "120,000+ readings delivered. Rated 4.9 — by people who were told the truth, not what they hoped to hear.",
+    "authority": "40,000+ readings delivered. Rated 4.9 — by people who were told the truth, not what they hoped to hear.",
     "value": [
       {
         "benefit": "Know exactly what to do about {him}",

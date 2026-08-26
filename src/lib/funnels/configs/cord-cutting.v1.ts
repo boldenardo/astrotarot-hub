@@ -552,7 +552,7 @@ export const CORDCUTTING_V1: PainFunnelConfig = {
         "with": "Less than $10 a month, cancel anytime"
       }
     ],
-    "authority": "120,000+ readings delivered. Rated 4.9 by the people who read them. Every reading is written from your own answers and the cards drawn for you. The cards interpret; they never predict your ex or speak for them, and we won't pretend otherwise.",
+    "authority": "40,000+ readings delivered. Rated 4.9 by the people who read them. Every reading is written from your own answers and the cards drawn for you. The cards interpret; they never predict your ex or speak for them, and we won't pretend otherwise.",
     "value": [
       {
         "benefit": "Finally say what you're holding, in words that fit",

@@ -333,7 +333,7 @@ export const INTIMACY_CONFIG: PainFunnelConfig = {
         "with": "Asked freely, answered personally, whenever you're ready"
       }
     ],
-    "authority": "Over 120,000 readings delivered, rated 4.9 by the people who received them. Every reading combines the Egyptian tarot deck with your quiz answers and the card your hand chose, so the interpretation is built around you — not copied from a generic card meaning. Your quiz answers set the context. The card you chose sets the door. No live calls, no appointments, nothing to explain to a stranger.",
+    "authority": "Over 40,000 readings delivered, rated 4.9 by the people who received them. Every reading combines the Egyptian tarot deck with your quiz answers and the card your hand chose, so the interpretation is built around you — not copied from a generic card meaning. Your quiz answers set the context. The card you chose sets the door. No live calls, no appointments, nothing to explain to a stranger.",
     "value": [
       {
         "benefit": "Finally have words for the thing you've never said out loud",

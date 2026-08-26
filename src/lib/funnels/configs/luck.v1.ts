@@ -340,7 +340,7 @@ export const LUCK_V1: PainFunnelConfig = {
         "with": "7 days, full refund, no questions"
       }
     ],
-    "authority": "AstroTarot has delivered over 120,000 written readings, with a 4.9 rating. Every reading is written and personalised — a reflection to sit with, not a prediction to wait on. That's all we'll claim, because it's all that's true.",
+    "authority": "AstroTarot has delivered over 40,000 written readings, with a 4.9 rating. Every reading is written and personalised — a reflection to sit with, not a prediction to wait on. That's all we'll claim, because it's all that's true.",
     "value": [
       {
         "benefit": "Have one specific thing to do tonight for the area that feels stuck",

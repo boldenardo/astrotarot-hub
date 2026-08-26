@@ -68,12 +68,12 @@ const APPEARANCE = {
   },
 };
 
+// Enxugado a pedido do dono (26/08): as fotos com o celular na mão
+// sairam quase todas — alem de parecerem produzidas, a TELA delas traz
+// "120,000+" gravado, que contradiz o numero novo de 40,000. Fica a
+// nossa mais natural + as tres naturais que o dono subiu (grid 2x2).
 const PROOF_PHOTOS = [
-  "/social-proof/couple-2.webp",
   "/social-proof/couple-1.webp",
-  "/social-proof/couple-4.webp",
-  "/social-proof/couple-3.webp",
-  // Casais do funil irmão — fotos de gente sozinha foram descartadas.
   "/social-proof/marie/extra-05.png",
   "/social-proof/marie/extra-06.png",
   "/social-proof/marie/extra-09.png",
@@ -628,7 +628,7 @@ export default function CustomCheckout() {
           <span className="text-sm font-semibold text-white">4.9</span>
         </div>
         <p className="mt-0.5 text-center text-xs text-white/55">
-          120,000+ readings delivered
+          40,000+ readings delivered
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           {PROOF_PHOTOS.map((p) => (
