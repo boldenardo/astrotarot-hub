@@ -79,11 +79,11 @@ const PROOF_PHOTOS = [
   "/social-proof/marie/extra-09.png",
 ];
 
-// Mural de reviews: o print de comentários do Facebook, com a faixa de
-// estrelas logo abaixo dele (pedido do dono). Prints de pessoas sozinhas
-// (extra-03, 04, 08, 10, 11) ficaram de fora — o grid é só de casais.
+// Mural de reviews (trocado 26/08 a pedido do dono): saiu o print da
+// Marie (marca alheia, rostos alheios) e entrou o mural da própria
+// Master Aura, fornecido pelo dono. Mesmo formato de comentários.
 const REVIEW_SHOTS = [
-  "/social-proof/marie/extra-12.png",
+  "/social-proof/aura-reviews.webp",
 ];
 
 // Urgência REAL: a carta revelada segura o desconto por 15 min nesta
@@ -653,8 +653,8 @@ export default function CustomCheckout() {
               <Image
                 src={p}
                 alt=""
-                width={540}
-                height={400}
+                width={850}
+                height={777}
                 loading="lazy"
                 sizes="(max-width: 640px) 90vw, 440px"
                 className="h-auto w-full object-contain"
