@@ -53,7 +53,18 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
-### 2026-08-25 — Kimi — entrega do bump Vibes & Meditations ($19)
+### 2026-08-25 — Claude (fotos de prova social regeradas, aprovadas pelo dono)
+As 4 `public/social-proof/couple-*.webp` foram SUBSTITUÍDAS no lugar (mesmos
+nomes → home, /quiz/vsl, /quiz/vsl-v2, quiz flow e checkout atualizam juntos).
+Motivo: todas as antigas mostravam um celular com "120,000+ readings" gravado
+na tela — contradizia o claim real de 40,000 (proof-stats.ts). As novas são
+candids sem celular, geradas no ChatGPT do dono e aprovadas por ele:
+couple-1 = casal sul-africano (selfie golden hour; nosso público pagante é ZA),
+couple-2 = casal ~50 na cozinha, couple-3 = casal ~30 varanda à noite,
+couple-4 = casal ~40 parque de outono. Fonte 1254², salvas 1080² webp q82.
+Ajuste de congruência: autora do depoimento do couple-4 no quiz flow era
+"Priya N." (nome indiano, foto de casal branco) → "Claire B.".
+Build OK. Commit 5bda732, deploy verificado em produção (bytes batem).
 O bump já concedia o entitlement `vibes`; faltava o produto. Implementado:
 - `src/lib/vibes-catalog.ts` — 10 faixas (durações reais via ffprobe); `src` agora é caminho no bucket privado `vibes`, não URL.
 - `src/app/api/vibes/stream/route.ts` (nova) — signed URL (1h) só com sessão + entitlement; padrão copiado de `/api/soulmate`.
