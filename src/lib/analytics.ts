@@ -49,6 +49,9 @@ export type AnalyticsEvent =
   | "vsl_scroll_50"
   | "vsl_scroll_75"
   | "vsl_scroll_90"
+  // Visitante frio na VSL (sem quiz neste navegador) devolvido à porta do
+  // funil — mede quanto tráfego chega pousando no meio do funil.
+  | "vsl_cold_redirect"
   // Etapas explícitas do handoff VSL → Stripe. Separadas de propósito: a
   // diferença entre "clicou" e "sessão criada" é a diferença entre um
   // problema de oferta e um problema de backend, e sem os dois eventos as

@@ -80,7 +80,7 @@ export function leadReadingEmail(input: {
 }): { subject: string; html: string; text: string } {
   const name = input.name?.trim().split(/\s+/)[0];
   const sign = input.sign ?? null;
-  const link = `${APP_URL}/quiz/vsl-v2`;
+  const link = `${APP_URL}/quiz/vsl-v2?from=email`;
 
   if (input.locale === "es") {
     const subject = name
@@ -146,7 +146,7 @@ export function paymentFailedEmail(input: {
   locale: Locale;
 }): { subject: string; html: string; text: string } {
   const name = input.name?.trim().split(/\s+/)[0];
-  const link = `${APP_URL}/quiz/vsl-v2`;
+  const link = `${APP_URL}/quiz/vsl-v2?from=email`;
 
   if (input.locale === "es") {
     const html = shell(
@@ -204,7 +204,7 @@ export function abandonedCartEmail(input: {
   locale: Locale;
 }): { subject: string; html: string; text: string; unsubscribeUrl: string } {
   const name = input.name?.trim().split(/\s+/)[0];
-  const link = `${APP_URL}/quiz/vsl-v2`;
+  const link = `${APP_URL}/quiz/vsl-v2?from=email`;
   // Este é o único e-mail promocional dos três: quem não comprou não pediu
   // para ser perseguido, então ele carrega saída.
   const unsub = unsubscribeUrl(input.email);

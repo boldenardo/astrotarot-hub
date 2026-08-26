@@ -509,6 +509,33 @@ export default function QuizVslV2Page() {
 
   useEffect(() => {
     const initial = readStore();
+
+    // Visitante FRIO: chegou sem nenhum vestígio do quiz neste navegador
+    // (link de bio, compartilhamento, histórico). A página inteira fala da
+    // "sua leitura" — sem quiz não existe leitura, e em 25/08 17 de 19
+    // entradas assim morreram aqui, enquanto quem entra pelo quiz começa
+    // em 18 de 18. Devolve à porta do funil, preservando a query (?ref=
+    // de afiliado sobrevive). Duas exceções que chegam LEGITIMAMENTE sem
+    // localStorage: clique de e-mail (abre noutro navegador; links levam
+    // ?from=email) e volta de checkout cancelado (?canceled=1 — o escape
+    // do webview abre o checkout no Chrome, fora do navegador do quiz).
+    if (!initial.answers || Object.keys(initial.answers).length === 0) {
+      let exempt = false;
+      let search = "";
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        exempt = sp.get("from") === "email" || sp.get("canceled") === "1";
+        search = window.location.search;
+      } catch {
+        // sem window.location utilizável não há o que preservar
+      }
+      if (!exempt) {
+        trackEvent("vsl_cold_redirect", { category: "quiz" });
+        window.location.replace("/quiz" + search);
+        return;
+      }
+    }
+
     setStore(initial);
     setFunnelVariant(VARIANT_IGNITE);
 
