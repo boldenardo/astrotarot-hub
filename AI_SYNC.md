@@ -53,7 +53,24 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
-### 2026-08-26 — Claude (tráfego frio pousando no meio do funil → devolvido ao quiz)
+### 2026-08-26 — Claude (rodada 2: uma página de dinheiro + landing para tráfego frio)
+Decisão do dono: UMA página de dinheiro. (a) vsl-v2: branch hospedado do
+CTA removido — sempre /quiz/checkout; a env NEXT_PUBLIC_CHECKOUT_SURFACE
+não faz mais nada ali. `checkout`/modal de e-mail ficaram adormecidos no
+arquivo (nada os chama; limpeza futura ok). 13 sessões usaram o redirect
+hospedado em 25/08, zero pagaram, página sem telemetria. (b) /quiz/vsl
+(V1, planos legados PACK5/assinatura, zero sessões em 2 dias) aposentada
+via 307 → vsl-v2 no next.config — código intacto, reverter = apagar 1
+linha. CHECKOUT CUSTOM INTOCADO (pedido explícito do dono). (c) Landing
+/quiz: era INVISÍVEL na telemetria (nenhum evento). Agora
+quiz_landing_view + quiz_landing_cta_clicked (hero|sticky). Headline: o
+"Their" da antiga era pronome sem antecedente p/ tráfego frio → "Your
+soulmate's face is already in your cards" (nomeia o desejo; "cards" no
+lugar de "chart" — marca é tarot); aviso-choque sob o CTA (padrão Marie),
+EN/ES. Régua: landing→flow ≥50% (benchmark bridge page 30–60%). Commit
+f4b86cc. PENDENTE de dados: 1 dia de quiz_landing_view para medir o gap
+real; próximo teste se vier fraco: sign-picker como porta (padrão Moon
+Reading), exige integração com o q_sign do flow.
 Telemetria de 25/08 mostrou o vazamento real do topo: de 45 sessões, 19
 entraram DIRETO em /quiz/vsl-v2 e 9 direto em /quiz/checkout — 26 delas
 primeira visita genuína (checado contra histórico do session id, que é
