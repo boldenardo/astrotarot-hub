@@ -1029,7 +1029,7 @@ const PROOF_COUPLES = [
   {
     photo: "/social-proof/couple-4.webp",
     quote: "Aura described my partner perfectly. Now I know he's the one.",
-    author: "Priya N.",
+    author: "Claire B.",
   },
 ];
 

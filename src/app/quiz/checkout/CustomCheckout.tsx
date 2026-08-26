@@ -68,10 +68,10 @@ const APPEARANCE = {
   },
 };
 
-// Enxugado a pedido do dono (26/08): as fotos com o celular na mão
-// sairam quase todas — alem de parecerem produzidas, a TELA delas traz
-// "120,000+" gravado, que contradiz o numero novo de 40,000. Fica a
-// nossa mais natural + as tres naturais que o dono subiu (grid 2x2).
+// Fotos regeradas (26/08, aprovadas pelo dono): couple-1..4 agora sao
+// candids sem celular na mao — as antigas traziam "120,000+" gravado na
+// tela, contradizendo o numero real de 40,000. couple-1 (casal sul-
+// africano, nosso publico pagante) + as tres naturais da Marie (grid 2x2).
 const PROOF_PHOTOS = [
   "/social-proof/couple-1.webp",
   "/social-proof/marie/extra-05.png",
