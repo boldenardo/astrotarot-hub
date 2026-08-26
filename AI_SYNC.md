@@ -53,7 +53,21 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
-### 2026-08-25 — Claude (fotos de prova social regeradas, aprovadas pelo dono)
+### 2026-08-26 — Claude (tráfego frio pousando no meio do funil → devolvido ao quiz)
+Telemetria de 25/08 mostrou o vazamento real do topo: de 45 sessões, 19
+entraram DIRETO em /quiz/vsl-v2 e 9 direto em /quiz/checkout — 26 delas
+primeira visita genuína (checado contra histórico do session id, que é
+localStorage), sem UTM. Só 1 dessas iniciou o quiz; quem entra pelo flow
+inicia em 18/18. A VSL fala "sua leitura" — para visitante frio ela não
+existe. Fix: vsl-v2 sem `answers` no storage redireciona para /quiz
+preservando a query (?ref= sobrevive), evento `vsl_cold_redirect` via
+sendBeacon. Exceções legítimas sem localStorage: `?from=email` (os 3 links
+de e-mail em email-templates.ts agora carregam o param — app de e-mail abre
+outro navegador) e `?canceled=1` (escape de webview paga no Chrome, não no
+navegador do quiz — comprador quente, não pode ser devolvido). Checkout
+frio ficou como está: é a página de dinheiro e esses visitantes engajam.
+Commit 7ee8e2c. Migration 20260825 CONFIRMADA aplicada (probe de insert
+cord_reading/past_life aceito) — pendência encerrada.
 As 4 `public/social-proof/couple-*.webp` foram SUBSTITUÍDAS no lugar (mesmos
 nomes → home, /quiz/vsl, /quiz/vsl-v2, quiz flow e checkout atualizam juntos).
 Motivo: todas as antigas mostravam um celular com "120,000+ readings" gravado
