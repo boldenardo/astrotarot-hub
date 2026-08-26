@@ -33,7 +33,15 @@ const nextConfig = {
   async redirects() {
     // Fortune/Prosperity aposentado: a URL antiga aponta para o sucessor
     // semântico (Luck Ritual). 301 preserva o que houver de SEO/backlinks.
-    return [{ source: "/abundance", destination: "/rituals/luck", permanent: true }];
+    return [
+      { source: "/abundance", destination: "/rituals/luck", permanent: true },
+      // V1 da VSL aposentada (26/08): vendia os planos legados (PACK5/
+      // assinatura) por um checkout hospedado sem trackeamento — a decisão
+      // "uma única página de dinheiro" não comporta um segundo caminho.
+      // Zero sessões em 25-26/08; o código fica, só a rota é coberta.
+      // 307 (não-permanente): reverter é apagar esta linha.
+      { source: "/quiz/vsl", destination: "/quiz/vsl-v2", permanent: false },
+    ];
   },
   async headers() {
     return [

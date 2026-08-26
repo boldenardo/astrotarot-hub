@@ -780,58 +780,28 @@ export default function QuizVslV2Page() {
     [score, baseParams]
   );
 
-  // CHECKOUT PRÓPRIO (26/08): o CTA leva para /quiz/checkout — página
-  // nossa, modelada no checkout de referência do dono, com bumps e
-  // carteiras inline. NEXT_PUBLIC_CHECKOUT_SURFACE=hosted volta o fluxo
-  // antigo (redirect à Stripe) sem deploy de código novo.
-  const CUSTOM_CHECKOUT =
-    (process.env.NEXT_PUBLIC_CHECKOUT_SURFACE || "custom") === "custom";
-
+  // UMA página de dinheiro (26/08, decisão do dono): o CTA leva SEMPRE
+  // para /quiz/checkout. O desvio hospedado (env CHECKOUT_SURFACE=hosted,
+  // sessão da Stripe + redirect) saiu: 13 sessões passaram por ele em
+  // 25/08, zero pagaram, e a página hospedada não tem nosso trackeamento.
+  // O caminho antigo (`checkout` + modal de e-mail) fica adormecido no
+  // arquivo — reativar é decisão de código, não de env.
   const startGuestCheckout = useCallback(
     (plan: PlanKey, ctaPosition: string) => {
-      // Guarda síncrona: dois toques rápidos criariam duas Checkout
-      // Sessions, e a pessoa poderia pagar as duas.
+      // Guarda síncrona: dois toques rápidos abririam duas navegações.
       if (submittingRef.current || loadingPlan) return;
 
-      if (CUSTOM_CHECKOUT) {
-        trackEvent("checkout_cta_clicked", {
-          ...baseParams(),
-          label: plan,
-          offer: FRONT_OFFER_ID,
-          cta_position: ctaPosition,
-          surface: "custom",
-        });
-        window.location.href = "/quiz/checkout";
-        return;
-      }
-      submittingRef.current = true;
-
-      // Disparado ANTES de falar com o backend: é a intenção do usuário, e
-      // precisa existir mesmo que a criação da sessão falhe depois.
       trackEvent("checkout_cta_clicked", {
         ...baseParams(),
         label: plan,
         offer: FRONT_OFFER_ID,
         cta_position: ctaPosition,
-      });
-      trackEvent("offer_clicked", {
-        ...baseParams(),
-        label: plan,
-        cta_position: ctaPosition,
+        surface: "custom",
       });
       trackPaymentInitiated(plan, FRONT_PRICE_USD);
-
-      const email = store.email?.trim();
-      if (!email) {
-        setEmailInput("");
-        setEmailError(null);
-        setEmailModalPlan(plan);
-        submittingRef.current = false;
-        return;
-      }
-      void checkout(plan, email, ctaPosition);
+      window.location.href = "/quiz/checkout";
     },
-    [loadingPlan, store.email, checkout, baseParams]
+    [loadingPlan, baseParams]
   );
 
   const submitEmailModal = useCallback(() => {

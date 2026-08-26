@@ -24,16 +24,26 @@ import { ZODIAC_SIGNS } from "@/lib/quiz-data";
 import { PROOF_STATS } from "@/lib/proof-stats";
 import { useQuizContent } from "@/components/LocaleProvider";
 import CardBack from "@/components/CardBack";
+import { trackEvent } from "@/lib/analytics";
 
+// Headline reescrita em 26/08 para o tráfego FRIO que passou a pousar aqui
+// (redirect da VSL + links de bio). A anterior — "Their face is already in
+// your chart" — abria com um pronome sem dono: quem vinha do funil sabia
+// quem era "their"; quem chega frio, não. A nova nomeia o desejo (Schwartz,
+// mercado em sofisticação 3–4: promessa concreta + mecanismo) e troca
+// "chart" (astrologia) por "cards" (a marca é tarot, e é o que o quiz usa).
+// O aviso sob o CTA é o padrão do funil de referência (Psychic Marie):
+// curiosidade + intensidade social no ponto exato da decisão.
 const COPY = {
   en: {
     badge: "Free soulmate reading",
-    h1a: "Their face is already",
-    h1b: "in your chart",
+    h1a: "Your soulmate's face",
+    h1b: "is already in your cards",
     caption: "Your soulmate",
     locked: "Revealed at the end of your reading",
     sub: "Answer a few questions and let your cards describe them — their look, their nature, and when your paths cross.",
     cta: "Reveal my soulmate",
+    warning: "Most people are shocked by how specific their reading gets.",
     guided: "Master Aura reads your answers as you go.",
     guidedBy: "Guided by",
     minutes: "2 minutes",
@@ -45,12 +55,13 @@ const COPY = {
   },
   es: {
     badge: "Lectura de alma gemela gratis",
-    h1a: "Su rostro ya está",
-    h1b: "en tu carta",
+    h1a: "El rostro de tu alma gemela",
+    h1b: "ya está en tus cartas",
     caption: "Tu alma gemela",
     locked: "Se revela al final de tu lectura",
     sub: "Responde unas preguntas y deja que tus cartas lo describan — cómo es, cómo se siente, y cuándo se cruzan sus caminos.",
     cta: "Revelar mi alma gemela",
+    warning: "La mayoría se sorprende de lo específica que es su lectura.",
     guided: "Master Aura lee tus respuestas mientras avanzas.",
     guidedBy: "Guiada por",
     minutes: "2 minutos",
@@ -74,6 +85,16 @@ const fadeUp = {
 export default function QuizLandingPage() {
   const { locale } = useQuizContent();
   const t = COPY[locale] ?? COPY.en;
+
+  // Denominador da landing: sem este evento, quem chegava aqui e saía era
+  // invisível — não dava para saber se a headline convertia ou espantava.
+  const viewFiredRef = useRef(false);
+  useEffect(() => {
+    if (viewFiredRef.current) return;
+    viewFiredRef.current = true;
+    trackEvent("quiz_landing_view", { category: "quiz", locale });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Barra fixa: aparece quando o botão principal sai da tela, para o CTA
   // nunca ficar fora do alcance do polegar numa página que rola.
@@ -204,11 +225,22 @@ export default function QuizLandingPage() {
       >
         <Link
           href="/quiz/flow"
+          onClick={() =>
+            trackEvent("quiz_landing_cta_clicked", {
+              category: "quiz",
+              cta_position: "hero",
+            })
+          }
           className="btn-gold flex min-h-[58px] w-full items-center justify-center rounded-2xl px-8 text-base font-semibold"
         >
           {t.cta}
         </Link>
-        <span className="mt-3 flex items-center justify-center gap-1.5 text-xs text-[#b9b2d0]">
+        {/* Aviso-curiosidade no ponto da decisão (padrão do funil de
+            referência): intensidade social, sem inventar número novo. */}
+        <p className="mt-3 text-xs text-[#e8d9a8]">
+          <span aria-hidden>⚠️</span> {t.warning}
+        </p>
+        <span className="mt-2 flex items-center justify-center gap-1.5 text-xs text-[#b9b2d0]">
           <Clock className="h-3.5 w-3.5" aria-hidden />
           {t.minutes}
           <span aria-hidden>&bull;</span> {t.free}
@@ -326,6 +358,12 @@ export default function QuizLandingPage() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-black/80 p-3 backdrop-blur-md">
           <Link
             href="/quiz/flow"
+            onClick={() =>
+              trackEvent("quiz_landing_cta_clicked", {
+                category: "quiz",
+                cta_position: "sticky",
+              })
+            }
             className="btn-gold mx-auto flex min-h-[50px] w-full max-w-sm items-center justify-center rounded-2xl px-6 text-sm font-semibold"
           >
             {t.cta}

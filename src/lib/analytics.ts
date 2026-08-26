@@ -52,6 +52,11 @@ export type AnalyticsEvent =
   // Visitante frio na VSL (sem quiz neste navegador) devolvido à porta do
   // funil — mede quanto tráfego chega pousando no meio do funil.
   | "vsl_cold_redirect"
+  // A LANDING pré-quiz era invisível: quem chegava e saía não disparava
+  // nada (nem entrava na contagem de sessões). Estes dois eventos criam o
+  // denominador e o numerador de landing→quiz.
+  | "quiz_landing_view"
+  | "quiz_landing_cta_clicked"
   // Etapas explícitas do handoff VSL → Stripe. Separadas de propósito: a
   // diferença entre "clicou" e "sessão criada" é a diferença entre um
   // problema de oferta e um problema de backend, e sem os dois eventos as
