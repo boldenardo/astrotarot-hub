@@ -16,7 +16,7 @@
  * divergem.
  */
 export const FRONT_PRICE_USD = Number(
-  process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 29
+  process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 14.99
 );
 
 export const FRONT_PRICE_LABEL = `$${FRONT_PRICE_USD}`;
@@ -48,8 +48,12 @@ export const BUMP_PRICE_LABEL = `$${BUMP_PRICE_USD}`;
 export const OTO_PRICE_USD = 27;
 export const OTO_PRICE_LABEL = `$${OTO_PRICE_USD}`;
 
-/** Downsell de quem recusa o front: só o retrato, sem a leitura. */
-export const DOWNSELL_PRICE_USD = 17;
+/**
+ * Downsell de quem recusa o front: só o retrato, sem a leitura.
+ * Desceu de $17 para $9 em 27/08 junto com o front ($29 → $14.99): um
+ * downsell tem de ser mais barato que a oferta recusada, senão é upsell.
+ */
+export const DOWNSELL_PRICE_USD = 9;
 export const DOWNSELL_PRICE_LABEL = `$${DOWNSELL_PRICE_USD}`;
 
 /** Continuidade, oferecida só depois da primeira compra. */

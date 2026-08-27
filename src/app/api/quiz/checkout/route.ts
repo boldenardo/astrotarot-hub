@@ -151,10 +151,15 @@ export async function POST(req: NextRequest) {
   // O número no texto e o price cobrado saem da MESMA env: trocar
   // NEXT_PUBLIC_FRONT_PRICE_USD para 37 sem trocar isto faria a página
   // prometer um valor e o cartão receber outro.
+  const frontEnv = String(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 14.99);
   const frontPrice =
-    String(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 29) === "37"
+    frontEnv === "37"
       ? process.env.STRIPE_PRICE_FRONT_37 || "price_1U7yhi07YF1LaBzhpXKyziUx"
-      : process.env.STRIPE_PRICE_FRONT_29 || "price_1U7yhh07YF1LaBzh5SloB0fx";
+      : frontEnv === "29"
+        ? process.env.STRIPE_PRICE_FRONT_29 || "price_1U7yhh07YF1LaBzh5SloB0fx"
+        : // Padrão desde 27/08: $14.99.
+          process.env.STRIPE_PRICE_FRONT_1499 ||
+          "price_1U9D2L07YF1LaBzhfR2GPbY4";
 
   // DOWNSELL_19: o cliente pede $19.99, o SERVIDOR decide. Token inválido,
   // já exibido para outro abandono do mesmo e-mail, já usado, ou banco
@@ -170,8 +175,10 @@ export async function POST(req: NextRequest) {
   const price =
     plan === "DOWNSELL_19"
       ? downsellGranted
-        ? process.env.STRIPE_PRICE_FRONT_1999 ||
-          "price_1U7z9g07YF1LaBzhS5vLC1o2"
+        ? // $9.99 desde 27/08 (era $19.99, que passou a custar mais que o
+          // front de $14.99 — um downsell não pode ser mais caro).
+          process.env.STRIPE_PRICE_FRONT_999 ||
+          "price_1U9D3E07YF1LaBzhAs8xikm3"
         : frontPrice
       : plan === "FRONT_READING"
         ? frontPrice
@@ -182,8 +189,9 @@ export async function POST(req: NextRequest) {
           ? process.env.STRIPE_PRICE_OTO_PASTLIFE ||
             "price_1U7yhj07YF1LaBzhKHhpPOeB"
           : plan === "DOWNSELL_PORTRAIT"
-            ? process.env.STRIPE_PRICE_DOWNSELL_PORTRAIT ||
-              "price_1U7yhk07YF1LaBzhtTSDnCqk"
+            ? // $9 desde 27/08 (era $17, acima do front novo).
+              process.env.STRIPE_PRICE_DOWNSELL_PORTRAIT ||
+              "price_1U9D3E07YF1LaBzhvLhaWoFr"
             : plan === "SUB_MONTHLY"
           ? process.env.STRIPE_PRICE_SUB_MONTHLY || "price_1U6hIO07YF1LaBzhrHFJ1lzW"
           : plan === "SUB_SEMIANNUAL"

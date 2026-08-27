@@ -63,7 +63,7 @@ const SALES_FUNNEL: Array<[string, string]> = [
   ["checkout_escape_attempted", "Escape p/ Chrome tentado"],
   ["checkout_escape_failed", "Escape bloqueado"],
   ["checkout_error", "Erro/redirect bloqueado"],
-  ["downsell_viewed", "Viu o downsell $19.99"],
+  ["downsell_viewed", "Viu o downsell $9.99"],
   ["downsell_clicked", "Clicou no downsell"],
   ["lead_captured", "E-mail capturado"],
 ];

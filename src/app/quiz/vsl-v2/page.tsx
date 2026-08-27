@@ -69,7 +69,6 @@ import {
   setFunnelVariant,
 } from "@/lib/funnel-variant";
 import {
-  FRONT_PRICE_LABEL,
   FRONT_LIST_PRICE_LABEL,
   FRONT_PRICE_USD,
   FRONT_OFFER_ID,
@@ -1167,8 +1166,8 @@ export default function QuizVslV2Page() {
             </p>
             <p className="mt-2 text-[14px] leading-relaxed text-white/70">
               You are not on the home page. You answered fifteen questions, so
-              there is something real to read you against. That is worth half to
-              us.
+              there is something real to read you against &mdash; and that saves
+              us the part that costs the most. You keep the difference.
             </p>
 
             <p className="mt-4 text-[15px] leading-relaxed text-white/75">
@@ -1324,17 +1323,21 @@ export default function QuizVslV2Page() {
             {loadingPlan === selectedPlan ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Opening your reading...
+                Taking you to secure checkout...
               </>
             ) : (
               <>
-                Show me who my soulmate is
+                Unseal my reading &mdash; {fmtMoney(cur, cur.front)}
                 <span aria-hidden>&rarr;</span>
               </>
             )}
           </button>
+          {/* fmtMoney, não FRONT_PRICE_LABEL: o rótulo é sempre em dólar, e
+              esta barra mostrava "$14.99" para quem o checkout ia cobrar em
+              rand — a divergência exata que o grid de moedas existe para
+              não deixar acontecer. */}
           <p className="mt-1.5 text-center text-[11px] text-white/55">
-            One payment of {FRONT_PRICE_LABEL} &middot; {GUARANTEE_DAYS}-day
+            One payment of {fmtMoney(cur, cur.front)} &middot; {GUARANTEE_DAYS}-day
             money back
           </p>
         </div>

@@ -25,25 +25,33 @@ export interface CurrencyGrid {
   oto: number;
 }
 
+// Front a $14.99 (27/08, decisão do dono): três dias com gente chegando ao
+// formulário de cartão e ninguém digitando. ZAR na mesma taxa que ele já
+// aprovou (R549 para $29 = 18,9 R/US$): 14,99 × 18,9 = R283 → R279.
+//
+// A ESCADA TEVE DE DESCER JUNTO. O downsell existe para ser mais barato que
+// o front; a $19.99 ele passaria a custar MAIS que o produto que a pessoa
+// acabou de recusar, e a página do downsell viraria um upsell disfarçado.
+// Mesma coisa com o e-mail de abandono ($17 → ver offer.ts).
 export const USD_GRID: CurrencyGrid = {
   code: "usd",
   symbol: "$",
-  front: Number(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 29),
+  front: Number(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 14.99),
   list: Number(process.env.NEXT_PUBLIC_FRONT_LIST_PRICE_USD || 58),
   cord: 9,
   vibes: 19,
-  downsell: 19.99,
+  downsell: 9.99,
   oto: 27,
 };
 
 export const ZAR_GRID: CurrencyGrid = {
   code: "zar",
   symbol: "R",
-  front: 549,
+  front: 279,
   list: 1099,
   cord: 169,
   vibes: 349,
-  downsell: 379,
+  downsell: 189,
   oto: 499,
 };
 
