@@ -20,6 +20,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { trackEvent } from "@/lib/analytics";
+import { useQuizContent } from "@/components/LocaleProvider";
 import { QUIZ_STORAGE_KEY } from "@/lib/quiz-data";
 import { getFunnelSessionId, getUtmParams } from "@/lib/funnel-session";
 import { getStoredRef } from "@/lib/affiliate";
@@ -103,6 +104,8 @@ interface PiState {
 }
 
 export default function CustomCheckout() {
+  // Idioma do funil (en|es) — vale também para os campos do Stripe.
+  const content = useQuizContent();
   // Moeda do visitante (ZA→ZAR; resto USD). Exibição — a cobrança usa o
   // MESMO país, resolvido no servidor pelo header de IP.
   const cur = useLocalPricing();
@@ -253,12 +256,22 @@ export default function CustomCheckout() {
     [bumps, pi]
   );
 
+  // locale FIXADO no idioma do funil (26/08). Sem isto o Stripe segue o
+  // idioma do NAVEGADOR: um visitante com celular em português via
+  // "Número do cartão / Data de validade" embaixo de "GET MY READING —
+  // $27.55" (print real do dono). Meia página em outro idioma na hora de
+  // digitar o cartão parece site clonado — e é o exato momento em que a
+  // pessoa decide confiar.
   const options = useMemo(
     () =>
       pi
-        ? { clientSecret: pi.clientSecret, appearance: APPEARANCE }
+        ? {
+            clientSecret: pi.clientSecret,
+            appearance: APPEARANCE,
+            locale: content.locale === "es" ? ("es" as const) : ("en" as const),
+          }
         : undefined,
-    [pi]
+    [pi, content.locale]
   );
 
   // ── Etapa 1: as cartas de desconto ─────────────────────────────────────

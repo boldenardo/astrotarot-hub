@@ -162,8 +162,16 @@ export async function POST(req: NextRequest) {
       amount: amountFor(grid, bumps, discountPct),
       currency: grid.code,
       customer: customerId,
-      // Cartão salvo → OTO da thank-you continua one-click.
-      setup_future_usage: "off_session",
+      // SEM setup_future_usage (26/08). Ele fazia o Stripe imprimir o
+      // mandato "ao fornecer os dados do cartão, você autoriza a Astrotarot
+      // a cobrar pagamentos FUTUROS" logo acima do botão de pagar — num
+      // funil que promete pagamento ÚNICO, para uma marca conhecida há oito
+      // minutos, no nicho onde o medo nº 1 é assinatura escondida. 10
+      // pessoas viram o formulário, 1 digitou o cartão.
+      // Preço: o OTO da thank-you deixa de ser cobrança off-session
+      // garantida. /api/quiz/oto já falha limpo (fallback: true) e a página
+      // oferece o checkout normal. Zero vendas × OTO de $27 = a troca é
+      // óbvia. Para reativar: devolver esta linha.
       automatic_payment_methods: { enabled: true },
       statement_descriptor_suffix: "ASTROTAROT",
       receipt_email: email,
