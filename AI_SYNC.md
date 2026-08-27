@@ -53,6 +53,36 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-27 — Claude (escape iOS: VEREDITO NEGATIVO + integridade de entrega + copy)
+Pesquisa com 13 agentes (verificação adversarial). **Não reabrir o escape iOS:**
+x-safari-https morto (Meta reescreve a URL, teste real do dono deu 404 no
+Safari); window.open não conserta — a falha é PÓS-handoff; fallback por
+setTimeout é pior que nada (perde user activation); instagram://extbrowser
+é no-op; com-apple-mobilesafari-tab, firefox://, Shortcuts x-callback,
+Universal Links e Smart App Banner não servem. **Apple Pay dentro da webview
+da Meta no iOS não existe** — ApplePaySession só é exposto se o app
+hospedeiro habilitar, e a Meta não habilita. Domínios na Stripe: registrei
+quiz.astrotarot.shop via API (astrotarot.shop já estava) — apple/google/link/
+paypal todos `active`. Isso conserta o Safari real, não a webview.
+BUG DE ENTREGA (o mais grave): buildDossierPrompt em /api/soulmate/generate
+recebia só name/birth_date/birth_location/sign — as 15 respostas do quiz
+NUNCA chegavam à leitura, embora estejam em `leads.answers` por e-mail. A
+oferta vende "who they are, in the words the cards used". Corrigido +
+adicionado campo `obstacle` ao schema/prompt/render (FRONT_INCLUDES vendia
+"what may be standing between you" e o dossiê não tinha o campo).
+CHECKOUT: removido setup_future_usage (imprimia mandato de "pagamentos
+futuros" acima do botão — num funil de pagamento único; OTO one-click cai
+para o fallback que já existia); Elements com locale fixo (era do
+navegador: campos em português sob título em inglês); divisor "OR PAY WITH
+CARD" agora espera availablePaymentMethods (renderizava sobre o nada em
+18% do tráfego). Novos eventos: checkout_wallets_ready,
+checkout_card_stage_passed (checkout_form_opened dispara no MOUNT = tela
+das cartas, não o formulário — cuidado ao ler a escada antiga).
+COPY vsl-v2: bloco-ponte quiz→oferta, preço no botão do CTA, headline da
+oferta (era repetição literal do H1), âncora "confira na home" no lugar de
+"50% off", garantia que diz o caso de falha. Commits 3dfcd01, a2ffb0c,
+4a40062. Verificado em produção.
+
 ### 2026-08-26 — Claude (rodada 2: uma página de dinheiro + landing para tráfego frio)
 Decisão do dono: UMA página de dinheiro. (a) vsl-v2: branch hospedado do
 CTA removido — sempre /quiz/checkout; a env NEXT_PUBLIC_CHECKOUT_SURFACE
