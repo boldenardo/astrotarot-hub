@@ -71,7 +71,6 @@ import {
 import {
   FRONT_PRICE_LABEL,
   FRONT_LIST_PRICE_LABEL,
-  LIST_DISCOUNT_PCT,
   FRONT_PRICE_USD,
   FRONT_OFFER_ID,
   FRONT_INCLUDES,
@@ -854,11 +853,16 @@ export default function QuizVslV2Page() {
         {loadingPlan === selectedPlan ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-            Opening your reading...
+            Taking you to secure checkout...
           </>
         ) : (
           <>
-            Show me who my soulmate is
+            {/* O preço VAI no botão (27/08). "Show me who my soulmate is"
+                levava a uma tela de pagamento sem nunca ter dito que havia
+                uma — a emboscada que produzia 18 checkouts abertos e 1
+                cartão digitado. Um botão que diz o preço é aceito por menos
+                gente e traído por ninguém. */}
+            Unseal my reading &mdash; {fmtMoney(cur, cur.front)}
             <span aria-hidden>&rarr;</span>
           </>
         )}
@@ -985,6 +989,28 @@ export default function QuizVslV2Page() {
           esta página se recusa a fazer. */}
       {hasQuiz && (
         <>
+          {/* PONTE (27/08). O quiz termina prometendo ENTREGA ("your
+              portrait is ready", "where should I send it") e a página
+              seguinte cobra. Sem nada no meio, o preço é lido como isca —
+              e a telemetria mostrava gente saindo pelo botão VOLTAR assim
+              que via o valor. Esta ponte nomeia a troca antes de qualquer
+              número aparecer: o mapa é de graça, ler o mapa é o trabalho. */}
+          <Reveal className="mt-14">
+            <p className="text-[15px] leading-relaxed text-white/80">
+              Master Aura went quiet for a reason
+              {firstName ? `, ${firstName}` : ""}. Drawing the face is the fast
+              part &mdash; your chart does that on its own, and it cost you
+              nothing but fifteen honest answers.
+            </p>
+            <p className="mt-3 text-[15px] leading-relaxed text-white/80">
+              But a face is not a person. Knowing who they are, what they carry,
+              what keeps getting in the way, and when your paths bend toward
+              each other &mdash; that has to be read, line by line, against your
+              chart and your answers. That is the part with a price on it. It is
+              also the part you actually came here for.
+            </p>
+          </Reveal>
+
           <Rule label="What your answers turned up" />
 
           <Reveal className="mt-6">
@@ -1092,13 +1118,20 @@ export default function QuizVslV2Page() {
 
         <Reveal className="mt-6">
           <div className="rounded-3xl border border-gold-400/25 bg-gradient-to-b from-gold-400/[0.07] to-transparent p-6">
+            {/* Era repetição literal do H1 do topo: no ponto de maior
+                resistência a página devolvia uma frase lida quatro minutos
+                antes — nada novo na cabeça dela, logo nenhuma razão nova
+                para agir. Agora nomeia a troca: o mapa guarda, a leitura
+                revela. */}
             <h2 className="text-[1.55rem] leading-tight">
-              {firstName ? `${firstName}, their` : "Their"} face is already
-              drawn.
+              {firstName ? `${firstName}, your` : "Your"} chart already holds
+              this.
             </h2>
 
             <p className="mt-5 text-[15px] leading-relaxed text-white/85">
-              Here is what comes with it:
+              The face, the temperament, the timing &mdash; none of it gets
+              invented on this page. It gets read out, against your birth chart
+              and the fifteen answers you just gave. Here is what comes back:
             </p>
 
             <ul className="mt-4 space-y-2.5">
@@ -1122,9 +1155,20 @@ export default function QuizVslV2Page() {
               </span>{" "}
               {fmtMoney(cur, cur.front)}. Yours to keep.
             </p>
-            <p className="mt-1 text-[13px] text-white/55">
-              {LIST_DISCOUNT_PCT}% off the regular price — for quiz readers
-              only.
+            {/* "50% off só para quem fez o quiz" é a frase mais descontada
+                da internet e não é verificável. Esta é: a home cobra
+                {cur.list} de verdade, hoje. Convidar a conferir é coisa que
+                só quem não está blefando faz — e dá um MOTIVO ao desconto,
+                o que impede o preço novo de virar a próxima âncora de
+                barganha. */}
+            <p className="mt-2 text-[14px] leading-relaxed text-white/70">
+              The same reading is {fmtMoney(cur, cur.list)} from our home page.
+              Go and check &mdash; it will still be there when you come back.
+            </p>
+            <p className="mt-2 text-[14px] leading-relaxed text-white/70">
+              You are not on the home page. You answered fifteen questions, so
+              there is something real to read you against. That is worth half to
+              us.
             </p>
 
             <p className="mt-4 text-[15px] leading-relaxed text-white/75">
@@ -1133,10 +1177,18 @@ export default function QuizVslV2Page() {
               person you cannot stop thinking about.
             </p>
 
+            {/* O medo dela não é perder o dinheiro — é pagar por um
+                horóscopo genérico com o nome dela colado. A garantia antiga
+                respondia a uma objeção que ela não tinha. Esta diz o caso de
+                falha em voz alta. */}
             <p className="mt-4 text-[15px] leading-relaxed text-white/75">
-              {GUARANTEE_DAYS} days. Read it, sit with it, compare it. If it
-              does not describe someone you recognize, write to us and we refund
-              it — and the portrait stays yours.
+              Here is the failure case, said out loud: you open it and it
+              describes nobody. Someone tall. Someone kind. A Tuesday. If that
+              is what lands, write to us and say so &mdash; all{" "}
+              {fmtMoney(cur, cur.front)} back, {GUARANTEE_DAYS} days, no
+              questions, and the portrait stays yours either way. We would
+              rather refund you than have you carrying around a description of
+              no one.
             </p>
 
             <div ref={ctaRef}>
