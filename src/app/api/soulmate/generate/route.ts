@@ -34,6 +34,14 @@ interface Dossier {
   meeting_window: string;
   /** Onde/como a pessoa vai reconhecê-lo. */
   how_to_recognize: string;
+  /**
+   * O que as cartas dizem que pode estar no caminho.
+   *
+   * A oferta vende este item desde sempre ("What the cards say may be
+   * standing between you", FRONT_INCLUDES) e o schema não o tinha — a
+   * leitura entregue não respondia o que o checkout cobrava.
+   */
+  obstacle: string;
   /** Parágrafo de fecho, tom da Master Aura. */
   closing: string;
 }
@@ -80,6 +88,24 @@ export async function POST() {
 
   const sign = deriveSign(profile.birth_date);
 
+  // As respostas do quiz vivem em `leads`, gravadas por e-mail no passo do
+  // e-mail (/api/quiz/lead). Best-effort: quem comprou por outro caminho
+  // (sem quiz) segue recebendo a leitura só pelo mapa natal.
+  let quizAnswers: Record<string, string> | null = null;
+  try {
+    if (profile.email) {
+      const { data: lead } = await admin
+        .from("leads")
+        .select("answers")
+        .eq("email", profile.email.trim().toLowerCase())
+        .maybeSingle();
+      const a = lead?.answers;
+      if (a && typeof a === "object") quizAnswers = a as Record<string, string>;
+    }
+  } catch (e) {
+    console.warn("[soulmate/generate] respostas do quiz não carregadas:", e);
+  }
+
   try {
     // 1. Dossiê pelo Groq, a partir dos dados reais de nascimento.
     const dossier = await groqChatJson<Dossier>({
@@ -87,7 +113,10 @@ export async function POST() {
         "You are Master Aura, an astrologer writing a soulmate reading. " +
         "Always respond in English (US). Return ONLY valid JSON with keys: " +
         "appearance, traits (array of 4 short strings), meeting_window, " +
-        "how_to_recognize, closing. " +
+        "how_to_recognize, obstacle, closing. " +
+        "obstacle is one short paragraph on what the cards say may be " +
+        "standing between them — a pattern or fear on her side, never a " +
+        "flaw in the other person and never a warning of harm. " +
         "appearance must be a single vivid paragraph describing a real " +
         "adult person's face and presence (hair, eyes, build, style, age " +
         "range 28-45) with no names and no celebrity references. " +
@@ -97,6 +126,7 @@ export async function POST() {
         birthDate: profile.birth_date,
         birthLocation: profile.birth_location,
         sign,
+        answers: quizAnswers,
       }),
       maxTokens: 900,
       temperature: 0.85,
@@ -203,18 +233,68 @@ function deriveSign(birthDate: string | null): string | null {
   return null;
 }
 
+/**
+ * O que cada resposta do quiz significa em linguagem de leitura.
+ *
+ * Sem isto o dossiê saía SÓ do mapa natal — e o funil inteiro promete o
+ * contrário: "Who they are, in the words the cards used", "what may be
+ * standing between you", e a Master Aura passa quinze passos dizendo que
+ * está lendo as respostas. Quem pagasse receberia um texto que qualquer
+ * pessoa do mesmo signo receberia igual: reembolso na certa.
+ */
+const ANSWER_MEANING: Record<string, Record<string, string>> = {
+  q_status: {
+    searching: "is actively looking for love and tired of near-misses",
+    complicated: "is in something undefined that keeps her guessing",
+    healing: "is recovering from a relationship that ended badly",
+    taken: "is with someone but questions whether they are the one",
+  },
+  q_met: {
+    yes: "believes she has already crossed paths with this person",
+    maybe: "suspects they have already met but is not sure",
+    no: "does not think they have met yet",
+  },
+  q_past: {
+    often: "feels déjà vu about a specific person very often",
+    sometimes: "occasionally feels a pull she cannot explain",
+    no: "has not felt that kind of recognition",
+  },
+  q_ready: {
+    yes: "says she is ready for it now",
+    unsure: "wants it but is afraid of being hurt again",
+    no: "is still putting herself back together first",
+  },
+};
+
+function describeAnswers(answers: Record<string, string> | null): string {
+  if (!answers) return "";
+  const lines: string[] = [];
+  for (const [key, value] of Object.entries(answers)) {
+    const meaning = ANSWER_MEANING[key]?.[value];
+    if (meaning) lines.push(`She ${meaning}.`);
+  }
+  return lines.join(" ");
+}
+
 function buildDossierPrompt(input: {
   name: string | null;
   birthDate: string | null;
   birthLocation: string | null;
   sign: string | null;
+  answers: Record<string, string> | null;
 }): string {
+  const said = describeAnswers(input.answers);
   return [
     `Person: ${input.name ?? "the seeker"}.`,
     input.birthDate ? `Born on ${input.birthDate}.` : "",
     input.birthLocation ? `Birth place: ${input.birthLocation}.` : "",
     input.sign ? `Sun sign: ${input.sign}.` : "",
+    said ? `What she told you in the reading: ${said}` : "",
     "Read their chart and describe the soulmate their Venus and 7th house point to.",
+    said
+      ? "Weave what she told you into the reading so she recognizes her own " +
+        "words — especially in obstacle and closing. Never quote the questions back."
+      : "",
   ]
     .filter(Boolean)
     .join(" ");

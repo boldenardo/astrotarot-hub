@@ -365,7 +365,13 @@ export default function CustomCheckout() {
             )}
             <button
               type="button"
-              onClick={() => setAdvanced(true)}
+              onClick={() => {
+                trackEvent("checkout_card_stage_passed", {
+                  category: "checkout",
+                  label: picked != null ? "with_discount" : "skipped",
+                });
+                setAdvanced(true);
+              }}
               className="btn-gold mt-5 flex min-h-[52px] w-full items-center justify-center rounded-full font-semibold"
             >
               Continue to my checkout
@@ -718,10 +724,32 @@ function PayBlock({
   const [error, setError] = useState<string | null>(null);
   const loadedRef = useRef(false);
 
+  // Carteiras disponíveis NESTE aparelho. Dentro da webview do Facebook no
+  // iOS não existe nenhuma (a Meta não expõe ApplePaySession), e o
+  // ExpressCheckoutElement renderiza vazio — deixando "OR PAY WITH CARD"
+  // pendurado sobre o nada, o que parece página quebrada bem na hora de
+  // digitar o cartão. Guardamos o resultado para esconder o divisor e para
+  // medir, com dado, quanto tráfego chega sem carteira nenhuma.
+  const [hasWallet, setHasWallet] = useState<boolean | null>(null);
+
   const onReady = () => {
     if (loadedRef.current) return;
     loadedRef.current = true;
     trackEvent("checkout_form_loaded", { category: "checkout", label: "custom" });
+  };
+
+  const onExpressReady = (e: { availablePaymentMethods?: Record<string, boolean> }) => {
+    const av = e.availablePaymentMethods;
+    const any = Boolean(av && Object.values(av).some(Boolean));
+    setHasWallet(any);
+    trackEvent("checkout_wallets_ready", {
+      category: "checkout",
+      label: any ? "wallet" : "none",
+      apple_pay: Boolean(av?.applePay),
+      google_pay: Boolean(av?.googlePay),
+      link: Boolean(av?.link),
+    });
+    onReady();
   };
 
   const pay = async () => {
@@ -758,13 +786,15 @@ function PayBlock({
     <div>
       <ExpressCheckoutElement
         onConfirm={() => void pay()}
-        onReady={onReady}
+        onReady={onExpressReady}
         options={{ buttonTheme: { googlePay: "black", applePay: "black" } }}
       />
-      <div className="my-3 flex items-center gap-3 text-[11px] uppercase tracking-wider text-white/40">
-        <span className="h-px flex-1 bg-white/10" /> or pay with card
-        <span className="h-px flex-1 bg-white/10" />
-      </div>
+      {hasWallet && (
+        <div className="my-3 flex items-center gap-3 text-[11px] uppercase tracking-wider text-white/40">
+          <span className="h-px flex-1 bg-white/10" /> or pay with card
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+      )}
       <PaymentElement onReady={onReady} options={{ layout: "tabs" }} />
       <button
         type="button"

@@ -57,6 +57,14 @@ export type AnalyticsEvent =
   // denominador e o numerador de landing→quiz.
   | "quiz_landing_view"
   | "quiz_landing_cta_clicked"
+  // Quais carteiras (Apple/Google/Link) existem no aparelho de quem chegou
+  // ao pagamento — separa "webview sem carteira" de "domínio mal
+  // configurado", que até 27/08 era discussão sem dado.
+  | "checkout_wallets_ready"
+  // Passou da tela das cartas de desconto. Sem isto, checkout_form_opened
+  // (que dispara no mount, na tela das CARTAS) era confundido com "viu o
+  // formulário de pagamento".
+  | "checkout_card_stage_passed"
   // Etapas explícitas do handoff VSL → Stripe. Separadas de propósito: a
   // diferença entre "clicou" e "sessão criada" é a diferença entre um
   // problema de oferta e um problema de backend, e sem os dois eventos as

@@ -23,6 +23,8 @@ interface Dossier {
   traits: string[];
   meeting_window: string;
   how_to_recognize: string;
+  /** Opcional: dossiês gerados antes de 27/08 não têm este campo. */
+  obstacle?: string;
   closing: string;
 }
 
@@ -263,6 +265,14 @@ function SoulmateContent() {
                         {dossier.how_to_recognize}
                       </p>
                     </div>
+                    {dossier.obstacle && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gold-300">
+                          What may be standing between you
+                        </h3>
+                        <p className="mt-1 text-ink-200">{dossier.obstacle}</p>
+                      </div>
+                    )}
                     <p className="text-ink-300">{dossier.closing}</p>
                   </div>
                   <a
