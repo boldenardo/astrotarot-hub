@@ -747,7 +747,11 @@ function ChatStep({
   const [done, setDone] = useState(false);
   return (
     <div>
-      <GuideConversation messages={messages} onDone={() => setDone(true)} />
+      {/* typeFirst (26/08, pedido do dono): no meio do fluxo a primeira
+          mensagem também nasce DIGITADA. Pronta na tela, ela entregava
+          "conteúdo de página"; ver a bolha sendo escrita é o que faz
+          parecer uma pessoa do outro lado. */}
+      <GuideConversation messages={messages} typeFirst onDone={() => setDone(true)} />
       {done && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
           <PrimaryButton onClick={onContinue}>{cta ?? ui.continue}</PrimaryButton>
@@ -794,7 +798,9 @@ function QuestionStep({
   return (
     <div>
       {intro && (
-        <GuideConversation messages={intro} onDone={() => setIntroDone(true)} />
+        // typeFirst: a intro de pergunta é sempre meio de conversa — a
+        // reação da guia à resposta anterior precisa parecer escrita agora.
+        <GuideConversation messages={intro} typeFirst onDone={() => setIntroDone(true)} />
       )}
 
       {/* A resposta dela entra na conversa, alinhada à direita — é o que
@@ -1277,15 +1283,20 @@ function MediaStep({
   }, [done, hasAudio, recDone]);
 
   // Sem autoplay. Só a limpeza: sair do passo para o áudio.
+  // recDone nas dependências (26/08): o <audio> só entra no DOM depois do
+  // "gravando áudio…" — sem re-executar nesse momento, audioRef.current
+  // ainda era null e NENHUM listener era anexado: o play até soava, mas
+  // relógio ficava em 0:00, o ícone nunca virava pause e o passo parecia
+  // quebrado (reclamação real do dono, 26/08).
   useEffect(() => {
-    if (!done || !hasAudio) return;
+    if (!done || !hasAudio || !recDone) return;
     const el = audioRef.current;
     if (!el) return;
     return () => {
       el.pause();
       el.currentTime = 0;
     };
-  }, [done, hasAudio]);
+  }, [done, hasAudio, recDone]);
 
   // O vídeo chega DEPOIS da voz: o contador dos 7s só começa quando o áudio
   // toca de verdade. O timer de ocioso é a saída para quem nunca tocar.
@@ -1307,7 +1318,7 @@ function MediaStep({
       window.clearTimeout(idle);
       if (delay != null) window.clearTimeout(delay);
     };
-  }, [done, hasAudio, videoReady]);
+  }, [done, hasAudio, videoReady, recDone]);
 
   const toggleAudio = useCallback(() => {
     const el = audioRef.current;
@@ -1347,7 +1358,7 @@ function MediaStep({
       el.removeEventListener("pause", onStop);
       el.removeEventListener("ended", onStop);
     };
-  }, [done, hasAudio]);
+  }, [done, hasAudio, recDone]);
 
   return (
     <div>
