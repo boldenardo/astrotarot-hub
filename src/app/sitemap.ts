@@ -22,9 +22,17 @@ const PUBLIC_ROUTES = [
   "",
   "/tarot",
   "/rituals",
+  // Os 8 tipos de RITUAL_TYPES (lib/experiences/types.ts) — todos 200 com
+  // canonical próprio; 6 estavam fora do sitemap até 26/08.
   "/rituals/luck",
   "/rituals/luck-7",
   "/rituals/cord-cutting",
+  "/rituals/money",
+  "/rituals/love",
+  "/rituals/protection",
+  "/rituals/energy-cleanse",
+  "/rituals/new-beginning",
+  "/rituals/moon",
   "/dreams",
   "/past-lives",
   "/compatibility",
