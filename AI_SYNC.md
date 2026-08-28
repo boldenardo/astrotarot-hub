@@ -53,6 +53,34 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-27 (noite) — Claude (preço $14.99 + auditoria de entrega: 5 falhas reais)
+PREÇO (decisão do dono): front $29 → **$14.99**, ZAR 549 → **279** (mesma taxa
+18,9 que ele aprovou). A ESCADA DESCEU JUNTO porque ficaria invertida:
+downsell 19.99 → **9.99** (ZAR 379 → 189) e e-mail de abandono 17 → **9** —
+ambos passariam a custar mais que o produto. Price ids novos na Stripe:
+front price_1U9D2L…, downsell price_1U9D3E…As8xikm3, retrato
+price_1U9D3E…vLhaWoFr. Verificado em produção: PI = 1499 usd; bundle
+publicado com front:279 no ZAR_GRID.
+AUDITORIA DE ENTREGA (11 agentes + refutação). **CRÍTICO — o retrato não
+renderizava**: /soulmate passa a URL assinada do Supabase ao next/image e
+remotePatterns só tinha pixabay/pinimg → /_next/image devolvia 400. Corrigido
+com host EXATO (curinga `*.supabase.co` NÃO casa no Next 15.1 — testado em
+produção) + `unoptimized` no retrato (URL assinada muda a cada load).
+Outras 4: (a) a prévia borrada nunca aparecia — o bloco exigia `image_url`,
+que a API zera para quem não comprou, então a isca E o botão de $58 (único
+lugar que cobra preço de tabela) eram inalcançáveis; (b) "What the cards
+suggest doing next" era o item 6 da oferta e não existia no gerador →
+campo `next_step` criado; (c) nada validava o JSON do modelo e a
+idempotência gravava dossiê incompleto para sempre → `assertComplete`;
+(d) comprador batia em "Add your birth date first" com a data que digitou
+no passo 9 → webhook agora copia birth_date/name de `leads` (só o que
+estiver vazio). offer-19 ainda dizia $19.99.
+VERIFICADO E OK: os 10 MP3 ESTÃO no bucket `vibes` (bump de $19 entrega);
+cobrança→webhook→entitlement íntegro; moeda ZA ponta a ponta.
+PENDENTE (não feito): e-mails não apontam para /soulmate — o comprador não
+sabe onde está a leitura. É o próximo risco de chargeback.
+Commits 12acd71, 042237b, 0e1d9c2.
+
 ### 2026-08-27 — Claude (escape iOS: VEREDITO NEGATIVO + integridade de entrega + copy)
 Pesquisa com 13 agentes (verificação adversarial). **Não reabrir o escape iOS:**
 x-safari-https morto (Meta reescreve a URL, teste real do dono deu 404 no
