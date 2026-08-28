@@ -3,7 +3,7 @@
 // A tela do downsell. A elegibilidade já foi decidida no servidor — aqui
 // só sobra mostrar a copy e abrir o checkout. O botão manda o token junto,
 // e a rota REVALIDA antes de escolher o price: um POST forjado com
-// plan="DOWNSELL_19" recebe $29, não $19.99.
+// plan="DOWNSELL_19" recebe o preço cheio, não $9.99.
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -92,11 +92,11 @@ export default function Offer19({ token }: { token: string }) {
 
       <p className="mt-4 text-[15px] leading-relaxed text-white/85">
         But I would rather you read it than not read it. So I will do something
-        I do not do twice: ten dollars off, for this reading, once.
+        I do not do twice: five dollars off, for this reading, once.
       </p>
 
       <p className="mt-5 text-[17px] font-semibold leading-relaxed text-white">
-        $19.99 — the same complete reading, the same portrait, the same{" "}
+        $9.99 — the same complete reading, the same portrait, the same{" "}
         {GUARANTEE_DAYS} days to decide.
       </p>
 
@@ -119,14 +119,14 @@ export default function Offer19({ token }: { token: string }) {
           </>
         ) : (
           <>
-            Read my soulmate reading — $19.99
+            Read my soulmate reading — $9.99
             <span aria-hidden>&rarr;</span>
           </>
         )}
       </button>
 
       <p className="mt-3 text-center text-xs leading-relaxed text-white/55">
-        One payment of $19.99 &middot; Instant access &middot; {GUARANTEE_DAYS}
+        One payment of $9.99 &middot; Instant access &middot; {GUARANTEE_DAYS}
         -day money back &middot; Secure checkout by Stripe
       </p>
 

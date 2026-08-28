@@ -23,8 +23,9 @@ interface Dossier {
   traits: string[];
   meeting_window: string;
   how_to_recognize: string;
-  /** Opcional: dossiês gerados antes de 27/08 não têm este campo. */
+  /** Opcionais: dossiês gerados antes de 27/08 não têm estes campos. */
   obstacle?: string;
+  next_step?: string;
   closing: string;
 }
 
@@ -202,15 +203,26 @@ function SoulmateContent() {
         </section>
       )}
 
-      {/* 3. Retrato pronto */}
-      {portrait?.image_url && (
+      {/* 3. Retrato pronto.
+          A condição era `portrait?.image_url`, que a API zera de propósito
+          para quem ainda não comprou — então o bloco inteiro (prévia
+          borrada + botão de compra) nunca aparecia para exatamente quem
+          precisava vê-lo, e a prévia gerada com blur ficava sem uso. */}
+      {(portrait?.image_url || portrait?.preview_url) && (
         <section className="mt-8">
           <figure className="glass glass-gold relative overflow-hidden rounded-3xl">
             <Image
-              src={hasFullUnlock ? portrait.image_url : portrait.preview_url ?? portrait.image_url}
+              src={
+                (hasFullUnlock
+                  ? portrait.image_url ?? portrait.preview_url
+                  : portrait.preview_url ?? portrait.image_url) as string
+              }
               alt="Your soulmate portrait"
               width={1024}
               height={1024}
+              // URL assinada e efêmera: o otimizador da Vercel não deve
+              // intermediar (ver remotePatterns em next.config.js).
+              unoptimized
               className={`w-full object-cover transition-all ${
                 hasFullUnlock ? "" : "scale-[1.02] blur-[6px]"
               }`}
@@ -273,18 +285,31 @@ function SoulmateContent() {
                         <p className="mt-1 text-ink-200">{dossier.obstacle}</p>
                       </div>
                     )}
+                    {dossier.next_step && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gold-300">
+                          What the cards suggest doing next
+                        </h3>
+                        <p className="mt-1 text-ink-200">{dossier.next_step}</p>
+                      </div>
+                    )}
                     <p className="text-ink-300">{dossier.closing}</p>
                   </div>
-                  <a
-                    href={portrait.image_url}
-                    download="my-soulmate.png"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-ghost mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full font-medium"
-                  >
-                    <Download className="h-4 w-4" aria-hidden />
-                    Save my portrait
-                  </a>
+                  {/* Só existe com a URL assinada da imagem cheia — desde
+                      que a prévia passou a renderizar sozinha, image_url
+                      pode ser nulo aqui. */}
+                  {portrait.image_url && (
+                    <a
+                      href={portrait.image_url}
+                      download="my-soulmate.png"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-ghost mt-6 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full font-medium"
+                    >
+                      <Download className="h-4 w-4" aria-hidden />
+                      Save my portrait
+                    </a>
+                  )}
                 </>
               ) : (
                 <div className="mt-5 border-t border-white/10 pt-5">

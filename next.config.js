@@ -14,6 +14,16 @@ const nextConfig = {
         protocol: "https",
         hostname: "i.pinimg.com",
       },
+      // Storage do Supabase — é de onde sai o RETRATO, o produto que o
+      // funil vende. Sem esta entrada o /_next/image devolvia 400 e o
+      // comprador via imagem quebrada (27/08). As URLs são assinadas, então
+      // o <Image> do retrato também vai como `unoptimized`: cada carga gera
+      // um token novo, e otimizar de novo a cada load queimaria a cota da
+      // Vercel sem ganho nenhum.
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+      },
     ],
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400, // Cache de 24 horas

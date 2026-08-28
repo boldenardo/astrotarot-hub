@@ -42,8 +42,31 @@ interface Dossier {
    * leitura entregue não respondia o que o checkout cobrava.
    */
   obstacle: string;
+  /**
+   * O que as cartas sugerem fazer a seguir — item 6 de FRONT_INCLUDES,
+   * vendido desde sempre e nunca gerado até 27/08.
+   */
+  next_step: string;
   /** Parágrafo de fecho, tom da Master Aura. */
   closing: string;
+}
+
+/**
+ * Nada de dossiê pela metade gravado para sempre.
+ *
+ * A trava de idempotência devolve o registro existente sem regenerar: se o
+ * modelo esquecesse uma chave, o comprador pagava por seis itens, recebia
+ * cinco, e não havia caminho de volta. Melhor falhar agora — a UI pede
+ * para tentar de novo — do que persistir uma entrega incompleta.
+ */
+function assertComplete(d: Dossier): void {
+  const missing = (
+    ["appearance", "meeting_window", "how_to_recognize", "obstacle", "next_step", "closing"] as const
+  ).filter((k) => typeof d[k] !== "string" || !d[k].trim());
+  if (!Array.isArray(d.traits) || d.traits.length < 3) missing.push("traits" as never);
+  if (missing.length) {
+    throw new Error(`dossiê incompleto do modelo: faltou ${missing.join(", ")}`);
+  }
 }
 
 export async function POST() {
@@ -113,10 +136,13 @@ export async function POST() {
         "You are Master Aura, an astrologer writing a soulmate reading. " +
         "Always respond in English (US). Return ONLY valid JSON with keys: " +
         "appearance, traits (array of 4 short strings), meeting_window, " +
-        "how_to_recognize, obstacle, closing. " +
+        "how_to_recognize, obstacle, next_step, closing. " +
         "obstacle is one short paragraph on what the cards say may be " +
         "standing between them — a pattern or fear on her side, never a " +
         "flaw in the other person and never a warning of harm. " +
+        "next_step is one short paragraph with what the cards suggest she " +
+        "does next — one concrete, doable thing in the coming weeks, framed " +
+        "as guidance and never as an instruction with a promised outcome. " +
         "appearance must be a single vivid paragraph describing a real " +
         "adult person's face and presence (hair, eyes, build, style, age " +
         "range 28-45) with no names and no celebrity references. " +
@@ -131,6 +157,7 @@ export async function POST() {
       maxTokens: 900,
       temperature: 0.85,
     });
+    assertComplete(dossier);
 
     // 2. Retrato, a partir da descrição que o dossiê acabou de produzir.
     const prompt = buildImagePrompt(dossier.appearance);

@@ -640,6 +640,37 @@ export async function POST(req: NextRequest) {
             .eq("id", piUserId);
         }
 
+        // A data de nascimento do QUIZ vai para o perfil (27/08).
+        // Sem isto, o comprador pagava, entrava em /soulmate e batia num
+        // "Add your birth date first" — dado que ele já tinha digitado no
+        // passo 9 e que estava guardado em `leads` o tempo todo. Pior: quem
+        // gerasse assim mesmo recebia a leitura sem signo. Só preenche o
+        // que estiver vazio; nunca sobrescreve o que a pessoa editou.
+        try {
+          const { data: leadRow } = await admin
+            .from("leads")
+            .select("birth_date, name")
+            .eq("email", piEmail)
+            .maybeSingle();
+          const { data: userRow } = await admin
+            .from("users")
+            .select("birth_date, name")
+            .eq("id", piUserId)
+            .maybeSingle();
+          const patch: Record<string, string> = {};
+          if (leadRow?.birth_date && !userRow?.birth_date) {
+            patch.birth_date = leadRow.birth_date as string;
+          }
+          if (leadRow?.name && !userRow?.name) {
+            patch.name = leadRow.name as string;
+          }
+          if (Object.keys(patch).length) {
+            await admin.from("users").update(patch).eq("id", piUserId);
+          }
+        } catch (e) {
+          console.warn("[webhook] perfil não herdou dados do lead:", e);
+        }
+
         await admin.from("payments").insert({
           user_id: piUserId,
           amount: pi.amount / 100,
