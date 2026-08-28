@@ -51,8 +51,16 @@ export function getDeviceClass(): "mobile" | "desktop" {
   }
 }
 
-/** Marca deixada por um travamento — a próxima visita já entra sem animação. */
-const LOW_END_KEY = "astro_low_end";
+/**
+ * Marca deixada por um travamento — a próxima visita já entra sem animação.
+ *
+ * Sufixo v2 (28/08): a v1 foi gravada em massa por um bug meu — o watchdog
+ * acusava travamento em toda transição quando a animação já estava
+ * desligada (ver o comentário no watchdog de /quiz/flow). Trocar a chave
+ * descarta essas marcas falsas em vez de deixar navegadores saudáveis
+ * permanentemente degradados.
+ */
+const LOW_END_KEY = "astro_low_end_v2";
 
 /**
  * Aparelho que não aguenta a animação de transição do quiz.

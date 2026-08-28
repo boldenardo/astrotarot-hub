@@ -177,6 +177,18 @@ export default function QuizFlowPage() {
   useEffect(() => {
     if (!hydrated) return;
     if (settledRef.current === step.id) return;
+    // SEM ANIMAÇÃO NÃO HÁ onAnimationComplete (28/08). Com `degraded`, o
+    // motion.div entra com initial={false} e duration 0 — o Framer não
+    // dispara o aviso de conclusão porque não houve o que concluir, e o
+    // watchdog passava a acusar TODA transição como travada. Isso virou
+    // um laço: cada falso travamento gravava "aparelho fraco" no
+    // navegador, que degradava a visita seguinte, que travava de novo.
+    // Em 28/08 os 7 leads do dia dispararam o evento (eram 1-2 por dia).
+    // Sem animação o passo já está assentado no primeiro paint.
+    if (degraded) {
+      settledRef.current = step.id;
+      return;
+    }
     const t = window.setTimeout(() => {
       if (settledRef.current === step.id) return;
       settledRef.current = step.id;
@@ -198,7 +210,7 @@ export default function QuizFlowPage() {
       setPresenceKey((k) => k + 1);
     }, STEP_SETTLE_MS);
     return () => window.clearTimeout(t);
-  }, [step.id, stepIndex, hydrated]);
+  }, [step.id, stepIndex, hydrated, degraded]);
   const progress = Math.round(((stepIndex + 1) / LOCALIZED_STEPS.length) * 100);
   const isAnalyzing = step.id === "analyzing";
   const firstName = state.name?.trim().split(/\s+/)[0];
