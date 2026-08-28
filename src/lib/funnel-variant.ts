@@ -50,3 +50,55 @@ export function getDeviceClass(): "mobile" | "desktop" {
     return "desktop";
   }
 }
+
+/** Marca deixada por um travamento — a próxima visita já entra sem animação. */
+const LOW_END_KEY = "astro_low_end";
+
+/**
+ * Aparelho que não aguenta a animação de transição do quiz.
+ *
+ * O watchdog do /quiz/flow já desligava as animações, mas só DEPOIS de a
+ * transição travar 1,5s — e em 4 sessões o travamento foi o último evento
+ * registrado: a pessoa já tinha ido embora quando o socorro chegou. Os
+ * aparelhos reais que travaram (Galaxy A03 e A07, Android de entrada)
+ * caem em todos os sinais abaixo.
+ *
+ * Também respeita quem pediu menos movimento no sistema — nesse caso não
+ * é performance, é preferência declarada, e vale igual.
+ */
+export function prefersNoTransitions(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    if (window.localStorage.getItem(LOW_END_KEY) === "1") return true;
+  } catch {
+    // modo privado: segue pelos sinais do aparelho
+  }
+  try {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return true;
+    }
+  } catch {
+    // sem matchMedia utilizável
+  }
+  const nav = navigator as Navigator & {
+    deviceMemory?: number;
+    connection?: { saveData?: boolean };
+  };
+  // deviceMemory só existe no Chrome/Android — que é justamente onde os
+  // travamentos aconteceram. Ausente (iOS/Safari) não conta como fraco.
+  if (typeof nav.deviceMemory === "number" && nav.deviceMemory <= 4) return true;
+  if (typeof nav.hardwareConcurrency === "number" && nav.hardwareConcurrency <= 4) {
+    return true;
+  }
+  if (nav.connection?.saveData) return true;
+  return false;
+}
+
+/** Chamado quando uma transição trava: a próxima visita já nasce sem animação. */
+export function rememberLowEndDevice(): void {
+  try {
+    window.localStorage.setItem(LOW_END_KEY, "1");
+  } catch {
+    // sem storage: só esta visita fica degradada
+  }
+}

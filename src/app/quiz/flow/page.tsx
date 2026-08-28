@@ -48,6 +48,10 @@ import { analyzingStagesFor, type QuizContent, type QuizUI } from "@/lib/i18n/co
 import { trackEvent } from "@/lib/analytics";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import { PROOF_STATS } from "@/lib/proof-stats";
+import {
+  prefersNoTransitions,
+  rememberLowEndDevice,
+} from "@/lib/funnel-variant";
 import { captureSource, getStoredSource } from "@/lib/source";
 import { suggestEmailFix } from "@/lib/email-hint";
 
@@ -120,6 +124,13 @@ export default function QuizFlowPage() {
 
   // Restaura o estado e retoma exatamente onde a pessoa parou.
   useEffect(() => {
+    // Aparelho fraco (ou quem pediu menos movimento): entra JÁ sem
+    // animação de transição, em vez de esperar o watchdog socorrer depois
+    // de 1,5s travado — socorro que em 4 sessões chegou tarde demais.
+    // Fora do estado inicial de propósito: ler navigator no primeiro
+    // render divergiria do HTML do servidor e quebraria a hidratação.
+    if (prefersNoTransitions()) setDegraded(true);
+
     const restored = loadQuizState();
     setState(restored);
     setStepIndex(resumeIndex(restored));
@@ -181,6 +192,9 @@ export default function QuizFlowPage() {
         step_index: stepIndex,
       });
       setDegraded(true);
+      // Este aparelho já provou que não aguenta: a próxima visita dele
+      // nasce sem animação nenhuma.
+      rememberLowEndDevice();
       setPresenceKey((k) => k + 1);
     }, STEP_SETTLE_MS);
     return () => window.clearTimeout(t);

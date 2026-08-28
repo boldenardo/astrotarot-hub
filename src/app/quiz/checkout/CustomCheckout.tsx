@@ -124,7 +124,6 @@ export default function CustomCheckout() {
   // de continuar) e libera o formulário de pagamento.
   const [cards] = useState(() => shuffle(CARD_DISCOUNTS));
   const [picked, setPicked] = useState<number | null>(null);
-  const [advanced, setAdvanced] = useState(false);
   const startedRef = useRef(false);
 
   const discount = picked !== null ? cards[picked] : null;
@@ -152,19 +151,12 @@ export default function CustomCheckout() {
     ? Math.max(0, Math.floor((deadline - nowTs) / 1000))
     : null;
 
-  // Expirou ANTES de avançar: o desconto volta pro baralho e a pessoa
-  // escolhe outra carta. Depois de avançar, o desconto já está no PI.
-  useEffect(() => {
-    if (secondsLeft === 0 && !advanced && picked !== null) {
-      setPicked(null);
-      setDeadline(null);
-      try {
-        sessionStorage.removeItem(DEADLINE_KEY);
-      } catch {
-        // idem
-      }
-    }
-  }, [secondsLeft, advanced, picked]);
+  // O contador agora só INFORMA. Antes ele devolvia a carta ao baralho ao
+  // expirar, o que fazia sentido quando as cartas eram uma tela anterior ao
+  // pagamento; com o desconto já gravado no PaymentIntent, tirá-lo de volta
+  // significaria subir o preço de alguém que está com o cartão na mão.
+  // A urgência continua real (a carta segura por 15 min) — o que sai é a
+  // punição de quem demorou lendo a própria oferta.
 
   useEffect(() => {
     try {
@@ -224,14 +216,40 @@ export default function CustomCheckout() {
     [creating, name, bumps, discount]
   );
 
-  // E-mail já veio do quiz → cria o intent sozinho. Só depois das cartas:
-  // o desconto escolhido precisa entrar na criação do PaymentIntent.
+  // E-mail já veio do quiz → cria o intent imediatamente. Não espera mais
+  // as cartas (27/08): elas saíram do caminho crítico e o desconto passou
+  // a entrar por update. Das 9 pessoas que abriram o checkout em 27/08,
+  // 8 escolheram uma carta e só 5 chegaram ao formulário — três morreram
+  // no clique EXTRA que separava o jogo do pagamento, depois de já terem
+  // decidido comprar.
   useEffect(() => {
-    if (advanced && email && EMAIL_RE.test(email) && !pi && !startedRef.current) {
+    if (email && EMAIL_RE.test(email) && !pi && !startedRef.current) {
       void createIntent(email);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, advanced]);
+  }, [email]);
+
+  /** Aplica no PI o desconto que a carta revelou. */
+  const applyDiscount = useCallback(
+    async (pct: number) => {
+      if (!pi) return;
+      try {
+        await fetch("/api/quiz/payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "update",
+            piId: pi.piId,
+            bumps,
+            discountPct: pct,
+          }),
+        });
+      } catch {
+        // o servidor revalida na confirmação; o número na tela já mudou
+      }
+    },
+    [pi, bumps]
+  );
 
   const frontFinal = (cur.front * (100 - (discount ?? 0))) / 100;
   const total =
@@ -278,33 +296,39 @@ export default function CustomCheckout() {
     [pi, content.locale]
   );
 
-  // ── Etapa 1: as cartas de desconto ─────────────────────────────────────
-  if (!advanced) {
-    return (
-      <div className="mx-auto w-full max-w-lg px-4 pb-20 pt-10">
-        <div className="flex items-center justify-center">
-          <span className="font-display text-lg font-semibold text-ink-50">
-            Astro<span className="text-gold">Tarot</span>
-          </span>
+  // ── As cartas de desconto: BLOCO OPCIONAL, não mais um portão ─────────
+  //
+  // Era uma tela inteira antes do checkout, e o pagamento só existia depois
+  // de dois cliques (escolher a carta + "Continue to my checkout"). Quem não
+  // quisesse jogar não tinha saída nenhuma. Em 27/08: 9 abriram, 8 jogaram,
+  // 5 passaram — três pessoas que já tinham decidido comprar morreram no
+  // clique do meio. Agora o jogo mora dentro do checkout, acima do resumo,
+  // e o formulário de pagamento existe desde o primeiro paint.
+  const discountCards = (
+    <div className="mt-5 rounded-2xl border border-gold-400/30 bg-gradient-to-b from-gold-400/[0.08] to-transparent p-4">
+      <div className="flex items-center gap-3">
+        <Image
+          src="/social-proof/marie/badge-50-off.png"
+          alt=""
+          width={80}
+          height={80}
+          className="h-12 w-12 shrink-0 object-contain"
+        />
+        <div>
+          <p className="text-[15px] font-semibold leading-snug text-white">
+            {picked === null
+              ? `${name ? `${name}, one` : "One"} of these cards holds your discount`
+              : "Your discount is applied below"}
+          </p>
+          <p className="mt-0.5 text-[13px] leading-snug text-white/65">
+            {picked === null
+              ? "Tap one — 5% to 30% off, applied to your order."
+              : `Card revealed ${discount}% off. Your reading is now ${fmt(frontFinal)}.`}
+          </p>
         </div>
-        <div className="mt-6 flex justify-center">
-          <Image
-            src="/social-proof/marie/badge-50-off.png"
-            alt=""
-            width={120}
-            height={120}
-            className="h-24 w-24 object-contain"
-          />
-        </div>
-        <h1 className="mt-4 text-center font-display text-2xl font-semibold text-ink-50 sm:text-3xl">
-          {name ? `${name}, one` : "One"} of these cards holds your discount
-        </h1>
-        <p className="mx-auto mt-3 max-w-sm text-center text-sm text-ink-300">
-          Pick a card. The discount you reveal applies to today&apos;s reading
-          — from 5% to 30% off the {fmt(cur.front)}.
-        </p>
+      </div>
 
-        <div className="mt-8 grid grid-cols-5 gap-2 sm:gap-3">
+        <div className="mt-4 grid grid-cols-5 gap-2 sm:gap-3">
           {cards.map((pct, i) => {
             const isPicked = picked === i;
             const revealed = picked !== null;
@@ -327,6 +351,9 @@ export default function CustomCheckout() {
                     label: `card_${i}`,
                     value: pct,
                   });
+                  // O preço do PI desce agora — não há mais um segundo
+                  // clique onde a pessoa possa se perder.
+                  void applyDiscount(pct);
                 }}
                 className={`flex aspect-[3/4] items-center justify-center rounded-xl border text-center transition-all duration-500 ${
                   isPicked
@@ -354,39 +381,16 @@ export default function CustomCheckout() {
           })}
         </div>
 
-        {picked !== null && (
-          <div className="mt-8 text-center">
-            <p className="text-[15px] font-semibold text-white">
-              Your card revealed{" "}
-              <span className="text-gold">{cards[picked]}% off</span> — your
-              reading comes out at {fmt(frontFinal)}.
-            </p>
-            {secondsLeft !== null && secondsLeft > 0 && (
-              <p className="mt-2 text-[13px] font-medium text-gold-300" role="status">
-                Discount held for{" "}
-                <span className="font-bold tabular-nums">{fmtMmSs(secondsLeft)}</span>
-              </p>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                trackEvent("checkout_card_stage_passed", {
-                  category: "checkout",
-                  label: picked != null ? "with_discount" : "skipped",
-                });
-                setAdvanced(true);
-              }}
-              className="btn-gold mt-5 flex min-h-[52px] w-full items-center justify-center rounded-full font-semibold"
-            >
-              Continue to my checkout
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
+      {picked !== null && secondsLeft !== null && secondsLeft > 0 && (
+        <p className="mt-3 text-center text-[13px] font-medium text-gold-300" role="status">
+          Held for{" "}
+          <span className="font-bold tabular-nums">{fmtMmSs(secondsLeft)}</span>
+        </p>
+      )}
+    </div>
+  );
 
-  // ── Etapa 2: o checkout ────────────────────────────────────────────────
+  // ── O checkout ─────────────────────────────────────────────────────────
 
   return (
     <div className="mx-auto w-full max-w-lg px-4 pb-20 pt-6">
@@ -419,6 +423,8 @@ export default function CustomCheckout() {
           )}
         </div>
       )}
+
+      {discountCards}
 
       {/* Risco zero no topo — a manchete do checkout de referência, na
           nossa versão honesta (a garantia é real e já está na LP). */}

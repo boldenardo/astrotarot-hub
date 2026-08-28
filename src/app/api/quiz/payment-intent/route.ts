@@ -95,10 +95,19 @@ export async function POST(req: NextRequest) {
       ) {
         return NextResponse.json({ error: "Not editable." }, { status: 400 });
       }
-      // O desconto é decidido pelas cartas ANTES de criar o PI e gravado
-      // na metadata — o update não aceita um novo, para um POST forjado
-      // não baixar o preço depois.
-      const discountPct = parseDiscount(pi.metadata?.discount_pct);
+      // O desconto pode chegar no UPDATE desde 27/08: as cartas saíram do
+      // caminho crítico e agora são um bloco opcional ACIMA do formulário
+      // de pagamento, então a escolha acontece depois de o PI existir.
+      //
+      // Isto não abre buraco novo: `create` já aceita discountPct do
+      // cliente, validado contra o mesmo ALLOWED_DISCOUNTS. Recusar aqui
+      // nunca protegeu nada que o create não permitisse — só impedia o
+      // fluxo honesto. E o PI confirmado não é editável (guarda de status
+      // acima), então nada disto alcança uma cobrança já feita.
+      const discountPct =
+        body.discountPct === undefined
+          ? parseDiscount(pi.metadata?.discount_pct)
+          : parseDiscount(body.discountPct);
       // A moeda do PI não muda no update: recalcula no MESMO grid em que
       // ele nasceu (gravado na metadata), nunca no do request atual.
       const piGrid = gridForCountry(pi.metadata?.price_country);
@@ -108,6 +117,7 @@ export async function POST(req: NextRequest) {
           ...pi.metadata,
           bump_cord: bumps.cord ? "1" : "0",
           bump_vibes: bumps.vibes ? "1" : "0",
+          discount_pct: String(discountPct),
         },
       });
       return NextResponse.json({ amount: updated.amount });
