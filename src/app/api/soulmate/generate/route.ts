@@ -12,6 +12,14 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { requireUser, hasEntitlement } from "@/lib/server/plan-gate";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
+import {
+  DOSSIER_SYSTEM,
+  buildDossierPrompt,
+} from "@/lib/server/soulmate-prompt";
+import {
+  isCompleteDossier,
+  type SoulmateReading,
+} from "@/lib/soulmate-reading";
 import { groqChatJson } from "@/lib/server/groq";
 import { getImageProvider } from "@/lib/server/image-gen";
 import { isPremium } from "@/lib/plans";
@@ -115,49 +123,57 @@ export async function POST() {
   // e-mail (/api/quiz/lead). Best-effort: quem comprou por outro caminho
   // (sem quiz) segue recebendo a leitura só pelo mapa natal.
   let quizAnswers: Record<string, string> | null = null;
+  /** Leitura já gerada de graça no fim do quiz (mesmas cartas, mesmo texto). */
+  let leadReading: SoulmateReading | null = null;
   try {
     if (profile.email) {
       const { data: lead } = await admin
         .from("leads")
-        .select("answers")
+        .select("answers, soulmate_reading")
         .eq("email", profile.email.trim().toLowerCase())
         .maybeSingle();
       const a = lead?.answers;
       if (a && typeof a === "object") quizAnswers = a as Record<string, string>;
+      const r = (lead as { soulmate_reading?: SoulmateReading } | null)
+        ?.soulmate_reading;
+      if (r?.cards?.length) leadReading = r;
     }
   } catch (e) {
     console.warn("[soulmate/generate] respostas do quiz não carregadas:", e);
   }
 
   try {
-    // 1. Dossiê pelo Groq, a partir dos dados reais de nascimento.
-    const dossier = await groqChatJson<Dossier>({
-      system:
-        "You are Master Aura, an astrologer writing a soulmate reading. " +
-        "Always respond in English (US). Return ONLY valid JSON with keys: " +
-        "appearance, traits (array of 4 short strings), meeting_window, " +
-        "how_to_recognize, obstacle, next_step, closing. " +
-        "obstacle is one short paragraph on what the cards say may be " +
-        "standing between them — a pattern or fear on her side, never a " +
-        "flaw in the other person and never a warning of harm. " +
-        "next_step is one short paragraph with what the cards suggest she " +
-        "does next — one concrete, doable thing in the coming weeks, framed " +
-        "as guidance and never as an instruction with a promised outcome. " +
-        "appearance must be a single vivid paragraph describing a real " +
-        "adult person's face and presence (hair, eyes, build, style, age " +
-        "range 28-45) with no names and no celebrity references. " +
-        "Never promise certainty about the future; write as interpretation.",
-      user: buildDossierPrompt({
-        name: profile.name,
-        birthDate: profile.birth_date,
-        birthLocation: profile.birth_location,
-        sign,
-        answers: quizAnswers,
-      }),
-      maxTokens: 900,
-      temperature: 0.85,
-    });
-    assertComplete(dossier);
+    // 1. O dossiê.
+    //
+    // Se a prévia grátis do fim do quiz já gerou um (mesmo e-mail, mesmas
+    // cartas), REAPROVEITA. Não é economia: é integridade. A pessoa leu as
+    // cartas III e IV antes de pagar; gerar tudo de novo aqui faria o
+    // obstáculo e a janela MUDAREM depois da compra — ela pagaria e as
+    // cartas teriam se movido. Só reaproveita origem "llm": um fallback
+    // determinístico é o significado canônico da carta, não uma leitura,
+    // e quem pagou tem direito ao texto de verdade.
+    const reusable =
+      leadReading?.source === "llm" && isCompleteDossier(leadReading.dossier)
+        ? (leadReading.dossier as Dossier)
+        : null;
+
+    const dossier =
+      reusable ??
+      (await groqChatJson<Dossier>({
+        system: DOSSIER_SYSTEM,
+        user: buildDossierPrompt({
+          name: profile.name,
+          birthDate: profile.birth_date,
+          birthLocation: profile.birth_location,
+          sign,
+          answers: quizAnswers,
+          cards: leadReading?.cards,
+          window: leadReading?.window ?? null,
+        }),
+        maxTokens: 900,
+        temperature: 0.85,
+      }));
+    if (!reusable) assertComplete(dossier);
 
     // 2. Retrato, a partir da descrição que o dossiê acabou de produzir.
     const prompt = buildImagePrompt(dossier.appearance);
@@ -198,7 +214,10 @@ export async function POST() {
         user_id: profile.id,
         image_url: fullPath,
         preview_url: previewPath,
-        dossier,
+        // As cartas viajam DENTRO do dossiê (coluna JSONB livre, sem
+        // migration): é o que deixa a página do comprador mostrar as
+        // mesmas cinco cartas que ele viu de graça na VSL.
+        dossier: { ...dossier, cards: leadReading?.cards ?? null },
         prompt,
         sign,
         updated_at: new Date().toISOString(),
@@ -260,72 +279,11 @@ function deriveSign(birthDate: string | null): string | null {
   return null;
 }
 
-/**
- * O que cada resposta do quiz significa em linguagem de leitura.
- *
- * Sem isto o dossiê saía SÓ do mapa natal — e o funil inteiro promete o
- * contrário: "Who they are, in the words the cards used", "what may be
- * standing between you", e a Master Aura passa quinze passos dizendo que
- * está lendo as respostas. Quem pagasse receberia um texto que qualquer
- * pessoa do mesmo signo receberia igual: reembolso na certa.
- */
-const ANSWER_MEANING: Record<string, Record<string, string>> = {
-  q_status: {
-    searching: "is actively looking for love and tired of near-misses",
-    complicated: "is in something undefined that keeps her guessing",
-    healing: "is recovering from a relationship that ended badly",
-    taken: "is with someone but questions whether they are the one",
-  },
-  q_met: {
-    yes: "believes she has already crossed paths with this person",
-    maybe: "suspects they have already met but is not sure",
-    no: "does not think they have met yet",
-  },
-  q_past: {
-    often: "feels déjà vu about a specific person very often",
-    sometimes: "occasionally feels a pull she cannot explain",
-    no: "has not felt that kind of recognition",
-  },
-  q_ready: {
-    yes: "says she is ready for it now",
-    unsure: "wants it but is afraid of being hurt again",
-    no: "is still putting herself back together first",
-  },
-};
-
-function describeAnswers(answers: Record<string, string> | null): string {
-  if (!answers) return "";
-  const lines: string[] = [];
-  for (const [key, value] of Object.entries(answers)) {
-    const meaning = ANSWER_MEANING[key]?.[value];
-    if (meaning) lines.push(`She ${meaning}.`);
-  }
-  return lines.join(" ");
-}
-
-function buildDossierPrompt(input: {
-  name: string | null;
-  birthDate: string | null;
-  birthLocation: string | null;
-  sign: string | null;
-  answers: Record<string, string> | null;
-}): string {
-  const said = describeAnswers(input.answers);
-  return [
-    `Person: ${input.name ?? "the seeker"}.`,
-    input.birthDate ? `Born on ${input.birthDate}.` : "",
-    input.birthLocation ? `Birth place: ${input.birthLocation}.` : "",
-    input.sign ? `Sun sign: ${input.sign}.` : "",
-    said ? `What she told you in the reading: ${said}` : "",
-    "Read their chart and describe the soulmate their Venus and 7th house point to.",
-    said
-      ? "Weave what she told you into the reading so she recognizes her own " +
-        "words — especially in obstacle and closing. Never quote the questions back."
-      : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
+// ANSWER_MEANING / describeAnswers / buildDossierPrompt saíram daqui em
+// 28/08 para src/lib/server/soulmate-prompt.ts: a prévia grátis do fim do
+// quiz precisa gerar o MESMO texto que esta rota, e duas cópias do prompt
+// divergiriam na primeira alteração — com a diferença aparecendo para
+// quem já tinha lido a prévia.
 
 function buildImagePrompt(appearance: string): string {
   // Fotorrealista, retrato único, sem texto e sem semelhança com pessoa real.
