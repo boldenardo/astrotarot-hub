@@ -59,13 +59,23 @@ export const DOWNSELL_PRICE_LABEL = `$${DOWNSELL_PRICE_USD}`;
 /** Continuidade, oferecida só depois da primeira compra. */
 export const CONTINUITY_PRICE_LABEL = "$9.99";
 
-/** Itens da leitura — a mesma lista que o checkout está cobrando. */
+/**
+ * O que a compra destrava — as TRÊS cartas ainda viradas para baixo, mais
+ * o retrato.
+ *
+ * Encolheu de 6 para 4 em 28/08: as cartas III (o que está no caminho) e IV
+ * (quando os caminhos se cruzam) passaram a ser entregues DE GRAÇA na VSL.
+ * Continuar listando as duas aqui seria vender o que a pessoa acabou de
+ * ganhar três blocos acima — a objeção que mata a oferta sozinha.
+ */
 export const FRONT_INCLUDES = [
   "Your soulmate's portrait, unblurred — the face your chart points to",
-  "Who they are, in the words the cards used",
-  "The traits that make them recognizable across a room",
-  "What the cards say may be standing between you",
-  "When your paths are most likely to cross",
-  "What the cards suggest doing next",
+  "Card I — who the cards point to, in the words they used",
+  "Card II — the traits that make them recognizable across a room",
+  "Card V — what the cards suggest you do next, inside your window",
 ] as const;
+
+/** Vai logo abaixo da lista: sem isto a oferta parece cobrar pelo grátis. */
+export const FRONT_ALREADY_FREE =
+  "Cards III and IV are already yours — buying or not.";
 export const FRONT_OFFER_ID = "soulmate_reading_portrait";

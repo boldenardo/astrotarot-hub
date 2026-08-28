@@ -246,14 +246,14 @@ export const UI_ES = {
   birthdateFuture: "Tu fecha de nacimiento no puede estar en el futuro.",
   emailIntro: (name?: string) =>
     name
-      ? `${name}, tu retrato está listo. ¿A dónde te envío tu Lectura de Alma Gemela completa?`
-      : "Tu retrato está listo. ¿A dónde te envío tu Lectura de Alma Gemela completa?",
+      ? `${name}, tu tirada está lista — cinco cartas, y dos puedo darlas vuelta ahora. ¿A dónde te las envío para que puedas volver a ellas?`
+      : "Tu tirada está lista — cinco cartas, y dos puedo darlas vuelta ahora. ¿A dónde te las envío para que puedas volver a ellas?",
   emailLabel: "Correo electrónico",
   emailError: "Ingresa un correo electrónico válido.",
   emailSuggestion: (fix: string) => `¿Quisiste decir ${fix}?`,
   emailSuggestionTail: " Toca para corregir, o continúa con lo que escribiste.",
-  emailCta: "Revelar a mi alma gemela",
-  noSpam: "Sin spam. Tu lectura es privada.",
+  emailCta: "Dar vuelta mis dos cartas",
+  noSpam: "Sin spam. Tus cartas son privadas, y el enlace sigue funcionando.",
   locating: "Ubicando el punto de encuentro en tu carta...",
   locationWithPlace: (place: string) =>
     `Tu carta astral muestra que es probable que encuentres a tu alma gemela cerca de 📍 ${place}. Preparé una revelación especial para ti, veámosla ahora mismo. ✨`,

@@ -138,6 +138,12 @@ export type AnalyticsEvent =
   | "downsell_viewed"
   | "downsell_clicked"
   | "challenge_cta_clicked"
+  // Prévia grátis de 5 cartas (28/08). shown = a tirada apareceu na VSL;
+  // cached = veio do banco, ou seja, alguém refez o quiz e recebeu as
+  // MESMAS cartas — é a métrica que prova o conserto dos 27%.
+  | "soulmate_preview_shown"
+  | "soulmate_preview_card_flipped"
+  | "soulmate_preview_cached"
   | "soulmate_draw_started"
   | "soulmate_unlock_clicked"
   | "streak_checkin"

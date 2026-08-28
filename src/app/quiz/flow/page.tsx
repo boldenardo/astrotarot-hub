@@ -48,6 +48,7 @@ import { analyzingStagesFor, type QuizContent, type QuizUI } from "@/lib/i18n/co
 import { trackEvent } from "@/lib/analytics";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import { PROOF_STATS } from "@/lib/proof-stats";
+import { READING_STORAGE_KEY } from "@/lib/soulmate-reading";
 import {
   prefersNoTransitions,
   rememberLowEndDevice,
@@ -306,6 +307,38 @@ export default function QuizFlowPage() {
             src: getStoredSource(),
           }),
         }).catch(() => {});
+
+        // PREFETCH DA TIRADA.
+        //
+        // Dispara AQUI, no passo do e-mail, para atravessar os ~5s de
+        // animação do "analyzing" — cujo terceiro estágio é literalmente
+        // "Drawing your soulmate cards". A Groq responde em 1,5-3s, então a
+        // VSL já pinta as cartas com o texto pronto e a pessoa não espera
+        // por nada. Nunca bloqueia: se falhar, a VSL busca de novo, e se
+        // falhar lá também a página segue exatamente como antes.
+        if (next.birthDate && next.answers) {
+          fetch("/api/quiz/soulmate-preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            keepalive: true,
+            body: JSON.stringify({
+              email,
+              name: next.name,
+              birthDate: next.birthDate,
+              answers: next.answers,
+            }),
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((reading) => {
+              if (reading?.cards?.length) {
+                localStorage.setItem(
+                  READING_STORAGE_KEY,
+                  JSON.stringify(reading)
+                );
+              }
+            })
+            .catch(() => {});
+        }
         return next;
       });
       trackEvent("lead_captured", { category: "quiz", label: "quiz_email" });

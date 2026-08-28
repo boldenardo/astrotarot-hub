@@ -47,16 +47,20 @@ export const UI_EN = {
   birthdateLabel: "Birth date",
   birthdateError: "Please enter your full birth date.",
   birthdateFuture: "Your birth date can't be in the future.",
+  // 28/08: a versão anterior prometia ENVIAR a leitura completa por e-mail
+  // — e nada era enviado. A promessa quebrada aparecia de novo por escrito
+  // no e-mail seguinte, e é o gatilho mais direto do refazer-o-quiz.
+  // Agora o e-mail serve para ela VOLTAR às cartas, que é o que ele faz.
   emailIntro: (name?: string) =>
     name
-      ? `${name}, your portrait is ready. Where should I send your full Soulmate Reading?`
-      : "Your portrait is ready. Where should I send your full Soulmate Reading?",
+      ? `${name}, your spread is done — five cards, and two of them I can turn over for you now. Where should I send them so you can find them again?`
+      : "Your spread is done — five cards, and two of them I can turn over for you now. Where should I send them so you can find them again?",
   emailLabel: "Email address",
   emailError: "Please enter a valid email address.",
   emailSuggestion: (fix: string) => `Did you mean ${fix}?`,
   emailSuggestionTail: " Tap to fix, or continue to keep what you typed.",
-  emailCta: "Reveal my soulmate",
-  noSpam: "No spam. Your reading stays private.",
+  emailCta: "Turn my two cards",
+  noSpam: "No spam. Your cards stay private, and the link keeps working.",
   locating: "Locating the meeting point in your chart...",
   locationWithPlace: (place: string) =>
     `Your birth chart shows that you are likely to meet your soulmate near to 📍 ${place}. I have prepared a special revelation for you, let's see it right now. ✨`,

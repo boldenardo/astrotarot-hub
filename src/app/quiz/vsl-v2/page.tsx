@@ -73,9 +73,15 @@ import {
   FRONT_PRICE_USD,
   FRONT_OFFER_ID,
   FRONT_INCLUDES,
+  FRONT_ALREADY_FREE,
   GUARANTEE_DAYS,
 } from "@/lib/offer";
 import { OFFER_LAYOUT } from "@/components/PlanPicker";
+import SoulmateCardSpread from "@/components/quiz/SoulmateCardSpread";
+import {
+  READING_STORAGE_KEY,
+  type SoulmateReading,
+} from "@/lib/soulmate-reading";
 import { fmtMoney } from "@/lib/pricing";
 import { useLocalPricing } from "@/lib/pricing-client";
 
@@ -106,6 +112,71 @@ interface QuizStore {
   birthDate?: string;
   sign?: string;
   score?: QuizScore;
+}
+
+
+/**
+ * Carrega a tirada: cache do navegador primeiro, rede depois.
+ *
+ * Nunca bloqueia a página — o componente já desenha os cinco versos antes
+ * de o texto chegar, e as cartas grátis viram quando ele chega.
+ */
+async function loadReading(
+  store: QuizStore,
+  setReading: (r: SoulmateReading) => void,
+  firedRef: { current: boolean }
+): Promise<void> {
+  const done = (r: SoulmateReading, cached: boolean) => {
+    setReading(r);
+    if (firedRef.current) return;
+    firedRef.current = true;
+    trackEvent("soulmate_preview_shown", {
+      category: "quiz",
+      label: r.source,
+    });
+    if (cached) trackEvent("soulmate_preview_cached", { category: "quiz" });
+  };
+
+  try {
+    const raw = localStorage.getItem(READING_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as SoulmateReading;
+      if (parsed?.cards?.length) {
+        done(parsed, false);
+        return;
+      }
+    }
+  } catch {
+    // storage bloqueado: segue para a rede
+  }
+
+  const email = store.email?.trim();
+  const birthDate = store.birthDate;
+  if (!email || !birthDate || !store.answers) return;
+
+  try {
+    const res = await fetch("/api/quiz/soulmate-preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email,
+        name: store.name,
+        birthDate,
+        answers: store.answers,
+      }),
+    });
+    if (!res.ok) return;
+    const data = (await res.json()) as SoulmateReading & { cached?: boolean };
+    if (!data?.cards?.length) return;
+    try {
+      localStorage.setItem(READING_STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      // sem storage: vale só nesta visita
+    }
+    done(data, Boolean(data.cached));
+  } catch {
+    // a tirada é um bônus da página; falhar aqui nunca pode custar a oferta
+  }
 }
 
 function readStore(): QuizStore {
@@ -218,7 +289,7 @@ const OBJECTIONS: Array<{ q: string; a: string }> = [
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly do I unlock?",
-    a: "Your complete Soulmate Reading with the portrait — who the cards point toward, the traits that make them recognizable, what may be standing between you, and when your paths are most likely to cross.",
+    a: "The three cards still face down — who the cards point toward, the traits that make them recognizable, and what to do next — plus the portrait, unblurred. Cards III and IV you already have, and you keep them either way.",
   },
   {
     q: "When do I get access?",
@@ -458,6 +529,10 @@ export default function QuizVslV2Page() {
   const [showSticky, setShowSticky] = useState(false);
 
 
+  /** A tirada de cinco cartas. Cache local primeiro; rede só se faltar. */
+  const [reading, setReading] = useState<SoulmateReading | null>(null);
+  const readingFiredRef = useRef(false);
+
   const viewFiredRef = useRef(false);
   const offerViewedRef = useRef(false);
   const ctaViewedRef = useRef(false);
@@ -544,6 +619,15 @@ export default function QuizVslV2Page() {
       trackEvent("quiz_vsl_view", params);
       trackEvent("quiz_result_viewed", params);
     }
+
+    // A TIRADA.
+    //
+    // O prefetch acontece na tela de "analyzing" do quiz, então na maior
+    // parte das visitas isto só lê o que já está no navegador. A rede só
+    // entra para quem chegou por outro caminho (link de e-mail, outro
+    // aparelho) — e aí é o cache do servidor que responde, não uma geração
+    // nova, porque a leitura é idempotente por e-mail.
+    void loadReading(initial, setReading, readingFiredRef);
 
     let canceled = false;
     try {
@@ -1002,11 +1086,11 @@ export default function QuizVslV2Page() {
               nothing but fifteen honest answers.
             </p>
             <p className="mt-3 text-[15px] leading-relaxed text-white/80">
-              But a face is not a person. Knowing who they are, what they carry,
-              what keeps getting in the way, and when your paths bend toward
-              each other &mdash; that has to be read, line by line, against your
-              chart and your answers. That is the part with a price on it. It is
-              also the part you actually came here for.
+  But a face is not a person. Two of your cards are turned below and
+              they cost you nothing. The three still face down are the ones
+              that name him &mdash; who he is, what makes him recognizable,
+              and what to do inside the window you just read. That is the part
+              with a price on it. It is also the part you came here for.
             </p>
           </Reveal>
 
@@ -1067,25 +1151,37 @@ export default function QuizVslV2Page() {
         </p>
       </Reveal>
 
-      {/* O QUE SEGUE SELADO */}
+      {/* A TIRADA — cinco cartas, duas viradas.
+          Substitui a lista SEALED, que eram cinco rótulos com cadeado e nada
+          por trás: a página afirmava a lacuna e cobrava por ela sem nunca
+          demonstrar. A lista continua servindo quem chega SEM quiz (link de
+          e-mail, volta de checkout), onde não há tirada para mostrar. */}
       <Reveal className="mt-8">
-        <ul className="divide-y divide-white/[0.07] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
-          {SEALED.map((item) => (
-            <li
-              key={item.n}
-              className="flex items-center gap-3.5 px-4 py-3.5 text-sm text-white/75"
-            >
-              <span className="w-5 shrink-0 font-display text-xs tracking-widest text-gold-400/60">
-                {item.n}
-              </span>
-              <span className="flex-1">{item.text}</span>
-              <Lock
-                className="h-3.5 w-3.5 shrink-0 text-gold-400/70"
-                aria-hidden
-              />
-            </li>
-          ))}
-        </ul>
+        {reading ? (
+          <SoulmateCardSpread
+            reading={reading}
+            firstName={firstName}
+            sign={sign}
+          />
+        ) : (
+          <ul className="divide-y divide-white/[0.07] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+            {SEALED.map((item) => (
+              <li
+                key={item.n}
+                className="flex items-center gap-3.5 px-4 py-3.5 text-sm text-white/75"
+              >
+                <span className="w-5 shrink-0 font-display text-xs tracking-widest text-gold-400/60">
+                  {item.n}
+                </span>
+                <span className="flex-1">{item.text}</span>
+                <Lock
+                  className="h-3.5 w-3.5 shrink-0 text-gold-400/70"
+                  aria-hidden
+                />
+              </li>
+            ))}
+          </ul>
+        )}
       </Reveal>
 
       {/* ===================================================================
@@ -1146,6 +1242,10 @@ export default function QuizVslV2Page() {
                 </li>
               ))}
             </ul>
+
+            <p className="mt-3 text-[13px] italic text-white/55">
+              {FRONT_ALREADY_FREE}
+            </p>
 
             <p className="mt-6 text-[15px] font-semibold leading-relaxed text-white">
               One payment of{" "}
