@@ -26,6 +26,8 @@ interface Dossier {
   /** Opcionais: dossiês gerados antes de 27/08 não têm estes campos. */
   obstacle?: string;
   next_step?: string;
+  /** As cinco cartas da tirada. Ausente em dossiês anteriores a 28/08. */
+  cards?: Array<{ position: string; arcanum: number; name: string; image: string }>;
   closing: string;
 }
 
@@ -294,6 +296,31 @@ function SoulmateContent() {
                       </div>
                     )}
                     <p className="text-ink-300">{dossier.closing}</p>
+                    {/* As cinco cartas, agora todas abertas. Fecha o loop:
+                        são as MESMAS que ela viu viradas para baixo na VSL. */}
+                    {dossier.cards && dossier.cards.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gold-300">
+                          Your five cards
+                        </h3>
+                        <div className="mt-2 grid grid-cols-5 gap-2">
+                          {dossier.cards.map((c) => (
+                            <div key={c.position} className="text-center">
+                              <Image
+                                src={c.image}
+                                alt=""
+                                width={160}
+                                height={272}
+                                className="h-auto w-full rounded-lg border border-white/10"
+                              />
+                              <p className="mt-1 text-[10px] leading-tight text-ink-300">
+                                {c.position}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {/* Só existe com a URL assinada da imagem cheia — desde
                       que a prévia passou a renderizar sozinha, image_url
