@@ -53,6 +53,40 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-28 — Claude (prévia grátis de 5 cartas: a promessa da porta virou verdade)
+A landing anuncia "Free soulmate reading", o quiz dizia "seu retrato está
+pronto, para onde envio sua leitura COMPLETA?" — e nada grátis era entregue.
+27% de quem começa o quiz o REFAZ (alguns 5 e 7 vezes): não é indecisão, é
+gente procurando o caminho grátis que a copy prometeu.
+DESENHO: uma leitura só, gerada DE GRAÇA no fim do quiz. A compra não gera
+texto — destrava o que já está no banco e dispara só o retrato. É o que
+garante que as 5 cartas e as palavras sejam as MESMAS antes e depois.
+GRÁTIS: III (obstáculo) + IV (janela). TRANCADAS: I (quem), II (traços),
+V (o que fazer). Decisão do dono. Razão: III e IV já eram meio-entregues
+(a página já diz a cidade e já fala do que está no caminho) e são as duas
+que falam DELA — III é a única carta falsificável, e prova só existe onde
+dá para errar. Liberar I ou II contradiria o parágrafo logo acima delas.
+NOVO: `src/lib/soulmate-reading.ts` (fonte única: posições, tirada, janela
+solar CALCULADA em código, fallback, `toPublicReading`),
+`src/lib/server/soulmate-prompt.ts` (prompt único das DUAS rotas),
+`POST /api/quiz/soulmate-preview` (pública, rate limit por IP, idempotente
+por e-mail, anti-oráculo por data de nascimento),
+`src/components/quiz/SoulmateCardSpread.tsx`. O bloco SEALED da VSL virou
+fallback para quem chega sem quiz.
+BUG PEGO EM TESTE AO VIVO: a resposta levava o dossiê INTEIRO ao navegador
+— appearance/traits/next_step, as três cartas pagas — e o localStorage
+guardava. Paywall de fachada. `toPublicReading` corta no servidor.
+COERÊNCIA: FRONT_INCLUDES caiu de 6 para 4 + "Cards III and IV are already
+yours"; FAQ e ponte pararam de vender o que virou grátis; passo de e-mail
+(EN+ES) parou de prometer envio.
+⚠️ PENDENTE (dono): migration 20260828_lead_soulmate_reading.sql. Sem ela a
+prévia FUNCIONA mas não cacheia — cada visita sorteia de novo, e o conserto
+dos 27% (mesmo e-mail = mesmas cartas) não acontece.
+Antes disso: `checkout_card_input_started` no PaymentElement — sem ele "10
+viram o formulário, 0 compraram" não distinguia oferta fraca de formulário
+morto.
+Commits 18e29ef→HEAD.
+
 ### 2026-08-27 (fim) — Claude (cartas fora do portão + sequência de e-mail + Android fraco)
 **KIMI, ATENÇÃO — mexi na sua feature das cartas, sem removê-la.** Elas eram
 uma TELA antes do pagamento e exigiam 2 cliques; quem não quisesse jogar não
