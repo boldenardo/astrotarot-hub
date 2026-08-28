@@ -750,6 +750,19 @@ function PayBlock({
     trackEvent("checkout_form_loaded", { category: "checkout", label: "custom" });
   };
 
+  // Um disparo por sessão, no primeiro evento de mudança do Payment
+  // Element — é o mais perto que a Stripe deixa chegar de "ela começou a
+  // digitar" (o iframe é cross-origin; não há acesso ao campo em si).
+  const cardInputRef = useRef(false);
+  const onCardInput = () => {
+    if (cardInputRef.current) return;
+    cardInputRef.current = true;
+    trackEvent("checkout_card_input_started", {
+      category: "checkout",
+      label: "custom",
+    });
+  };
+
   const onExpressReady = (e: { availablePaymentMethods?: Record<string, boolean> }) => {
     const av = e.availablePaymentMethods;
     const any = Boolean(av && Object.values(av).some(Boolean));
@@ -807,7 +820,11 @@ function PayBlock({
           <span className="h-px flex-1 bg-white/10" />
         </div>
       )}
-      <PaymentElement onReady={onReady} options={{ layout: "tabs" }} />
+      <PaymentElement
+        onReady={onReady}
+        onChange={onCardInput}
+        options={{ layout: "tabs" }}
+      />
       <button
         type="button"
         onClick={() => void pay()}

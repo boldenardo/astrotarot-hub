@@ -61,6 +61,13 @@ export type AnalyticsEvent =
   // ao pagamento — separa "webview sem carteira" de "domínio mal
   // configurado", que até 27/08 era discussão sem dado.
   | "checkout_wallets_ready"
+  // Primeiro toque REAL no formulário de cartão.
+  //
+  // Sem ele, "10 pessoas viram o formulário e 0 compraram" não distingue
+  // oferta fraca de formulário morto — e os consertos são opostos.
+  // checkout_form_loaded só prova que o iframe montou; trackPaymentInitiated
+  // dispara no clique do CTA, antes de existir campo nenhum.
+  | "checkout_card_input_started"
   // Passou da tela das cartas de desconto. Sem isto, checkout_form_opened
   // (que dispara no mount, na tela das CARTAS) era confundido com "viu o
   // formulário de pagamento".
