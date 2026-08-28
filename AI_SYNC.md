@@ -53,6 +53,39 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-27 (fim) — Claude (cartas fora do portão + sequência de e-mail + Android fraco)
+**KIMI, ATENÇÃO — mexi na sua feature das cartas, sem removê-la.** Elas eram
+uma TELA antes do pagamento e exigiam 2 cliques; quem não quisesse jogar não
+tinha saída. Dado de 27/08: 9 abriram, 8 jogaram, **5 passaram** — 3 pessoas
+que já tinham decidido comprar morreram no clique do meio. Agora o jogo é um
+bloco DENTRO do checkout, acima do resumo, e o formulário existe desde o
+primeiro paint. Escolher a carta atualiza o preço do PI na hora.
+Para isso o `update` do payment-intent passou a aceitar `discountPct`. Isso
+NÃO abre buraco: o `create` já aceitava do cliente contra o mesmo
+ALLOWED_DISCOUNTS — recusar no update só bloqueava o caminho honesto, e PI
+confirmado continua não-editável. O contador agora só INFORMA (antes
+devolvia a carta ao baralho e subiria o preço de quem está com o cartão na
+mão). Verificado em produção: "Secure checkout" + "holds your discount" na
+MESMA página, "Continue to my checkout" não existe mais.
+E-MAILS: welcome agora leva a /soulmate (`redirect_url`, que o Clerk honra
+sobre o fallback da página) e diz que o retrato sai naquela tela; /auth/
+register não promete mais "4 leituras grátis" a quem acabou de pagar.
+Recuperação era 1 e-mail genérico às 4h — quem montou pedido (escolheu
+carta, viu o formulário) agora recebe "seu pedido continua aberto, com seu
+desconto"; 1 chamada à Stripe por execução marca quem tem PI não pago.
+Adicionada a leva 2 no dia 3 (`lastCallEmail`), com o único gancho honesto
+disponível: as respostas moram no navegador do quiz.
+⚠️ PENDENTE (dono): `supabase/migrations/20260827_last_call_email.sql` —
+sem ela a leva 2 fica DESLIGADA (degrada para off, não para repetição
+diária). Modo seco confirmou: candidates 10, withOpenOrder 3,
+lastCallAvailable false.
+ANDROID FRACO: `prefersNoTransitions()` em funnel-variant — <=4GB, <=4
+núcleos, save-data ou prefers-reduced-motion entram JÁ sem animação, em vez
+de esperar o watchdog de 1,5s (que em 4 sessões chegou depois de a pessoa
+sair). Aparelho que trava é lembrado em localStorage.
+Bump Vibes $19 → $9 (ZAR 349 → 169): custava mais que o produto de $14.99.
+Commits af6602e, 2a00e72.
+
 ### 2026-08-27 (noite) — Claude (preço $14.99 + auditoria de entrega: 5 falhas reais)
 PREÇO (decisão do dono): front $29 → **$14.99**, ZAR 549 → **279** (mesma taxa
 18,9 que ele aprovou). A ESCADA DESCEU JUNTO porque ficaria invertida:
