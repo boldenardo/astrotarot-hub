@@ -170,13 +170,27 @@ export async function POST(req: NextRequest) {
   // funcionando nesta sessão (o navegador guarda a cópia).
   if (!columnMissing) {
     try {
-      await admin
-        .from("leads")
-        .update({
+      // UPSERT, não update.
+      //
+      // O prefetch da tirada dispara no passo do e-mail, no MESMO instante
+      // em que /api/quiz/lead cria a linha do lead. Um update que chegasse
+      // primeiro atingiria zero linhas — sem erro nenhum — e a leitura se
+      // perderia em silêncio: a pessoa refaria o quiz e receberia cartas
+      // novas, que é exatamente o comportamento que esta rota existe para
+      // acabar. O upsert grava de qualquer jeito, e o lead preenche o resto
+      // depois (colunas diferentes, uma não apaga a outra).
+      //
+      // birth_date entra junto porque é ele que arma a trava anti-oráculo
+      // da próxima chamada.
+      await admin.from("leads").upsert(
+        {
+          email,
+          birth_date: birthDate,
           soulmate_reading: reading,
           soulmate_reading_at: new Date().toISOString(),
-        })
-        .eq("email", email);
+        },
+        { onConflict: "email" }
+      );
     } catch (e) {
       console.warn("[soulmate-preview] leitura não persistida:", e);
     }
