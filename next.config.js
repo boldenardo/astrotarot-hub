@@ -21,8 +21,11 @@ const nextConfig = {
       // um token novo, e otimizar de novo a cada load queimaria a cota da
       // Vercel sem ganho nenhum.
       {
+        // Host EXATO, não "*.supabase.co": o curinga não casou no
+        // otimizador da Vercel com Next 15.1 (testado em produção,
+        // 27/08 — devolvia INVALID_IMAGE_OPTIMIZE_REQUEST).
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "tnmfwkiwnghrnwxdvryz.supabase.co",
       },
     ],
     formats: ["image/avif", "image/webp"],
