@@ -39,7 +39,10 @@ export const USD_GRID: CurrencyGrid = {
   front: Number(process.env.NEXT_PUBLIC_FRONT_PRICE_USD || 14.99),
   list: Number(process.env.NEXT_PUBLIC_FRONT_LIST_PRICE_USD || 58),
   cord: 9,
-  vibes: 19,
+  // 27/08: era $19 — mais caro que o próprio produto depois que o front
+  // caiu para $14.99. Um bump que custa mais que a compra desmonta a
+  // percepção de entrada barata que a queda de preço existe para criar.
+  vibes: 9,
   downsell: 9.99,
   oto: 27,
 };
@@ -50,7 +53,7 @@ export const ZAR_GRID: CurrencyGrid = {
   front: 279,
   list: 1099,
   cord: 169,
-  vibes: 349,
+  vibes: 169,
   downsell: 189,
   oto: 499,
 };

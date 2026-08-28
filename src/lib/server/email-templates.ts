@@ -278,6 +278,145 @@ export function abandonedCartEmail(input: {
  * sobre o nosso produto, sem fabricar nada. As respostas caem na caixa
  * do endereço de envio (EMAIL_FROM).
  */
+/* ------------------------------------------------------------------ */
+/* 3b. Pedido montado e não pago.                                       */
+/*                                                                      */
+/* Difere do abandono comum de propósito: esta pessoa escolheu a carta  */
+/* de desconto, viu o formulário do cartão e parou ali. Mandar para ela */
+/* o mesmo "sua leitura está esperando" de quem só deu o e-mail joga    */
+/* fora a informação mais valiosa que temos — ela já decidiu comprar.   */
+/* ------------------------------------------------------------------ */
+
+export function openOrderEmail(input: {
+  name?: string | null;
+  email: string;
+  locale: Locale;
+}): { subject: string; html: string; text: string } {
+  const name = input.name?.trim().split(/\s+/)[0];
+  const link = `${APP_URL}/quiz/checkout?from=email`;
+  const unsub = unsubscribeUrl(input.email);
+
+  if (input.locale === "es") {
+    const html = shell(
+      [
+        h1(name ? `${name}, tu pedido sigue abierto` : "Tu pedido sigue abierto"),
+        p(
+          "Llegaste hasta la pantalla del pago y algo te detuvo ahí. Pasa: la mitad de las veces es el banco, la otra mitad es que no era el momento."
+        ),
+        p(
+          "Tu lectura sigue reservada con el descuento que elegiste. No hace falta responder nada de nuevo — el pedido está armado tal como lo dejaste."
+        ),
+        button("Terminar mi pedido", link),
+        p(
+          `<span style="color:${MUTED};font-size:13px;">Si fue el banco quien rechazó, otra tarjeta suele resolverlo al primer intento.</span>`
+        ),
+      ].join(""),
+      {
+        preheader: "Tu lectura sigue reservada, con tu descuento.",
+        locale: "es",
+        unsubscribeUrl: unsub,
+      }
+    );
+    return {
+      subject: name ? `${name}, dejaste tu lectura a un paso` : "Dejaste tu lectura a un paso",
+      html,
+      text: `Tu pedido sigue abierto: ${link}`,
+    };
+  }
+
+  const html = shell(
+    [
+      h1(name ? `${name}, your order is still open` : "Your order is still open"),
+      p(
+        "You made it all the way to the payment screen and something stopped you there. It happens — half the time it is the bank, the other half it simply was not the moment."
+      ),
+      p(
+        "Your reading is still held, with the discount you picked. Nothing to answer again: the order is sitting exactly where you left it."
+      ),
+      button("Finish my order", link),
+      p(
+        `<span style="color:${MUTED};font-size:13px;">If it was the bank that declined, a different card usually clears on the first try.</span>`
+      ),
+    ].join(""),
+    {
+      preheader: "Your reading is still held, with your discount.",
+      locale: "en",
+      unsubscribeUrl: unsub,
+    }
+  );
+  return {
+    subject: name ? `${name}, you left your reading one step away` : "You left your reading one step away",
+    html,
+    text: `Your order is still open: ${link}`,
+  };
+}
+
+/* ------------------------------------------------------------------ */
+/* 3c. Última tentativa, três dias depois.                              */
+/*                                                                      */
+/* Sem desconto novo e sem prazo inventado — o único gancho honesto que */
+/* existe é o real: as respostas moram no navegador em que ela fez o    */
+/* quiz, e trocar de aparelho significa começar do zero.                */
+/* ------------------------------------------------------------------ */
+
+export function lastCallEmail(input: {
+  name?: string | null;
+  email: string;
+  locale: Locale;
+}): { subject: string; html: string; text: string } {
+  const name = input.name?.trim().split(/\s+/)[0];
+  const link = `${APP_URL}/quiz/vsl-v2?from=email`;
+  const unsub = unsubscribeUrl(input.email);
+
+  if (input.locale === "es") {
+    const html = shell(
+      [
+        h1("Antes de que se pierdan tus respuestas"),
+        p(
+          "Hace unos días respondiste quince preguntas y no volviste. No te voy a insistir de nuevo después de este correo."
+        ),
+        p(
+          "Solo una cosa práctica: tus respuestas viven en el navegador donde hiciste el quiz. Si cambias de teléfono o borras los datos, hay que empezar de cero. Este enlace todavía las encuentra."
+        ),
+        button("Volver a mi lectura", link),
+      ].join(""),
+      {
+        preheader: "Tus respuestas siguen ahí — por ahora.",
+        locale: "es",
+        unsubscribeUrl: unsub,
+      }
+    );
+    return {
+      subject: name ? `${name}, tus respuestas siguen ahí` : "Tus respuestas siguen ahí",
+      html,
+      text: `Vuelve a tu lectura: ${link}`,
+    };
+  }
+
+  const html = shell(
+    [
+      h1("Before your answers go"),
+      p(
+        "A few days ago you answered fifteen questions and did not come back. I will not write about it again after this one."
+      ),
+      p(
+        "One practical thing, though: your answers live in the browser you took the quiz on. Change phones or clear your data and it starts from zero. This link still finds them."
+      ),
+      button("Go back to my reading", link),
+    ].join(""),
+    {
+      preheader: "Your answers are still there — for now.",
+      locale: "en",
+      unsubscribeUrl: unsub,
+    }
+  );
+  return {
+    subject: name ? `${name}, your answers are still there` : "Your answers are still there",
+    html,
+    text: `Go back to your reading: ${link}`,
+  };
+}
+
 export function reviewAskHtml(): string {
   return p(
     `<span style="color:${MUTED};font-size:13px;">P.S. When you have read it — just hit reply and tell me one thing your reading got right. Real answers from real readers are the only reviews we show.</span>`
@@ -290,46 +429,59 @@ export function welcomeEmail(input: {
   locale: Locale;
 }): { subject: string; html: string; text: string } {
   const name = input.name?.trim().split(/\s+/)[0];
-  const link = `${APP_URL}/auth/register?email=${encodeURIComponent(input.email)}`;
+  // Leva à LEITURA, não a um cadastro solto (27/08). O e-mail antigo
+  // mandava para /auth/register, o cadastro caía em /dashboard, e a pessoa
+  // que acabou de pagar para ver um rosto tinha de achar o card certo entre
+  // oito. `redirect_url` é o parâmetro que o Clerk respeita — o
+  // fallbackRedirectUrl da página só vale quando ele não vem.
+  const link =
+    `${APP_URL}/auth/register?email=${encodeURIComponent(input.email)}` +
+    `&redirect_url=${encodeURIComponent("/soulmate")}`;
 
   if (input.locale === "es") {
     const html = shell(
       [
-        h1("¡Bienvenida a AstroTarot!"),
+        h1("Tu lectura te está esperando"),
         p(
-          "Tu pago está confirmado. Falta un paso: crea tu cuenta con ESTE MISMO correo y tu acceso se activa al instante."
+          "Tu pago está confirmado. Falta un paso, y es corto: crea tu cuenta con ESTE MISMO correo — es así como reconocemos que la lectura es tuya."
         ),
-        button("Crear mi cuenta", link),
         p(
-          `<span style="color:${MUTED};font-size:13px;">Si ya la creaste, puedes ignorar este mensaje.</span>`
+          "El botón te lleva directo a tu página de alma gemela. Ahí tocas <strong>Draw my soulmate</strong> y el retrato se revela mientras lo lees."
+        ),
+        button("Abrir mi lectura", link),
+        p(
+          `<span style="color:${MUTED};font-size:13px;">Guarda este correo: el mismo enlace funciona siempre que quieras volver.</span>`
         ),
       ].join(""),
-      { preheader: "Falta un paso para activar tu acceso.", locale: "es" }
+      { preheader: "Un paso corto y tu retrato se revela.", locale: "es" }
     );
     return {
-      subject: name ? `${name}, activa tu acceso` : "Activa tu acceso",
+      subject: name ? `${name}, tu lectura está lista` : "Tu lectura está lista",
       html,
-      text: `Crea tu cuenta con este mismo correo: ${link}`,
+      text: `Crea tu cuenta con este mismo correo y abre tu lectura: ${link}`,
     };
   }
 
   const html = shell(
     [
-      h1("Welcome to AstroTarot!"),
+      h1("Your reading is waiting for you"),
       p(
-        "Your payment is confirmed. One step left: create your account with THIS SAME email and your access unlocks instantly."
+        "Your payment is confirmed. One short step left: create your account with THIS SAME email — that is how we know the reading belongs to you."
       ),
-      button("Create my account", link),
       p(
-        `<span style="color:${MUTED};font-size:13px;">If you already created it, you can ignore this.</span>`
+        "The button takes you straight to your soulmate page. Tap <strong>Draw my soulmate</strong> there and the portrait comes through while you read."
+      ),
+      button("Open my reading", link),
+      p(
+        `<span style="color:${MUTED};font-size:13px;">Keep this email — the same link works any time you want to come back.</span>`
       ),
     ].join(""),
-    { preheader: "One step left to activate your access.", locale: "en" }
+    { preheader: "One short step and your portrait comes through.", locale: "en" }
   );
   return {
-    subject: name ? `${name}, activate your access` : "Activate your access",
+    subject: name ? `${name}, your reading is ready` : "Your reading is ready",
     html,
-    text: `Create your account with this same email: ${link}`,
+    text: `Create your account with this same email and open your reading: ${link}`,
   };
 }
 

@@ -24,7 +24,11 @@ import { useQuizContent } from "@/components/LocaleProvider";
 import { QUIZ_STORAGE_KEY } from "@/lib/quiz-data";
 import { getFunnelSessionId, getUtmParams } from "@/lib/funnel-session";
 import { getStoredRef } from "@/lib/affiliate";
-import { FRONT_INCLUDES, GUARANTEE_DAYS } from "@/lib/offer";
+import {
+  CONTINUITY_PRICE_LABEL,
+  FRONT_INCLUDES,
+  GUARANTEE_DAYS,
+} from "@/lib/offer";
 import { fmtMoney } from "@/lib/pricing";
 import { useLocalPricing } from "@/lib/pricing-client";
 
@@ -537,8 +541,10 @@ export default function CustomCheckout() {
           <span className="mt-0.5 block text-[13px] leading-snug text-white/65">
             Guided audio sessions tuned to your intention — love, luck and
             calm — to listen while your connection unfolds.{" "}
+            {/* A comparação era com "dois meses do plano de $9.99/mês" —
+                falsa agora que o bump custa menos de um mês dele. */}
             <span className="text-gold-300">
-              Lifetime access for less than two months of the $9.99/mo plan.
+              Yours for life, for less than one month of the {CONTINUITY_PRICE_LABEL}/mo plan.
             </span>
           </span>
         </span>
