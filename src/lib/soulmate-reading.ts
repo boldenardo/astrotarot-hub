@@ -394,6 +394,25 @@ export function pickFree(
   return out;
 }
 
+
+/**
+ * O que pode descer para o navegador.
+ *
+ * O dossiê COMPLETO fica no servidor. Mandá-lo inteiro e só esconder I, II
+ * e V na interface seria um paywall de fachada: o payload aparece no
+ * devtools e no localStorage, e as três cartas pagas seriam legíveis de
+ * graça por qualquer pessoa que abrisse a aba de rede. `free` já contém
+ * exatamente o que a prévia mostra — o resto não tem por que viajar.
+ */
+export function toPublicReading(r: SoulmateReading): Omit<SoulmateReading, "dossier"> {
+  return {
+    cards: r.cards,
+    source: r.source,
+    free: r.free,
+    ...(r.window ? { window: r.window } : {}),
+  };
+}
+
 /** Chave do cache no navegador. Fora do QUIZ_STORAGE_KEY de propósito:
  *  loadQuizState remonta o objeto campo a campo e descartaria esta. */
 export const READING_STORAGE_KEY = "astro_soulmate_reading_v1";

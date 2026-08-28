@@ -30,6 +30,7 @@ import {
   fallbackFree,
   isCompleteDossier,
   pickFree,
+  toPublicReading,
   signOf,
   solarWindow,
   toDrawnCards,
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
 
   const cached = cachedRow?.soulmate_reading;
   if (cached?.cards?.length) {
-    return NextResponse.json({ ...cached, cached: true });
+    return NextResponse.json({ ...toPublicReading(cached), cached: true });
   }
 
   // ── Tirada: SEMPRE em código ───────────────────────────────────────────
@@ -181,5 +182,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ...reading, cached: false });
+  // NUNCA devolver o dossiê inteiro: as três cartas pagas ficam no servidor.
+  return NextResponse.json({ ...toPublicReading(reading), cached: false });
 }
