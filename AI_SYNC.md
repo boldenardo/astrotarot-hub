@@ -53,6 +53,136 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-29 (tarde) — Claude (a revelação vira página; o desconto sai)
+
+O dono olhou o print das duas cartas abertas dentro da VSL: *"está
+praticamente igual"*. Estava. Uma carta que se abre entre um parágrafo de
+preço e um bloco de FAQ não é revelação, é um acordeão.
+
+**Fluxo novo:** `/quiz/vsl-v2` → [botão] → **`/quiz/reveal`** → [botão] →
+pagamento. Não é um botão a mais competindo com a oferta — é o MESMO
+botão. Os três CTAs e a barra fixa passaram a levar para a revelação, e o
+botão de comprar mora lá.
+
+**O que a revisão adversarial encontrou, e mudou o desenho.** Um dos
+revisores achou no próprio repositório o registro de que esta experiência
+já tinha sido rodada: em 27/08 uma tela de cartas ANTES do formulário de
+pagamento matou **3 de 8** pessoas que já tinham decidido comprar
+(`CustomCheckout.tsx`, comentário do bloco de desconto). Conferido, palavra
+por palavra. A lição não foi "cartas não funcionam" — foi que ninguém pode
+ser obrigado a jogar para chegar ao pagamento. Por isso **a oferta e o
+botão de comprar existem na revelação desde o primeiro paint**: quem rolar
+direto compra sem virar nada.
+
+**O sequenciamento é ESTADO, não animação.** `prefersNoTransitions()`
+responde true para `deviceMemory <= 4`, que na África do Sul, Índia, Nepal
+e Tanzânia é a maioria dos Android. Se a cerimônia fosse feita de
+transição, a maioria do tráfego receberia a mesma tela chapada de antes,
+agora custando uma navegação. Então: a carta IV **não existe no DOM** antes
+da III virar, e as trancadas não existem antes da IV. Verificado com o flag
+de aparelho fraco ligado — a sequência continua, sem timers.
+
+**As três trancadas sobem de face para cima**, arte e nome visíveis, texto
+trancado. Ela VÊ a carta que representa ele e não consegue lê-la. Não vaza
+nada: `toPublicReading` já mandava as cinco cartas ao navegador; só o texto
+de I, II e V fica no servidor.
+
+**O desconto saiu, nos dois lugares.** As cinco cartas de "toque uma, 5% a
+30% off" com relógio de 15 min eram a TERCEIRA grade de cinco cartas do
+funil, uma tela depois da tirada — e a terceira ensina retroativamente que
+a segunda era uma raspadinha, sendo a segunda a prova em que a oferta se
+apoia. Na Hotmart são impossíveis (o preço vive na oferta do painel). Na
+VSL, quatro parágrafos seguidos de justificativa de preço viraram dois;
+saiu a âncora "psychic runs $30 to $150", que além de repetição era o único
+valor em dólar da página que ignorava o grid de moedas.
+
+**Copy que era falsa, corrigida.** `drawEgyptian` é `Math.random` — as
+respostas escrevem o TEXTO, não escolhem os arcanos; "drawn from your
+answers" era mentira e virou "came up once, and they have not moved since".
+"Fifteen answers" são 15 TELAS, das quais seis são pergunta e só quatro
+chegam ao modelo. "Already yours" dito a quem ainda não virou carta nenhuma.
+
+**Detalhes que custam venda:** âncoras `<a href>` em vez de `location.href`
+(a webview do Facebook engole navegação por script sem lançar erro); o
+destino do pagamento vira href ANTES do clique, resolvido do **servidor** e
+não da env pública; as cinco artes são pré-carregadas no mount (o
+`next/image` das faces é lazy, então o giro terminava numa face BRANCA); a
+tirada é repassada por `sessionStorage` antes de navegar.
+
+**Medição:** `soulmate_reveal_clicked` substitui `checkout_cta_clicked` NA
+VSL — aquele nome significa "clicou um botão que leva ao pagamento", e este
+passou a levar a duas cartas grátis. A série histórica quebra ali de
+propósito.
+
+**Armadilha para quem for testar isto:** o servidor de dev (turbopack)
+estava entregando ao cliente uma versão desatualizada do componente e
+mentiu por meia hora — a prop do servidor chegava `undefined` e o efeito
+não rodava. Em build de PRODUÇÃO funciona. **Valide funil neste projeto com
+`npm run build` + `npm start`, não com `npm run dev`.** E não rode
+`rm -rf .next` com o dev server de pé: ele passa a servir HTML sem
+JavaScript nenhum, o que parece bug de hidratação e não é.
+
+### 2026-08-29 — Claude (Hotmart: as seis ofertas criadas e ligadas)
+
+Branch `hotmart-migracao`. Decisão do dono depois de mais um
+`transaction_not_allowed` na Stripe: trocar de gateway. As seis ofertas
+foram criadas pelo painel, **todas dentro do mesmo produto** AstroTarot
+(ID 8387609, `V107320990D`) — é o que mantém um só webhook, um só hottok
+e um só relatório de vendas.
+
+| Oferta | Valor | Código |
+|---|---|---|
+| (base) | US$ 14,99 | `msxqi5zi` |
+| Downsell | US$ 9,99 | `bvyxnxxf` |
+| Portrait | US$ 9 | `v6eqt5s7` |
+| Cord Reading | US$ 9 | `c7d60z8z` |
+| Vibes | US$ 9 | `uuiqazhu` |
+| Past Life | US$ 27 | `r4wq8vzf` |
+
+**Os códigos vieram da API, não da tela.** O painel mostra o formulário
+que você acabou de preencher — não o que foi gravado. Duas ofertas
+"salvas" não apareceram na primeira listagem da API, e uma delas só
+existiu na segunda tentativa. Quem for criar mais: confira pela listagem
+(`ucode` do produto, não o id numérico — com id numérico o endpoint dá
+500).
+
+A API da Hotmart é **somente leitura** para ofertas: POST e PUT em
+`/products/{id}/offers` dão 404 com qualquer payload. Não dá para criar
+por script; é painel ou nada.
+
+Ligados como padrão no código (`src/lib/payments/hotmart-offers.ts` e o
+webhook), não só em env, pelo mesmo motivo dos price ids da Stripe: o
+código da oferta aparece na barra de endereço de qualquer comprador,
+então não é segredo, e assim virar a chave não fica esperando a env
+chegar na Vercel. `HOTMART_CHECKOUT_URL_*` / `HOTMART_OFFER_*` continuam
+com prioridade, para trocar uma oferta sem deploy.
+
+`VIBES_ADDON` é plano novo. Na Stripe, Vibes é item **dentro** da
+assinatura mais order bump do checkout próprio, e nenhum dos dois
+sobrevive à troca (a Hotmart não tem bump ao vivo). A oferta é o que ela
+de fato é: compra única de US$ 9.
+
+**Não migram:** as assinaturas e o `PACK5`. Assinatura não é mais uma
+oferta dentro de um produto de compra única — é outro produto, e não
+existe na conta. Com `PAYMENT_PROVIDER=hotmart` esses planos devolvem 503
+explícito e **nunca** caem para a Stripe por baixo dos panos: cobrar pelo
+gateway que o dono desligou é pior que não vender. Na prática não bloqueia
+nada, porque nunca houve venda de assinatura.
+
+Conferido ao vivo: as páginas de US$ 27 e US$ 9 abrem cobrando R$ 154,25 e
+R$ 51,41 — a conversão automática de moeda fazendo o trabalho que o nosso
+checkout fazia para o rand. Build limpo (após `rm -rf .next`).
+
+**Falta ao dono** (só painel/Vercel, ver `docs/HOTMART_SETUP.md`): criar o
+webhook em Ferramentas → Webhook apontando para
+`https://astrotarot.shop/api/hotmart/webhook` com PURCHASE_APPROVED /
+COMPLETE / REFUNDED / CHARGEBACK, pôr `HOTMART_HOTTOK` na Vercel, e então
+`PAYMENT_PROVIDER=hotmart` + `NEXT_PUBLIC_PAYMENT_PROVIDER=hotmart`. Sem o
+hottok o webhook rejeita tudo e quem pagar fica sem acesso.
+
+Divergência aceita pelo dono: garantia de 7 dias no painel contra 30 na
+copy — reembolso fora do prazo é estornado à mão.
+
 ### 2026-08-28 — Claude (prévia grátis de 5 cartas: a promessa da porta virou verdade)
 A landing anuncia "Free soulmate reading", o quiz dizia "seu retrato está
 pronto, para onde envio sua leitura COMPLETA?" — e nada grátis era entregue.

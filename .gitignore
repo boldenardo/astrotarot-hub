@@ -49,7 +49,7 @@ supabase/.temp/
 # public/brand/master-aura.webp, recortada no rosto e com 6 KB.
 avatar conversas.png
 
-# journal local de QA/mutacoes (nunca em git)
+# Hotmart MCP — journal local de mutações (ids de recurso; nunca em git)
 mcp/hotmart/journal.jsonl
 
 # deliverables de mídia (upload via scripts/upload-vibes-audio.mjs)

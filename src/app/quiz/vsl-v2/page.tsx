@@ -52,7 +52,7 @@ const EmbeddedCheckoutPanel = dynamic(
 const GalaxyParticles = dynamic(() => import("@/components/GalaxyParticles"), {
   ssr: false,
 });
-import { trackEvent, trackPaymentInitiated } from "@/lib/analytics";
+import { trackEvent } from "@/lib/analytics";
 import { openCheckout } from "@/lib/webview";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
 import {
@@ -80,6 +80,7 @@ import { OFFER_LAYOUT } from "@/components/PlanPicker";
 import SoulmateCardSpread from "@/components/quiz/SoulmateCardSpread";
 import {
   READING_STORAGE_KEY,
+  REVEAL_HANDOFF_KEY,
   type SoulmateReading,
 } from "@/lib/soulmate-reading";
 import { fmtMoney } from "@/lib/pricing";
@@ -104,6 +105,7 @@ const RETURNED_KEY = "astro_vsl_returned";
 // A oferta NÃO é gateada pelo vídeo — o player entra como ativo de
 // retenção e o CTA continua visível desde o primeiro scroll.
 const SHOW_VSL = true;
+
 
 interface QuizStore {
   answers?: Record<string, string>;
@@ -289,7 +291,7 @@ const OBJECTIONS: Array<{ q: string; a: string }> = [
 const FAQ_ITEMS: Array<{ q: string; a: string }> = [
   {
     q: "What exactly do I unlock?",
-    a: "The three cards still face down — who the cards point toward, the traits that make them recognizable, and what to do next — plus the portrait, unblurred. Cards III and IV you already have, and you keep them either way.",
+    a: "The three cards still face down — who the cards point toward, the traits that make them recognizable, and what to do next — plus the portrait, unblurred. Cards III and IV open free on the next screen, and you keep them either way.",
   },
   {
     q: "When do I get access?",
@@ -862,28 +864,43 @@ export default function QuizVslV2Page() {
     [score, baseParams]
   );
 
-  // UMA página de dinheiro (26/08, decisão do dono): o CTA leva SEMPRE
-  // para /quiz/checkout. O desvio hospedado (env CHECKOUT_SURFACE=hosted,
-  // sessão da Stripe + redirect) saiu: 13 sessões passaram por ele em
-  // 25/08, zero pagaram, e a página hospedada não tem nosso trackeamento.
-  // O caminho antigo (`checkout` + modal de e-mail) fica adormecido no
-  // arquivo — reativar é decisão de código, não de env.
-  const startGuestCheckout = useCallback(
-    (plan: PlanKey, ctaPosition: string) => {
-      // Guarda síncrona: dois toques rápidos abririam duas navegações.
-      if (submittingRef.current || loadingPlan) return;
-
-      trackEvent("checkout_cta_clicked", {
+  /**
+   * Ir para a REVELAÇÃO (/quiz/reveal) — o novo passo entre esta página e
+   * o pagamento (29/08, decisão do dono).
+   *
+   * Isto NÃO navega: quem navega é o href da âncora. Aqui só acontece o que
+   * precisa acontecer antes — a medição e o repasse da tirada.
+   *
+   * O repasse existe porque a tirada pode estar vivendo só em memória
+   * (localStorage bloqueado, aba anônima, webview que limpa tudo), e uma
+   * navegação de página inteira a joga fora. Sem ele, a pessoa clicaria
+   * "vire minhas cartas" e chegaria numa cerimônia vazia tendo acabado de
+   * ver as cinco cartas na tela anterior.
+   *
+   * Por que um evento NOVO e não `checkout_cta_clicked`: aquele evento
+   * significa "clicou um botão que leva ao pagamento", e este botão passou
+   * a levar a duas cartas grátis. Ele continua sendo disparado — no botão
+   * de compra da revelação, que é onde a frase voltou a ser verdadeira. A
+   * série histórica de `checkout_cta_clicked` quebra aqui de propósito: um
+   * nome que muda de significado em silêncio é pior que uma série que
+   * recomeça.
+   */
+  const goToReveal = useCallback(
+    (ctaPosition: string) => {
+      trackEvent("soulmate_reveal_clicked", {
         ...baseParams(),
-        label: plan,
-        offer: FRONT_OFFER_ID,
+        label: selectedPlan,
         cta_position: ctaPosition,
-        surface: "custom",
       });
-      trackPaymentInitiated(plan, FRONT_PRICE_USD);
-      window.location.href = "/quiz/checkout";
+      try {
+        if (reading) {
+          sessionStorage.setItem(REVEAL_HANDOFF_KEY, JSON.stringify(reading));
+        }
+      } catch {
+        // sem sessionStorage: a revelação refaz o fetch por conta própria
+      }
     },
-    [loadingPlan, baseParams]
+    [baseParams, selectedPlan, reading]
   );
 
   const submitEmailModal = useCallback(() => {
@@ -923,36 +940,40 @@ export default function QuizVslV2Page() {
     void checkout(plan, email, "email_modal");
   }, [emailInput, emailModalPlan, checkout, baseParams]);
 
-  /** CTA. Vende o desejo; o preço fica logo abaixo, legível, sempre. */
+  /**
+   * CTA. Leva para a REVELAÇÃO, não direto para o pagamento (29/08).
+   *
+   * O mesmo caminho de antes, com a entrega do que a porta prometeu no
+   * meio: /quiz/reveal abre as duas cartas grátis e é lá que mora o botão
+   * de comprar. Não é um botão a mais competindo com a oferta — é este
+   * botão, com um passo a mais antes do cartão.
+   *
+   * ÂNCORA, não botão com handler. `window.location.href` disparado de um
+   * onClick pode ser engolido sem erro na webview do Facebook, que é a
+   * maior parte deste tráfego — foi o que produziu 34 sessões criadas e 1
+   * cartão digitado. Navegação nativa de <a> não é engolida.
+   *
+   * O preço sai do botão e desce uma linha, de propósito. A regra de 27/08
+   * é "um botão que cai numa tela de pagamento não pode surpreendê-la" —
+   * e este não cai. Dizer "$14.99" num botão que abre duas cartas grátis
+   * cobraria por elas na cabeça dela antes de entregá-las. A linha de baixo
+   * carrega o preço para a frente, então nada aparece do nada depois.
+   */
   const Cta = ({ id }: { id: string }) => (
     <div className="mt-7">
-      <button
-        type="button"
-        onClick={() => startGuestCheckout(selectedPlan, id)}
-        disabled={loadingPlan !== null}
+      <a
+        href="/quiz/reveal"
+        onClick={() => goToReveal(id)}
         data-cta={id}
-        className="btn-gold flex w-full min-h-[60px] items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold uppercase tracking-[0.06em] disabled:opacity-60"
+        className="btn-gold flex w-full min-h-[60px] items-center justify-center gap-2 rounded-full px-6 text-center text-[15px] font-bold uppercase tracking-[0.06em]"
       >
-        {loadingPlan === selectedPlan ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
-            Taking you to secure checkout...
-          </>
-        ) : (
-          <>
-            {/* O preço VAI no botão (27/08). "Show me who my soulmate is"
-                levava a uma tela de pagamento sem nunca ter dito que havia
-                uma — a emboscada que produzia 18 checkouts abertos e 1
-                cartão digitado. Um botão que diz o preço é aceito por menos
-                gente e traído por ninguém. */}
-            Unseal my reading &mdash; {fmtMoney(cur, cur.front)}
-            <span aria-hidden>&rarr;</span>
-          </>
-        )}
-      </button>
+        Turn my two cards &mdash; free
+        <span aria-hidden>&rarr;</span>
+      </a>
       <p className="mt-3 text-center text-xs leading-relaxed text-white/55">
-        One payment of {fmtMoney(cur, cur.front)} &middot; Instant access &middot;{" "}
-        {GUARANTEE_DAYS}-day money back &middot; Secure checkout by Stripe
+        Cards III and IV open free on the next screen &middot; the full reading
+        and the portrait are {fmtMoney(cur, cur.front)} &middot;{" "}
+        {GUARANTEE_DAYS}-day money back
       </p>
       {/* Redirect engolido pela webview: uma linha, sem berrar. */}
       {manualUrl && (
@@ -1083,14 +1104,15 @@ export default function QuizVslV2Page() {
               Master Aura went quiet for a reason
               {firstName ? `, ${firstName}` : ""}. Drawing the face is the fast
               part &mdash; your chart does that on its own, and it cost you
-              nothing but fifteen honest answers.
+              nothing but your birth date and a few honest answers.
             </p>
             <p className="mt-3 text-[15px] leading-relaxed text-white/80">
-  But a face is not a person. Two of your cards are turned below and
-              they cost you nothing. The three still face down are the ones
-              that name him &mdash; who he is, what makes him recognizable,
-              and what to do inside the window you just read. That is the part
-              with a price on it. It is also the part you came here for.
+              But a face is not a person. Two of the five cards are yours to
+              read for nothing, and they open on the next screen. The three
+              that stay sealed are the ones that name him &mdash; who he is,
+              what makes him recognizable, and what to do inside the window
+              those two give you. That is the part with a price on it. It is
+              also the part you came here for.
             </p>
           </Reveal>
 
@@ -1161,7 +1183,7 @@ export default function QuizVslV2Page() {
           <SoulmateCardSpread
             reading={reading}
             firstName={firstName}
-            sign={sign}
+            onOpen={() => goToReveal("spread")}
           />
         ) : (
           <ul className="divide-y divide-white/[0.07] overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
@@ -1226,7 +1248,7 @@ export default function QuizVslV2Page() {
             <p className="mt-5 text-[15px] leading-relaxed text-white/85">
               The face, the temperament, the timing &mdash; none of it gets
               invented on this page. It gets read out, against your birth chart
-              and the fifteen answers you just gave. Here is what comes back:
+              and what you told me on the way here. Here is what comes back:
             </p>
 
             <ul className="mt-4 space-y-2.5">
@@ -1263,17 +1285,6 @@ export default function QuizVslV2Page() {
             <p className="mt-2 text-[14px] leading-relaxed text-white/70">
               The same reading is {fmtMoney(cur, cur.list)} from our home page.
               Go and check &mdash; it will still be there when you come back.
-            </p>
-            <p className="mt-2 text-[14px] leading-relaxed text-white/70">
-              You are not on the home page. You answered fifteen questions, so
-              there is something real to read you against &mdash; and that saves
-              us the part that costs the most. You keep the difference.
-            </p>
-
-            <p className="mt-4 text-[15px] leading-relaxed text-white/75">
-              A single reading with a psychic runs $30 to $150, and ends when
-              the call ends. This one you keep, and you can hold it next to the
-              person you cannot stop thinking about.
             </p>
 
             {/* O medo dela não é perder o dinheiro — é pagar por um
@@ -1414,31 +1425,20 @@ export default function QuizVslV2Page() {
             paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))",
           }}
         >
-          <button
-            type="button"
-            onClick={() => startGuestCheckout(selectedPlan, "sticky")}
-            disabled={loadingPlan !== null}
-            className="btn-gold mx-auto flex w-full max-w-lg min-h-[54px] items-center justify-center gap-2 rounded-full px-6 text-sm font-bold uppercase tracking-[0.06em] disabled:opacity-60"
+          <a
+            href="/quiz/reveal"
+            onClick={() => goToReveal("sticky")}
+            className="btn-gold mx-auto flex w-full max-w-lg min-h-[54px] items-center justify-center gap-2 rounded-full px-6 text-center text-sm font-bold uppercase tracking-[0.06em]"
           >
-            {loadingPlan === selectedPlan ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Taking you to secure checkout...
-              </>
-            ) : (
-              <>
-                Unseal my reading &mdash; {fmtMoney(cur, cur.front)}
-                <span aria-hidden>&rarr;</span>
-              </>
-            )}
-          </button>
+            Turn my two cards &mdash; free
+            <span aria-hidden>&rarr;</span>
+          </a>
           {/* fmtMoney, não FRONT_PRICE_LABEL: o rótulo é sempre em dólar, e
               esta barra mostrava "$14.99" para quem o checkout ia cobrar em
               rand — a divergência exata que o grid de moedas existe para
               não deixar acontecer. */}
           <p className="mt-1.5 text-center text-[11px] text-white/55">
-            One payment of {fmtMoney(cur, cur.front)} &middot; {GUARANTEE_DAYS}-day
-            money back
+            Free to turn &middot; the full reading is {fmtMoney(cur, cur.front)}
           </p>
         </div>
       )}

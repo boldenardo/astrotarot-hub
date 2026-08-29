@@ -108,6 +108,11 @@ export type AnalyticsEvent =
   | "checkout_escape_attempted"
   | "checkout_escape_failed"
   | "checkout_error"
+  // Chegou em /quiz/checkout (Stripe) com a Hotmart ativa no servidor e foi
+  // reencaminhado. Deve ser RARO: se aparecer com volume, a env pública
+  // NEXT_PUBLIC_PAYMENT_PROVIDER está desatualizada na Vercel e todo mundo
+  // está pagando um salto a mais.
+  | "checkout_provider_bounce"
   // Painel de checkout embutido — separa "não viu o formulário" de
   // "viu e desistiu" (sem isto, 8 sessões sem cartão eram um mistério).
   | "checkout_form_opened"
@@ -143,6 +148,20 @@ export type AnalyticsEvent =
   // MESMAS cartas — é a métrica que prova o conserto dos 27%.
   | "soulmate_preview_shown"
   | "soulmate_preview_card_flipped"
+  // A revelação como página (/quiz/reveal). `viewed` conta chegadas,
+  // `completed` conta as duas cartas viradas, `skipped` conta quem pulou
+  // para o fim, `resumed` conta quem voltou e encontrou tudo aberto.
+  // ATENÇÃO ao ler a série de `soulmate_preview_card_flipped`: o nome
+  // continua o mesmo, a população não. Antes era quem chegava à tirada
+  // dentro da VSL; a partir de 29/08 é quem clicou o CTA e chegou aqui.
+  // Clique no CTA da VSL, que a partir de 29/08 leva à revelação e não
+  // mais ao pagamento. Substitui `checkout_cta_clicked` NESTA posição —
+  // aquele nome ficou reservado para botões que caem no pagamento.
+  | "soulmate_reveal_clicked"
+  | "soulmate_reveal_viewed"
+  | "soulmate_reveal_completed"
+  | "soulmate_reveal_skipped"
+  | "soulmate_reveal_resumed"
   | "soulmate_preview_cached"
   | "soulmate_draw_started"
   | "soulmate_unlock_clicked"

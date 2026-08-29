@@ -75,7 +75,14 @@ export const FRONT_INCLUDES = [
   "Card V — what the cards suggest you do next, inside your window",
 ] as const;
 
-/** Vai logo abaixo da lista: sem isto a oferta parece cobrar pelo grátis. */
+/**
+ * Vai logo abaixo da lista: sem isto a oferta parece cobrar pelo grátis.
+ *
+ * Era "already yours". Deixou de ser verdade quando a revelação virou uma
+ * página à parte (29/08): na VSL ela ainda não virou carta nenhuma, e
+ * "already" diz a quem não recebeu nada que já recebeu. "Free — buying or
+ * not" é verdadeiro nos dois lugares, antes e depois de virar.
+ */
 export const FRONT_ALREADY_FREE =
-  "Cards III and IV are already yours — buying or not.";
+  "Cards III and IV are yours free — buying or not.";
 export const FRONT_OFFER_ID = "soulmate_reading_portrait";

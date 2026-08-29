@@ -155,6 +155,71 @@
   }
 }
 
+/* --------------------------------------------------------------------------
+   A REVELAÇÃO (/quiz/reveal)
+   Giro de carta em CSS puro, de propósito: a maior parte do tráfego é
+   Android fraco, e `prefersNoTransitions()` já responde true por
+   deviceMemory<=4 nesses aparelhos. Uma biblioteca de animação aqui pagaria
+   JavaScript por um efeito que a maioria não veria.
+   O sequenciamento NÃO mora aqui — é estado do React. Isto anima; se não
+   animar, a cerimônia continua acontecendo, uma carta por vez.
+   -------------------------------------------------------------------------- */
+.sm-flip {
+  perspective: 1000px;
+}
+.sm-flip-inner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 10 / 17;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.sm-flip[data-face="up"] .sm-flip-inner {
+  transform: rotateY(180deg);
+}
+.sm-flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.sm-flip-face--back {
+  transform: rotateY(180deg);
+}
+
+/* Entrada de um bloco que só passa a existir depois de um toque. Curta:
+   ela acabou de agir, e esperar a própria ação é o que mata ritual. */
+.sm-enter {
+  animation: sm-enter 0.45s ease-out both;
+}
+@keyframes sm-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Aparelho fraco (data-degraded) e prefers-reduced-motion desligam a
+   animação — nunca o sequenciamento. */
+.sm-degraded .sm-flip-inner,
+.sm-degraded .sm-enter {
+  transition: none;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-flip-inner {
+    transition: none;
+  }
+  .sm-enter {
+    animation: none;
+  }
+}
+
 /* ===== Céu do modo cinema (V2): estrelas e arcanos flutuando ===== */
 @keyframes galaxy-twinkle {
   0%, 100% { opacity: 0.15; }

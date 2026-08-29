@@ -12,12 +12,14 @@
     "lint": "next lint",
     "validate:env": "node scripts/validate-env.js",
     "seo:audit": "node scripts/seo-audit.mjs",
-    "upload:vibes": "node scripts/upload-vibes-audio.mjs"
+    "upload:vibes": "node scripts/upload-vibes-audio.mjs",
+    "test:hotmart": "tsx --test tests/hotmart/token-manager.test.mjs tests/hotmart/client.test.mjs tests/hotmart/service-writes.test.mjs"
   },
   "dependencies": {
     "@clerk/localizations": "^4.13.6",
     "@clerk/nextjs": "^7.5.21",
     "@clerk/themes": "^2.4.57",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@radix-ui/react-slot": "^1.2.4",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.0",
@@ -57,6 +59,7 @@
     "postcss": "^8.4.49",
     "supabase": "^2.58.5",
     "tailwindcss": "^3.4.17",
+    "tsx": "^4.23.12",
     "typescript": "^5.7.2"
   },
   "overrides": {

@@ -3,6 +3,12 @@
 // database connectivity check using the service-role client. Safe to expose.
 
 import { NextResponse } from "next/server";
+import {
+  activeProvider,
+  hotmartArmed,
+  hotmartBlockedReason,
+} from "@/lib/payments/provider";
+import { configuredHotmartPlans } from "@/lib/payments/hotmart-offers";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,6 +62,30 @@ export async function GET() {
     NEXT_PUBLIC_APP_URL: present(process.env.NEXT_PUBLIC_APP_URL),
   };
 
+  // Estado da troca de gateway. Existe para responder, em uma URL, a
+  // pergunta que só se responde hoje adivinhando: "eu já virei ou não?".
+  //
+  // `blocked` é o caso que mais dói: a Hotmart pedida e não assumida
+  // porque falta o hottok. Sem esta linha o dono veria cobranças ainda
+  // caindo na Stripe sem nenhuma pista do motivo.
+  const payments = {
+    active: activeProvider(),
+    hotmart: {
+      armed: hotmartArmed(),
+      blocked: hotmartBlockedReason(),
+      hottok: present(process.env.HOTMART_HOTTOK),
+      // Planos com oferta cadastrada. As assinaturas ficam de fora até
+      // existir produto de assinatura no painel — ver docs/HOTMART_SETUP.md.
+      plans: configuredHotmartPlans(),
+    },
+    // A env pública que o CTA do cliente lê. Divergir da `active` não
+    // quebra nada (a página /quiz/checkout reencaminha), mas custa um
+    // salto a mais na hora do pagamento.
+    clientHintMatches:
+      (process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === "hotmart") ===
+      (activeProvider() === "hotmart"),
+  };
+
   let db: { ok: boolean; code?: string; message?: string } = { ok: false };
   if (env.NEXT_PUBLIC_SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
@@ -86,6 +116,7 @@ export async function GET() {
     ok: missing.length === 0 && db.ok,
     missing,
     env,
+    payments,
     db,
   });
 }

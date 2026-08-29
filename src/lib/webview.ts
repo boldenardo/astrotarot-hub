@@ -39,7 +39,12 @@ function os(): "android" | "ios" | "other" {
  * transportam #). Se em 1,4s a página ainda estiver visível, o app
  * bloqueou o pulo → segue o redirect normal dentro da webview.
  */
-export function openCheckout(opts: { url: string; sessionId?: string | null }): void {
+export function openCheckout(opts: {
+  url: string;
+  sessionId?: string | null;
+  /** Rastreio de variante, para a ponte não perder a atribuição. */
+  sck?: string | null;
+}): void {
   const { url, sessionId } = opts;
   const platform = os();
 
@@ -54,11 +59,16 @@ export function openCheckout(opts: { url: string; sessionId?: string | null }): 
     return;
   }
 
-  const bridge = `${window.location.origin}/pay/${sessionId}`;
+  // A query sobrevive ao intent:// (só o fragmento não sobrevive), então é
+  // por ela que a atribuição de variante atravessa o pulo. O e-mail NÃO vai:
+  // esta string inteira passa pelo app do Facebook.
+  const sck = typeof opts.sck === "string" ? opts.sck.trim().slice(0, 40) : "";
+  const path = `/pay/${sessionId}${sck ? `?sck=${encodeURIComponent(sck)}` : ""}`;
+  const bridge = `${window.location.origin}${path}`;
   const target =
     // package fixa o Chrome; sem ele instalado, o fallback_url abre o
     // navegador padrão do aparelho — qualquer um deles tem carteira.
-    `intent://${window.location.host}/pay/${sessionId}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(bridge)};end`;
+    `intent://${window.location.host}${path}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(bridge)};end`;
 
   trackEvent("checkout_escape_attempted", {
     category: "checkout",

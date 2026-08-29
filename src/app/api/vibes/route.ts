@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { requireUser, hasEntitlement } from "@/lib/server/plan-gate";
 import { isPremium } from "@/lib/plans";
+import { stripeEnabled, STRIPE_DISABLED_RESPONSE } from "@/lib/payments/provider";
 
 export const runtime = "nodejs";
 
@@ -32,6 +33,12 @@ export async function GET() {
 }
 
 export async function POST() {
+  // Stripe desligada do runtime (migração Hotmart): sem cobrança nova.
+  // O DELETE segue ativo de propósito — cancelar um add-on pago é direito
+  // do cliente e não cria cobrança.
+  if (!stripeEnabled()) {
+    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
+  }
   const gate = await requireUser();
   if (!gate.ok) return gate.response;
   const { profile } = gate;

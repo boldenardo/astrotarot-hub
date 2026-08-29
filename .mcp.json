@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "hotmart": {
+      "command": "node",
+      "args": [
+        "node_modules/tsx/dist/cli.mjs",
+        "mcp/hotmart/server.mts"
+      ]
+    }
+  }
+}

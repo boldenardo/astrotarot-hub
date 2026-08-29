@@ -14,6 +14,12 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
 import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 import { normalizeEmail } from "@/lib/email-normalize";
+import {
+  activeProvider,
+  stripeEnabled,
+  STRIPE_DISABLED_RESPONSE,
+} from "@/lib/payments/provider";
+import { hotmartCheckoutUrl } from "@/lib/payments/hotmart-offers";
 
 export const runtime = "nodejs";
 
@@ -110,6 +116,9 @@ export async function POST(req: NextRequest) {
     "OTO_PASTLIFE",
     // Compra avulsa do Cord Reading ($9) dentro da conta.
     "CORD_READING",
+    // Vibes avulso ($9). Só atendido pela Hotmart — na Stripe, Vibes é
+    // item de assinatura e order bump, não plano de checkout.
+    "VIBES_ADDON",
     // Downsell de abandono. O preço REAL é decidido no servidor: pedir
     // este plano não garante $19.99 (ver resolveDownsell).
     "DOWNSELL_19",
@@ -129,12 +138,51 @@ export async function POST(req: NextRequest) {
   // Saneia antes de validar: sufixo de autocomplete do webview e typos de
   // TLD em provedores conhecidos viram o endereço real (ver email-normalize).
   const email = normalizeEmail(body.email);
+  // A validação dele vem DEPOIS do desvio da Hotmart, de propósito — ver a
+  // guarda logo abaixo daquele bloco.
+
+  // ── PROVIDER ATIVO ──────────────────────────────────────────────────
+  //
+  // A Hotmart não cria sessão dinâmica como a Stripe: cada oferta é uma
+  // PÁGINA criada no painel, e o que fazemos é mandar a pessoa para lá com
+  // o e-mail pré-preenchido e a variante no `sck` (o parâmetro de rastreio
+  // nativo, que volta nos relatórios de venda e preserva a atribuição).
+  //
+  // SEM FALLBACK, por regra: se a Hotmart não puder atender este plano, o
+  // erro é explícito. A Stripe NUNCA entra por baixo dos panos — cobrar
+  // pelo gateway que o dono desligou seria pior que não vender.
+  if (activeProvider() === "hotmart") {
+    const url = hotmartCheckoutUrl(plan, { email, variant: body.variant });
+    if (!url) {
+      return NextResponse.json(
+        {
+          error: "This plan is temporarily unavailable.",
+          code: "HOTMART_OPERATION_UNAVAILABLE",
+        },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ url, provider: "hotmart" });
+  }
+
+  // Daqui para baixo é Stripe, e aí o e-mail é OBRIGATÓRIO: é a chave que
+  // liga a PaymentIntent ao lead, ao entitlement e ao webhook. Na Hotmart
+  // não é — quem coleta o e-mail é o checkout deles, e a compra casa pelo
+  // e-mail do COMPRADOR, não pelo nosso. Exigi-lo antes do desvio derrubaria
+  // a venda de quem chega sem storage: link de e-mail, aba anônima, webview
+  // que limpou tudo. Quando temos, vai como preenchimento prévio — ganho,
+  // não requisito.
   if (!email) {
     return NextResponse.json(
       { error: "Please enter a valid email address." },
       { status: 400 }
     );
   }
+
+  if (!stripeEnabled()) {
+    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
+  }
+
 
   const ONE_OFF = new Set([
     "PACK5",
