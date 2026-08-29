@@ -8,17 +8,32 @@
 // Consequência que precisa estar clara para quem mexer nisto: enquanto o
 // provider for `hotmart`, o checkout próprio (/quiz/checkout) sai do
 // caminho, e com ele as cartas de desconto, os order bumps ao vivo e o
-// preço em rand. Em troca, a Hotmart traz Pix, boleto, parcelado e cartão
-// local — que é exatamente o que faltava para o comprador brasileiro, o
-// maior grupo identificado nos pedidos reais (6 de 13 com país conhecido).
+// preço em rand.
+//
+// O que se ganha em troca é para venda INTERNACIONAL (o público real é
+// África do Sul, Índia, Nepal, Tanzânia, EUA — não Brasil): a Hotmart é
+// merchant of record, processa com adquirência própria em vários países e
+// oferece PayPal, que é a saída de quem tem cartão bloqueado para
+// e-commerce internacional — o `transaction_not_allowed` que derrubou a
+// venda de 29/08. O checkout também converte a moeda por país sozinho.
 //
 // Cada URL entra por env, sem deploy: criar a oferta no painel e colar o
 // link na Vercel liga aquele produto.
 
+// Produto AstroTarot na conta CNS NEGOCIOS DIGITAIS LTDA (lido do painel
+// em 29/08): ID 8387609, código V107320990D, oferta base `msxqi5zi` a
+// US$ 14,99 — o MESMO preço que o funil anuncia hoje.
+//
+// O link vai como padrão no código, e não só em env, pelo mesmo motivo dos
+// price ids da Stripe: ele não é segredo (aparece na barra de endereço de
+// qualquer comprador) e assim a troca de gateway não depende de a env ter
+// chegado na Vercel. A env continua tendo prioridade.
+const FRONT_DEFAULT = "https://pay.hotmart.com/V107320990D?off=msxqi5zi";
+
 /** Plano do funil → env com a URL da oferta na Hotmart. */
 const OFFER_ENV: Record<string, string | undefined> = {
   // O produto principal: a leitura completa com o retrato.
-  FRONT_READING: process.env.HOTMART_CHECKOUT_URL_FRONT,
+  FRONT_READING: process.env.HOTMART_CHECKOUT_URL_FRONT || FRONT_DEFAULT,
   // Downsell de quem recusou o front.
   DOWNSELL_19: process.env.HOTMART_CHECKOUT_URL_DOWNSELL,
   // Só o retrato, do e-mail de abandono.

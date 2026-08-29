@@ -178,7 +178,8 @@ export async function POST(req: NextRequest) {
       const addOffer = (env: string | undefined, features: AddonFeature[]) => {
         if (env) ENTITLEMENT_BY_OFFER[env] = features;
       };
-      addOffer(process.env.HOTMART_OFFER_FRONT, ["soulmate_portrait"]);
+      // `msxqi5zi` é a oferta base do AstroTarot, lida do painel em 29/08.
+      addOffer(process.env.HOTMART_OFFER_FRONT || "msxqi5zi", ["soulmate_portrait"]);
       addOffer(process.env.HOTMART_OFFER_DOWNSELL, ["soulmate_portrait"]);
       addOffer(process.env.HOTMART_OFFER_PORTRAIT, ["soulmate_portrait"]);
       addOffer(process.env.HOTMART_OFFER_CORD, ["cord_reading"]);
