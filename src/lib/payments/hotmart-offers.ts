@@ -82,7 +82,7 @@ const OFFER_ENV: Record<string, string | undefined> = {
  */
 export function hotmartCheckoutUrl(
   plan: string,
-  opts: { email: string; variant?: string | null }
+  opts: { email?: string | null; variant?: string | null }
 ): string | null {
   const base = OFFER_ENV[plan];
   if (!base) return null;
@@ -91,7 +91,11 @@ export function hotmartCheckoutUrl(
     // `email` pré-preenche o checkout; `sck` é o parâmetro de rastreio
     // nativo da Hotmart e volta nos relatórios de venda, o que mantém a
     // atribuição por braço do funil depois da troca de gateway.
-    url.searchParams.set("email", opts.email);
+    //
+    // Vazio NÃO entra: `?email=` faria o checkout deles abrir com o campo
+    // marcado como preenchido e em branco, que é pior que não preencher.
+    const mail = typeof opts.email === "string" ? opts.email.trim() : "";
+    if (mail) url.searchParams.set("email", mail);
     const variant =
       typeof opts.variant === "string" ? opts.variant.trim().slice(0, 40) : "";
     if (variant) url.searchParams.set("sck", variant);

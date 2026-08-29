@@ -108,6 +108,11 @@ export type AnalyticsEvent =
   | "checkout_escape_attempted"
   | "checkout_escape_failed"
   | "checkout_error"
+  // Chegou em /quiz/checkout (Stripe) com a Hotmart ativa no servidor e foi
+  // reencaminhado. Deve ser RARO: se aparecer com volume, a env pública
+  // NEXT_PUBLIC_PAYMENT_PROVIDER está desatualizada na Vercel e todo mundo
+  // está pagando um salto a mais.
+  | "checkout_provider_bounce"
   // Painel de checkout embutido — separa "não viu o formulário" de
   // "viu e desistiu" (sem isto, 8 sessões sem cartão eram um mistério).
   | "checkout_form_opened"

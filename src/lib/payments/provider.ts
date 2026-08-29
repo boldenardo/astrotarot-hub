@@ -1,27 +1,57 @@
 // Seleção de provider financeiro do runtime.
 //
-// Migração temporária (2026-08-20): Hotmart assume como provider ativo e a
-// Stripe fica DESLIGADA do runtime, mas 100% preservada no código — a volta
-// é trocar duas variáveis de ambiente, sem deploy de código.
+// A Hotmart é o provider ativo desde 29/08 (decisão do dono, depois de mais
+// um `transaction_not_allowed` na Stripe). A Stripe fica DESLIGADA para
+// cobranças novas, mas 100% preservada no código.
 //
-//   PAYMENT_PROVIDER=hotmart|stripe   (default: stripe — trocar de gateway
-//                                      é um ato explícito, nunca acidente
-//                                      de env ausente)
-//   STRIPE_ENABLED=true|false         (false corta TODA criação de sessão,
-//                                      upsell e cobrança nova na Stripe)
+//   PAYMENT_PROVIDER=stripe   escotilha explícita de volta, sem deploy.
+//                             Qualquer outro valor (ou nenhum) significa
+//                             Hotmart.
+//   STRIPE_ENABLED=false      corta TODA criação de sessão nova na Stripe.
 //
-// REGRA DE OURO (sem fallback): com PAYMENT_PROVIDER=hotmart, falha da
-// Hotmart NUNCA cai para a Stripe. A rota devolve erro explícito.
+// ── A TRAVA ──────────────────────────────────────────────────────────────
 //
-// O webhook da Stripe (/api/stripe/webhook) fica ATIVO mesmo com
-// STRIPE_ENABLED=false: ele só reage a eventos assinados pela Stripe e
-// precisa continuar honrando compras feitas antes da troca (entitlements,
-// reembolsos de vendas antigas). Desligá-lo perderia clientes reais.
+// Hotmart só assume de verdade quando ela consegue ENTREGAR. A entrega
+// inteira depende do webhook, e o webhook rejeita tudo sem `HOTMART_HOTTOK`
+// — então um deploy com a Hotmart ligada e o hottok faltando venderia e não
+// entregaria, que é pior que não vender. Enquanto o token não estiver no
+// ambiente, o runtime continua na Stripe e `/api/health` diz por quê.
+//
+// Isto não é a "regra de ouro" sendo quebrada: aquela regra proíbe cair
+// para a Stripe quando a Hotmart FALHA em runtime, e continua valendo (ver
+// /api/quiz/checkout). Esta trava age antes disso, sobre configuração
+// incompleta — nunca sobre uma cobrança em curso.
+//
+// O webhook da Stripe (/api/stripe/webhook) fica ATIVO de qualquer forma:
+// ele só reage a eventos assinados pela Stripe e precisa continuar honrando
+// compras feitas antes da troca (entitlements, reembolsos). Desligá-lo
+// perderia clientes reais.
 
 export type PaymentProviderName = "stripe" | "hotmart";
 
+/**
+ * A Hotmart consegue entregar o que vender?
+ *
+ * Um único requisito, e é o que basta: sem o hottok o webhook rejeita toda
+ * notificação de compra, e quem pagar fica sem acesso.
+ */
+export function hotmartArmed(): boolean {
+  return Boolean(process.env.HOTMART_HOTTOK?.trim());
+}
+
 export function activeProvider(): PaymentProviderName {
-  return process.env.PAYMENT_PROVIDER === "hotmart" ? "hotmart" : "stripe";
+  // Volta explícita para a Stripe, sem deploy.
+  if (process.env.PAYMENT_PROVIDER === "stripe") return "stripe";
+  return hotmartArmed() ? "hotmart" : "stripe";
+}
+
+/**
+ * A troca foi pedida mas não pôde acontecer? Serve ao diagnóstico — sem
+ * isto o dono veria "ainda estou na Stripe" sem nenhuma pista do motivo.
+ */
+export function hotmartBlockedReason(): string | null {
+  if (process.env.PAYMENT_PROVIDER === "stripe") return null;
+  return hotmartArmed() ? null : "HOTMART_HOTTOK ausente no ambiente";
 }
 
 /** Stripe pode criar sessões/cobranças novas? (leitura/webhook não passam aqui) */

@@ -138,12 +138,8 @@ export async function POST(req: NextRequest) {
   // Saneia antes de validar: sufixo de autocomplete do webview e typos de
   // TLD em provedores conhecidos viram o endereço real (ver email-normalize).
   const email = normalizeEmail(body.email);
-  if (!email) {
-    return NextResponse.json(
-      { error: "Please enter a valid email address." },
-      { status: 400 }
-    );
-  }
+  // A validação dele vem DEPOIS do desvio da Hotmart, de propósito — ver a
+  // guarda logo abaixo daquele bloco.
 
   // ── PROVIDER ATIVO ──────────────────────────────────────────────────
   //
@@ -167,6 +163,20 @@ export async function POST(req: NextRequest) {
       );
     }
     return NextResponse.json({ url, provider: "hotmart" });
+  }
+
+  // Daqui para baixo é Stripe, e aí o e-mail é OBRIGATÓRIO: é a chave que
+  // liga a PaymentIntent ao lead, ao entitlement e ao webhook. Na Hotmart
+  // não é — quem coleta o e-mail é o checkout deles, e a compra casa pelo
+  // e-mail do COMPRADOR, não pelo nosso. Exigi-lo antes do desvio derrubaria
+  // a venda de quem chega sem storage: link de e-mail, aba anônima, webview
+  // que limpou tudo. Quando temos, vai como preenchimento prévio — ganho,
+  // não requisito.
+  if (!email) {
+    return NextResponse.json(
+      { error: "Please enter a valid email address." },
+      { status: 400 }
+    );
   }
 
   if (!stripeEnabled()) {
