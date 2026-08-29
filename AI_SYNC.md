@@ -53,6 +53,75 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-29 (tarde) — Claude (a revelação vira página; o desconto sai)
+
+O dono olhou o print das duas cartas abertas dentro da VSL: *"está
+praticamente igual"*. Estava. Uma carta que se abre entre um parágrafo de
+preço e um bloco de FAQ não é revelação, é um acordeão.
+
+**Fluxo novo:** `/quiz/vsl-v2` → [botão] → **`/quiz/reveal`** → [botão] →
+pagamento. Não é um botão a mais competindo com a oferta — é o MESMO
+botão. Os três CTAs e a barra fixa passaram a levar para a revelação, e o
+botão de comprar mora lá.
+
+**O que a revisão adversarial encontrou, e mudou o desenho.** Um dos
+revisores achou no próprio repositório o registro de que esta experiência
+já tinha sido rodada: em 27/08 uma tela de cartas ANTES do formulário de
+pagamento matou **3 de 8** pessoas que já tinham decidido comprar
+(`CustomCheckout.tsx`, comentário do bloco de desconto). Conferido, palavra
+por palavra. A lição não foi "cartas não funcionam" — foi que ninguém pode
+ser obrigado a jogar para chegar ao pagamento. Por isso **a oferta e o
+botão de comprar existem na revelação desde o primeiro paint**: quem rolar
+direto compra sem virar nada.
+
+**O sequenciamento é ESTADO, não animação.** `prefersNoTransitions()`
+responde true para `deviceMemory <= 4`, que na África do Sul, Índia, Nepal
+e Tanzânia é a maioria dos Android. Se a cerimônia fosse feita de
+transição, a maioria do tráfego receberia a mesma tela chapada de antes,
+agora custando uma navegação. Então: a carta IV **não existe no DOM** antes
+da III virar, e as trancadas não existem antes da IV. Verificado com o flag
+de aparelho fraco ligado — a sequência continua, sem timers.
+
+**As três trancadas sobem de face para cima**, arte e nome visíveis, texto
+trancado. Ela VÊ a carta que representa ele e não consegue lê-la. Não vaza
+nada: `toPublicReading` já mandava as cinco cartas ao navegador; só o texto
+de I, II e V fica no servidor.
+
+**O desconto saiu, nos dois lugares.** As cinco cartas de "toque uma, 5% a
+30% off" com relógio de 15 min eram a TERCEIRA grade de cinco cartas do
+funil, uma tela depois da tirada — e a terceira ensina retroativamente que
+a segunda era uma raspadinha, sendo a segunda a prova em que a oferta se
+apoia. Na Hotmart são impossíveis (o preço vive na oferta do painel). Na
+VSL, quatro parágrafos seguidos de justificativa de preço viraram dois;
+saiu a âncora "psychic runs $30 to $150", que além de repetição era o único
+valor em dólar da página que ignorava o grid de moedas.
+
+**Copy que era falsa, corrigida.** `drawEgyptian` é `Math.random` — as
+respostas escrevem o TEXTO, não escolhem os arcanos; "drawn from your
+answers" era mentira e virou "came up once, and they have not moved since".
+"Fifteen answers" são 15 TELAS, das quais seis são pergunta e só quatro
+chegam ao modelo. "Already yours" dito a quem ainda não virou carta nenhuma.
+
+**Detalhes que custam venda:** âncoras `<a href>` em vez de `location.href`
+(a webview do Facebook engole navegação por script sem lançar erro); o
+destino do pagamento vira href ANTES do clique, resolvido do **servidor** e
+não da env pública; as cinco artes são pré-carregadas no mount (o
+`next/image` das faces é lazy, então o giro terminava numa face BRANCA); a
+tirada é repassada por `sessionStorage` antes de navegar.
+
+**Medição:** `soulmate_reveal_clicked` substitui `checkout_cta_clicked` NA
+VSL — aquele nome significa "clicou um botão que leva ao pagamento", e este
+passou a levar a duas cartas grátis. A série histórica quebra ali de
+propósito.
+
+**Armadilha para quem for testar isto:** o servidor de dev (turbopack)
+estava entregando ao cliente uma versão desatualizada do componente e
+mentiu por meia hora — a prop do servidor chegava `undefined` e o efeito
+não rodava. Em build de PRODUÇÃO funciona. **Valide funil neste projeto com
+`npm run build` + `npm start`, não com `npm run dev`.** E não rode
+`rm -rf .next` com o dev server de pé: ele passa a servir HTML sem
+JavaScript nenhum, o que parece bug de hidratação e não é.
+
 ### 2026-08-29 — Claude (Hotmart: as seis ofertas criadas e ligadas)
 
 Branch `hotmart-migracao`. Decisão do dono depois de mais um

@@ -61,30 +61,68 @@ que vendem recorrência, continuam dependendo da Stripe. O **front tem
 volume, a recorrência não** — nunca houve venda de assinatura — então isso
 não bloqueia virar a chave.
 
-## 3. Virar a chave
+## 3. Virar a chave — UMA variável
 
-Na Vercel, depois do webhook configurado:
+O provider padrão do código já é a Hotmart. Mas ela só assume de verdade
+quando consegue **entregar**, e a entrega inteira depende do webhook:
 
 ```
-PAYMENT_PROVIDER=hotmart
-NEXT_PUBLIC_PAYMENT_PROVIDER=hotmart
 HOTMART_HOTTOK=<o token do painel>
 ```
 
-Voltar para a Stripe é apagar as duas primeiras. Nenhum deploy de código:
-o webhook da Stripe continua ligado de qualquer jeito, para honrar compras
-antigas (entitlements e reembolsos de quem já comprou).
+Enquanto essa variável não estiver na Vercel, o runtime **continua na
+Stripe de propósito**. Um deploy com a Hotmart ligada e o token faltando
+venderia e não entregaria — quem pagasse ficaria sem acesso, que é pior
+que não vender.
 
-As seis ofertas de compra única já existem, então virar a chave leva o
-funil inteiro junto. Só a recorrência fica na Stripe (ver acima).
+Então a ordem é: **webhook criado no painel → `HOTMART_HOTTOK` na Vercel →
+está virado.** Não precisa mexer em mais nada.
+
+`NEXT_PUBLIC_PAYMENT_PROVIDER` virou opcional. As duas páginas que
+importam já perguntam ao servidor: `/quiz/reveal` recebe o gateway como
+prop do server component, e `/quiz/checkout` reencaminha sozinho se
+alguém chegar nele com a Hotmart ativa. Setá-la só economiza um salto.
+
+### Conferir se virou
+
+```
+https://astrotarot.shop/api/health
+```
+
+No bloco `payments`:
+
+- `active` — `"hotmart"` ou `"stripe"`, o que está valendo agora
+- `hotmart.blocked` — `null` quando está tudo certo; com texto, é o motivo
+  de a troca ter sido pedida e não ter acontecido
+- `hotmart.plans` — os planos com oferta cadastrada
+- `clientHintMatches` — `false` só custa um salto a mais no pagamento
+
+### Voltar para a Stripe
+
+```
+PAYMENT_PROVIDER=stripe
+```
+
+Sem deploy de código. O webhook da Stripe fica ativo de qualquer forma,
+para honrar compras feitas antes da troca.
 
 ## O que se perde na troca
 
 O checkout próprio (`/quiz/checkout`) sai do caminho, e com ele:
 
-- as **cartas de desconto** (5% a 30%)
 - os **order bumps ao vivo** (Cord e Vibes recalculando o total)
-- o **preço em rand** para a África do Sul
+- o **preço em rand** montado por nós
+
+As **cartas de desconto** não entram nesta conta: foram removidas em 29/08
+por decisão do dono ("o desconto ficou carregado demais"), e não voltariam
+de qualquer forma — na Hotmart o preço vive na oferta cadastrada no
+painel, então um desconto escolhido no nosso site não teria como chegar
+lá. Prometer 30% e cobrar cheio seria pior que não descontar.
+
+E o preço em rand não se perde de verdade: a **conversão automática de
+moeda** está ligada nas seis ofertas, e é a Hotmart que faz esse trabalho
+agora. Conferido ao vivo — as páginas de US$ 27 e US$ 9 abrem em real para
+IP brasileiro.
 
 A Hotmart trabalha com página de oferta fixa criada no painel. Em troca ela
 é *merchant of record*, processa com adquirência própria em vários países e
