@@ -14,6 +14,12 @@ import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { isPremium } from "@/lib/plans";
 import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
 import { normalizeEmail } from "@/lib/email-normalize";
+import {
+  activeProvider,
+  stripeEnabled,
+  STRIPE_DISABLED_RESPONSE,
+} from "@/lib/payments/provider";
+import { hotmartCheckoutUrl } from "@/lib/payments/hotmart-offers";
 
 export const runtime = "nodejs";
 
@@ -135,6 +141,35 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  // ── PROVIDER ATIVO ──────────────────────────────────────────────────
+  //
+  // A Hotmart não cria sessão dinâmica como a Stripe: cada oferta é uma
+  // PÁGINA criada no painel, e o que fazemos é mandar a pessoa para lá com
+  // o e-mail pré-preenchido e a variante no `sck` (o parâmetro de rastreio
+  // nativo, que volta nos relatórios de venda e preserva a atribuição).
+  //
+  // SEM FALLBACK, por regra: se a Hotmart não puder atender este plano, o
+  // erro é explícito. A Stripe NUNCA entra por baixo dos panos — cobrar
+  // pelo gateway que o dono desligou seria pior que não vender.
+  if (activeProvider() === "hotmart") {
+    const url = hotmartCheckoutUrl(plan, { email, variant: body.variant });
+    if (!url) {
+      return NextResponse.json(
+        {
+          error: "This plan is temporarily unavailable.",
+          code: "HOTMART_OPERATION_UNAVAILABLE",
+        },
+        { status: 503 }
+      );
+    }
+    return NextResponse.json({ url, provider: "hotmart" });
+  }
+
+  if (!stripeEnabled()) {
+    return NextResponse.json(STRIPE_DISABLED_RESPONSE, { status: 503 });
+  }
+
 
   const ONE_OFF = new Set([
     "PACK5",

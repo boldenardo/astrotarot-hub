@@ -105,6 +105,10 @@ const RETURNED_KEY = "astro_vsl_returned";
 // retenção e o CTA continua visível desde o primeiro scroll.
 const SHOW_VSL = true;
 
+// Gateway ativo no cliente. O servidor tem a palavra final (PAYMENT_PROVIDER);
+// esta é só a versão pública, para o CTA saber para onde mandar a pessoa.
+const HOTMART = process.env.NEXT_PUBLIC_PAYMENT_PROVIDER === "hotmart";
+
 interface QuizStore {
   answers?: Record<string, string>;
   email?: string;
@@ -878,12 +882,67 @@ export default function QuizVslV2Page() {
         label: plan,
         offer: FRONT_OFFER_ID,
         cta_position: ctaPosition,
-        surface: "custom",
+        surface: HOTMART ? "hotmart" : "custom",
       });
       trackPaymentInitiated(plan, FRONT_PRICE_USD);
+
+      // HOTMART: a oferta é uma página no painel deles, não uma sessão que
+      // criamos. O servidor devolve a URL certa (com e-mail e rastreio) e
+      // saímos daqui. O checkout próprio — cartas de desconto, bumps ao
+      // vivo, preço em rand — não existe nesse caminho: quem manda no
+      // preço passa a ser a oferta cadastrada lá.
+      if (HOTMART) {
+        submittingRef.current = true;
+        setLoadingPlan(plan);
+        void (async () => {
+          try {
+            const res = await fetch("/api/quiz/checkout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                plan,
+                email: store.email ?? "",
+                ref: getStoredRef(),
+                src: getStoredSource(),
+                funnelSessionId: getFunnelSessionId(),
+                variant: VARIANT_IGNITE,
+                utm: getUtmParams(),
+              }),
+            });
+            const data = (await res.json().catch(() => ({}))) as {
+              url?: string;
+              error?: string;
+            };
+            if (data.url) {
+              window.location.href = data.url;
+              return;
+            }
+            trackEvent("checkout_error", {
+              ...baseParams(),
+              label: plan,
+              reason: "hotmart_unavailable",
+              status: res.status,
+            });
+            setError(
+              data.error || "We couldn't open the checkout. Please try again."
+            );
+          } catch {
+            trackEvent("checkout_error", {
+              ...baseParams(),
+              label: plan,
+              reason: "network",
+            });
+            setError("We couldn't open the checkout. Please try again.");
+          }
+          setLoadingPlan(null);
+          submittingRef.current = false;
+        })();
+        return;
+      }
+
       window.location.href = "/quiz/checkout";
     },
-    [loadingPlan, baseParams]
+    [loadingPlan, baseParams, store.email]
   );
 
   const submitEmailModal = useCallback(() => {
