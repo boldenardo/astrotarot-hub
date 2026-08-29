@@ -34,21 +34,6 @@ import { useLocalPricing } from "@/lib/pricing-client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-// Cartas de desconto pré-checkout: 5 cartas reais — 3× 5%, 1× 20%, 1× 30%.
-// O baralho é embaralhado de verdade no client; o 5% cai mais porque há
-// mais cartas dele, não porque o jogo manipula o resultado. O percentual
-// é revalidado no servidor (ALLOWED_DISCOUNTS) — o client nunca manda valor.
-const CARD_DISCOUNTS = [5, 5, 5, 20, 30];
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 
 
 let stripePromise: Promise<StripeJs | null> | null = null;
@@ -91,15 +76,6 @@ const REVIEW_SHOTS = [
   "/social-proof/aura-reviews.webp",
 ];
 
-// Urgência REAL: a carta revelada segura o desconto por 15 min nesta
-// sessão. Expirou antes de avançar → escolhe de novo. Depois de avançar,
-// o desconto já está travado na metadata do PaymentIntent ("locked in").
-const DISCOUNT_HOLD_MS = 15 * 60 * 1000;
-const DEADLINE_KEY = "ck_discount_deadline";
-
-const fmtMmSs = (s: number) =>
-  `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-
 interface PiState {
   clientSecret: string;
   piId: string;
@@ -120,43 +96,31 @@ export default function CustomCheckout() {
   const [pi, setPi] = useState<PiState | null>(null);
   const [creating, setCreating] = useState(false);
   const [bumps, setBumps] = useState({ cord: false, vibes: false });
-  // Etapa das cartas: `advanced` vira true depois da escolha (ou do botão
-  // de continuar) e libera o formulário de pagamento.
-  const [cards] = useState(() => shuffle(CARD_DISCOUNTS));
-  const [picked, setPicked] = useState<number | null>(null);
   const startedRef = useRef(false);
 
-  const discount = picked !== null ? cards[picked] : null;
-
-  // Contador de urgência — persiste na sessão (sobrevive a refresh na aba).
-  const [deadline, setDeadline] = useState<number | null>(null);
-  const [nowTs, setNowTs] = useState(() => Date.now());
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(DEADLINE_KEY);
-      if (raw) setDeadline(Number(raw));
-    } catch {
-      // sem storage: o contador simplesmente não persiste
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!deadline) return;
-    const t = setInterval(() => setNowTs(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [deadline]);
-
-  const secondsLeft = deadline
-    ? Math.max(0, Math.floor((deadline - nowTs) / 1000))
-    : null;
-
-  // O contador agora só INFORMA. Antes ele devolvia a carta ao baralho ao
-  // expirar, o que fazia sentido quando as cartas eram uma tela anterior ao
-  // pagamento; com o desconto já gravado no PaymentIntent, tirá-lo de volta
-  // significaria subir o preço de alguém que está com o cartão na mão.
-  // A urgência continua real (a carta segura por 15 min) — o que sai é a
-  // punição de quem demorou lendo a própria oferta.
+  // ── AS CARTAS DE DESCONTO SAÍRAM (29/08, decisão do dono: "o desconto
+  //    acabou ficando um pouco carregado demais") ──────────────────────
+  //
+  // Eram cinco cartas viradas para baixo, "toque uma — 5% a 30% off", com
+  // relógio de 15 minutos. Três motivos para sair, e o terceiro é o que
+  // torna a volta improvável:
+  //
+  //  1. Viraram a TERCEIRA grade de cinco cartas do funil, uma tela depois
+  //     da revelação (/quiz/reveal). A terceira ensina, retroativamente,
+  //     que a segunda era uma raspadinha — e a segunda é a tirada em que
+  //     esta oferta inteira se apoia como prova.
+  //  2. Já tinham custado caro uma vez: como TELA antes do pagamento, em
+  //     27/08, mataram 3 de 8 pessoas que já tinham decidido comprar. Foram
+  //     rebaixadas a bloco dentro do checkout; agora saem de vez.
+  //  3. Na Hotmart elas são impossíveis. O preço vive na oferta cadastrada
+  //     no painel deles, e um desconto escolhido aqui não teria como
+  //     chegar lá — prometer 30% e cobrar cheio seria pior que não
+  //     descontar.
+  //
+  // A tubulação do servidor continua de pé (`discountPct` é validado e
+  // aplicado em /api/quiz/payment-intent): o que saiu é a interface. Voltar
+  // é decidir de novo, não reescrever a cobrança.
+  const discount: number | null = null;
 
   useEffect(() => {
     try {
@@ -304,92 +268,6 @@ export default function CustomCheckout() {
   // 5 passaram — três pessoas que já tinham decidido comprar morreram no
   // clique do meio. Agora o jogo mora dentro do checkout, acima do resumo,
   // e o formulário de pagamento existe desde o primeiro paint.
-  const discountCards = (
-    <div className="mt-5 rounded-2xl border border-gold-400/30 bg-gradient-to-b from-gold-400/[0.08] to-transparent p-4">
-      <div className="flex items-center gap-3">
-        <Image
-          src="/social-proof/marie/badge-50-off.png"
-          alt=""
-          width={80}
-          height={80}
-          className="h-12 w-12 shrink-0 object-contain"
-        />
-        <div>
-          <p className="text-[15px] font-semibold leading-snug text-white">
-            {picked === null
-              ? `${name ? `${name}, one` : "One"} of these cards holds your discount`
-              : "Your discount is applied below"}
-          </p>
-          <p className="mt-0.5 text-[13px] leading-snug text-white/65">
-            {picked === null
-              ? "Tap one — 5% to 30% off, applied to your order."
-              : `Card revealed ${discount}% off. Your reading is now ${fmt(frontFinal)}.`}
-          </p>
-        </div>
-      </div>
-
-        <div className="mt-4 grid grid-cols-5 gap-2 sm:gap-3">
-          {cards.map((pct, i) => {
-            const isPicked = picked === i;
-            const revealed = picked !== null;
-            return (
-              <button
-                key={i}
-                type="button"
-                disabled={revealed}
-                onClick={() => {
-                  setPicked(i);
-                  const dl = Date.now() + DISCOUNT_HOLD_MS;
-                  setDeadline(dl);
-                  try {
-                    sessionStorage.setItem(DEADLINE_KEY, String(dl));
-                  } catch {
-                    // sem storage: segue sem persistir
-                  }
-                  trackEvent("checkout_discount_card_picked", {
-                    category: "checkout",
-                    label: `card_${i}`,
-                    value: pct,
-                  });
-                  // O preço do PI desce agora — não há mais um segundo
-                  // clique onde a pessoa possa se perder.
-                  void applyDiscount(pct);
-                }}
-                className={`flex aspect-[3/4] items-center justify-center rounded-xl border text-center transition-all duration-500 ${
-                  isPicked
-                    ? "scale-105 border-gold-400 bg-gold-400/20 shadow-[0_0_24px_rgba(212,175,55,0.35)]"
-                    : revealed
-                      ? "border-white/10 bg-white/[0.03] opacity-50"
-                      : "border-gold-400/40 bg-gradient-to-b from-[#2a1f45] to-[#171226] hover:scale-105 hover:border-gold-400"
-                }`}
-              >
-                {revealed ? (
-                  <span
-                    className={`font-display font-bold ${
-                      isPicked ? "text-lg text-gold sm:text-xl" : "text-sm text-white/50"
-                    }`}
-                  >
-                    {pct}%<br />OFF
-                  </span>
-                ) : (
-                  <span className="text-xl text-gold-400/80" aria-hidden>
-                    ✦
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-      {picked !== null && secondsLeft !== null && secondsLeft > 0 && (
-        <p className="mt-3 text-center text-[13px] font-medium text-gold-300" role="status">
-          Held for{" "}
-          <span className="font-bold tabular-nums">{fmtMmSs(secondsLeft)}</span>
-        </p>
-      )}
-    </div>
-  );
-
   // ── O checkout ─────────────────────────────────────────────────────────
 
   return (
@@ -403,28 +281,6 @@ export default function CustomCheckout() {
           <Lock className="h-3.5 w-3.5" aria-hidden /> Secure checkout
         </span>
       </div>
-
-      {/* Urgência — o desconto da carta é real e tem validade nesta sessão */}
-      {discount !== null && secondsLeft !== null && (
-        <div className="mt-4 rounded-xl border border-gold-400/40 bg-gold-400/10 px-4 py-2.5 text-center text-[13px] text-white">
-          {secondsLeft > 0 ? (
-            <>
-              Your <span className="font-bold text-gold">{discount}% off</span>{" "}
-              is reserved for{" "}
-              <span className="font-bold tabular-nums text-gold">
-                {fmtMmSs(secondsLeft)}
-              </span>
-            </>
-          ) : (
-            <>
-              Your <span className="font-bold text-gold">{discount}% off</span>{" "}
-              is locked in for this order
-            </>
-          )}
-        </div>
-      )}
-
-      {discountCards}
 
       {/* Risco zero no topo — a manchete do checkout de referência, na
           nossa versão honesta (a garantia é real e já está na LP). */}

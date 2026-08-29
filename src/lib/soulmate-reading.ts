@@ -413,6 +413,38 @@ export function toPublicReading(r: SoulmateReading): Omit<SoulmateReading, "doss
   };
 }
 
+/**
+ * Uma linha honesta sobre uma carta quando o texto do dossiê não veio.
+ *
+ * A carta IV depende da janela solar, e a janela é null para leituras
+ * gravadas antes de 28/08 e para datas de nascimento que não parseiam. Sem
+ * isto a cerimônia da revelação teria como clímax um "Master Aura is still
+ * writing this one" — a carta vira em silêncio e a página perde o ponto.
+ * Isto não substitui o dossiê: é o que se pode dizer sem inventar nada,
+ * lido do próprio baralho.
+ */
+export function deckLine(card: DrawnCard | undefined, ordinalWord: string): string {
+  if (!card) return "";
+  const deck = EGYPTIAN_DECK.find((c) => c.id === card.arcanum);
+  if (!deck) return "";
+  const meaning = deck.upright.slice(0, 2).join(" and ").toLowerCase();
+  return `Your ${ordinalWord} card is ${deck.name}. In this position it reads as ${meaning}.`;
+}
+
 /** Chave do cache no navegador. Fora do QUIZ_STORAGE_KEY de propósito:
  *  loadQuizState remonta o objeto campo a campo e descartaria esta. */
 export const READING_STORAGE_KEY = "astro_soulmate_reading_v1";
+
+/**
+ * Passagem da tirada da VSL para a página da revelação.
+ *
+ * O READING_STORAGE_KEY continua sendo a fonte, mas ele pode não existir:
+ * quem tem storage bloqueado carrega a tirada só em memória, e uma
+ * navegação de página inteira a joga fora — a pessoa clicaria "vire minhas
+ * cartas" e chegaria numa cerimônia vazia. O sessionStorage é a segunda
+ * fonte, escrita imediatamente antes de navegar.
+ */
+export const REVEAL_HANDOFF_KEY = "astro_soulmate_reveal_handoff";
+
+/** A revelação já foi vista neste navegador — serve à retomada sem refazê-la. */
+export const REVEAL_DONE_KEY = "astro_soulmate_reveal_done_v1";
