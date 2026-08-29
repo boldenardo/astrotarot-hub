@@ -112,3 +112,41 @@ export function configuredHotmartPlans(): string[] {
     .filter(([, v]) => Boolean(v))
     .map(([k]) => k);
 }
+
+/**
+ * Um código de oferta NOSSO vira a URL de pagamento dele.
+ *
+ * Existe para a ponte de escape de webview (/pay/hm_<codigo>): o destino
+ * precisa sair deste mapa, nunca da query, senão a ponte vira um open
+ * redirect assinado pelo nosso domínio. Código desconhecido devolve null e
+ * quem chama manda a pessoa de volta ao funil.
+ */
+export function hotmartUrlByOfferCode(code: string): string | null {
+  if (!/^[a-z0-9]{4,16}$/.test(code)) return null;
+  for (const base of Object.values(OFFER_ENV)) {
+    if (!base) continue;
+    try {
+      if (new URL(base).searchParams.get("off") === code) return base;
+    } catch {
+      // env malformada: ignora esta entrada
+    }
+  }
+  return null;
+}
+
+/**
+ * O id que a ponte de escape entende, extraído de uma URL de pagamento.
+ *
+ * Na Stripe a ponte recebe a sessão; aqui não existe sessão, então o id é
+ * o código da oferta com prefixo. Devolve null quando a URL não é nossa —
+ * e aí quem chama simplesmente redireciona direto, sem tentar o escape.
+ */
+export function hotmartBridgeId(payUrl: string): string | null {
+  try {
+    const code = new URL(payUrl).searchParams.get("off");
+    if (!code || !/^[a-z0-9]{4,16}$/.test(code)) return null;
+    return hotmartUrlByOfferCode(code) ? `hm_${code}` : null;
+  } catch {
+    return null;
+  }
+}

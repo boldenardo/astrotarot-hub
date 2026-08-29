@@ -10,10 +10,19 @@
 // meio do pulo webview→Chrome. Edge abre em dezenas de ms, e a única
 // dependência é um GET na API da Stripe.
 //
-// Sem open redirect: o destino nunca vem da query — é sempre o session.url
-// que a PRÓPRIA Stripe devolve para o id validado.
+// Serve aos DOIS gateways. Na Stripe o id é a sessão (`cs_...`); na Hotmart
+// não existe sessão — a oferta é uma página fixa —, então o id é
+// `hm_<codigo da oferta>` e o destino sai do NOSSO mapa de ofertas.
+//
+// Sem open redirect, nos dois casos: o destino nunca vem da query. Ou é o
+// session.url que a PRÓPRIA Stripe devolve para o id validado, ou é uma URL
+// que já estava cadastrada no nosso código. A query só carrega `sck`, o
+// rastreio de variante — que é rótulo de funil, não destino, e não é dado
+// pessoal (o e-mail de propósito NÃO viaja aqui: esta URL acaba embutida
+// numa string intent:// que o app do Facebook enxerga).
 
 import { NextRequest, NextResponse } from "next/server";
+import { hotmartUrlByOfferCode } from "@/lib/payments/hotmart-offers";
 
 export const runtime = "edge";
 
@@ -23,6 +32,19 @@ export async function GET(
 ) {
   const { session: id } = await params;
   const fallback = new URL("/quiz/vsl-v2", req.url);
+
+  // ── HOTMART ──────────────────────────────────────────────────────────
+  const hm = /^hm_([a-z0-9]{4,16})$/.exec(id);
+  if (hm) {
+    const base = hotmartUrlByOfferCode(hm[1]);
+    if (!base) return NextResponse.redirect(fallback);
+    const dest = new URL(base);
+    const sck = req.nextUrl.searchParams.get("sck");
+    if (sck) dest.searchParams.set("sck", sck.slice(0, 40));
+    return NextResponse.redirect(dest.toString());
+  }
+
+  // ── STRIPE ───────────────────────────────────────────────────────────
   const key = process.env.STRIPE_SECRET_KEY;
 
   if (!/^cs_(live|test)_[a-zA-Z0-9]+$/.test(id) || !key) {
