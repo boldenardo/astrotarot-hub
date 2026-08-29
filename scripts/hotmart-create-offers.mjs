@@ -1,4 +1,17 @@
-// Cria as ofertas do funil no produto AstroTarot, via Products API.
+// Ofertas do funil no produto AstroTarot.
+//
+// ⚠️ A CRIAÇÃO POR API NÃO EXISTE. Verificado empiricamente em 29/08, não
+// suposto: o GET de /products/api/v1/products/{ucode}/offers responde 200,
+// e POST/PUT na MESMA url — e em mais quatro variantes — respondem 404
+// "not_found". A sondagem usou corpo vazio de propósito, para um endpoint
+// que existisse recusar por validação em vez de criar lixo na conta.
+//
+// (Páginas de terceiros afirmam que a Products API "cria ofertas". Não
+// cria. Só o painel cria.)
+//
+// O que este script AINDA serve para: listar as ofertas existentes com
+// seus códigos, que é o que o webhook precisa para mapear cada compra ao
+// direito certo. Rode sem argumento para ver.
 //
 // Feito por API e não pelo painel a pedido do dono: cinco formulários numa
 // SPA que parou de renderizar no meio da sessão é como se deixa uma oferta
@@ -21,7 +34,10 @@ for (const line of fs.readFileSync(".env", "utf8").split(/\r?\n/)) {
 
 const CLIENT_ID = env.HOTMART_CLIENT_ID;
 const CLIENT_SECRET = env.HOTMART_CLIENT_SECRET;
-const PRODUCT_ID = env.HOTMART_PRODUCT_ID || "8387609";
+// O endpoint de ofertas quer o UCODE, não o id numérico — com o id ele
+// devolve 500 "não foi possível obter as ofertas", que parece erro do
+// servidor e é só o identificador errado.
+const UCODE = env.HOTMART_PRODUCT_UCODE || "669b1fca-03df-423b-ba8f-0758060d04af";
 const CONFIRM = process.argv.includes("--confirm");
 
 // As cinco ofertas que faltam. Preços iguais aos que o funil já anuncia —
@@ -61,10 +77,10 @@ async function main() {
   }
 
   const tk = await token();
-  console.log("autenticado. produto:", PRODUCT_ID);
+  console.log("autenticado. produto:", UCODE);
 
   // O que já existe — para nunca criar oferta duplicada.
-  const listUrl = `https://developers.hotmart.com/products/api/v1/products/${PRODUCT_ID}/offers`;
+  const listUrl = `https://developers.hotmart.com/products/api/v1/products/${UCODE}/offers`;
   const cur = await fetch(listUrl, { headers: { Authorization: `Bearer ${tk}` } });
   const curBody = await cur.text();
   console.log(`GET offers -> ${cur.status}`);
@@ -91,10 +107,15 @@ async function main() {
       console.log(`- ${off.name}: JA EXISTE, pulando`);
       continue;
     }
+    // payment_mode PAY_IN_FULL e conversão de moeda ligada: os dois valores
+    // foram lidos da oferta base que já existe, não supostos. Conversão
+    // ligada é o que faz um comprador na África do Sul ver o preço na
+    // moeda dele em vez de dólar.
     const payload = {
       name: off.name,
       price: { value: off.price, currency_code: "USD" },
-      payment_mode: "SINGLE_PAYMENT",
+      payment_mode: "PAY_IN_FULL",
+      is_currency_conversion_enabled: true,
     };
     if (!CONFIRM) {
       console.log(`- ${off.name} US$ ${off.price} -> ${JSON.stringify(payload)} (DRY RUN)`);
