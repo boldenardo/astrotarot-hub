@@ -20,28 +20,50 @@
 // Cada URL entra por env, sem deploy: criar a oferta no painel e colar o
 // link na Vercel liga aquele produto.
 
-// Produto AstroTarot na conta CNS NEGOCIOS DIGITAIS LTDA (lido do painel
-// em 29/08): ID 8387609, código V107320990D, oferta base `msxqi5zi` a
-// US$ 14,99 — o MESMO preço que o funil anuncia hoje.
+// Produto AstroTarot na conta CNS NEGOCIOS DIGITAIS LTDA: ID 8387609,
+// código V107320990D. As seis ofertas foram criadas no painel em 29/08,
+// todas DENTRO deste mesmo produto — é o que mantém um só webhook, um só
+// hottok e um só relatório de vendas.
 //
-// O link vai como padrão no código, e não só em env, pelo mesmo motivo dos
-// price ids da Stripe: ele não é segredo (aparece na barra de endereço de
-// qualquer comprador) e assim a troca de gateway não depende de a env ter
-// chegado na Vercel. A env continua tendo prioridade.
-const FRONT_DEFAULT = "https://pay.hotmart.com/V107320990D?off=msxqi5zi";
+// Os códigos abaixo foram conferidos pela API depois de criados, não lidos
+// da tela: o painel mostra o formulário que você acabou de preencher, a
+// listagem da API mostra o que de fato existe. Duas ofertas "salvas" no
+// painel não apareceram na primeira listagem.
+//
+// Vão como padrão no código, e não só em env, pelo mesmo motivo dos price
+// ids da Stripe: o código da oferta aparece na barra de endereço de
+// qualquer comprador, então não é segredo, e assim a troca de gateway não
+// fica esperando a env chegar na Vercel. A env continua tendo prioridade.
+const PAY = "https://pay.hotmart.com/V107320990D?off=";
+const D = {
+  FRONT: PAY + "msxqi5zi",     // US$ 14,99 — oferta principal
+  DOWNSELL: PAY + "bvyxnxxf",  // US$ 9,99
+  PORTRAIT: PAY + "v6eqt5s7",  // US$ 9
+  CORD: PAY + "c7d60z8z",      // US$ 9
+  VIBES: PAY + "uuiqazhu",     // US$ 9
+  OTO: PAY + "r4wq8vzf",       // US$ 27
+};
 
 /** Plano do funil → env com a URL da oferta na Hotmart. */
 const OFFER_ENV: Record<string, string | undefined> = {
   // O produto principal: a leitura completa com o retrato.
-  FRONT_READING: process.env.HOTMART_CHECKOUT_URL_FRONT || FRONT_DEFAULT,
+  FRONT_READING: process.env.HOTMART_CHECKOUT_URL_FRONT || D.FRONT,
   // Downsell de quem recusou o front.
-  DOWNSELL_19: process.env.HOTMART_CHECKOUT_URL_DOWNSELL,
+  DOWNSELL_19: process.env.HOTMART_CHECKOUT_URL_DOWNSELL || D.DOWNSELL,
   // Só o retrato, do e-mail de abandono.
-  DOWNSELL_PORTRAIT: process.env.HOTMART_CHECKOUT_URL_PORTRAIT,
+  DOWNSELL_PORTRAIT: process.env.HOTMART_CHECKOUT_URL_PORTRAIT || D.PORTRAIT,
   // Order bump vendido avulso dentro da conta.
-  CORD_READING: process.env.HOTMART_CHECKOUT_URL_CORD,
+  CORD_READING: process.env.HOTMART_CHECKOUT_URL_CORD || D.CORD,
   // OTO pós-compra.
-  OTO_PASTLIFE: process.env.HOTMART_CHECKOUT_URL_OTO,
+  OTO_PASTLIFE: process.env.HOTMART_CHECKOUT_URL_OTO || D.OTO,
+  // Vibes avulso. Na Stripe, Vibes é um ITEM dentro da assinatura ($9.99/mês,
+  // ver syncVibesFromSubscription no webhook) e também um order bump do
+  // checkout próprio. Nenhum dos dois sobrevive à troca de gateway: a
+  // Hotmart não tem bump ao vivo, e não há produto de assinatura lá.
+  // Então aqui ele é o que a oferta criada no painel de fato é — compra
+  // única de US$ 9, direito vitalício. Quem já paga pela Stripe continua
+  // pela Stripe; /vibes só muda quando existir assinatura na Hotmart.
+  VIBES_ADDON: process.env.HOTMART_CHECKOUT_URL_VIBES || D.VIBES,
   // Assinaturas — só ligam quando existir produto de assinatura no painel.
   SUB_MONTHLY: process.env.HOTMART_CHECKOUT_URL_SUB_MONTHLY,
   SUB_SEMIANNUAL: process.env.HOTMART_CHECKOUT_URL_SUB_SEMIANNUAL,

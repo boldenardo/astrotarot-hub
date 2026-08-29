@@ -180,11 +180,11 @@ export async function POST(req: NextRequest) {
       };
       // `msxqi5zi` é a oferta base do AstroTarot, lida do painel em 29/08.
       addOffer(process.env.HOTMART_OFFER_FRONT || "msxqi5zi", ["soulmate_portrait"]);
-      addOffer(process.env.HOTMART_OFFER_DOWNSELL, ["soulmate_portrait"]);
-      addOffer(process.env.HOTMART_OFFER_PORTRAIT, ["soulmate_portrait"]);
-      addOffer(process.env.HOTMART_OFFER_CORD, ["cord_reading"]);
-      addOffer(process.env.HOTMART_OFFER_VIBES, ["vibes"]);
-      addOffer(process.env.HOTMART_OFFER_OTO, ["past_life"]);
+      addOffer(process.env.HOTMART_OFFER_DOWNSELL || "bvyxnxxf", ["soulmate_portrait"]);
+      addOffer(process.env.HOTMART_OFFER_PORTRAIT || "v6eqt5s7", ["soulmate_portrait"]);
+      addOffer(process.env.HOTMART_OFFER_CORD || "c7d60z8z", ["cord_reading"]);
+      addOffer(process.env.HOTMART_OFFER_VIBES || "uuiqazhu", ["vibes"]);
+      addOffer(process.env.HOTMART_OFFER_OTO || "r4wq8vzf", ["past_life"]);
 
       // Sem mapa para esta oferta, o padrão é o produto principal: é o que
       // o funil vende, e conceder a mais nunca deixa alguém pagando sem

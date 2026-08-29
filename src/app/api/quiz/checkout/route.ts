@@ -116,6 +116,9 @@ export async function POST(req: NextRequest) {
     "OTO_PASTLIFE",
     // Compra avulsa do Cord Reading ($9) dentro da conta.
     "CORD_READING",
+    // Vibes avulso ($9). Só atendido pela Hotmart — na Stripe, Vibes é
+    // item de assinatura e order bump, não plano de checkout.
+    "VIBES_ADDON",
     // Downsell de abandono. O preço REAL é decidido no servidor: pedir
     // este plano não garante $19.99 (ver resolveDownsell).
     "DOWNSELL_19",

@@ -20,25 +20,46 @@ O token (*hottok*) já está no `.env` local. **Precisa ir para a Vercel**
 como `HOTMART_HOTTOK` — o webhook rejeita tudo sem ele, e quem pagar fica
 sem acesso.
 
-## 2. As outras ofertas — todas dentro do MESMO produto
+## 2. As ofertas — FEITO
 
-Painel → produto AstroTarot → **Precificação e ofertas → Novo preço**.
-Uma oferta por linha. Depois de criar, copie o **código** de cada uma
-(aparece na coluna "Código", como `msxqi5zi`) e o link de pagamento.
+As seis já existem, todas dentro do mesmo produto, e os códigos abaixo
+foram lidos da **API** depois de criadas (o painel mostra o formulário que
+você acabou de preencher; a listagem da API mostra o que de fato existe —
+duas ofertas "salvas" não apareceram na primeira listagem).
 
-| Nome sugerido | Valor | Para quê | Env do link | Env do código |
-|---|---|---|---|---|
-| Downsell | US$ 9,99 | quem recusou a oferta principal | `HOTMART_CHECKOUT_URL_DOWNSELL` | `HOTMART_OFFER_DOWNSELL` |
-| Portrait | US$ 9 | e-mail de abandono | `HOTMART_CHECKOUT_URL_PORTRAIT` | `HOTMART_OFFER_PORTRAIT` |
-| Cord Reading | US$ 9 | order bump / venda avulsa | `HOTMART_CHECKOUT_URL_CORD` | `HOTMART_OFFER_CORD` |
-| Vibes | US$ 9 | order bump | `HOTMART_CHECKOUT_URL_VIBES` | `HOTMART_OFFER_VIBES` |
-| Past Life | US$ 27 | OTO pós-compra | `HOTMART_CHECKOUT_URL_OTO` | `HOTMART_OFFER_OTO` |
+| Oferta | Valor | Para quê | Código |
+|---|---|---|---|
+| (base) | US$ 14,99 | oferta principal do funil | `msxqi5zi` |
+| Downsell | US$ 9,99 | quem recusou a principal | `bvyxnxxf` |
+| Portrait | US$ 9 | e-mail de abandono | `v6eqt5s7` |
+| Cord Reading | US$ 9 | venda avulsa | `c7d60z8z` |
+| Vibes | US$ 9 | venda avulsa | `uuiqazhu` |
+| Past Life | US$ 27 | OTO pós-compra | `r4wq8vzf` |
 
-O link tem o formato `https://pay.hotmart.com/V107320990D?off=CODIGO`.
+O link de cada uma é `https://pay.hotmart.com/V107320990D?off=CODIGO`.
 
-**Enquanto uma oferta não existir, aquele caminho devolve erro em vez de
-vender** — de propósito. Mandar a pessoa para a oferta errada cobraria o
-valor errado, que é pior que não vender.
+**Já estão no código como padrão** (`src/lib/payments/hotmart-offers.ts`),
+tanto para montar o link quanto para o webhook decidir qual direito
+conceder. Não é preciso colar nada na Vercel: as envs
+`HOTMART_CHECKOUT_URL_*` e `HOTMART_OFFER_*` continuam existindo e têm
+prioridade, mas só para trocar uma oferta sem deploy.
+
+Todas foram criadas como **pagamento à vista em dólar**, com conversão
+automática de moeda ligada — que é o que faz o preço aparecer em rand para
+a África do Sul sem o nosso checkout.
+
+### O que ainda NÃO tem oferta
+
+**As assinaturas** (`SUB_MONTHLY`, `SUB_SEMIANNUAL`, `SUB_ANNUAL`) e o
+`PACK5` legado. Não existe produto de assinatura na conta Hotmart, e uma
+assinatura não é uma oferta a mais dentro de um produto de compra única —
+é outro produto. Enquanto não existir, esses planos devolvem **503
+explícito** com `PAYMENT_PROVIDER=hotmart`.
+
+Consequência prática: o pós-compra (`/quiz/thank-you`) e a página `/vibes`,
+que vendem recorrência, continuam dependendo da Stripe. O **front tem
+volume, a recorrência não** — nunca houve venda de assinatura — então isso
+não bloqueia virar a chave.
 
 ## 3. Virar a chave
 
@@ -54,8 +75,8 @@ Voltar para a Stripe é apagar as duas primeiras. Nenhum deploy de código:
 o webhook da Stripe continua ligado de qualquer jeito, para honrar compras
 antigas (entitlements e reembolsos de quem já comprou).
 
-**Dá para virar só o produto principal agora** e deixar o resto na Stripe
-até as outras ofertas existirem — o front é o único caminho com volume.
+As seis ofertas de compra única já existem, então virar a chave leva o
+funil inteiro junto. Só a recorrência fica na Stripe (ver acima).
 
 ## O que se perde na troca
 
