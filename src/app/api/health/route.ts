@@ -74,6 +74,14 @@ export async function GET() {
       armed: hotmartArmed(),
       blocked: hotmartBlockedReason(),
       hottok: present(process.env.HOTMART_HOTTOK),
+      // Só os NOMES das chaves HOTMART* que existem no ambiente, nunca os
+      // valores. Existe porque "a variável está lá no painel e o runtime
+      // não a vê" tem três causas indistinguíveis de fora — nome com
+      // typo, escopo errado, build anterior à variável — e a lista de
+      // nomes separa a primeira das outras duas em um GET.
+      keys: Object.keys(process.env)
+        .filter((k) => /^HOTMART/i.test(k))
+        .sort(),
       // Planos com oferta cadastrada. As assinaturas ficam de fora até
       // existir produto de assinatura no painel — ver docs/HOTMART_SETUP.md.
       plans: configuredHotmartPlans(),
