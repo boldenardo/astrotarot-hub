@@ -1,12 +1,12 @@
 // /quiz/checkout — o checkout próprio (ver CustomCheckout.tsx).
 //
 // Server component de propósito: é aqui que se lê o provider REAL do
-// runtime. Com a Hotmart ativa o formulário da Stripe nem é montado — quem
-// chegar aqui por um link antigo, um "voltar" do navegador ou uma env
-// pública desatualizada é reencaminhado para a oferta certa (HotmartBounce).
+// runtime. Com a Hotmart ativa monta-se o HotmartCheckout — a MESMA moldura
+// de confiança do checkout próprio (garantia, resumo, selo, prova), com o
+// formulário de pagamento deles abrindo em overlay por cima.
 import type { Metadata } from "next";
 import CustomCheckout from "./CustomCheckout";
-import HotmartBounce from "./HotmartBounce";
+import HotmartCheckout from "./HotmartCheckout";
 import { activeProvider } from "@/lib/payments/provider";
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export default function CheckoutPage() {
   const hotmart = activeProvider() === "hotmart";
   return (
     <main className="min-h-screen bg-[#0e0a1a]">
-      {hotmart ? <HotmartBounce /> : <CustomCheckout />}
+      {hotmart ? <HotmartCheckout /> : <CustomCheckout />}
     </main>
   );
 }

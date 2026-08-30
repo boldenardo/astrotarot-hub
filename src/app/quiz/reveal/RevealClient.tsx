@@ -93,7 +93,12 @@ export default function RevealClient({ hotmart }: { hotmart: boolean }) {
   const [reading, setReading] = useState<SoulmateReading | null>(null);
   const [state, setState] = useState<State>("loading");
   const [store, setStore] = useState<Store>({});
-  const [payHref, setPayHref] = useState("/quiz/checkout");
+  // UMA página de dinheiro (26/08, reafirmado 30/08): o botão leva SEMPRE
+  // para /quiz/checkout — que agora É a moldura da Hotmart, com o resumo,
+  // a garantia e a prova que a página deles não tem. O desvio direto para
+  // pay.hotmart.com durou um dia e o dono viu o custo: "perdemos tudo do
+  // nosso checkout antigo".
+  const payHref = "/quiz/checkout";
   const cur = useLocalPricing();
 
   const load = useCallback(async (s: Store) => {
@@ -143,44 +148,6 @@ export default function RevealClient({ hotmart }: { hotmart: boolean }) {
     setStore(s);
     void load(s);
   }, [load]);
-
-  // O destino do pagamento vira href de âncora ANTES do clique.
-  //
-  // Duas razões. A primeira é a webview do Facebook, onde
-  // `window.location.href` disparado de um handler pode ser engolido sem
-  // erro — navegação nativa de <a> não é. A segunda é a Hotmart: o destino
-  // é um domínio deles, e resolvê-lo no clique adicionaria um round-trip
-  // exatamente no instante mais caro da página. Se a resolução falhar, o
-  // href continua sendo /quiz/checkout, que reencaminha no servidor.
-  useEffect(() => {
-    if (!hotmart) return;
-    let alive = true;
-    void (async () => {
-      try {
-        const res = await fetch("/api/quiz/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            plan: "FRONT_READING",
-            email: readStore().email ?? "",
-          }),
-        });
-        const data = (await res.json().catch(() => ({}))) as {
-          url?: string;
-          provider?: string;
-        };
-        // Só segue a URL quando o SERVIDOR confirma Hotmart. Sob Stripe
-        // esta mesma rota devolve uma sessão hospedada, e mandar a pessoa
-        // para lá seria reabrir o checkout que foi removido do funil.
-        if (alive && data.provider === "hotmart" && data.url) setPayHref(data.url);
-      } catch {
-        // fica em /quiz/checkout
-      }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [hotmart]);
 
   const onBuy = () => {
     trackEvent("checkout_cta_clicked", {
