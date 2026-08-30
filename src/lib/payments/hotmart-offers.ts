@@ -88,6 +88,17 @@ export function hotmartCheckoutUrl(
   if (!base) return null;
   try {
     const url = new URL(base);
+    // A PÁGINA COM A NOSSA MARCA.
+    //
+    // Sem `checkoutMode=10` a Hotmart serve o checkout genérico dela: barra
+    // laranja no topo, fundo bege, zero AstroTarot. Com ele, serve a página
+    // publicada no Checkout Builder — fundo #0E0A1A (o mesmo do site) e a
+    // nossa logo no cabeçalho. É o próprio painel que entrega o link nesse
+    // formato; o parâmetro não é adivinhação.
+    //
+    // Vale para as SEIS ofertas de uma vez: a página foi publicada como
+    // "padrão", então cobre todo preço que não tenha página própria.
+    url.searchParams.set("checkoutMode", "10");
     // `email` pré-preenche o checkout; `sck` é o parâmetro de rastreio
     // nativo da Hotmart e volta nos relatórios de venda, o que mantém a
     // atribuição por braço do funil depois da troca de gateway.

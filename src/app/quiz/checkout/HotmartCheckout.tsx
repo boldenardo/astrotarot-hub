@@ -95,12 +95,13 @@ export default function HotmartCheckout() {
           provider?: string;
           error?: string;
         };
+        // A URL já vem com `checkoutMode=10` do servidor — o modo que
+        // renderiza a página do Checkout Builder com a nossa marca. Nada a
+        // acrescentar aqui: quem manda no formato do link é uma função só
+        // (hotmartCheckoutUrl), para o overlay, a ponte de webview e o
+        // e-mail de recuperação nunca divergirem.
         if (data.provider === "hotmart" && data.url) {
-          // checkoutMode=2 é o modo overlay do widget. Na degradação (sem
-          // script) o parâmetro é inofensivo: a página deles abre normal.
-          const u = new URL(data.url);
-          u.searchParams.set("checkoutMode", "2");
-          setPayUrl(u.toString());
+          setPayUrl(data.url);
           return;
         }
         setError(data.error || "We couldn't open the checkout. Please try again.");
