@@ -53,6 +53,39 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-30 (5) — Claude (o gargalo do quiz: nome e data)
+
+Medicao passo a passo (quiz_step_viewed, 119 sessoes desde 25/08, 58
+completaram). Nao e variado — os TRES maiores pontos de saida sao
+exatamente os tres onde ela precisa DIGITAR:
+
+  1. nome ......... 20 pararam ali (17% de quem viu)
+  10. birthdate ... 11 (14%)
+  14. email ....... 6 (9%)
+  perguntas ....... 2-3% cada; videos, quase nada
+
+O nome saiu da PRIMEIRA tela para depois de duas perguntas. A perda era
+igual em todo dispositivo (16/17/19% em Facebook/navegador/Instagram), o
+que descarta webview: era a tela. A data virou tres campos digitados
+(p90 de 446s no `<input type="date">` — a roda nativa comeca em hoje).
+
+**Cuidado ao mexer em STEPS de novo:** a lista espanhola (`STEPS_ES`) tem
+de ser reordenada JUNTO. O `stepIndex` e compartilhado e o LocaleProvider
+troca o idioma depois da hidratacao — com as listas fora de sincronia, essa
+troca muda a TELA, nao so o idioma. E qualquer reordenacao exige subir
+`STEPS_VERSION`, senao quem tem estado salvo retoma no passo errado e pula
+uma pergunta pontuada (o score vai para HIGH sem resposta).
+
+**Buraco pre-existente fechado:** o servidor nunca conferiu calendario.
+O regex aceita "1994-02-31" e `new Date` rola para 03/03 em silencio —
+signo errado gravado como verdade. `isRealDate` (soulmate-reading.ts) agora
+roda em /api/quiz/lead e /api/quiz/soulmate-preview.
+
+**Armadilha de teste:** com o painel do navegador fechado,
+`document.hidden` congela o rAF e o watchdog do quiz dispara ("transicao
+nao assentou em 1500ms"). Nao e bug do produto — mas impede testar a
+RETOMADA por navegacao. Verifique logica de resume por teste unitario.
+
 ### 2026-08-30 (4) — Claude (CORRECAO: as tres trancadas voltam a ficar fechadas)
 
 Erro meu, pego pelo dono num print: a cerimonia abria as CINCO cartas no
