@@ -44,6 +44,19 @@ export const UI_EN = {
   nameError: "Please tell me your name so I can read your chart.",
   birthdateIntro:
     "Your exact birth date is what turns a reading into a portrait — it fixes the position of Venus at the moment you were born.",
+  monthNames: [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ],
+  // O eco da data por extenso. É função e não template solto porque a
+  // ordem muda por idioma: "June 15, 1994" contra "15 de junio de 1994".
+  birthdatePretty: (month: string, day: number, year: number) =>
+    `${month} ${day}, ${year}`,
+  birthdateImpossible: "That day doesn't exist — check the month and the day.",
+  birthdateTooOld: "Please check the year.",
+  birthdateMonth: "Month",
+  birthdateDay: "Day",
+  birthdateYear: "Year",
   birthdateLabel: "Birth date",
   birthdateError: "Please enter your full birth date.",
   birthdateFuture: "Your birth date can't be in the future.",

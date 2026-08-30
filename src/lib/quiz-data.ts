@@ -11,6 +11,8 @@ export interface QuizState {
   email?: string;
   name?: string;
   birthDate?: string;
+  /** Ordem de passos que gerou o `stepIndex` salvo (ver STEPS_VERSION). */
+  stepsVersion?: number;
   sign?: string;
   score?: QuizScore;
   /** Passo mais avançado alcançado — usado para retomar após refresh. */
@@ -238,24 +240,13 @@ export function signFromDate(isoDate: string): string | undefined {
 // leva a pessoa até a VSL.
 export const STEPS: QuizStep[] = [
   {
-    id: "name",
-    kind: "name",
-    messages: [
-      "I'm Master Aura. Before I open your chart, I need one thing from you.",
-      "Tell me — what should I call you?",
-    ],
-    placeholder: "Your first name",
-    cta: "Continue",
-  },
-  {
     id: "c_welcome",
     kind: "chat",
     messages: [
-      "It's a true pleasure to meet you, {name}. ✨",
-      "I can already feel a special connection forming around you.",
-      "Are you ready to discover the soulmate the universe has been preparing for you?",
+      "I'm Master Aura. I read the chart you were born under — the one that already knows who you are looking for.",
+      "I am not going to ask you for anything yet. Answer me honestly and the cards do the rest.",
     ],
-    cta: "Yes, I'm ready ✨",
+    cta: "I'm ready ✨",
   },
   {
     id: "q_status",
@@ -283,9 +274,31 @@ export const STEPS: QuizStep[] = [
     ],
   },
   {
+    // O NOME MUDOU DE LUGAR (30/08). Era a PRIMEIRA tela do quiz e
+    // custava 17% de todo mundo que comecava — a maior perda isolada do
+    // funil, e igual em todos os dispositivos (16% Facebook, 17%
+    // navegador, 19% Instagram), o que descarta bug de webview: era a
+    // tela. A pessoa clicava em "leitura gratis" e a primeira coisa que
+    // acontecia era um estranho pedindo o nome dela, antes de qualquer
+    // entrega.
+    //
+    // Agora ele vem depois de duas perguntas. Ela ja contou onde esta o
+    // coracao dela e se ja conheceu a pessoa — pedir o nome vira educacao
+    // no meio de uma conversa, nao um formulario na porta.
+    id: "name",
+    kind: "name",
+    messages: [
+      "You just told me two true things. Most people cannot.",
+      "Before I open your chart — what should I call you?",
+    ],
+    placeholder: "Your first name",
+    cta: "Continue",
+  },
+  {
     id: "q_sign",
     kind: "question",
     intro: [
+      "A true pleasure, {name}. ✨",
       "We each carry a soulmate written in our stars from the day we're born.",
       "Tell me your sign so I can read your chart and visualize them.",
     ],
@@ -451,7 +464,19 @@ export function computeScore(answers: Record<string, string>): QuizScore {
  * revelação, vídeos, localização) ficam entre inputs e seriam puladas.
  * Nunca retoma na tela de "analyzing", que navega sozinha.
  */
+/**
+ * A ordem dos passos mudou em 30/08 (o nome saiu da primeira tela e foi
+ * para depois de duas perguntas). Quem tinha estado salvo pela ordem
+ * ANTIGA guardou um índice que agora aponta para outro passo: salvo em 2
+ * (era q_status, não respondido) voltaria em q_met e pularia q_status
+ * PARA SEMPRE — e q_status é pontuado, então o score iria para HIGH sem
+ * ela ter respondido. Estado sem versão volta para o começo; as respostas
+ * que ela já deu continuam salvas, então não é recomeço de verdade.
+ */
+export const STEPS_VERSION = 2;
+
 export function resumeIndex(state: QuizState): number {
+  if (state.stepsVersion !== STEPS_VERSION) return 0;
   const saved = state.stepIndex;
   if (typeof saved !== "number" || !Number.isFinite(saved)) return 0;
   const lastPlayable = STEPS.length - 2; // -1 = analyzing
@@ -480,6 +505,10 @@ export function loadQuizState(): QuizState {
         typeof parsed.stepIndex === "number" && Number.isFinite(parsed.stepIndex)
           ? parsed.stepIndex
           : undefined,
+      // Precisa atravessar a remontagem campo a campo, senão resumeIndex
+      // veria `undefined` sempre e ninguém mais retomaria de onde parou.
+      stepsVersion:
+        typeof parsed.stepsVersion === "number" ? parsed.stepsVersion : undefined,
     };
   } catch {
     return { answers: {} };
@@ -490,7 +519,10 @@ export function loadQuizState(): QuizState {
 export function saveQuizState(state: QuizState): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(QUIZ_STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(
+      QUIZ_STORAGE_KEY,
+      JSON.stringify({ ...state, stepsVersion: STEPS_VERSION })
+    );
   } catch {
     // Storage may be unavailable (private mode); the funnel still works in memory.
   }

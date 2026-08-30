@@ -44,6 +44,7 @@ import {
   type QuizStep,
 } from "@/lib/quiz-data";
 import { useQuizContent } from "@/components/LocaleProvider";
+import type { Locale } from "@/lib/i18n";
 import { analyzingStagesFor, type QuizContent, type QuizUI } from "@/lib/i18n/content";
 import { trackEvent } from "@/lib/analytics";
 import { getStoredRef, getVisitorId } from "@/lib/affiliate";
@@ -160,7 +161,17 @@ export default function QuizFlowPage() {
       label: current.id,
       step_id: current.id,
       step_index: stepIndex,
+      // O step_index é o índice dentro dos passos DO IDIOMA. Sem esta
+      // dimensão, 0 misturaria idiomas caso as listas voltem a divergir —
+      // e foi exatamente o que quase aconteceu nesta rodada. Relatórios
+      // devem agrupar por step_id, que é estável.
+      locale: content.locale,
     });
+    // Deps de propósito só [stepIndex, hydrated]: o LocaleProvider troca o
+    // idioma no mount, e incluir `content.locale` dispararia um SEGUNDO
+    // quiz_step_viewed para a mesma tela — inflando o denominador do funil
+    // exatamente na entrada, que é onde a análise dói.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex, hydrated]);
 
   const step: QuizStep = LOCALIZED_STEPS[Math.min(stepIndex, LOCALIZED_STEPS.length - 1)];
@@ -360,9 +371,14 @@ export default function QuizFlowPage() {
     router.push("/quiz/vsl-v2");
   }, [router]);
 
+  // `state.birthDate` estava sendo LIDO e faltava nas deps. O efeito era
+  // silencioso e perverso: handleBirthdate só troca `sign` quando a data
+  // contradiz o signo que ela escolheu, então para quem responde CERTO o
+  // memo nunca recalculava e a carta de fechamento saía com a data em
+  // branco ("—"). Só via a data quem tinha errado o próprio signo.
   const vars = useMemo(
     () => ({ name: firstName, sign: state.sign, birthDate: state.birthDate }),
-    [firstName, state.sign]
+    [firstName, state.sign, state.birthDate]
   );
 
   // Sem gate de hidratação: a primeira tela precisa aparecer no HTML inicial.
@@ -479,6 +495,7 @@ export default function QuizFlowPage() {
             {step.kind === "birthdate" && (
               <BirthdateStep
                 ui={ui}
+                locale={content.locale}
                 initialValue={state.birthDate ?? ""}
                 onContinue={handleBirthdate}
               />
@@ -1604,64 +1621,231 @@ function LocationStep({
 
 /* ------------------------------- Birthdate ------------------------------- */
 
+/**
+ * A DATA DE NASCIMENTO, DIGITADA (30/08).
+ *
+ * Era um <input type="date"> nativo. No celular isso abre a roda do
+ * sistema COMEÇANDO EM HOJE, e a pessoa precisa rolar uns trinta anos para
+ * trás. O dado mostrava a briga: mediana de 49s no passo, mas p90 de 446s
+ * — um em cada dez ficava mais de sete minutos ali. Era a segunda maior
+ * perda do quiz (11 de 80 que viam a tela nunca passavam dela).
+ *
+ * Três campos digitados, teclado numérico, e a data ENTENDIDA devolvida por
+ * extenso embaixo. O eco não é enfeite: o público é misto (EUA escreve
+ * mês/dia, África do Sul e Índia escrevem dia/mês) e uma troca silenciosa
+ * daria o signo errado, que estraga a leitura inteira sem ninguém notar.
+ * Por isso o eco fala o idioma dela e a ORDEM DOS CAMPOS segue o locale.
+ */
 function BirthdateStep({
   ui,
+  locale,
   initialValue,
   onContinue,
 }: {
   ui: QuizUI;
+  locale: Locale;
   initialValue: string;
   onContinue: (birthDate: string) => void;
 }) {
-  const [value, setValue] = useState(initialValue);
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(initialValue);
+  const [month, setMonth] = useState(parts ? parts[2] : "");
+  const [day, setDay] = useState(parts ? parts[3] : "");
+  const [year, setYear] = useState(parts ? parts[1] : "");
   const [error, setError] = useState<string | null>(null);
-  const [maxDate, setMaxDate] = useState<string>();
+  const monthRef = useRef<HTMLInputElement>(null);
+  const dayRef = useRef<HTMLInputElement>(null);
+  const yearRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const now = new Date();
+  const digits = (v: string, max: number) => v.replace(/\D/g, "").slice(0, max);
+
+  /**
+   * O que a data é, ou por que não é. Um só lugar decide — antes o eco e o
+   * validador liam regras diferentes, e o eco chegava a exibir
+   * "June 15, 999" numa data que o formulário recusava.
+   */
+  const parsed = (() => {
+    const m = Number(month);
+    const d = Number(day);
+    if (!month || !day || year.length !== 4) {
+      return { iso: null, why: "incomplete" as const };
+    }
+    const y = Number(year);
+    if (m < 1 || m > 12 || d < 1 || d > 31) {
+      return { iso: null, why: "impossible" as const };
+    }
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    // Roundtrip: 31/02 vira 03/03 e morre aqui. É a única checagem de
+    // calendário de verdade — `new Date` sozinho não recusa data falsa.
+    if (
+      dt.getUTCFullYear() !== y ||
+      dt.getUTCMonth() !== m - 1 ||
+      dt.getUTCDate() !== d
+    ) {
+      return { iso: null, why: "impossible" as const };
+    }
+    if (y < 1900) return { iso: null, why: "tooOld" as const };
     const pad = (n: number) => String(n).padStart(2, "0");
-    setMaxDate(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`);
-  }, []);
+    return { iso: `${String(y).padStart(4, "0")}-${pad(m)}-${pad(d)}`, why: null };
+  })();
+
+  const pretty = parsed.iso
+    ? ui.birthdatePretty(ui.monthNames[Number(month) - 1], Number(day), Number(year))
+    : null;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!value || !signFromDate(value)) {
-      setError(ui.birthdateError);
+    if (!parsed.iso) {
+      setError(
+        parsed.why === "impossible"
+          ? ui.birthdateImpossible
+          : parsed.why === "tooOld"
+            ? ui.birthdateTooOld
+            : ui.birthdateError
+      );
       return;
     }
-    if (maxDate && value > maxDate) {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    if (parsed.iso > today) {
       setError(ui.birthdateFuture);
       return;
     }
-    onContinue(value);
+    if (!signFromDate(parsed.iso)) {
+      setError(ui.birthdateError);
+      return;
+    }
+    onContinue(parsed.iso);
   };
+
+  /**
+   * Campo de duas casas, com transbordo.
+   *
+   * Duas armadilhas que a primeira versão tinha, ambas aqui:
+   *
+   * 1. Quem nasceu em JANEIRO digitava "1" e nada avançava — certo, ainda
+   *    podia virar 10/11/12 — e o dígito seguinte virava mês "15",
+   *    inválido. Agora há TRANSBORDO: se os dois dígitos passam do máximo,
+   *    o primeiro fica e o segundo cai no campo seguinte. "1" e depois "5"
+   *    vira mês 1, dia 5.
+   * 2. Não dava para CORRIGIR. Com "06" no mês, tocar e digitar dava
+   *    "067" → cortado de volta para "06": o valor não mudava, mas o
+   *    avanço disparava e jogava o foco fora. Quem lia o eco, via mês/dia
+   *    trocados e ia consertar, era expulso sem ter mudado nada. Agora só
+   *    avança quando o valor de fato CRESCEU.
+   */
+  const twoDigitField = (
+    raw: string,
+    prev: string,
+    max: number,
+    set: (v: string) => void,
+    setNext: (v: string) => void,
+    next: React.RefObject<HTMLInputElement | null>
+  ) => {
+    setError(null);
+    const v = digits(raw, 2);
+    if (v.length === 2 && Number(v) > max && Number(v[0]) >= 1) {
+      set(v[0]);
+      setNext(v[1]);
+      next.current?.focus();
+      return;
+    }
+    set(v);
+    if (v.length === 2 && v.length > prev.length) next.current?.focus();
+  };
+
+  /** Backspace num campo vazio volta para o anterior. */
+  const backOnEmpty =
+    (value: string, prev: React.RefObject<HTMLInputElement | null>) =>
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace" && value === "") prev.current?.focus();
+    };
+
+  const box =
+    "glass glass-gold block min-h-[56px] w-full min-w-0 appearance-none rounded-2xl px-2 text-center text-lg tabular-nums text-[#e8e4f5] outline-none focus:border-[#d4af37]";
+  const cap =
+    "mb-1 block text-center text-[11px] uppercase tracking-wider text-[#e8e4f5]/50";
+
+  const monthBox = (
+    <div key="m">
+      <label htmlFor="bd-month" className={cap}>
+        {ui.birthdateMonth}
+      </label>
+      <input
+        id="bd-month"
+        ref={monthRef}
+        inputMode="numeric"
+        autoComplete="bday-month"
+        placeholder="MM"
+        value={month}
+        className={box}
+        onChange={(e) =>
+          twoDigitField(e.target.value, month, 12, setMonth, setDay, dayRef)
+        }
+      />
+    </div>
+  );
+  const dayBox = (
+    <div key="d">
+      <label htmlFor="bd-day" className={cap}>
+        {ui.birthdateDay}
+      </label>
+      <input
+        id="bd-day"
+        ref={dayRef}
+        inputMode="numeric"
+        autoComplete="bday-day"
+        placeholder="DD"
+        value={day}
+        className={box}
+        onChange={(e) =>
+          twoDigitField(e.target.value, day, 31, setDay, setYear, yearRef)
+        }
+        onKeyDown={backOnEmpty(day, monthRef)}
+      />
+    </div>
+  );
+  const yearBox = (
+    <div key="y">
+      <label htmlFor="bd-year" className={cap}>
+        {ui.birthdateYear}
+      </label>
+      <input
+        id="bd-year"
+        ref={yearRef}
+        inputMode="numeric"
+        autoComplete="bday-year"
+        placeholder="YYYY"
+        value={year}
+        className={box}
+        onChange={(e) => {
+          setYear(digits(e.target.value, 4));
+          setError(null);
+        }}
+        onKeyDown={backOnEmpty(year, dayRef)}
+      />
+    </div>
+  );
+
+  // Ordem dos campos pelo locale: quem escreve "15/06" não deve ter de
+  // inverter a própria mão para usar o formulário.
+  const boxes =
+    locale === "es" ? [dayBox, monthBox, yearBox] : [monthBox, dayBox, yearBox];
 
   return (
     <form onSubmit={submit} noValidate>
-      <GuideConversation
-        messages={[
-          ui.birthdateIntro,
-        ]}
-      />
-      <label htmlFor="quiz-birthdate" className="sr-only">
-        {ui.birthdateLabel}
-      </label>
-      <input
-        id="quiz-birthdate"
-        type="date"
-        required
-        max={maxDate}
-        value={value}
-        onChange={(e) => {
-          setValue(e.target.value);
-          setError(null);
-        }}
-        // appearance-none + min-w-0/max-w-full: o iOS Safari dá largura
-        // intrínseca ao controle nativo de data e estoura o w-full sem isso.
-        className="glass glass-gold mt-6 block min-h-[56px] w-full min-w-0 max-w-full appearance-none rounded-2xl px-4 text-center text-base text-[#e8e4f5] outline-none focus:border-[#d4af37] [color-scheme:dark] [&::-webkit-date-and-time-value]:text-center"
-      />
+      <GuideConversation messages={[ui.birthdateIntro]} />
+      <div className="mt-6 grid grid-cols-[1fr_1fr_1.4fr] gap-2">{boxes}</div>
+      {/* O eco. Existe para ela ver que entendemos a data certa antes de
+          seguir — mês/dia trocado daria o signo errado em silêncio. */}
+      <p
+        className="mt-3 min-h-[20px] text-center text-sm text-[#e8e4f5]/70"
+        aria-live="polite"
+      >
+        {pretty}
+      </p>
       {error && (
-        <p role="alert" className="mt-2 text-center text-sm text-red-400">
+        <p role="alert" className="mt-1 text-center text-sm text-red-400">
           {error}
         </p>
       )}

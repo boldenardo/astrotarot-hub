@@ -158,6 +158,30 @@ const SIGN_START: Record<string, [number, number]> = {
   Sagittarius: [11, 22], Capricorn: [12, 22], Aquarius: [1, 20], Pisces: [2, 19],
 };
 
+
+/**
+ * A data existe mesmo no calendário?
+ *
+ * O regex /^\d{4}-\d{2}-\d{2}$/ que as rotas usam aceita "1994-02-31", e
+ * `new Date` NÃO recusa: rola para 03/03 em silêncio. O resultado era um
+ * signo errado (Peixes em vez de Aquário) gravado como se fosse verdade,
+ * sem nada no log. A única checagem de calendário do sistema vivia no
+ * componente do quiz, ou seja, no navegador — qualquer POST repetido,
+ * cliente velho ou retry da VSL passava por fora.
+ */
+export function isRealDate(iso: string): boolean {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  if (y < 1900 || mo < 1 || mo > 12 || d < 1 || d > 31) return false;
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === mo - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
 /** Signo solar de uma data (YYYY-MM-DD ou Date). Cálculo local, sem API. */
 export function signOf(date: string | Date): string | null {
   const d =

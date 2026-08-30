@@ -57,24 +57,13 @@ export const SIGN_LOVE_TRAIT_ES: Record<string, string> = {
 
 export const STEPS_ES: QuizStep[] = [
   {
-    id: "name",
-    kind: "name",
-    messages: [
-      "Soy Master Aura. Antes de abrir tu carta astral, necesito una cosa de ti.",
-      "Dime — ¿cómo te llamo?",
-    ],
-    placeholder: "Tu nombre",
-    cta: "Continuar",
-  },
-  {
     id: "c_welcome",
     kind: "chat",
     messages: [
-      "Es un verdadero placer conocerte, {name}. ✨",
-      "Ya siento una conexión especial formándose a tu alrededor.",
-      "¿Estás lista para descubrir a la persona que el universo ha estado preparando para ti?",
+      "Soy Master Aura. Leo la carta astral bajo la que naciste — la que ya sabe a quién estás buscando.",
+      "Todavía no voy a pedirte nada. Respóndeme con la verdad y las cartas hacen el resto.",
     ],
-    cta: "Sí, estoy lista ✨",
+    cta: "Estoy lista ✨",
   },
   {
     id: "q_status",
@@ -102,9 +91,26 @@ export const STEPS_ES: QuizStep[] = [
     ],
   },
   {
+    // Mesma mudança do inglês (30/08): o nome saiu da PRIMEIRA tela,
+    // onde custava 17% de todo mundo que começava, e entra aqui, depois
+    // de duas perguntas. A ordem TEM de bater com STEPS do inglês: o
+    // stepIndex é persistido e o LocaleProvider troca de idioma depois da
+    // hidratação — com as listas fora de sincronia, essa troca mudaria
+    // a TELA, não só o idioma.
+    id: "name",
+    kind: "name",
+    messages: [
+      "Acabas de decirme dos verdades. La mayoría no puede.",
+      "Antes de abrir tu carta astral — ¿cómo te llamo?",
+    ],
+    placeholder: "Tu nombre",
+    cta: "Continuar",
+  },
+  {
     id: "q_sign",
     kind: "question",
     intro: [
+      "Un verdadero placer, {name}. ✨",
       "Cada uno de nosotros lleva un alma gemela escrita en las estrellas desde el día en que nace.",
       "Dime tu signo para leer tu carta y poder visualizarla.",
     ],
@@ -241,6 +247,17 @@ export const UI_ES = {
   nameError: "Dime tu nombre para poder leer tu carta.",
   birthdateIntro:
     "Tu fecha exacta de nacimiento es lo que convierte una lectura en un retrato — fija la posición de Venus en el momento en que naciste.",
+  monthNames: [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+  ],
+  birthdatePretty: (month: string, day: number, year: number) =>
+    `${day} de ${month} de ${year}`,
+  birthdateImpossible: "Ese día no existe — revisa el mes y el día.",
+  birthdateTooOld: "Revisa el año, por favor.",
+  birthdateMonth: "Mes",
+  birthdateDay: "Día",
+  birthdateYear: "Año",
   birthdateLabel: "Fecha de nacimiento",
   birthdateError: "Ingresa tu fecha de nacimiento completa.",
   birthdateFuture: "Tu fecha de nacimiento no puede estar en el futuro.",

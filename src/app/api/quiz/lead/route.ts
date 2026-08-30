@@ -11,9 +11,12 @@ import { normalizeCode } from "@/lib/affiliate";
 import { sendEmail } from "@/lib/server/email";
 import { leadReadingEmail } from "@/lib/server/email-templates";
 import { LANG_COOKIE, isLocale, DEFAULT_LOCALE } from "@/lib/i18n";
+import { isRealDate } from "@/lib/soulmate-reading";
 
 export const runtime = "nodejs";
 
+// O formato era a unica checagem: "1994-02-31" passava e virava NULL sem
+// aviso. isRealDate confere o calendario de verdade (ver soulmate-reading).
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SCORES = new Set(["LOW", "MEDIUM", "HIGH"]);
 const MAX_ANSWERS_BYTES = 2048;
@@ -84,7 +87,10 @@ export async function POST(req: NextRequest) {
       {
         email,
         name,
-        birth_date: birthDate && DATE_RE.test(birthDate) ? birthDate : null,
+        birth_date:
+          birthDate && DATE_RE.test(birthDate) && isRealDate(birthDate)
+            ? birthDate
+            : null,
         sign,
         score: score && SCORES.has(score) ? score : null,
         answers,

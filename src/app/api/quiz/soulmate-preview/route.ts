@@ -29,6 +29,7 @@ import {
 import {
   fallbackFree,
   isCompleteDossier,
+  isRealDate,
   pickFree,
   toPublicReading,
   signOf,
@@ -86,7 +87,14 @@ export async function POST(req: NextRequest) {
 
   // Sem estes três não há leitura possível — e recusar antes da Groq é o
   // que impede um POST vazio de gastar tokens.
-  if (!email || !DATE_RE.test(birthDate) || Object.keys(answers).length < 2) {
+  // isRealDate e o que impede "1994-02-31" de virar uma leitura inteira com
+// o signo errado: o regex aceita, e `new Date` rola para 03/03 calado.
+  if (
+    !email ||
+    !DATE_RE.test(birthDate) ||
+    !isRealDate(birthDate) ||
+    Object.keys(answers).length < 2
+  ) {
     return NextResponse.json({ error: "Not enough to read." }, { status: 400 });
   }
 
