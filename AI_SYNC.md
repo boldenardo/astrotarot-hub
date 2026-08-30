@@ -53,6 +53,37 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-30 (2) — Claude (o checkout ganha a moldura de volta)
+
+Reclamação do dono, correta: "perdemos tudo do nosso checkout antigo". O
+desvio direto para pay.hotmart.com jogava fora a garantia, o resumo, o
+selo, as fotos e os reviews — a página deles é um formulário genérico.
+
+/quiz/checkout voltou a ser página NOSSA (`HotmartCheckout.tsx`): a mesma
+moldura de confiança do checkout próprio, bloco a bloco, com as MESMAS
+imagens (ordem do dono: nunca remover). O pagamento é o widget oficial da
+Hotmart (static.hotmart.com/checkout/widget.min.js) abrindo a oferta em
+OVERLAY por cima da página — a pessoa não sai do site. Degradação é o
+caminho normal: o botão é âncora com o href real da oferta; sem script,
+vira o redirect de página inteira de antes, nunca clique morto.
+
+A revelação voltou a apontar para /quiz/checkout (UMA página de dinheiro,
+26/08). HotmartBounce apagado — a página que reencaminhava virou a página
+que vende. "Powered by Stripe" saiu das bandeiras; entrou PayPal e
+"Secured by Hotmart".
+
+Verificação: em produção, a moldura renderiza com os dados reais do quiz
+e o clique NÃO navega — iframe de pay.hotmart.com criado, evento load
+disparado, fancybox aberto. A revelação VISUAL do overlay não pôde ser
+fotografada: o fancybox anima via requestAnimationFrame e todas as abas
+de teste disponíveis estavam com document.hidden=true (rAF congelado). É
+limitação do harness, não do produto — mas o olho humano ainda não viu o
+overlay aberto; o dono foi instruído a abrir a página e tocar no botão.
+
+Pendência: personalizar o checkout da Hotmart no painel (logo/cores
+DENTRO do overlay). A ferramenta existe no painel do produto
+(Ferramentas → buscar "checkout"), mas a SPA do painel degradou de novo
+na sessão e a rota direta que tentei deu 404. Fica para a próxima janela.
 ### 2026-08-30 — Claude (a chave virou: Hotmart no ar, entrega provada)
 
 A virada travou uma vez e o motivo merece registro: a env HOTMART_HOTTOK
