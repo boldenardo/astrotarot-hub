@@ -53,6 +53,50 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-30 (3) — Claude (a marca entra na pagina de pagamento da Hotmart)
+
+Reclamacao do dono: o checkout deles estava "horroroso" — barra laranja da
+Hotmart, fundo bege, quadrado cinza no lugar do produto.
+
+**A peca que faltava era um parametro: `checkoutMode=10`.** Nao foi
+adivinhado — e o proprio painel que entrega o link nesse formato, no campo
+"Pagina de pagamentos padrao". Sem ele a Hotmart serve o checkout generico
+e toda personalizacao feita no painel fica invisivel. Agora vive em
+`hotmartCheckoutUrl`, funcao unica, para o overlay, a ponte de escape de
+webview e os e-mails de recuperacao nunca divergirem. Saiu o
+`checkoutMode=2` que eu tinha chutado para o widget: o overlay abre o
+iframe da URL que receber, entao mode 10 serve aos dois.
+
+**Onde mora a personalizacao** (para quem for mexer): Produto →
+Ferramentas → busque "personaliz" → **"Aparencia da pagina de pagamento"**
+→ abre o `custom-checkout.hotmart.com/<id>` (Checkout Builder). A busca por
+"checkout" NAO encontra — so acha "Automacoes".
+
+Feito la: fundo **#0E0A1A** (o mesmo do site, entao o overlay deixa de
+parecer uma segunda empresa) e a logo como cabecalho em **Tamanho
+Pequeno** — no tamanho original ela empurrava o formulario para fora da
+primeira tela no celular. Publicada como **padrao**: vale para as seis
+ofertas de uma vez. Desktop replicado da mobile pelo botao "Copiar
+celular". Separadamente, a **imagem do produto** virou a logo (Informacoes
+basicas), que e o que aparece ao lado do preco.
+
+**A API nao serve para nada disso** — probei: `/products` e somente
+leitura (GET lista OK; GET por ucode, PATCH e /image dao 404), e nao existe
+endpoint de customizacao. Painel ou nada, igual as ofertas.
+
+**Comportamento do widget que muda a leitura do funil:** em 375px o widget
+NAO abre overlay — ele navega a pagina inteira para pay.hotmart.com. O
+overlay e so desktop. Como 85% do trafego e mobile, na pratica a maioria
+sai do site mesmo; o que salva a experiencia e justamente o
+`checkoutMode=10`, que faz a pagina de destino ter a nossa cara.
+
+Verificado em producao a 375px: nossa moldura completa (risco-zero,
+resumo, prova, PayPal), href com checkoutMode=10, e a pagina de destino
+com `custom-skin-render` em rgb(14, 10, 26) mais a logo no topo.
+
+Armadilha registrada: o push de 1d3a10c nao gerou deployment na Vercel (o
+hook do GitHub nao disparou). Um commit vazio destravou. Se um deploy
+"sumir", e isso — nao e cache.
 ### 2026-08-30 (2) — Claude (o checkout ganha a moldura de volta)
 
 Reclamação do dono, correta: "perdemos tudo do nosso checkout antigo". O
