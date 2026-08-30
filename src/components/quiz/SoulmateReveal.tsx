@@ -34,6 +34,7 @@ import CardBack from "@/components/CardBack";
 import { trackEvent } from "@/lib/analytics";
 import { prefersNoTransitions } from "@/lib/funnel-variant";
 import {
+  FREE_POSITIONS,
   POSITIONS,
   REVEAL_DONE_KEY,
   deckLine,
@@ -95,15 +96,17 @@ export default function SoulmateReveal({
 
   const hasWindow = Boolean(reading.window);
 
-  // Pré-carrega as cinco artes no mount.
+  // Pré-carrega as artes que vão virar.
   //
   // Sem isto o giro de 0,85s termina numa face BRANCA e a arte aparece
   // depois, porque o next/image das faces é lazy por padrão e a face de
   // trás só entra na viewport quando já virou. Uma carta que se abre vazia
   // e preenche meio segundo depois não é revelação — é carregamento. As
-  // cinco juntas são alguns KB e ninguém as vê chegar.
+  // duas juntas são alguns KB e ninguém as vê chegar.
   useEffect(() => {
     for (const c of reading.cards) {
+      // Só as grátis: são as únicas que chegam a virar.
+      if (!FREE_POSITIONS.includes(c.position)) continue;
       const img = new window.Image();
       img.src = c.image;
     }
@@ -227,10 +230,17 @@ export default function SoulmateReveal({
       <div className="mt-8 grid grid-cols-5 gap-1.5 sm:gap-2.5">
         {POSITIONS.map((p) => {
           const card = cardOf(p.id);
+          // SÓ as duas grátis viram. Nunca as trancadas.
+          //
+          // A primeira versão abria as cinco no fim da cerimônia — arte
+          // visível, texto trancado — na ideia de que ver a carta que
+          // representa ele aumentaria o desejo. Errado, e o dono pegou: com
+          // as cinco abertas a tela DIZ que a revelação acabou, e ninguém
+          // paga para terminar o que parece terminado. O que vende é o que
+          // continua virado para baixo.
           const faceUp =
             (p.id === "III" && atLeast(stage, "third")) ||
-            (p.id === "IV" && atLeast(stage, "fourth")) ||
-            (!p.free && showAll);
+            (p.id === "IV" && atLeast(stage, "fourth"));
           const isNext =
             (p.id === "III" && stage === "closed") ||
             (p.id === "IV" && stage === "third");
@@ -259,9 +269,21 @@ export default function SoulmateReveal({
                         isNext ? "opacity-100" : "opacity-70"
                       }`}
                     />
+                    {!p.free && (
+                      <Lock
+                        className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-gold"
+                        aria-hidden
+                      />
+                    )}
                   </span>
+                  {/* A face virada só EXISTE para as duas grátis. Nas
+                      trancadas ela ficava no DOM escondida por
+                      backface-visibility — invisível na tela e visível em
+                      dois cliques no inspetor, além de baixar três imagens
+                      que ninguém ia ver, num funil que é quase todo
+                      celular. O que não pode ser visto não é renderizado. */}
                   <span className="sm-flip-face sm-flip-face--back block overflow-hidden rounded-xl border border-gold-400/45">
-                    {card && (
+                    {p.free && card && (
                       <Image
                         src={card.image}
                         alt=""
@@ -274,11 +296,18 @@ export default function SoulmateReveal({
                   </span>
                 </span>
               </button>
-              <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-gold-300">
+              {/* translate="no": o tradutor do navegador transforma o
+                  algarismo romano "I" em "EU" e "IV" em "4" — foi o que o
+                  dono viu no print. Os rótulos das posições não são texto
+                  para traduzir, são numeração. */}
+              <p
+                translate="no"
+                className="notranslate mt-1.5 text-[10px] font-semibold uppercase tracking-wide text-gold-300"
+              >
                 {p.id}
               </p>
               <p className="text-[10px] leading-tight text-white/50">
-                {isNext ? "Tap to turn" : faceUp ? card?.name : "Face down"}
+                {isNext ? "Tap to turn" : faceUp ? card?.name : "Sealed"}
               </p>
             </div>
           );
@@ -302,7 +331,8 @@ export default function SoulmateReveal({
       {atLeast(stage, "third") && (
         <div className="sm-enter mt-8 border-l-2 border-gold-400/40 pl-4">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gold-300">
-            III &mdash; {POSITIONS[2].title}
+            <span translate="no" className="notranslate">III</span> &mdash;{" "}
+            {POSITIONS[2].title}
           </h2>
           <p className="mt-2 text-[16px] leading-relaxed text-white/90">
             {textOf("obstacle", "III", "third")}
@@ -333,7 +363,8 @@ export default function SoulmateReveal({
       {atLeast(stage, "fourth") && (
         <div className="sm-enter mt-8 border-l-2 border-gold-400/40 pl-4">
           <h2 className="text-[13px] font-semibold uppercase tracking-wide text-gold-300">
-            IV &mdash; {POSITIONS[3].title}
+            <span translate="no" className="notranslate">IV</span> &mdash;{" "}
+            {POSITIONS[3].title}
           </h2>
           <p className="mt-2 text-[16px] leading-relaxed text-white/90">
             {textOf("meeting_window", "IV", "fourth")}
@@ -352,33 +383,32 @@ export default function SoulmateReveal({
             are the two you could check.
           </p>
           <p className="mt-3 text-[15px] leading-relaxed text-white/75">
-            These three have a person in them. I can show you the cards. I am
-            not going to show you what they say.
+            The three still face down are the ones with a person in them. They
+            stay face down until you ask for them.
           </p>
 
           <div className="mt-6 space-y-3">
             {POSITIONS.filter((p) => !p.free).map((p) => {
-              const card = cardOf(p.id);
               return (
                 <div
                   key={p.id}
                   className="flex items-start gap-3.5 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
                 >
-                  <span className="relative block w-14 shrink-0 overflow-hidden rounded-lg border border-gold-400/30">
-                    {card && (
-                      <Image
-                        src={card.image}
-                        alt=""
-                        width={120}
-                        height={204}
-                        loading="eager"
-                        className="h-auto w-full"
-                      />
-                    )}
+                  {/* Verso e cadeado. Nem a arte, nem o nome do arcano: o
+                      que ela não pode ver é o que a faz pagar. */}
+                  <span className="relative block w-14 shrink-0">
+                    <CardBack className="aspect-[10/17] w-full opacity-75" />
+                    <Lock
+                      className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 text-gold"
+                      aria-hidden
+                    />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gold-300">
-                      {p.id} &mdash; {card?.name}
+                    <p
+                      translate="no"
+                      className="notranslate text-[11px] font-semibold uppercase tracking-wide text-gold-300"
+                    >
+                      {p.id}
                     </p>
                     <p className="mt-0.5 text-[14px] font-medium leading-snug text-white/90">
                       {p.title}

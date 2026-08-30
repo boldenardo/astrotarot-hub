@@ -53,6 +53,32 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-30 (4) — Claude (CORRECAO: as tres trancadas voltam a ficar fechadas)
+
+Erro meu, pego pelo dono num print: a cerimonia abria as CINCO cartas no
+fim. Eu tinha desenhado assim de proposito — arte visivel, texto trancado,
+na ideia de que ver a carta que representa ele aumentaria o desejo. Errado,
+e o motivo e simples: com as cinco abertas a tela DIZ que a revelacao
+acabou, e ninguem paga para terminar o que ja parece terminado. O que vende
+e o que continua virado para baixo.
+
+Agora so III e IV viram. As tres trancadas ficam verso + cadeado, na grade
+e no bloco do pivo — sem arte e sem o nome do arcano. O rotulo delas passou
+de "Face down" para "Sealed".
+
+E a face virada nem EXISTE no DOM para as trancadas. Antes ela ficava la,
+escondida por backface-visibility: invisivel na tela e visivel em dois
+cliques no inspetor, alem de baixar tres imagens que ninguem ia ver num
+funil quase todo celular. O preload tambem passou a cobrir so as duas.
+
+Bonus do mesmo print: os algarismos romanos apareciam como "EU" e "4" — o
+tradutor do navegador transformando "I" e "IV". Os rotulos de posicao
+levaram translate="no" + classe notranslate.
+
+Verificado em build de producao a 375px: faces down,down,up,up,down;
+"Temperance", "The Moon" e "The Hanged Man" nao aparecem em lugar nenhum
+do texto; so duas imagens de carta no DOM; e os arcanos trancados nao
+aparecem nem no HTML da pagina.
 ### 2026-08-30 (3) — Claude (a marca entra na pagina de pagamento da Hotmart)
 
 Reclamacao do dono: o checkout deles estava "horroroso" — barra laranja da
