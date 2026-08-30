@@ -53,6 +53,41 @@ Método: `git diff d78bdca..HEAD` completo + `npm run build` (exit 0) + `npm sta
 
 ## Log
 
+### 2026-08-30 — Claude (a chave virou: Hotmart no ar, entrega provada)
+
+A virada travou uma vez e o motivo merece registro: a env HOTMART_HOTTOK
+existia na Vercel mas com VALOR VAZIO (o salvar pegou antes do colar). De
+fora, tres causas produzem o mesmo sintoma — typo no nome, escopo errado,
+build anterior a env — e foram separadas fazendo o /api/health listar os
+NOMES das chaves HOTMART* do ambiente (nomes, nunca valores) e depois a
+FORMA do valor (vazio / so-espaco / com-aspas / ok — nunca o valor nem o
+tamanho). O dono recolou o valor e deu redeploy.
+
+Registro de erro meu: na primeira conferencia pos-redeploy eu li o build
+VELHO como se fosse o novo e disse ao dono que o valor continuava vazio.
+Estava certo ele, nao eu. Conferencia de env na Vercel so vale depois de
+confirmar que o deployment novo esta servindo (o campo hottokShape do
+health resolve isso de vez).
+
+Estado final, tudo verificado em producao:
+- /api/health: active=hotmart, hottokShape=ok, blocked=null
+- /api/quiz/checkout devolve pay.hotmart.com com email e sck
+- /quiz/reveal no ar com data-gateway="hotmart"
+- Webhook "AstroTarot Hub" cadastrado no painel (v2.0.0, aprovada/
+  completa/reembolsada/chargeback) — criado pelo navegador, com o aceite
+  obrigatorio do Termo de Tratamento de Dados Pessoais
+- Teste de configuracao da Hotmart: 4 eventos, 4x "200 - Processado"
+- A PROVA DE ENTREGA: o teste criou o comprador falso no Supabase e
+  concedeu soulmate_portrait com source=hotmart — o caminho inteiro
+  compra→webhook→entitlement funcionando. Residuo de teste apagado
+  (user + entitlement do testeComprador...@example.com).
+
+O que NAO foi feito de proposito: compra real com cartao. E dinheiro de
+verdade e digitacao de cartao — se o dono quiser o teste com cartao real,
+ele mesmo faz e estorna pelo painel (e produtor, estorno e um clique).
+
+Stripe segue apenas honrando compras antigas (webhook ativo). Volta:
+PAYMENT_PROVIDER=stripe na Vercel, sem deploy.
 ### 2026-08-29 (tarde) — Claude (a revelação vira página; o desconto sai)
 
 O dono olhou o print das duas cartas abertas dentro da VSL: *"está
