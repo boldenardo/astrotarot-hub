@@ -82,6 +82,19 @@ export async function GET() {
       keys: Object.keys(process.env)
         .filter((k) => /^HOTMART/i.test(k))
         .sort(),
+      // COMO o valor está errado, sem dizer qual é ele. A chave existe no
+      // ambiente e mesmo assim não arma — e "vazio", "só espaço" e "veio
+      // com aspas coladas" pedem correções diferentes. Nenhuma destas
+      // respostas revela um caractere do token, nem o seu tamanho.
+      hottokShape: (() => {
+        const raw = process.env.HOTMART_HOTTOK;
+        if (raw === undefined) return "chave-nao-existe";
+        if (raw === "") return "string-vazia";
+        if (!raw.trim()) return "so-espaco-ou-quebra-de-linha";
+        if (/^["']|["']$/.test(raw.trim())) return "com-aspas-coladas";
+        if (raw !== raw.trim()) return "com-espaco-nas-pontas";
+        return "ok";
+      })(),
       // Planos com oferta cadastrada. As assinaturas ficam de fora até
       // existir produto de assinatura no painel — ver docs/HOTMART_SETUP.md.
       plans: configuredHotmartPlans(),
