@@ -21,6 +21,12 @@ const ALLOWED =
   /^(quiz_|vsl_|pain_|checkout_|offer_|downsell_|cta_viewed$|lead_captured$|purchase_completed$|plan_options|experience_|ritual_|dream_|soulmate_)/;
 
 const MAX_PARAMS_BYTES = 1500;
+
+/** As unicas chaves de origem aceitas. Espelha ENTRY_KEYS do analytics. */
+const ENTRY_KEYS = new Set([
+  "from", "src", "ref", "canceled",
+  "utm_source", "utm_medium", "utm_campaign",
+]);
 const SENSITIVE = /email|name|birth|answer|phone|card/i;
 
 function webviewOf(ua: string): string {
@@ -53,6 +59,7 @@ export async function POST(req: NextRequest) {
     path?: string;
     vw?: number;
     vh?: number;
+    q?: unknown;
   } = {};
   try {
     body = await req.json();
@@ -66,13 +73,43 @@ export async function POST(req: NextRequest) {
   }
 
   const ua = (req.headers.get("user-agent") || "").slice(0, 400);
+
+  // ── PAIS E ORIGEM ────────────────────────────────────────────────────
+  //
+  // O pais vem do header que a Vercel injeta na borda, LIDO AQUI: nao custa
+  // round-trip nenhum e nao depende do cliente cooperar. Sem ele nao havia
+  // como responder a pergunta que o funil vive fazendo — 20 pessoas abriram
+  // o checkout em sete dias e nenhuma pagou, e a hipotese mais forte e QUEM
+  // esta pagando (cartao bloqueado para compra internacional na Africa do
+  // Sul, India, Nepal), nao o gateway.
+  //
+  // Vai dentro de `params` e nao numa coluna nova de proposito: coluna
+  // exigiria SQL rodado a mao antes de qualquer dado aparecer, e um insert
+  // com coluna inexistente derruba TODA a telemetria, nao so o campo novo.
+  const country = (req.headers.get("x-vercel-ip-country") || "").slice(0, 2) || null;
+  // A whitelist mora AQUI, e nao so no cliente: `q` vem do corpo do POST e
+  // qualquer um pode chamar esta rota. Sem isto, um caller curioso enfia o
+  // que quiser em params e a coluna vira lixeira aberta.
+  const entry =
+    body.q && typeof body.q === "object"
+      ? Object.fromEntries(
+          Object.entries(body.q as Record<string, unknown>)
+            .filter(
+              ([k, v]) => ENTRY_KEYS.has(k) && typeof v === "string" && v
+            )
+            .map(([k, v]) => [`q_${k}`, String(v).slice(0, 60)])
+        )
+      : {};
   const row = {
     event,
     funnel_session_id:
       typeof body.funnelSessionId === "string" ? body.funnelSessionId.slice(0, 64) : null,
     variant: typeof body.variant === "string" ? body.variant.slice(0, 64) : null,
     path: typeof body.path === "string" ? body.path.slice(0, 120) : null,
-    params: cleanParams(body.params),
+    // O pais entra DEPOIS do cleanParams: ele e derivado do request, nao
+    // enviado pelo cliente, entao nao passa pelo filtro de conteudo — e nao
+    // pode ser forjado por quem chama a rota.
+    params: { ...cleanParams(body.params), ...entry, ...(country ? { country } : {}) },
     user_agent: ua,
     webview: webviewOf(ua),
     viewport_w: Number.isFinite(body.vw) ? Math.round(body.vw as number) : null,

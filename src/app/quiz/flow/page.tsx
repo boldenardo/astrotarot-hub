@@ -772,6 +772,27 @@ function NameStep({
     onContinue(trimmed);
   };
 
+  /**
+   * PULAR O NOME (01/09).
+   *
+   * Mover o passo do nome para depois de duas perguntas nao resolveu: ele
+   * continuou perdendo 20% de quem chega nele (3 de 15 no quiz novo), quase
+   * o mesmo 17% que perdia como primeira tela. A perda mudou de lugar, nao
+   * de tamanho — o que diz que quem sai ali nao quer dar o nome, e nenhum
+   * momento vai convence-la.
+   *
+   * Entao ela passa sem dar. Todo o resto do funil ja aguenta: o
+   * resolveReactionText apaga o vocativo ", {name}" inteiro quando o nome
+   * falta, e os textos de e-mail, local e "analisando" ja tem versao sem
+   * nome. Isso foi conferido campo a campo antes de expor o botao.
+   */
+  const skip = () => {
+    if (submitted) return;
+    setSubmitted(true);
+    trackEvent("quiz_name_skipped", { category: "quiz" });
+    onContinue("");
+  };
+
   return (
     <form onSubmit={submit} noValidate>
       <GuideConversation messages={messages} onDone={() => setDone(true)} />
@@ -801,6 +822,16 @@ function NameStep({
           <PrimaryButton type="submit" disabled={submitted}>
             {cta ?? ui.continue}
           </PrimaryButton>
+          {/* Discreto de proposito: e uma saida, nao uma sugestao. Quem ia
+              dar o nome nem repara; quem ia embora fica. */}
+          <button
+            type="button"
+            onClick={skip}
+            disabled={submitted}
+            className="mx-auto mt-4 block text-[13px] text-[#b9b2d0]/70 underline underline-offset-4 transition-colors hover:text-[#e8e4f5] disabled:opacity-50"
+          >
+            {ui.nameSkip}
+          </button>
         </motion.div>
       )}
     </form>

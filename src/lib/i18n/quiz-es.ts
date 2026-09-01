@@ -244,6 +244,7 @@ export const UI_ES = {
   typing: "Escribiendo",
   recordingAudio: "Master Aura está grabando un audio...",
   yourFirstName: "Tu nombre",
+  nameSkip: "Prefiero no decirlo",
   nameError: "Dime tu nombre para poder leer tu carta.",
   birthdateIntro:
     "Tu fecha exacta de nacimiento es lo que convierte una lectura en un retrato — fija la posición de Venus en el momento en que naciste.",

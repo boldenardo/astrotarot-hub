@@ -157,6 +157,9 @@ export type AnalyticsEvent =
   // Clique no CTA da VSL, que a partir de 29/08 leva à revelação e não
   // mais ao pagamento. Substitui `checkout_cta_clicked` NESTA posição —
   // aquele nome ficou reservado para botões que caem no pagamento.
+  // Quantos passam do nome sem dar o nome. Se for alto, o passo nao
+  // deveria existir; se for baixo, o botao so recuperou quem ia embora.
+  | "quiz_name_skipped"
   | "soulmate_reveal_clicked"
   | "soulmate_reveal_viewed"
   | "soulmate_reveal_completed"
@@ -188,6 +191,27 @@ function getFbq(): GtagFn | undefined {
   if (typeof window === "undefined") return undefined;
   const fbq = (window as any).fbq;
   return typeof fbq === "function" ? fbq : undefined;
+}
+
+/** Chaves de origem que o funil de fato usa. Fechada de proposito. */
+const ENTRY_KEYS = [
+  "from", "src", "ref", "canceled",
+  "utm_source", "utm_medium", "utm_campaign",
+] as const;
+
+/** Os parametros de origem da URL atual, so os conhecidos e curtos. */
+function entryParams(): Record<string, string> {
+  const out: Record<string, string> = {};
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    for (const k of ENTRY_KEYS) {
+      const v = sp.get(k);
+      if (v) out[k] = v.slice(0, 60);
+    }
+  } catch {
+    // sem URL utilizavel: o evento vale do mesmo jeito
+  }
+  return out;
 }
 
 /**
@@ -234,6 +258,11 @@ function mirror(eventName: string, params?: AnalyticsEventParams) {
       funnelSessionId: p.funnel_session_id ?? getFunnelSessionId(),
       variant,
       path: window.location.pathname,
+      // A ORIGEM. `path` sempre descartou a query, entao `?from=email`
+      // sumia: mandamos 57 e-mails de recuperacao e nao havia como saber
+      // quem voltou por eles. Vai so uma lista fechada de chaves — a query
+      // inteira poderia carregar qualquer coisa que alguem cole na URL.
+      q: entryParams(),
       vw: window.innerWidth,
       vh: window.innerHeight,
     });

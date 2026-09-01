@@ -42,6 +42,7 @@ export const UI_EN = {
   recordingAudio: "Master Aura is recording an audio...",
   yourFirstName: "Your first name",
   nameError: "Please tell me your name so I can read your chart.",
+  nameSkip: "I'd rather not say",
   birthdateIntro:
     "Your exact birth date is what turns a reading into a portrait — it fixes the position of Venus at the moment you were born.",
   monthNames: [
