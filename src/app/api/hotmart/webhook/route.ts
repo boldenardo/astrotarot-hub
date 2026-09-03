@@ -17,16 +17,24 @@
 // ativação. Reembolso/chargeback marcam o payment — sem revogação
 // automática de acesso (decisão manual do operador).
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getSupabaseAdmin } from "@/lib/server/supabase-admin";
 import { welcomeEmail } from "@/lib/server/email-templates";
 import { sendEmail } from "@/lib/server/email";
+import {
+  generateSoulmateFor,
+  type SoulmateProfile,
+} from "@/lib/server/soulmate-generate";
 import {
   setEntitlement,
   type AddonFeature,
 } from "@/lib/server/entitlements-write";
 
 export const runtime = "nodejs";
+// A geração do retrato roda em `after`, depois da resposta — a função
+// precisa continuar viva por ela. A Hotmart recebe o 200 na hora de
+// qualquer forma; isto é o teto do trabalho de fundo, não do webhook.
+export const maxDuration = 60;
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -224,6 +232,35 @@ export async function POST(req: NextRequest) {
         locale: "en",
       });
       await sendEmail({ to: email, ...mail });
+
+      // 5. O RETRATO COMEÇA AGORA, não quando ela clicar.
+      //
+      // A primeira venda (03/09) mostrou o custo de esperar: pagou às
+      // 04:08 e treze horas depois não existia retrato nenhum, porque o
+      // produto só era gerado quando o comprador criasse conta e apertasse
+      // um botão. Agora a aprovação do pagamento é o gatilho, e quando o
+      // e-mail é aberto o desenho já está lá.
+      //
+      // `after` roda DEPOIS da resposta: a Hotmart recebe 200 na hora e não
+      // trata a geração de imagem (que leva perto de um minuto) como
+      // webhook lento. Falhar aqui não desfaz nada — o direito já foi
+      // concedido, e a página /reading gera sob demanda se faltar.
+      after(async () => {
+        try {
+          const { data: u } = await admin
+            .from("users")
+            .select("id, email, name, birth_date, birth_location")
+            .eq("id", userId)
+            .maybeSingle();
+          if (!u) return;
+          const r = await generateSoulmateFor(u as unknown as SoulmateProfile);
+          if (!r.ok) {
+            console.error("[hotmart/webhook] retrato nao gerado:", r.code, email);
+          }
+        } catch (e) {
+          console.error("[hotmart/webhook] retrato falhou:", e);
+        }
+      });
 
       return NextResponse.json({ received: true, granted: true });
     }

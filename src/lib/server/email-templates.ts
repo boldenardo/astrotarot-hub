@@ -3,6 +3,7 @@
 // mesmo idioma em que a pessoa fez o funil.
 
 import type { Locale } from "@/lib/i18n";
+import { readingUrl } from "@/lib/server/reading-access";
 import { unsubscribeUrl } from "./email-unsubscribe";
 
 const BRAND = "#d4af37";
@@ -429,59 +430,58 @@ export function welcomeEmail(input: {
   locale: Locale;
 }): { subject: string; html: string; text: string } {
   const name = input.name?.trim().split(/\s+/)[0];
-  // Leva à LEITURA, não a um cadastro solto (27/08). O e-mail antigo
-  // mandava para /auth/register, o cadastro caía em /dashboard, e a pessoa
-  // que acabou de pagar para ver um rosto tinha de achar o card certo entre
-  // oito. `redirect_url` é o parâmetro que o Clerk respeita — o
-  // fallbackRedirectUrl da página só vale quando ele não vem.
-  const link =
-    `${APP_URL}/auth/register?email=${encodeURIComponent(input.email)}` +
-    `&redirect_url=${encodeURIComponent("/soulmate")}`;
+  // Leva à LEITURA JÁ PRONTA, sem cadastro (03/09).
+  //
+  // O link antigo ia para /auth/register com redirect para /soulmate. A
+  // primeira venda da Hotmart provou o custo disso: pagou às 04:08 e treze
+  // horas depois não tinha retrato nenhum — parou na criação de conta.
+  // Agora o link abre a leitura direto, assinado por HMAC do e-mail.
+  const link = readingUrl(input.email);
 
   if (input.locale === "es") {
     const html = shell(
       [
-        h1("Tu lectura te está esperando"),
+        h1("Tu retrato ya está listo"),
         p(
-          "Tu pago está confirmado. Falta un paso, y es corto: crea tu cuenta con ESTE MISMO correo — es así como reconocemos que la lectura es tuya."
+          "Tu pago está confirmado, y tu lectura ya está hecha. No hay cuenta que crear ni nada que esperar."
         ),
         p(
-          "El botón te lleva directo a tu página de alma gemela. Ahí tocas <strong>Draw my soulmate</strong> y el retrato se revela mientras lo lees."
+          "El botón abre el retrato y las cinco cartas, completas — incluidas las tres que estaban boca abajo."
         ),
-        button("Abrir mi lectura", link),
+        button("Ver mi retrato", link),
         p(
-          `<span style="color:${MUTED};font-size:13px;">Guarda este correo: el mismo enlace funciona siempre que quieras volver.</span>`
+          `<span style="color:${MUTED};font-size:13px;">Guarda este correo: el mismo enlace te trae de vuelta cuando quieras.</span>`
         ),
       ].join(""),
-      { preheader: "Un paso corto y tu retrato se revela.", locale: "es" }
+      { preheader: "Tu retrato y tus cinco cartas, listos.", locale: "es" }
     );
     return {
-      subject: name ? `${name}, tu lectura está lista` : "Tu lectura está lista",
+      subject: name ? `${name}, tu retrato ya está listo` : "Tu retrato ya está listo",
       html,
-      text: `Crea tu cuenta con este mismo correo y abre tu lectura: ${link}`,
+      text: `Tu lectura está lista, sin crear cuenta: ${link}`,
     };
   }
 
   const html = shell(
     [
-      h1("Your reading is waiting for you"),
+      h1("Your portrait is ready"),
       p(
-        "Your payment is confirmed. One short step left: create your account with THIS SAME email — that is how we know the reading belongs to you."
+        "Your payment is confirmed, and your reading is already done. There is no account to create and nothing to wait for."
       ),
       p(
-        "The button takes you straight to your soulmate page. Tap <strong>Draw my soulmate</strong> there and the portrait comes through while you read."
+        "The button opens the portrait and all five cards in full &mdash; including the three that were face down."
       ),
-      button("Open my reading", link),
+      button("See my portrait", link),
       p(
-        `<span style="color:${MUTED};font-size:13px;">Keep this email — the same link works any time you want to come back.</span>`
+        `<span style="color:${MUTED};font-size:13px;">Keep this email — the same link brings you back any time.</span>`
       ),
     ].join(""),
-    { preheader: "One short step and your portrait comes through.", locale: "en" }
+    { preheader: "Your portrait and all five cards are ready.", locale: "en" }
   );
   return {
-    subject: name ? `${name}, your reading is ready` : "Your reading is ready",
+    subject: name ? `${name}, your portrait is ready` : "Your portrait is ready",
     html,
-    text: `Create your account with this same email and open your reading: ${link}`,
+    text: `Your reading is ready, no account needed: ${link}`,
   };
 }
 
